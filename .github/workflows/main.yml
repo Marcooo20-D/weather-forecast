@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install -r requirements.txt
+      - run: pip install requests pandas numpy
 
       - run: python weather_ensemble_multi_location.py --mode forecast --timezone Asia/Jakarta
 
