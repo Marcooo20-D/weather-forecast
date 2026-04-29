@@ -1,0 +1,31 @@
+2026-04-29 06:51:34,987 INFO Log file: /home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260429_135134.log
+2026-04-29 06:51:34,987 INFO Output dir: /home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor
+2026-04-29 06:51:34,987 INFO Metadata lokasi: slug=jatinangor adm4=32.11.15.2002 bmkg_point=Hegarmanah area_level=kecamatan proxy_bmkg=True
+2026-04-29 06:51:34,987 INFO Koordinat: lat=-6.938 lon=107.7556 timezone=Asia/Jakarta
+2026-04-29 06:51:34,987 INFO Catatan lokasi: BMKG representative point: Hegarmanah, Kecamatan Jatinangor
+2026-04-29 06:51:34,987 INFO Mulai proses untuk lokasi Jatinangor, Sumedang
+2026-04-29 06:51:34,987 INFO Target date: 2026-04-30
+2026-04-29 06:51:34,987 INFO Target hours: 10:00, 13:00, 16:00, 19:00, 22:00
+2026-04-29 06:51:34,987 INFO Sumber aktif: BMKG, ECMWF, GFS, ICON, CMA, METEOFRANCE, KMA, UKMO, METNO
+2026-04-29 06:51:34,987 INFO Bobot aktif: BMKG=1.35, CMA=0.85, ECMWF=1.2, GFS=1.0, ICON=1.05, KMA=0.9, METEOFRANCE=1.1, METNO=1.0, UKMO=0.95
+2026-04-29 06:51:34,988 DEBUG BMKG HTTP attempt 1 https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=32.11.15.2002
+2026-04-29 06:51:34,988 DEBUG ECMWF HTTP attempt 1 https://api.open-meteo.com/v1/ecmwf?latitude=-6.938&longitude=107.7556&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m
+2026-04-29 06:51:34,988 DEBUG GFS HTTP attempt 1 https://api.open-meteo.com/v1/gfs?latitude=-6.938&longitude=107.7556&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m
+2026-04-29 06:51:34,989 DEBUG ICON HTTP attempt 1 https://api.open-meteo.com/v1/dwd-icon?latitude=-6.938&longitude=107.7556&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m
+2026-04-29 06:51:34,989 DEBUG CMA HTTP attempt 1 https://api.open-meteo.com/v1/cma?latitude=-6.938&longitude=107.7556&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m
+2026-04-29 06:51:34,992 DEBUG METEOFRANCE HTTP attempt 1 https://api.open-meteo.com/v1/meteofrance?latitude=-6.938&longitude=107.7556&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m
+2026-04-29 06:51:34,995 DEBUG KMA HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.938&longitude=107.7556&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m&models=kma_seamless
+2026-04-29 06:51:34,997 DEBUG UKMO HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.938&longitude=107.7556&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m&models=ukmo_seamless
+2026-04-29 06:51:35,094 DEBUG METNO HTTP attempt 1 https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=-6.938&lon=107.7556
+2026-04-29 06:51:35,772 INFO Selesai.
+2026-04-29 06:51:35,772 INFO Sumber sukses: 9/9
+2026-04-29 06:51:35,772 INFO Total forecast point: 45
+2026-04-29 06:51:35,772 INFO BMKG: OK (5/5 point) 
+2026-04-29 06:51:35,772 INFO CMA: OK (5/5 point) 
+2026-04-29 06:51:35,772 INFO ECMWF: OK (5/5 point) 
+2026-04-29 06:51:35,772 INFO GFS: OK (5/5 point) 
+2026-04-29 06:51:35,772 INFO ICON: OK (5/5 point) 
+2026-04-29 06:51:35,772 INFO KMA: OK (5/5 point) 
+2026-04-29 06:51:35,772 INFO METEOFRANCE: OK (5/5 point) 
+2026-04-29 06:51:35,772 INFO METNO: OK (5/5 point) 
+2026-04-29 06:51:35,772 INFO UKMO: OK (5/5 point) 
