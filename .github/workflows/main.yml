@@ -1,0 +1,35 @@
+name: Daily Forecast
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  forecast:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - run: python weather_ensemble_multi_location.py --mode forecast --timezone Asia/Jakarta
+
+      - run: mkdir public
+
+      - run: |
+          cp *.csv public/ || true
+          cp *.json public/ || true
+
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: public
