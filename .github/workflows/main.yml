@@ -19,13 +19,18 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install requests pandas numpy
+      - name: Run forecast
+        run: |
+          python weather_ensemble_multi_location.py --mode forecast --timezone Asia/Jakarta || echo "forecast failed"
 
-      - run: python weather_ensemble_multi_location.py --mode forecast --timezone Asia/Jakarta
+      - name: Debug files
+        run: |
+          echo "=== FILE LIST ==="
+          ls -R
 
-      - run: mkdir public
-
-      - run: |
+      - name: Prepare public folder
+        run: |
+          mkdir public
           cp *.csv public/ || true
           cp *.json public/ || true
 
