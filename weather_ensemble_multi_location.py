@@ -3120,13 +3120,6 @@ def main():
         self_test_for_locations(args, locations)
     else:
         raise ValueError(f"Mode tidak dikenali: {args.mode}")
-
-import os
-
-os.makedirs("outputs/test", exist_ok=True)
-
-with open("outputs/test/test.csv", "w") as f:
-    f.write("test,123\n")
     
 if __name__ == "__main__":
     main()
