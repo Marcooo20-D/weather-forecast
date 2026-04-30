@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-30T21:27:05.419837+07:00",
-  "target_date": "2026-05-01",
+  "generated_at": "2026-05-01T00:03:44.923173+07:00",
+  "target_date": "2026-05-02",
   "source_id": "METNO",
   "provider": "MET Norway",
   "success": true,
@@ -32,117 +32,6 @@
         }
       },
       "timeseries": [
-        {
-          "time": "2026-04-30T14:00:00Z",
-          "data": {
-            "instant": {
-              "details": {
-                "air_pressure_at_sea_level": 1015.2,
-                "air_temperature": 21.9,
-                "cloud_area_fraction": 100.0,
-                "relative_humidity": 90.8,
-                "wind_from_direction": 187.4,
-                "wind_speed": 1.8
-              }
-            },
-            "next_12_hours": {
-              "summary": {
-                "symbol_code": "cloudy"
-              },
-              "details": {}
-            },
-            "next_1_hours": {
-              "summary": {
-                "symbol_code": "cloudy"
-              },
-              "details": {
-                "precipitation_amount": 0.0
-              }
-            },
-            "next_6_hours": {
-              "summary": {
-                "symbol_code": "cloudy"
-              },
-              "details": {
-                "precipitation_amount": 0.2
-              }
-            }
-          }
-        },
-        {
-          "time": "2026-04-30T15:00:00Z",
-          "data": {
-            "instant": {
-              "details": {
-                "air_pressure_at_sea_level": 1015.5,
-                "air_temperature": 21.8,
-                "cloud_area_fraction": 100.0,
-                "relative_humidity": 90.3,
-                "wind_from_direction": 350.8,
-                "wind_speed": 1.4
-              }
-            },
-            "next_12_hours": {
-              "summary": {
-                "symbol_code": "partlycloudy_day"
-              },
-              "details": {}
-            },
-            "next_1_hours": {
-              "summary": {
-                "symbol_code": "cloudy"
-              },
-              "details": {
-                "precipitation_amount": 0.0
-              }
-            },
-            "next_6_hours": {
-              "summary": {
-                "symbol_code": "cloudy"
-              },
-              "details": {
-                "precipitation_amount": 0.2
-              }
-            }
-          }
-        },
-        {
-          "time": "2026-04-30T16:00:00Z",
-          "data": {
-            "instant": {
-              "details": {
-                "air_pressure_at_sea_level": 1014.7,
-                "air_temperature": 21.6,
-                "cloud_area_fraction": 100.0,
-                "relative_humidity": 92.2,
-                "wind_from_direction": 23.7,
-                "wind_speed": 0.8
-              }
-            },
-            "next_12_hours": {
-              "summary": {
-                "symbol_code": "partlycloudy_day"
-              },
-              "details": {}
-            },
-            "next_1_hours": {
-              "summary": {
-                "symbol_code": "lightrainshowers_night"
-              },
-              "details": {
-                "precipitation_amount": 0.1
-              }
-            },
-            "next_6_hours": {
-              "summary": {
-                "symbol_code": "cloudy"
-              },
-              "details": {
-                "precipitation_amount": 0.1
-              }
-            }
-          }
-        },
         {
           "time": "2026-04-30T17:00:00Z",
           "data": {

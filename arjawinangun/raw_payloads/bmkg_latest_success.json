@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-30T21:27:07.460087+07:00",
-  "target_date": "2026-05-01",
+  "generated_at": "2026-05-01T00:03:47.158073+07:00",
+  "target_date": "2026-05-02",
   "source_id": "BMKG",
   "provider": "BMKG",
   "success": true,
@@ -39,29 +39,6 @@
           "type": "adm4"
         },
         "cuaca": [
-          [
-            {
-              "datetime": "2026-04-30T15:00:00Z",
-              "t": 25,
-              "tcc": 100,
-              "tp": 0,
-              "weather": 3,
-              "weather_desc": "Berawan",
-              "weather_desc_en": "Mostly Cloudy",
-              "wd_deg": 220,
-              "wd": "S",
-              "wd_to": "N",
-              "ws": 3.3,
-              "hu": 94,
-              "vs": 9984,
-              "vs_text": "< 10 km",
-              "time_index": "2-3",
-              "analysis_date": "2026-04-30T12:00:00",
-              "image": "https://api-apps.bmkg.go.id/storage/icon/cuaca/berawan-pm.svg",
-              "utc_datetime": "2026-04-30 15:00:00",
-              "local_datetime": "2026-04-30 22:00:00"
-            }
-          ],
           [
             {
               "datetime": "2026-04-30T18:00:00Z",
@@ -400,6 +377,50 @@
               "image": "https://api-apps.bmkg.go.id/storage/icon/cuaca/berawan-pm.svg",
               "utc_datetime": "2026-05-02 15:00:00",
               "local_datetime": "2026-05-02 22:00:00"
+            }
+          ],
+          [
+            {
+              "datetime": "2026-05-02T18:00:00Z",
+              "t": 24,
+              "tcc": 100,
+              "tp": 0,
+              "weather": 3,
+              "weather_desc": "Berawan",
+              "weather_desc_en": "Mostly Cloudy",
+              "wd_deg": 233,
+              "wd": "SW",
+              "wd_to": "NE",
+              "ws": 1.4,
+              "hu": 93,
+              "vs": 8009,
+              "vs_text": "< 9 km",
+              "time_index": "53-54",
+              "analysis_date": "2026-04-30T12:00:00",
+              "image": "https://api-apps.bmkg.go.id/storage/icon/cuaca/berawan-pm.svg",
+              "utc_datetime": "2026-05-02 18:00:00",
+              "local_datetime": "2026-05-03 01:00:00"
+            },
+            {
+              "datetime": "2026-05-02T21:00:00Z",
+              "t": 24,
+              "tcc": 99,
+              "tp": 0,
+              "weather": 3,
+              "weather_desc": "Berawan",
+              "weather_desc_en": "Mostly Cloudy",
+              "wd_deg": 178,
+              "wd": "SE",
+              "wd_to": "NW",
+              "ws": 0.9,
+              "hu": 93,
+              "vs": 7989,
+              "vs_text": "< 8 km",
+              "time_index": "56-57",
+              "analysis_date": "2026-04-30T12:00:00",
+              "image": "https://api-apps.bmkg.go.id/storage/icon/cuaca/berawan-pm.svg",
+              "utc_datetime": "2026-05-02 21:00:00",
+              "local_datetime": "2026-05-03 04:00:00"
             }
           ]
         ]
