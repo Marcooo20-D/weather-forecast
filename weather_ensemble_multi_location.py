@@ -1,13 +1,18 @@
 import argparse
 import csv
+import gzip
 import json
 import logging
 import math
 import os
+import random
 import ssl
 import tempfile
+import threading
 import time
 import traceback
+import zlib
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -23,7 +28,24 @@ except ImportError:
     certifi = None
 
 
-TARGET_TIMES = ["10:00", "13:00", "16:00", "19:00", "22:00"]
+"""
+Weather Ensemble Multi-Location (single-file version).
+
+Upgrades over baseline:
+- Retry: exponential backoff + jitter + explicit handling for 429/5xx and Retry-After.
+- Concurrency: per-host semaphore to avoid rate-limit bursts; per-run total workers remain bounded.
+- Cache: BMKG fallback now prefers latest SUCCESS for same target_date stamp.
+- Raw payloads: optional gzip compression; "latest" pointers supported.
+- Observability: per-source timing + last HTTP status captured in SourceResult and written to source_status CSV.
+- Robustness: value validation / sanitization for point fields; safer file writes; more CLI switches.
+
+Keeping everything in ONE file, as requested.
+"""
+
+
+# Default target times: per-hour (00:00..23:00).
+# You can still override with --targets (custom list) at runtime.
+TARGET_TIMES = [f"{hour:02d}:00" for hour in range(24)]
 CUACA_ORDER = [
     "Cerah",
     "Cerah Berawan",
@@ -45,6 +67,7 @@ RETRY_BACKOFF_SECONDS = 2
 MAX_WORKERS = 8
 RAW_PAYLOAD_DIRNAME = "raw_payloads"
 SAVE_RAW_PAYLOADS = True
+COMPRESS_RAW_PAYLOADS = False
 OBSERVATION_DIRNAME = "observations"
 REPORT_DIRNAME = "reports"
 LOG_DIRNAME = "logs"
@@ -56,7 +79,11 @@ MIN_SOURCE_SUCCESS_FOR_RUN = 5
 OUTLIER_Z_THRESHOLD = 3.5
 DEFAULT_EVALUATION_DAYS = 14
 DEFAULT_RETENTION_DAYS = 30
+DEFAULT_RETENTION_MAX_MB = 0
 MAX_CONSECUTIVE_FAILURE_PENALTY = 5
+
+# Host-level concurrency to reduce burstiness / rate limit issues.
+DEFAULT_MAX_INFLIGHT_PER_HOST = 3
 
 RUN_DAILY = False
 RUN_TIME = "19:00"
@@ -72,9 +99,11 @@ BMKG_API_URL = "https://api.bmkg.go.id/publik/prakiraan-cuaca"
 BMKG_PORTAL_URL = "https://data.bmkg.go.id/prakiraan-cuaca/"
 MET_NO_URL = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
 DEFAULT_HTTP_HEADERS = {
-    "User-Agent": "weather-ensemble-multi-location/3.0 (+https://data.bmkg.go.id/prakiraan-cuaca/)",
+    "User-Agent": "weather-ensemble-multi-location/3.1 (+https://data.bmkg.go.id/prakiraan-cuaca/)",
     "Accept": "application/json,text/plain,*/*",
     "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Accept-Encoding": "gzip,deflate",
+    "Connection": "close",
 }
 BMKG_HTTP_HEADERS = {
     "User-Agent": (
@@ -84,10 +113,12 @@ BMKG_HTTP_HEADERS = {
     ),
     "Accept": "application/json,text/plain,*/*",
     "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Accept-Encoding": "gzip,deflate",
     "Referer": BMKG_PORTAL_URL,
     "Origin": "https://data.bmkg.go.id",
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
+    "Connection": "close",
 }
 SOURCE_BASE_WEIGHTS = {
     "BMKG": 1.35,
@@ -162,6 +193,12 @@ ALL_SOURCE_CONFIGS = [
     },
 ]
 
+# Active sources can be restricted via CLI (--sources).
+ACTIVE_SOURCE_CONFIGS = list(ALL_SOURCE_CONFIGS)
+
+# Output schema version (helps downstream consumers tolerate new columns).
+OUTPUT_SCHEMA_VERSION = "2026-05-09.v2"
+
 
 @dataclass(frozen=True)
 class LocationConfig:
@@ -188,8 +225,6 @@ DEFAULT_LOCATION_PRESET_DATA = {
         "is_proxy_bmkg": False,
         "note": "BMKG point: Dago, Coblong, Kota Bandung",
     },
-    # Jatinangor does not have a single village named "Jatinangor" in BMKG adm4 format,
-    # so the preset uses Hegarmanah as a representative BMKG point for the district area.
     "jatinangor": {
         "location_name": "Jatinangor, Sumedang",
         "adm4": "32.11.15.2002",
@@ -219,6 +254,8 @@ ACTIVE_SOURCE_WEIGHTS = dict(SOURCE_BASE_WEIGHTS)
 SOURCE_HEALTH = {}
 ACTIVE_OUTPUT_DIR = BASE_DIR
 ACTIVE_LOCATIONS_FILE = ""
+CSV_DELIMITER = ","
+ACTIVE_HOUR_BUCKET_WEIGHTS: dict[str, float] = {}
 
 
 def log_info(*args):
@@ -287,6 +324,27 @@ def path_output(filename):
     return os.path.join(ACTIVE_OUTPUT_DIR, filename)
 
 
+def atomic_write_bytes(path, writer_fn):
+    directory = os.path.dirname(path) or "."
+    ensure_directory(directory)
+    temp_fd, temp_path = tempfile.mkstemp(
+        dir=directory,
+        prefix=f".{sanitize_filename(os.path.basename(path))}_",
+        suffix=".tmp",
+        text=False,
+    )
+    try:
+        with os.fdopen(temp_fd, "wb") as f:
+            writer_fn(f)
+        os.replace(temp_path, path)
+    except Exception:
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
+        raise
+
+
 def atomic_write_text(path, writer_fn, newline=None):
     directory = os.path.dirname(path) or "."
     ensure_directory(directory)
@@ -310,7 +368,7 @@ def atomic_write_text(path, writer_fn, newline=None):
 
 def write_csv(path, headers, rows):
     def writer_fn(f):
-        writer = csv.writer(f)
+        writer = csv.writer(f, delimiter=CSV_DELIMITER)
         writer.writerow(headers)
         writer.writerows(rows)
 
@@ -319,7 +377,7 @@ def write_csv(path, headers, rows):
 
 def write_dict_csv(path, fieldnames, rows):
     def writer_fn(f):
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer = csv.DictWriter(f, fieldnames=fieldnames, delimiter=CSV_DELIMITER)
         writer.writeheader()
         writer.writerows(rows)
 
@@ -333,9 +391,20 @@ def write_json(path, payload):
     atomic_write_text(path, writer_fn)
 
 
+def write_json_gz(path, payload):
+    def writer_fn(fb):
+        with gzip.GzipFile(fileobj=fb, mode="wb") as gz:
+            gz.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
+
+    atomic_write_bytes(path, writer_fn)
+
+
 def read_json(path, default=None):
     if not os.path.exists(path):
         return default
+    if path.lower().endswith(".gz"):
+        with gzip.open(path, "rt", encoding="utf-8") as f:
+            return json.load(f)
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -344,7 +413,15 @@ def read_dict_csv(path):
     if not os.path.exists(path):
         return []
     with open(path, "r", newline="", encoding="utf-8") as f:
-        return list(csv.DictReader(f))
+        sample = f.read(4096)
+        f.seek(0)
+        delimiter = CSV_DELIMITER
+        try:
+            sniffed = csv.Sniffer().sniff(sample, delimiters=[",", ";", "\t", "|"])
+            delimiter = sniffed.delimiter or delimiter
+        except Exception:
+            pass
+        return list(csv.DictReader(f, delimiter=delimiter))
 
 
 def build_location_config(slug, payload):
@@ -489,6 +566,17 @@ def parse_display_date(text):
     return datetime.strptime(text, "%d-%m-%Y").date()
 
 
+def build_hourly_targets(step_minutes: int = 60) -> list[str]:
+    if step_minutes <= 0 or (1440 % step_minutes) != 0:
+        raise ValueError("step_minutes harus membagi 1440 (mis. 60, 30, 15)")
+    times = []
+    for minutes in range(0, 24 * 60, step_minutes):
+        hh = minutes // 60
+        mm = minutes % 60
+        times.append(f"{hh:02d}:{mm:02d}")
+    return times
+
+
 def iter_dates(start_date, end_date):
     current = start_date
     while current <= end_date:
@@ -506,36 +594,146 @@ def build_ssl_context():
     return ssl.create_default_context()
 
 
+class HttpPayloadError(ValueError):
+    def __init__(self, message: str, *, status: Optional[int] = None, content_type: str = "", snippet: str = ""):
+        super().__init__(message)
+        self.status = status
+        self.content_type = content_type or ""
+        self.snippet = snippet or ""
+
+
+def _looks_like_html(text: str) -> bool:
+    head = (text or "").lstrip().lower()
+    return head.startswith("<!doctype html") or head.startswith("<html") or head.startswith("<head")
+
+
+def _decode_http_bytes(raw_bytes, encoding_header):
+    encoding = (encoding_header or "").lower()
+    if raw_bytes[:2] == b"\x1f\x8b" and "gzip" not in encoding:
+        encoding = (encoding + ",gzip").strip(",")
+
+    if "gzip" in encoding:
+        try:
+            raw_bytes = gzip.decompress(raw_bytes)
+        except OSError:
+            pass
+    if "deflate" in encoding:
+        try:
+            raw_bytes = zlib.decompress(raw_bytes)
+        except zlib.error:
+            try:
+                raw_bytes = zlib.decompress(raw_bytes, -zlib.MAX_WBITS)
+            except zlib.error:
+                pass
+    return raw_bytes
+
+
 def http_get_json(url, headers=None, timeout=HTTP_TIMEOUT_SECONDS):
     effective_headers = dict(DEFAULT_HTTP_HEADERS)
     if headers:
         effective_headers.update(headers)
+
     request = urllib.request.Request(url, headers=effective_headers)
     ssl_context = build_ssl_context() if url.lower().startswith("https://") else None
+
+    started = time.time()
     with urllib.request.urlopen(request, timeout=timeout, context=ssl_context) as response:
+        status = getattr(response, "status", None) or response.getcode()
         charset = response.headers.get_content_charset() or "utf-8"
-        payload = response.read().decode(charset)
-        return json.loads(payload)
+        encoding = response.headers.get("Content-Encoding") or ""
+        content_type = response.headers.get("Content-Type") or ""
+        raw = response.read()
+        raw = _decode_http_bytes(raw, encoding)
+        payload = raw.decode(charset, errors="replace")
+        duration_ms = int((time.time() - started) * 1000)
+        if not payload.strip():
+            raise HttpPayloadError(
+                f"Empty response body (status={status}, content_type={content_type})",
+                status=status,
+                content_type=content_type,
+                snippet="",
+            )
+        if "json" not in content_type.lower() and _looks_like_html(payload):
+            snippet = payload.strip().replace("\n", " ")[:200]
+            raise HttpPayloadError(
+                f"Non-JSON HTML response (status={status}, content_type={content_type}): {snippet}",
+                status=status,
+                content_type=content_type,
+                snippet=snippet,
+            )
+        try:
+            return json.loads(payload), status, duration_ms
+        except json.JSONDecodeError as exc:
+            snippet = payload.strip().replace("\n", " ")[:200]
+            raise HttpPayloadError(
+                f"JSON decode failed (status={status}, content_type={content_type}): {snippet}",
+                status=status,
+                content_type=content_type,
+                snippet=snippet,
+            ) from exc
 
 
-def fetch_json_with_retry(url, headers=None, source_id="UNKNOWN"):
+def _parse_retry_after_seconds(exc):
+    try:
+        headers = getattr(exc, "headers", None) or {}
+        value = headers.get("Retry-After")
+        if not value:
+            return None
+        value = value.strip()
+        if value.isdigit():
+            return int(value)
+        # HTTP-date format is possible; skip for simplicity
+        return None
+    except Exception:
+        return None
+
+
+def fetch_json_with_retry(url, headers=None, source_id="UNKNOWN", timeout=HTTP_TIMEOUT_SECONDS, max_retry=None):
+    """
+    Returns tuple: (payload_dict, http_status, duration_ms)
+    """
+    if max_retry is None:
+        max_retry = MAX_RETRY_HTTP
+
     last_error = None
-    for attempt in range(1, MAX_RETRY_HTTP + 1):
+    for attempt in range(1, max_retry + 1):
         try:
             log_debug(source_id, "HTTP attempt", attempt, url)
-            return http_get_json(url, headers=headers)
+            payload, status, duration_ms = http_get_json(url, headers=headers, timeout=timeout)
+            return payload, status, duration_ms
         except urllib.error.HTTPError as exc:
             last_error = exc
-            log_debug(source_id, "attempt gagal:", exc)
-            if exc.code in (400, 401, 403, 404):
+            status = getattr(exc, "code", None)
+            log_debug(source_id, "HTTPError:", status, exc)
+
+            # Non-retryable by default
+            non_retry = {400, 401, 403, 404}
+            if status in non_retry:
                 raise
-            if attempt < MAX_RETRY_HTTP:
-                time.sleep(RETRY_BACKOFF_SECONDS * attempt)
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+
+            retryable = (status == 429) or (status is not None and 500 <= status <= 599)
+            if not retryable or attempt >= max_retry:
+                raise
+
+            retry_after = _parse_retry_after_seconds(exc)
+            if retry_after is not None:
+                sleep_s = min(max(retry_after, 1), 60)
+            else:
+                base = max(RETRY_BACKOFF_SECONDS, 0.5)
+                sleep_s = base * (2 ** (attempt - 1))
+                sleep_s *= random.uniform(0.7, 1.4)  # jitter
+                sleep_s = min(sleep_s, 45)
+            time.sleep(sleep_s)
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, HttpPayloadError) as exc:
             last_error = exc
-            log_debug(source_id, "attempt gagal:", exc)
-            if attempt < MAX_RETRY_HTTP:
-                time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+            log_debug(source_id, "Network/Decode error:", exc)
+            if attempt >= max_retry:
+                break
+            base = max(RETRY_BACKOFF_SECONDS, 0.5)
+            sleep_s = base * (2 ** (attempt - 1))
+            sleep_s *= random.uniform(0.7, 1.4)  # jitter
+            sleep_s = min(sleep_s, 45)
+            time.sleep(sleep_s)
     raise last_error
 
 
@@ -585,11 +783,35 @@ def source_active_weight(source_id):
     return ACTIVE_SOURCE_WEIGHTS.get(source_id, source_base_weight(source_id))
 
 
+def hour_bucket_for_time(jam_text: str) -> str:
+    try:
+        hh = int(str(jam_text).split(":")[0])
+    except Exception:
+        return ""
+    if 0 <= hh <= 5:
+        return "00-05"
+    if 6 <= hh <= 11:
+        return "06-11"
+    if 12 <= hh <= 17:
+        return "12-17"
+    if 18 <= hh <= 23:
+        return "18-23"
+    return ""
+
+
+def hour_bucket_factor(jam_text: str) -> float:
+    bucket = hour_bucket_for_time(jam_text)
+    if not bucket:
+        return 1.0
+    return float(ACTIVE_HOUR_BUCKET_WEIGHTS.get(bucket) or 1.0)
+
+
 def load_weight_config():
-    global ACTIVE_SOURCE_WEIGHTS
+    global ACTIVE_SOURCE_WEIGHTS, ACTIVE_HOUR_BUCKET_WEIGHTS
     path = path_output(WEIGHTS_FILENAME)
     payload = read_json(path, default=None)
     ACTIVE_SOURCE_WEIGHTS = dict(SOURCE_BASE_WEIGHTS)
+    ACTIVE_HOUR_BUCKET_WEIGHTS = {}
     if not payload:
         return
 
@@ -597,6 +819,11 @@ def load_weight_config():
         parsed = safe_float(value)
         if parsed is not None and parsed > 0:
             ACTIVE_SOURCE_WEIGHTS[source_id] = round(parsed, 4)
+
+    for bucket, value in (payload.get("hour_bucket_weights") or {}).items():
+        parsed = safe_float(value)
+        if parsed is not None and parsed > 0:
+            ACTIVE_HOUR_BUCKET_WEIGHTS[str(bucket)] = round(parsed, 4)
 
 
 def save_weight_config(weights, metadata):
@@ -615,6 +842,9 @@ def load_health_config():
 
 
 def save_health_config(results, args, target_date=None):
+    if args.disable_health:
+        return
+
     previous = read_json(path_output(HEALTH_FILENAME), default={}) or {}
     source_health = previous.get("sources", {})
 
@@ -678,7 +908,11 @@ def source_health_factor(source_id):
 
 
 def point_weight(point):
-    base = source_active_weight(point.source_id) * source_health_factor(point.source_id)
+    base = (
+        source_active_weight(point.source_id)
+        * source_health_factor(point.source_id)
+        * hour_bucket_factor(point.target_time)
+    )
     gap_minutes = point.gap_minutes or 0.0
     gap_factor = clamp(1 - (gap_minutes / 240.0), 0.55, 1.0)
 
@@ -701,7 +935,7 @@ def confidence_label(score):
 
 def expected_total_weight():
     return round(
-        sum(source_active_weight(item["source_id"]) for item in ALL_SOURCE_CONFIGS), 4
+        sum(source_active_weight(item["source_id"]) for item in ACTIVE_SOURCE_CONFIGS), 4
     )
 
 
@@ -709,7 +943,7 @@ def compute_confidence(bucket, total_weight, dominant_weight, temp_std, rh_std, 
     if not bucket:
         return 0.0, "Rendah"
 
-    expected_sources = max(len(ALL_SOURCE_CONFIGS), 1)
+    expected_sources = max(len(ACTIVE_SOURCE_CONFIGS), 1)
     expected_weight = max(expected_total_weight(), 0.0001)
     coverage_score = clamp((len(bucket) / expected_sources) * 100, 0, 100)
     weight_score = clamp((total_weight / expected_weight) * 100, 0, 100)
@@ -900,6 +1134,35 @@ def category_from_metno_symbol(symbol_code, rain_mm, rh):
     return infer_kategori_non_hujan(None, rh)
 
 
+def validate_point_values(temp_c, rh_pct, rain_mm, wind_kmh):
+    """
+    Light-weight sanitization (does not "fix" too much):
+    - RH clipped to 0..100
+    - rain clipped to >=0
+    - wind clipped to >=0
+    - temperature sanity: allow -30..60C otherwise None
+    """
+    flags = []
+
+    if temp_c is not None and not (-30 <= temp_c <= 60):
+        flags.append("temp_out_of_range")
+        temp_c = None
+    if rh_pct is not None:
+        if rh_pct < 0 or rh_pct > 100:
+            flags.append("rh_clipped")
+        rh_pct = clamp(rh_pct, 0, 100)
+    if rain_mm is not None:
+        if rain_mm < 0:
+            flags.append("rain_clipped")
+            rain_mm = 0.0
+        # keep upper range; heavy rain possible
+    if wind_kmh is not None and wind_kmh < 0:
+        flags.append("wind_clipped")
+        wind_kmh = 0.0
+
+    return temp_c, rh_pct, rain_mm, wind_kmh, flags
+
+
 def extract_bmkg_points(target_date, payload, args):
     data_items = payload.get("data") or []
     if not data_items:
@@ -914,15 +1177,22 @@ def extract_bmkg_points(target_date, payload, args):
             dt_local = parse_naive_local_datetime(local_datetime, args.timezone)
             if dt_local.date() != target_date:
                 continue
+            temp_c, rh_pct, rain_mm, wind_kmh, flags = validate_point_values(
+                safe_float(item.get("t")),
+                safe_float(item.get("hu")),
+                bmkg_rain_proxy_mm(item.get("weather_desc")),
+                safe_float(item.get("ws")),
+            )
             candidates.append(
                 {
                     "dt": dt_local,
-                    "temp_c": safe_float(item.get("t")),
-                    "rh_pct": safe_float(item.get("hu")),
-                    "rain_mm": bmkg_rain_proxy_mm(item.get("weather_desc")),
-                    "wind_kmh": safe_float(item.get("ws")),
+                    "temp_c": temp_c,
+                    "rh_pct": rh_pct,
+                    "rain_mm": rain_mm,
+                    "wind_kmh": wind_kmh,
                     "raw_condition": item.get("weather_desc") or "",
                     "category": bmkg_to_kategori(item.get("weather_desc")),
+                    "flags": flags + (["rain_proxy"] if rain_mm is not None else []),
                 }
             )
 
@@ -954,38 +1224,244 @@ def extract_bmkg_points(target_date, payload, args):
     return points
 
 
+def extract_open_meteo_points(target_date, payload, config, args):
+    hourly = payload.get("hourly") or {}
+
+    times = hourly.get("time") or []
+    if not times:
+        raise ValueError("Open-Meteo response tidak memiliki hourly.time")
+
+    temperatures = hourly.get("temperature_2m") or []
+    humidities = hourly.get("relative_humidity_2m") or []
+    precipitations = hourly.get("precipitation") or []
+    weather_codes = hourly.get("weather_code") or []
+    wind_speeds = hourly.get("wind_speed_10m") or []
+
+    candidates = []
+    for idx, time_text in enumerate(times):
+        dt_local = parse_open_meteo_time(time_text, args.timezone)
+        if dt_local.date() != target_date:
+            continue
+        temp_c, rh_pct, rain_mm, wind_kmh, _flags = validate_point_values(
+            safe_float(temperatures[idx] if idx < len(temperatures) else None),
+            safe_float(humidities[idx] if idx < len(humidities) else None),
+            safe_float(precipitations[idx] if idx < len(precipitations) else None),
+            safe_float(wind_speeds[idx] if idx < len(wind_speeds) else None),
+        )
+        candidates.append(
+            {
+                "dt": dt_local,
+                "temp_c": temp_c,
+                "rh_pct": rh_pct,
+                "rain_mm": rain_mm,
+                "wind_kmh": wind_kmh,
+                "weather_code": weather_codes[idx] if idx < len(weather_codes) else None,
+            }
+        )
+
+    if not candidates:
+        raise ValueError(f"{config['source_id']} tidak mengembalikan kandidat target date")
+
+    points = {}
+    for jam in TARGET_TIMES:
+        target_dt = parse_local_hour_string(target_date, jam, args.timezone)
+        match = next((item for item in candidates if item["dt"] == target_dt), None)
+        if not match:
+            match = nearest_candidate(candidates, target_dt, max_gap_hours=2)
+        if not match:
+            continue
+        gap_minutes = round(abs((match["dt"] - target_dt).total_seconds()) / 60, 2)
+        category = category_from_wmo_code(
+            match.get("weather_code"),
+            match.get("rain_mm"),
+            match.get("rh_pct"),
+        )
+        points[jam] = ForecastPoint(
+            source_id=config["source_id"],
+            provider=config["provider"],
+            target_time=jam,
+            source_datetime=match["dt"],
+            temp_c=match["temp_c"],
+            rh_pct=match["rh_pct"],
+            rain_mm=match["rain_mm"],
+            wind_kmh=match["wind_kmh"],
+            category=category,
+            raw_condition=f"wmo:{match.get('weather_code')}",
+            gap_minutes=gap_minutes,
+        )
+    return points
+
+
+def extract_met_no_points(target_date, payload, config, args):
+    series = ((payload.get("properties") or {}).get("timeseries")) or []
+    if not series:
+        raise ValueError("MET Norway response tidak memiliki timeseries")
+
+    candidates = []
+    for entry in series:
+        dt_local = parse_utc_iso_to_local(entry.get("time"), args.timezone)
+        if dt_local.date() != target_date:
+            continue
+        data = entry.get("data") or {}
+        instant_details = (data.get("instant") or {}).get("details") or {}
+        wind_ms = safe_float(instant_details.get("wind_speed"))
+        rain_mm = metno_precipitation_amount(data)
+        symbol_code = metno_symbol_code(data)
+        temp_c, rh_pct, rain_mm, wind_kmh, _flags = validate_point_values(
+            safe_float(instant_details.get("air_temperature")),
+            safe_float(instant_details.get("relative_humidity")),
+            rain_mm,
+            round(wind_ms * 3.6, 2) if wind_ms is not None else None,
+        )
+        candidates.append(
+            {
+                "dt": dt_local,
+                "temp_c": temp_c,
+                "rh_pct": rh_pct,
+                "rain_mm": rain_mm,
+                "wind_kmh": wind_kmh,
+                "symbol_code": symbol_code,
+            }
+        )
+
+    if not candidates:
+        raise ValueError("MET Norway tidak mengembalikan kandidat target date")
+
+    points = {}
+    for jam in TARGET_TIMES:
+        target_dt = parse_local_hour_string(target_date, jam, args.timezone)
+        match = next((item for item in candidates if item["dt"] == target_dt), None)
+        if not match:
+            match = nearest_candidate(candidates, target_dt, max_gap_hours=2)
+        if not match:
+            continue
+        gap_minutes = round(abs((match["dt"] - target_dt).total_seconds()) / 60, 2)
+        category = category_from_metno_symbol(
+            match.get("symbol_code"),
+            match.get("rain_mm"),
+            match.get("rh_pct"),
+        )
+        points[jam] = ForecastPoint(
+            source_id=config["source_id"],
+            provider=config["provider"],
+            target_time=jam,
+            source_datetime=match["dt"],
+            temp_c=match["temp_c"],
+            rh_pct=match["rh_pct"],
+            rain_mm=match["rain_mm"],
+            wind_kmh=match["wind_kmh"],
+            category=category,
+            raw_condition=match.get("symbol_code") or "",
+            gap_minutes=gap_minutes,
+        )
+    return points
+
+
+def load_cached_source_payload(target_date, source_id, extractor_fn, args):
+    """
+    Generic cache loader for any source stored in raw_payloads.
+    Prefers latest_success, then same-date successes, then other successes.
+    """
+    raw_dir = path_output(RAW_PAYLOAD_DIRNAME)
+    if not os.path.isdir(raw_dir):
+        return None
+
+    file_stub = sanitize_filename(source_id.lower())
+    stamp = target_date.strftime("%Y%m%d")
+    ext = _raw_payload_ext(args)
+
+    preferred_paths = [
+        os.path.join(raw_dir, f"{file_stub}_latest_success{ext}"),
+        os.path.join(raw_dir, f"{file_stub}_latest{ext}"),
+    ]
+
+    versioned_paths = []
+    ignored_names = {
+        f"{file_stub}_latest{ext}",
+        f"{file_stub}_latest_success{ext}",
+        f"{file_stub}_latest_failure{ext}",
+    }
+    for entry in os.scandir(raw_dir):
+        if not entry.is_file():
+            continue
+        lower_name = entry.name.lower()
+        if not lower_name.startswith(f"{file_stub}_") or not (
+            lower_name.endswith(".json") or lower_name.endswith(".json.gz")
+        ):
+            continue
+        if entry.name in ignored_names:
+            continue
+        versioned_paths.append(entry.path)
+
+    same_date = [p for p in versioned_paths if f"_{stamp}_" in os.path.basename(p)]
+    other_date = [p for p in versioned_paths if p not in same_date]
+    same_date.sort(key=lambda path: os.path.getmtime(path), reverse=True)
+    other_date.sort(key=lambda path: os.path.getmtime(path), reverse=True)
+
+    candidate_paths = [p for p in preferred_paths if os.path.exists(p)]
+    candidate_paths.extend(same_date)
+    candidate_paths.extend(other_date)
+
+    for path in candidate_paths:
+        document = read_json(path, default=None) or {}
+        payload = document.get("payload")
+        if not document.get("success") or not isinstance(payload, dict):
+            continue
+        try:
+            points = extractor_fn(target_date, payload)
+        except Exception:
+            continue
+        return {
+            "path": path,
+            "payload": payload,
+            "points": points,
+            "request_url": document.get("request_url") or "",
+        }
+    return None
+
+def _raw_payload_ext(args):
+    return ".json.gz" if args.compress_raw_payloads else ".json"
+
+
 def load_cached_bmkg_payload(target_date, args):
     raw_dir = path_output(RAW_PAYLOAD_DIRNAME)
     if not os.path.isdir(raw_dir):
         return None
 
     file_stub = sanitize_filename("bmkg")
+    stamp = target_date.strftime("%Y%m%d")
+    ext = _raw_payload_ext(args)
+
     preferred_paths = [
-        os.path.join(raw_dir, f"{file_stub}_latest_success.json"),
-        os.path.join(raw_dir, f"{file_stub}_latest.json"),
+        os.path.join(raw_dir, f"{file_stub}_latest_success{ext}"),
+        os.path.join(raw_dir, f"{file_stub}_latest{ext}"),
     ]
+
     versioned_paths = []
     ignored_names = {
-        f"{file_stub}_latest.json",
-        f"{file_stub}_latest_success.json",
-        f"{file_stub}_latest_failure.json",
+        f"{file_stub}_latest{ext}",
+        f"{file_stub}_latest_success{ext}",
+        f"{file_stub}_latest_failure{ext}",
     }
     for entry in os.scandir(raw_dir):
         if not entry.is_file():
             continue
         lower_name = entry.name.lower()
-        if not lower_name.startswith(f"{file_stub}_") or not lower_name.endswith(".json"):
+        if not lower_name.startswith(f"{file_stub}_") or not (lower_name.endswith(".json") or lower_name.endswith(".json.gz")):
             continue
-        if lower_name in ignored_names:
+        if entry.name in ignored_names:
             continue
         versioned_paths.append(entry.path)
 
-    candidate_paths = []
-    for path in preferred_paths:
-        if os.path.exists(path):
-            candidate_paths.append(path)
-    versioned_paths.sort(key=lambda path: os.path.getmtime(path), reverse=True)
-    candidate_paths.extend(versioned_paths)
+    # Prefer same-date successful payloads first.
+    same_date = [p for p in versioned_paths if f"_{stamp}_" in os.path.basename(p)]
+    other_date = [p for p in versioned_paths if p not in same_date]
+    same_date.sort(key=lambda path: os.path.getmtime(path), reverse=True)
+    other_date.sort(key=lambda path: os.path.getmtime(path), reverse=True)
+
+    candidate_paths = [p for p in preferred_paths if os.path.exists(p)]
+    candidate_paths.extend(same_date)
+    candidate_paths.extend(other_date)
 
     for path in candidate_paths:
         document = read_json(path, default=None) or {}
@@ -1031,19 +1507,25 @@ class SourceResult:
     raw_payload: Optional[Any] = None
     payload_saved_path: str = ""
     base_weight: float = 1.0
+    http_status: Optional[int] = None
+    duration_ms: Optional[int] = None
+    error_content_type: str = ""
+    error_snippet: str = ""
 
 
 def fetch_bmkg_forecast(target_date, config, args):
     params = {"adm4": args.adm4}
     url = build_url(BMKG_API_URL, params)
     try:
-        payload = fetch_json_with_retry(
+        payload, status, duration_ms = fetch_json_with_retry(
             url,
             headers=BMKG_HTTP_HEADERS,
             source_id=config["source_id"],
+            timeout=args.http_timeout,
+            max_retry=args.max_retry_http,
         )
         points = extract_bmkg_points(target_date, payload, args)
-        return {"points": points, "raw_payload": payload, "request_url": url}
+        return {"points": points, "raw_payload": payload, "request_url": url, "http_status": status, "duration_ms": duration_ms}
     except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
         cached = load_cached_bmkg_payload(target_date, args)
         if not cached:
@@ -1056,6 +1538,8 @@ def fetch_bmkg_forecast(target_date, config, args):
             "raw_payload": cached["payload"],
             "request_url": f"{url} [cached:{cache_name}]",
             "note": note,
+            "http_status": None,
+            "duration_ms": None,
         }
 
 
@@ -1078,75 +1562,62 @@ def fetch_open_meteo_forecast(target_date, config, args):
     if config.get("models"):
         params["models"] = config["models"]
     url = build_url(config["endpoint"], params)
-    payload = fetch_json_with_retry(url, source_id=config["source_id"])
-    hourly = payload.get("hourly") or {}
-
-    times = hourly.get("time") or []
-    if not times:
-        raise ValueError("Open-Meteo response tidak memiliki hourly.time")
-
-    temperatures = hourly.get("temperature_2m") or []
-    humidities = hourly.get("relative_humidity_2m") or []
-    precipitations = hourly.get("precipitation") or []
-    weather_codes = hourly.get("weather_code") or []
-    wind_speeds = hourly.get("wind_speed_10m") or []
-
-    candidates = []
-    for idx, time_text in enumerate(times):
-        dt_local = parse_open_meteo_time(time_text, args.timezone)
-        if dt_local.date() != target_date:
-            continue
-        candidates.append(
-            {
-                "dt": dt_local,
-                "temp_c": safe_float(temperatures[idx] if idx < len(temperatures) else None),
-                "rh_pct": safe_float(humidities[idx] if idx < len(humidities) else None),
-                "rain_mm": safe_float(precipitations[idx] if idx < len(precipitations) else None),
-                "wind_kmh": safe_float(wind_speeds[idx] if idx < len(wind_speeds) else None),
-                "weather_code": weather_codes[idx] if idx < len(weather_codes) else None,
-            }
-        )
-
-    if not candidates:
-        raise ValueError(f"{config['source_id']} tidak mengembalikan kandidat target date")
-
-    points = {}
-    for jam in TARGET_TIMES:
-        target_dt = parse_local_hour_string(target_date, jam, args.timezone)
-        match = next((item for item in candidates if item["dt"] == target_dt), None)
-        if not match:
-            match = nearest_candidate(candidates, target_dt, max_gap_hours=2)
-        if not match:
-            continue
-        gap_minutes = round(abs((match["dt"] - target_dt).total_seconds()) / 60, 2)
-        category = category_from_wmo_code(
-            match.get("weather_code"),
-            match.get("rain_mm"),
-            match.get("rh_pct"),
-        )
-        points[jam] = ForecastPoint(
+    try:
+        payload, status, duration_ms = fetch_json_with_retry(
+            url,
             source_id=config["source_id"],
-            provider=config["provider"],
-            target_time=jam,
-            source_datetime=match["dt"],
-            temp_c=match["temp_c"],
-            rh_pct=match["rh_pct"],
-            rain_mm=match["rain_mm"],
-            wind_kmh=match["wind_kmh"],
-            category=category,
-            raw_condition=f"wmo:{match.get('weather_code')}",
-            gap_minutes=gap_minutes,
+            timeout=args.http_timeout,
+            max_retry=args.max_retry_http,
         )
-    return {"points": points, "raw_payload": payload, "request_url": url}
+        points = extract_open_meteo_points(target_date, payload, config, args)
+        return {
+            "points": points,
+            "raw_payload": payload,
+            "request_url": url,
+            "http_status": status,
+            "duration_ms": duration_ms,
+        }
+    except Exception as exc:
+        cached = load_cached_source_payload(
+            target_date,
+            config["source_id"],
+            extractor_fn=lambda d, p: extract_open_meteo_points(d, p, config, args),
+            args=args,
+        )
+        if not cached:
+            raise
+        cache_name = os.path.basename(cached["path"])
+        note = f"Live Open-Meteo {config['source_id']} gagal ({exc}); memakai cache {cache_name}"
+        log_warning(note)
+        return {
+            "points": cached["points"],
+            "raw_payload": cached["payload"],
+            "request_url": f"{url} [cached:{cache_name}]",
+            "note": note,
+            "http_status": None,
+            "duration_ms": None,
+        }
 
 
 def metno_precipitation_amount(data):
-    for bucket_name, divisor in (("next_1_hours", 1), ("next_6_hours", 6), ("next_12_hours", 12)):
+    """
+    MET.no precipitation_amount is aggregated over the bucket window.
+    Prefer next_1_hours (most precise). If missing, use next_6/12 divided to hourly rate.
+    """
+    preferred = [
+        ("next_1_hours", 1),
+        ("next_6_hours", 6),
+        ("next_12_hours", 12),
+    ]
+    for bucket_name, divisor in preferred:
         bucket = data.get(bucket_name) or {}
         details = bucket.get("details") or {}
         value = safe_float(details.get("precipitation_amount"))
-        if value is not None:
-            return round(value / divisor, 2) if divisor > 1 else value
+        if value is None:
+            continue
+        if divisor <= 1:
+            return value
+        return round(value / divisor, 2)
     return None
 
 
@@ -1163,67 +1634,48 @@ def metno_symbol_code(data):
 def fetch_met_no_forecast(target_date, config, args):
     params = {"lat": args.latitude, "lon": args.longitude}
     headers = {
-        "User-Agent": "weather-ensemble-multi-location/3.0 (contact: local-script)",
+        "User-Agent": args.metno_user_agent or "weather-ensemble-multi-location/3.1 (contact: local-script)",
         "Accept": "application/json",
+        "Accept-Encoding": "gzip,deflate",
+        "Connection": "close",
     }
     url = build_url(MET_NO_URL, params)
-    payload = fetch_json_with_retry(url, headers=headers, source_id=config["source_id"])
-    series = ((payload.get("properties") or {}).get("timeseries")) or []
-    if not series:
-        raise ValueError("MET Norway response tidak memiliki timeseries")
-
-    candidates = []
-    for entry in series:
-        dt_local = parse_utc_iso_to_local(entry.get("time"), args.timezone)
-        if dt_local.date() != target_date:
-            continue
-        data = entry.get("data") or {}
-        instant_details = (data.get("instant") or {}).get("details") or {}
-        wind_ms = safe_float(instant_details.get("wind_speed"))
-        rain_mm = metno_precipitation_amount(data)
-        symbol_code = metno_symbol_code(data)
-        candidates.append(
-            {
-                "dt": dt_local,
-                "temp_c": safe_float(instant_details.get("air_temperature")),
-                "rh_pct": safe_float(instant_details.get("relative_humidity")),
-                "rain_mm": rain_mm,
-                "wind_kmh": round(wind_ms * 3.6, 2) if wind_ms is not None else None,
-                "symbol_code": symbol_code,
-            }
-        )
-
-    if not candidates:
-        raise ValueError("MET Norway tidak mengembalikan kandidat target date")
-
-    points = {}
-    for jam in TARGET_TIMES:
-        target_dt = parse_local_hour_string(target_date, jam, args.timezone)
-        match = next((item for item in candidates if item["dt"] == target_dt), None)
-        if not match:
-            match = nearest_candidate(candidates, target_dt, max_gap_hours=2)
-        if not match:
-            continue
-        gap_minutes = round(abs((match["dt"] - target_dt).total_seconds()) / 60, 2)
-        category = category_from_metno_symbol(
-            match.get("symbol_code"),
-            match.get("rain_mm"),
-            match.get("rh_pct"),
-        )
-        points[jam] = ForecastPoint(
+    try:
+        payload, status, duration_ms = fetch_json_with_retry(
+            url,
+            headers=headers,
             source_id=config["source_id"],
-            provider=config["provider"],
-            target_time=jam,
-            source_datetime=match["dt"],
-            temp_c=match["temp_c"],
-            rh_pct=match["rh_pct"],
-            rain_mm=match["rain_mm"],
-            wind_kmh=match["wind_kmh"],
-            category=category,
-            raw_condition=match.get("symbol_code") or "",
-            gap_minutes=gap_minutes,
+            timeout=args.http_timeout,
+            max_retry=args.max_retry_http,
         )
-    return {"points": points, "raw_payload": payload, "request_url": url}
+        points = extract_met_no_points(target_date, payload, config, args)
+        return {
+            "points": points,
+            "raw_payload": payload,
+            "request_url": url,
+            "http_status": status,
+            "duration_ms": duration_ms,
+        }
+    except Exception as exc:
+        cached = load_cached_source_payload(
+            target_date,
+            config["source_id"],
+            extractor_fn=lambda d, p: extract_met_no_points(d, p, config, args),
+            args=args,
+        )
+        if not cached:
+            raise
+        cache_name = os.path.basename(cached["path"])
+        note = f"Live METNO gagal ({exc}); memakai cache {cache_name}"
+        log_warning(note)
+        return {
+            "points": cached["points"],
+            "raw_payload": cached["payload"],
+            "request_url": f"{url} [cached:{cache_name}]",
+            "note": note,
+            "http_status": None,
+            "duration_ms": None,
+        }
 
 
 def preview_request_url(config, args):
@@ -1254,16 +1706,17 @@ def preview_request_url(config, args):
     return ""
 
 
-def save_raw_payload_snapshot(target_date, result, tz_name):
+def save_raw_payload_snapshot(target_date, result, tz_name, args):
     raw_dir = path_output(RAW_PAYLOAD_DIRNAME)
     ensure_directory(raw_dir)
     stamp = target_date.strftime("%Y%m%d")
     created_stamp = now_local(tz_name).strftime("%Y%m%d_%H%M%S")
     file_stub = sanitize_filename(result.source_id.lower())
-    path_versioned = os.path.join(raw_dir, f"{file_stub}_{stamp}_{created_stamp}.json")
-    path_latest = os.path.join(raw_dir, f"{file_stub}_latest.json")
-    path_latest_success = os.path.join(raw_dir, f"{file_stub}_latest_success.json")
-    path_latest_failure = os.path.join(raw_dir, f"{file_stub}_latest_failure.json")
+    ext = _raw_payload_ext(args)
+    path_versioned = os.path.join(raw_dir, f"{file_stub}_{stamp}_{created_stamp}{ext}")
+    path_latest = os.path.join(raw_dir, f"{file_stub}_latest{ext}")
+    path_latest_success = os.path.join(raw_dir, f"{file_stub}_latest_success{ext}")
+    path_latest_failure = os.path.join(raw_dir, f"{file_stub}_latest_failure{ext}")
     document = {
         "generated_at": now_local(tz_name).isoformat(),
         "target_date": target_date.isoformat(),
@@ -1272,17 +1725,82 @@ def save_raw_payload_snapshot(target_date, result, tz_name):
         "success": result.success,
         "base_weight": result.base_weight,
         "request_url": result.request_url,
+        "http_status": result.http_status,
+        "duration_ms": result.duration_ms,
         "points_collected": len(result.points),
         "error": result.error,
         "payload": result.raw_payload,
     }
-    write_json(path_versioned, document)
-    write_json(path_latest, document)
-    if result.success and result.raw_payload is not None:
-        write_json(path_latest_success, document)
+    if args.compress_raw_payloads:
+        write_json_gz(path_versioned, document)
+        write_json_gz(path_latest, document)
+        if result.success and result.raw_payload is not None:
+            write_json_gz(path_latest_success, document)
+        else:
+            write_json_gz(path_latest_failure, document)
     else:
-        write_json(path_latest_failure, document)
+        write_json(path_versioned, document)
+        write_json(path_latest, document)
+        if result.success and result.raw_payload is not None:
+            write_json(path_latest_success, document)
+        else:
+            write_json(path_latest_failure, document)
     return path_versioned
+
+
+_HOST_SEMAPHORES_LOCK = threading.Lock()
+_HOST_SEMAPHORES: dict[str, threading.Semaphore] = {}
+
+_HOST_CIRCUIT_LOCK = threading.Lock()
+_HOST_CIRCUIT: dict[str, dict[str, Any]] = {}
+
+
+def _circuit_state(host: str) -> dict:
+    with _HOST_CIRCUIT_LOCK:
+        return _HOST_CIRCUIT.setdefault(
+            host,
+            {"fails": 0, "open_until": 0.0, "last_error": "", "last_status": None},
+        )
+
+
+def _circuit_is_open(host: str) -> tuple[bool, float]:
+    state = _circuit_state(host)
+    until = float(state.get("open_until") or 0.0)
+    now = time.time()
+    return (until > now), max(0.0, until - now)
+
+
+def _circuit_note_failure(host: str, error_text: str, status: Optional[int], args):
+    if not args.enable_circuit_breaker:
+        return
+    state = _circuit_state(host)
+    state["fails"] = int(state.get("fails") or 0) + 1
+    state["last_error"] = str(error_text)[:300]
+    state["last_status"] = status
+    # Backoff grows with consecutive failures and is capped.
+    backoff = min(args.circuit_max_backoff_seconds, args.circuit_base_seconds * (2 ** (min(state["fails"], 6) - 1)))
+    backoff *= random.uniform(0.8, 1.4)
+    state["open_until"] = time.time() + backoff
+
+
+def _circuit_note_success(host: str):
+    state = _circuit_state(host)
+    state["fails"] = 0
+    state["open_until"] = 0.0
+    state["last_error"] = ""
+    state["last_status"] = None
+
+
+def _get_host_semaphore(url, max_inflight_per_host):
+    host = urllib.parse.urlparse(url).netloc.lower()
+    if not host:
+        host = "unknown"
+    with _HOST_SEMAPHORES_LOCK:
+        sem = _HOST_SEMAPHORES.get(host)
+        if sem is None:
+            sem = threading.Semaphore(max(1, int(max_inflight_per_host)))
+            _HOST_SEMAPHORES[host] = sem
+        return sem, host
 
 
 def fetch_source(target_date, config, args):
@@ -1290,52 +1808,88 @@ def fetch_source(target_date, config, args):
     provider = config["provider"]
     kind = config["kind"]
     request_url = preview_request_url(config, args)
-    try:
-        if kind == "bmkg":
-            fetch_result = fetch_bmkg_forecast(target_date, config, args)
-        elif kind == "open_meteo":
-            fetch_result = fetch_open_meteo_forecast(target_date, config, args)
-        elif kind == "met_no":
-            fetch_result = fetch_met_no_forecast(target_date, config, args)
-        else:
-            raise ValueError(f"Unknown source kind: {kind}")
 
-        points = fetch_result["points"]
-        success = len(points) > 0
-        note = fetch_result.get("note", "")
-        result = SourceResult(
-            source_id=source_id,
-            provider=provider,
-            success=success,
-            points=points,
-            error=note if success else (note or "source returned 0 points"),
-            request_url=fetch_result.get("request_url", request_url),
-            raw_payload=fetch_result["raw_payload"],
-            base_weight=source_active_weight(source_id),
-        )
-        if args.save_raw_payloads:
-            result.payload_saved_path = save_raw_payload_snapshot(
-                target_date, result, args.timezone
-            )
-        return result
-    except Exception as exc:
-        log_info(f"{source_id} gagal:", exc)
-        if DEBUG:
-            traceback.print_exc()
-        result = SourceResult(
+    sem, host = _get_host_semaphore(request_url, args.max_inflight_per_host)
+    started = time.time()
+
+    is_open, wait_s = _circuit_is_open(host)
+    if is_open:
+        return SourceResult(
             source_id=source_id,
             provider=provider,
             success=False,
             points={},
-            error=str(exc),
+            error=f"circuit_open host={host} wait={int(wait_s)}s",
             request_url=request_url,
             base_weight=source_active_weight(source_id),
+            http_status=None,
+            duration_ms=0,
         )
-        if args.save_raw_payloads:
-            result.payload_saved_path = save_raw_payload_snapshot(
-                target_date, result, args.timezone
+
+    with sem:
+        try:
+            if kind == "bmkg":
+                fetch_result = fetch_bmkg_forecast(target_date, config, args)
+            elif kind == "open_meteo":
+                fetch_result = fetch_open_meteo_forecast(target_date, config, args)
+            elif kind == "met_no":
+                fetch_result = fetch_met_no_forecast(target_date, config, args)
+            else:
+                raise ValueError(f"Unknown source kind: {kind}")
+
+            points = fetch_result["points"]
+            success = len(points) > 0
+            note = fetch_result.get("note", "")
+            result = SourceResult(
+                source_id=source_id,
+                provider=provider,
+                success=success,
+                points=points,
+                error=note if success else (note or "source returned 0 points"),
+                request_url=fetch_result.get("request_url", request_url),
+                raw_payload=fetch_result["raw_payload"],
+                base_weight=source_active_weight(source_id),
+                http_status=fetch_result.get("http_status"),
+                duration_ms=fetch_result.get("duration_ms"),
             )
-        return result
+            if args.save_raw_payloads:
+                result.payload_saved_path = save_raw_payload_snapshot(
+                    target_date, result, args.timezone, args
+                )
+            if result.success:
+                _circuit_note_success(host)
+            return result
+        except Exception as exc:
+            log_info(f"{source_id} gagal (host={host}):", exc)
+            if DEBUG:
+                traceback.print_exc()
+            duration_ms = int((time.time() - started) * 1000)
+            status = getattr(exc, "code", None) if isinstance(exc, urllib.error.HTTPError) else None
+            _circuit_note_failure(host, str(exc), status, args)
+            error_content_type = ""
+            error_snippet = ""
+            if isinstance(exc, HttpPayloadError):
+                status = exc.status if exc.status is not None else status
+                error_content_type = exc.content_type
+                error_snippet = exc.snippet
+            result = SourceResult(
+                source_id=source_id,
+                provider=provider,
+                success=False,
+                points={},
+                error=str(exc),
+                request_url=request_url,
+                base_weight=source_active_weight(source_id),
+                http_status=status,
+                duration_ms=duration_ms,
+                error_content_type=error_content_type,
+                error_snippet=error_snippet,
+            )
+            if args.save_raw_payloads:
+                result.payload_saved_path = save_raw_payload_snapshot(
+                    target_date, result, args.timezone, args
+                )
+            return result
 
 
 def observation_dir():
@@ -1375,14 +1929,21 @@ def normalize_observation_row(row):
             safe_float(row.get("rh_pct")),
         )
 
+    temp_c, rh_pct, rain_mm, wind_kmh, _flags = validate_point_values(
+        safe_float(row.get("temp_c")),
+        safe_float(row.get("rh_pct")),
+        safe_float(row.get("rain_mm")),
+        safe_float(row.get("wind_kmh")),
+    )
+
     return {
         "tanggal": tanggal,
         "jam": jam,
         "observed_datetime": row.get("observed_datetime") or "",
-        "temp_c": round_or_blank(safe_float(row.get("temp_c"))),
-        "rh_pct": round_or_blank(safe_float(row.get("rh_pct"))),
-        "rain_mm": round_or_blank(safe_float(row.get("rain_mm"))),
-        "wind_kmh": round_or_blank(safe_float(row.get("wind_kmh"))),
+        "temp_c": round_or_blank(temp_c),
+        "rh_pct": round_or_blank(rh_pct),
+        "rain_mm": round_or_blank(rain_mm),
+        "wind_kmh": round_or_blank(wind_kmh),
         "weather_code": row.get("weather_code") or "",
         "category": category,
     }
@@ -1411,13 +1972,19 @@ def extract_archive_observations(target_date, payload, tz_name):
         dt_local = parse_open_meteo_time(time_text, tz_name)
         if dt_local.date() != target_date:
             continue
+        temp_c, rh_pct, rain_mm, wind_kmh, _flags = validate_point_values(
+            safe_float(temperatures[idx] if idx < len(temperatures) else None),
+            safe_float(humidities[idx] if idx < len(humidities) else None),
+            safe_float(precipitations[idx] if idx < len(precipitations) else None),
+            safe_float(wind_speeds[idx] if idx < len(wind_speeds) else None),
+        )
         candidates.append(
             {
                 "dt": dt_local,
-                "temp_c": safe_float(temperatures[idx] if idx < len(temperatures) else None),
-                "rh_pct": safe_float(humidities[idx] if idx < len(humidities) else None),
-                "rain_mm": safe_float(precipitations[idx] if idx < len(precipitations) else None),
-                "wind_kmh": safe_float(wind_speeds[idx] if idx < len(wind_speeds) else None),
+                "temp_c": temp_c,
+                "rh_pct": rh_pct,
+                "rain_mm": rain_mm,
+                "wind_kmh": wind_kmh,
                 "weather_code": weather_codes[idx] if idx < len(weather_codes) else None,
             }
         )
@@ -1467,7 +2034,8 @@ def fetch_archive_observations(target_date, args):
         ),
     }
     url = build_url(OBSERVATION_ARCHIVE_URL, params)
-    payload = fetch_json_with_retry(url, source_id="OBSERVATION_ARCHIVE")
+    payload, status, duration_ms = fetch_json_with_retry(url, source_id="OBSERVATION_ARCHIVE", timeout=args.http_timeout, max_retry=args.max_retry_http)
+    _ = status, duration_ms
     return url, payload, extract_archive_observations(target_date, payload, args.timezone)
 
 
@@ -1558,16 +2126,17 @@ def sync_observations(args):
         if args.save_raw_payloads:
             payload_path = os.path.join(
                 observation_dir(),
-                f"archive_payload_{target_date.strftime('%Y%m%d')}.json",
+                f"archive_payload_{target_date.strftime('%Y%m%d')}{_raw_payload_ext(args)}",
             )
-            write_json(
-                payload_path,
-                {
-                    "request_url": url,
-                    "target_date": target_date.isoformat(),
-                    "payload": payload,
-                },
-            )
+            document = {
+                "request_url": url,
+                "target_date": target_date.isoformat(),
+                "payload": payload,
+            }
+            if args.compress_raw_payloads:
+                write_json_gz(payload_path, document)
+            else:
+                write_json(payload_path, document)
         summary_rows.append({"target_date": target_date.isoformat(), "rows_saved": len(rows)})
         log_info("Observasi tersimpan untuk", target_date.isoformat(), f"({len(rows)} rows)")
 
@@ -1616,6 +2185,47 @@ def cleanup_old_files_in_directory(directory_path, retention_days):
     return deleted
 
 
+def cleanup_to_max_size_mb(directory_path, max_mb):
+    if max_mb is None:
+        return 0
+    try:
+        max_mb = float(max_mb)
+    except Exception:
+        return 0
+    if max_mb <= 0 or not os.path.isdir(directory_path):
+        return 0
+    max_bytes = int(max_mb * 1024 * 1024)
+
+    files = []
+    total = 0
+    for entry in os.scandir(directory_path):
+        if not entry.is_file():
+            continue
+        try:
+            st = entry.stat()
+            size = int(st.st_size)
+            total += size
+            files.append((st.st_mtime, size, entry.path))
+        except OSError:
+            continue
+
+    if total <= max_bytes:
+        return 0
+
+    files.sort(key=lambda x: x[0])  # oldest first
+    deleted = 0
+    for _mtime, size, path in files:
+        if total <= max_bytes:
+            break
+        try:
+            os.remove(path)
+            total -= size
+            deleted += 1
+        except OSError:
+            continue
+    return deleted
+
+
 def cleanup_old_outputs(args):
     total_deleted = 0
     for folder_name in (
@@ -1624,9 +2234,11 @@ def cleanup_old_outputs(args):
         OBSERVATION_DIRNAME,
         REPORT_DIRNAME,
     ):
+        folder_path = path_output(folder_name)
         total_deleted += cleanup_old_files_in_directory(
             path_output(folder_name), args.retention_days
         )
+        total_deleted += cleanup_to_max_size_mb(folder_path, args.retention_max_mb)
     if total_deleted:
         log_info("Cleanup menghapus", total_deleted, "file lama")
     return total_deleted
@@ -1684,6 +2296,7 @@ def evaluate_historical_performance(args):
             if not observed:
                 continue
 
+            source_id = row.get("source_id")
             temp_error = absolute_error(
                 safe_float(row.get("suhu_C")),
                 safe_float(observed.get("temp_c")),
@@ -1692,27 +2305,36 @@ def evaluate_historical_performance(args):
                 safe_float(row.get("RH_%")),
                 safe_float(observed.get("rh_pct")),
             )
-            rain_error = absolute_error(
-                safe_float(row.get("rain_mm")),
-                safe_float(observed.get("rain_mm")),
-            )
+            # BMKG rain_mm is a proxy derived from category; do not penalize on rain magnitude.
+            if source_id == "BMKG":
+                rain_error = None
+            else:
+                rain_error = absolute_error(
+                    safe_float(row.get("rain_mm")),
+                    safe_float(observed.get("rain_mm")),
+                )
             category_score = category_match_score(row.get("kategori"), observed.get("category"))
 
             temp_score = metric_score(temp_error, 8)
             rh_score = metric_score(rh_error, 1.5)
             rain_score = metric_score(rain_error, 20)
-            overall_score = round(
-                temp_score * 0.35
-                + rh_score * 0.20
-                + rain_score * 0.20
-                + category_score * 0.25,
-                2,
+            components = [
+                ("temp", temp_score, 0.35),
+                ("rh", rh_score, 0.20),
+                ("rain", rain_score, 0.20 if rain_error is not None else 0.0),
+                ("category", category_score, 0.25),
+            ]
+            total_w = sum(w for _name, _score, w in components if w > 0)
+            overall_score = (
+                round(sum(score * w for _name, score, w in components if w > 0) / total_w, 2)
+                if total_w > 0
+                else 0.0
             )
 
             detail_rows.append(
                 {
                     "target_date": target_date.isoformat(),
-                    "source_id": row.get("source_id"),
+                    "source_id": source_id,
                     "jam": row.get("target_jam"),
                     "temp_error": round_or_blank(temp_error),
                     "rh_error": round_or_blank(rh_error),
@@ -1723,7 +2345,7 @@ def evaluate_historical_performance(args):
             )
 
             bucket = per_source.setdefault(
-                row.get("source_id"),
+                source_id,
                 {
                     "scores": [],
                     "temp_errors": [],
@@ -1828,14 +2450,18 @@ def evaluate_historical_performance(args):
         "status": "ok" if detail_rows else "no_data",
     }
     write_json(summary_path, summary_payload)
-    save_weight_config(
-        derived_weights,
-        {
-            "date_range": summary_payload["date_range"],
-            "evaluated_sources": len(source_score_rows),
-            "evaluated_rows": len(detail_rows),
-        },
-    )
+
+    if args.freeze_weights:
+        log_info("freeze-weights aktif: tidak menyimpan source_weights.json dari evaluasi.")
+    else:
+        save_weight_config(
+            derived_weights,
+            {
+                "date_range": summary_payload["date_range"],
+                "evaluated_sources": len(source_score_rows),
+                "evaluated_rows": len(detail_rows),
+            },
+        )
     load_weight_config()
     if not detail_rows:
         log_warning("Tidak ada pasangan forecast-observasi yang bisa dievaluasi pada rentang ini.")
@@ -1849,10 +2475,15 @@ def evaluate_historical_performance(args):
 
 def collect_all_sources(target_date, args):
     results = []
-    with ThreadPoolExecutor(max_workers=min(MAX_WORKERS, len(ALL_SOURCE_CONFIGS))) as executor:
+    workers = min(
+        int(args.max_workers),
+        len(ACTIVE_SOURCE_CONFIGS),
+        MAX_WORKERS if MAX_WORKERS else 8,
+    )
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as executor:
         future_map = {
             executor.submit(fetch_source, target_date, config, args): config
-            for config in ALL_SOURCE_CONFIGS
+            for config in ACTIVE_SOURCE_CONFIGS
         }
         for future in as_completed(future_map):
             results.append(future.result())
@@ -1911,6 +2542,10 @@ def build_status_rows(results, target_date):
                 "effective_base_weight": round(result.base_weight * health_factor, 4),
                 "points_collected": len(result.points),
                 "target_points": len(TARGET_TIMES),
+                "http_status": result.http_status if result.http_status is not None else "",
+                "duration_ms": result.duration_ms if result.duration_ms is not None else "",
+                "error_content_type": result.error_content_type or "",
+                "error_snippet": result.error_snippet or "",
                 "payload_saved_path": result.payload_saved_path,
                 "error": result.error,
             }
@@ -1999,6 +2634,11 @@ def build_ensemble_rows(points):
             rh_std,
             rain_std,
         )
+        expected_sources = max(len(ACTIVE_SOURCE_CONFIGS), 1)
+        coverage_fraction = round(len(bucket) / expected_sources, 4)
+        gap_values = [p.gap_minutes for p in bucket if p.gap_minutes is not None]
+        gap_mean = round(sum(gap_values) / len(gap_values), 2) if gap_values else None
+        gap_max = round(max(gap_values), 2) if gap_values else None
         coverage_status = "cukup" if len(bucket) >= MIN_SOURCE_SUCCESS_FOR_RUN else "terbatas"
 
         rows.append(
@@ -2025,6 +2665,14 @@ def build_ensemble_rows(points):
                 probs["Hujan Ringan"],
                 probs["Hujan Sedang"],
                 probs["Hujan Lebat"],
+                round_or_blank(temp_std),
+                round_or_blank(rh_std),
+                round_or_blank(rain_std),
+                round_or_blank(hi_std),
+                expected_sources,
+                round_or_blank(coverage_fraction, 4),
+                round_or_blank(gap_mean),
+                round_or_blank(gap_max),
             ]
         )
     return rows
@@ -2117,6 +2765,10 @@ def save_outputs(target_date, results, args):
             "effective_base_weight",
             "points_collected",
             "target_points",
+            "http_status",
+            "duration_ms",
+            "error_content_type",
+            "error_snippet",
             "payload_saved_path",
             "error",
         ],
@@ -2134,6 +2786,10 @@ def save_outputs(target_date, results, args):
             "effective_base_weight",
             "points_collected",
             "target_points",
+            "http_status",
+            "duration_ms",
+            "error_content_type",
+            "error_snippet",
             "payload_saved_path",
             "error",
         ],
@@ -2165,6 +2821,14 @@ def save_outputs(target_date, results, args):
             "%hujan_ringan",
             "%hujan_sedang",
             "%hujan_lebat",
+            "temp_std",
+            "rh_std",
+            "rain_std",
+            "heat_index_std",
+            "sources_expected",
+            "coverage_fraction",
+            "gap_mean_minutes",
+            "gap_max_minutes",
         ],
         ensemble_rows,
     )
@@ -2193,6 +2857,14 @@ def save_outputs(target_date, results, args):
             "%hujan_ringan",
             "%hujan_sedang",
             "%hujan_lebat",
+            "temp_std",
+            "rh_std",
+            "rain_std",
+            "heat_index_std",
+            "sources_expected",
+            "coverage_fraction",
+            "gap_mean_minutes",
+            "gap_max_minutes",
         ],
         ensemble_rows,
     )
@@ -2214,6 +2886,7 @@ def save_outputs(target_date, results, args):
 
     low_coverage_slots = [row[0] for row in ensemble_rows if row[3] != "cukup"]
     summary = {
+        "schema_version": OUTPUT_SCHEMA_VERSION,
         "generated_at": now_local(args.timezone).isoformat(),
         "location_slug": args.location_slug,
         "location_name": args.location_name,
@@ -2229,6 +2902,8 @@ def save_outputs(target_date, results, args):
         "sources_total": len(results),
         "sources_success": sum(1 for item in results if item.success),
         "points_total": len(points),
+        "sources_active": [item["source_id"] for item in ACTIVE_SOURCE_CONFIGS],
+        "target_hours": list(TARGET_TIMES),
         "weights_file": path_output(WEIGHTS_FILENAME),
         "health_file": path_output(HEALTH_FILENAME),
         "output_dir": ACTIVE_OUTPUT_DIR,
@@ -2258,6 +2933,14 @@ def validate_common_args(args):
     hour, minute = [int(part) for part in args.run_time.split(":")]
     if not (0 <= hour <= 23 and 0 <= minute <= 59):
         raise ValueError("run_time harus memakai format HH:MM")
+    if args.max_inflight_per_host <= 0:
+        raise ValueError("max_inflight_per_host harus > 0")
+    if args.max_workers <= 0:
+        raise ValueError("max_workers harus > 0")
+    if args.max_retry_http <= 0:
+        raise ValueError("max_retry_http harus > 0")
+    if args.http_timeout <= 0:
+        raise ValueError("http_timeout harus > 0")
 
 
 def validate_location_config(location):
@@ -2389,12 +3072,27 @@ def run_once(args):
     else:
         target_date = (now_local(args.timezone) + timedelta(days=1)).date()
 
+    # Optional idempotency: skip if outputs already exist for this target_date.
+    stamp = target_date.strftime("%Y%m%d")
+    existing_path = path_output(f"forecast_{stamp}.csv")
+    if args.skip_existing and os.path.exists(existing_path) and not args.force:
+        log_info("skip-existing aktif: forecast sudah ada:", existing_path)
+        return {
+            "generated_at": now_local(args.timezone).isoformat(),
+            "location_slug": args.location_slug,
+            "location_name": args.location_name,
+            "target_date": target_date.isoformat(),
+            "output_dir": ACTIVE_OUTPUT_DIR,
+            "run_status": "skipped",
+            "reason": "existing_output",
+        }
+
     load_weight_config()
     load_health_config()
     log_info("Mulai proses untuk lokasi", args.location_name)
     log_info("Target date:", target_date.isoformat())
     log_info("Target hours:", ", ".join(TARGET_TIMES))
-    log_info("Sumber aktif:", ", ".join(item["source_id"] for item in ALL_SOURCE_CONFIGS))
+    log_info("Sumber aktif:", ", ".join(item["source_id"] for item in ACTIVE_SOURCE_CONFIGS))
     log_info(
         "Bobot aktif:",
         ", ".join(
@@ -2422,10 +3120,16 @@ def run_once(args):
     if summary["low_coverage_slots"]:
         log_warning("Coverage terbatas pada jam:", ", ".join(summary["low_coverage_slots"]))
     for result in results:
+        meta = []
+        if result.http_status is not None:
+            meta.append(f"http={result.http_status}")
+        if result.duration_ms is not None:
+            meta.append(f"t={result.duration_ms}ms")
         log_info(
             f"{result.source_id}:",
             "OK" if result.success else "FAIL",
             f"({len(result.points)}/{len(TARGET_TIMES)} point)",
+            (" ".join(meta)) if meta else "",
             result.error if result.error else "",
         )
     return summary
@@ -2469,6 +3173,7 @@ def run_self_tests(args):
         latitude=DEFAULT_LATITUDE,
         longitude=DEFAULT_LONGITUDE,
         timezone=DEFAULT_TIMEZONE,
+        mode="forecast",
     )
 
     assert bmkg_to_kategori("Hujan Ringan") == "Hujan Ringan"
@@ -2612,6 +3317,89 @@ def combined_ensemble_fieldnames():
     ]
 
 
+def combined_ensemble_long_fieldnames():
+    """
+    BI-friendly long format (1 row per location per hour):
+    - Avoids % in header names
+    - Keeps same information as ensemble.csv
+    """
+    return combined_location_fieldnames() + [
+        "jam",
+        "sources_used",
+        "weight_total",
+        "coverage_status",
+        "source_list",
+        "dominant_category",
+        "confidence_score",
+        "confidence_label",
+        "temp_mean",
+        "temp_error",
+        "rh_mean",
+        "rh_error",
+        "rain_mean",
+        "rain_error",
+        "heat_index_mean",
+        "heat_index_error",
+        "pct_cerah",
+        "pct_cerah_berawan",
+        "pct_berawan",
+        "pct_hujan_ringan",
+        "pct_hujan_sedang",
+        "pct_hujan_lebat",
+        "temp_std",
+        "rh_std",
+        "rain_std",
+        "heat_index_std",
+        "sources_expected",
+        "coverage_fraction",
+        "gap_mean_minutes",
+        "gap_max_minutes",
+    ]
+
+
+def collect_combined_ensemble_long_rows(location_args, target_date, output_dir):
+    ensemble_path = os.path.join(output_dir, "ensemble.csv")
+    rows = []
+    metadata = combined_location_metadata(location_args, target_date)
+    for row in read_dict_csv(ensemble_path):
+        rows.append(
+            {
+                **metadata,
+                "jam": row.get("jam") or "",
+                "sources_used": row.get("sources_used") or "",
+                "weight_total": row.get("weight_total") or "",
+                "coverage_status": row.get("coverage_status") or "",
+                "source_list": row.get("source_list") or "",
+                "dominant_category": row.get("dominant_category") or "",
+                "confidence_score": row.get("confidence_score") or "",
+                "confidence_label": row.get("confidence_label") or "",
+                "temp_mean": row.get("temp_mean") or "",
+                "temp_error": row.get("temp_error") or "",
+                "rh_mean": row.get("rh_mean") or "",
+                "rh_error": row.get("rh_error") or "",
+                "rain_mean": row.get("rain_mean") or "",
+                "rain_error": row.get("rain_error") or "",
+                "heat_index_mean": row.get("heat_index_mean") or "",
+                "heat_index_error": row.get("heat_index_error") or "",
+                "pct_cerah": row.get("%cerah") or "",
+                "pct_cerah_berawan": row.get("%cerah_berawan") or "",
+                "pct_berawan": row.get("%berawan") or "",
+                "pct_hujan_ringan": row.get("%hujan_ringan") or "",
+                "pct_hujan_sedang": row.get("%hujan_sedang") or "",
+                "pct_hujan_lebat": row.get("%hujan_lebat") or "",
+                "temp_std": row.get("temp_std") or "",
+                "rh_std": row.get("rh_std") or "",
+                "rain_std": row.get("rain_std") or "",
+                "heat_index_std": row.get("heat_index_std") or "",
+                "sources_expected": row.get("sources_expected") or "",
+                "coverage_fraction": row.get("coverage_fraction") or "",
+                "gap_mean_minutes": row.get("gap_mean_minutes") or "",
+                "gap_max_minutes": row.get("gap_max_minutes") or "",
+            }
+        )
+    return rows
+
+
 def combined_forecast_fieldnames():
     return combined_location_fieldnames() + [
         "tanggal",
@@ -2641,6 +3429,10 @@ def combined_source_status_fieldnames():
         "effective_base_weight",
         "points_collected",
         "target_points",
+        "http_status",
+        "duration_ms",
+        "error_content_type",
+        "error_snippet",
         "payload_saved_path",
         "error",
     ]
@@ -2724,6 +3516,10 @@ def collect_combined_source_status_rows(location_args, target_date, output_dir):
                 "effective_base_weight": row.get("effective_base_weight") or "",
                 "points_collected": row.get("points_collected") or "",
                 "target_points": row.get("target_points") or "",
+                "http_status": row.get("http_status") or "",
+                "duration_ms": row.get("duration_ms") or "",
+                "error_content_type": row.get("error_content_type") or "",
+                "error_snippet": row.get("error_snippet") or "",
                 "payload_saved_path": row.get("payload_saved_path") or "",
                 "error": row.get("error") or "",
             }
@@ -2760,6 +3556,7 @@ def write_combined_csv(base_filename, fieldnames, rows):
 def run_forecast_for_locations(base_args, locations):
     rows = []
     combined_ensemble_rows = []
+    combined_ensemble_long_rows = []
     combined_forecast_rows = []
     combined_status_rows = []
     for location in locations:
@@ -2770,6 +3567,13 @@ def run_forecast_for_locations(base_args, locations):
             output_dir = summary.get("output_dir") or ACTIVE_OUTPUT_DIR
             combined_ensemble_rows.extend(
                 collect_combined_ensemble_rows(
+                    location_args,
+                    summary["target_date"],
+                    output_dir,
+                )
+            )
+            combined_ensemble_long_rows.extend(
+                collect_combined_ensemble_long_rows(
                     location_args,
                     summary["target_date"],
                     output_dir,
@@ -2828,6 +3632,12 @@ def run_forecast_for_locations(base_args, locations):
             combined_ensemble_rows,
         ),
         (
+            "ensemble_long_all_locations",
+            "Ensemble long (BI)",
+            combined_ensemble_long_fieldnames(),
+            combined_ensemble_long_rows,
+        ),
+        (
             "forecast_all_locations",
             "Forecast raw",
             combined_forecast_fieldnames(),
@@ -2840,11 +3650,14 @@ def run_forecast_for_locations(base_args, locations):
             combined_status_rows,
         ),
     ):
-        latest_path, versioned_path = write_combined_csv(
-            base_filename,
-            fieldnames,
-            payload_rows,
-        )
+        if base_args.no_combined:
+            latest_path, versioned_path = None, None
+        else:
+            latest_path, versioned_path = write_combined_csv(
+                base_filename,
+                fieldnames,
+                payload_rows,
+            )
         combined_outputs[base_filename] = {
             "latest_path": latest_path or "",
             "versioned_path": versioned_path or "",
@@ -2862,7 +3675,146 @@ def run_forecast_for_locations(base_args, locations):
             "combined_outputs": combined_outputs,
         },
     )
+
+    # BI artifacts (dims + fact)
+    if not base_args.no_combined:
+        bi_summary_path = root_output_path("bi_artifacts_summary.json")
+        try:
+            dim_src_path, dim_src_count = write_dim_sources()
+            dim_loc_path, dim_loc_count = write_dim_locations(locations, base_args)
+            fact_path, fact_rows = write_ensemble_fact_from_long(combined_ensemble_long_rows)
+            payload = {
+                "generated_at": now_local(DEFAULT_TIMEZONE).isoformat(),
+                "schema_version": OUTPUT_SCHEMA_VERSION,
+                "dim_sources": {"path": dim_src_path, "rows": dim_src_count},
+                "dim_locations": {"path": dim_loc_path, "rows": dim_loc_count},
+                "ensemble_fact": {"path": fact_path or "", "rows": fact_rows},
+            }
+            write_json(bi_summary_path, payload)
+            batch_info("Dim sources:", dim_src_path, f"({dim_src_count} rows)")
+            batch_info("Dim locations:", dim_loc_path, f"({dim_loc_count} rows)")
+            if fact_path:
+                batch_info("Ensemble fact (BI):", fact_path, f"({fact_rows} rows)")
+        except Exception as exc:
+            write_json(
+                bi_summary_path,
+                {
+                    "generated_at": now_local(DEFAULT_TIMEZONE).isoformat(),
+                    "schema_version": OUTPUT_SCHEMA_VERSION,
+                    "status": "error",
+                    "error": str(exc),
+                },
+            )
+            batch_warning("Gagal menulis BI artifacts:", exc)
+
     return rows
+
+
+def write_dim_locations(locations: list[LocationConfig], base_args):
+    rows = []
+    for loc in locations:
+        rows.append(
+            {
+                "location_slug": loc.slug,
+                "location_name": loc.location_name,
+                "adm4": loc.adm4,
+                "bmkg_point_name": loc.bmkg_point_name,
+                "area_level": loc.area_level,
+                "is_proxy_bmkg": "yes" if loc.is_proxy_bmkg else "no",
+                "latitude": loc.latitude,
+                "longitude": loc.longitude,
+                "timezone": loc.timezone,
+                "note": loc.note,
+            }
+        )
+    rows.sort(key=lambda r: r["location_slug"])
+    path = root_output_path("dim_locations.csv")
+    write_dict_csv(
+        path,
+        [
+            "location_slug",
+            "location_name",
+            "adm4",
+            "bmkg_point_name",
+            "area_level",
+            "is_proxy_bmkg",
+            "latitude",
+            "longitude",
+            "timezone",
+            "note",
+        ],
+        rows,
+    )
+    return path, len(rows)
+
+
+def write_dim_sources():
+    rows = []
+    for cfg in ALL_SOURCE_CONFIGS:
+        rows.append(
+            {
+                "source_id": cfg.get("source_id") or "",
+                "provider": cfg.get("provider") or "",
+                "kind": cfg.get("kind") or "",
+                "endpoint": cfg.get("endpoint") or "",
+                "models": cfg.get("models") or "",
+                "base_weight": source_base_weight(cfg.get("source_id") or ""),
+            }
+        )
+    rows.sort(key=lambda r: r["source_id"])
+    path = root_output_path("dim_sources.csv")
+    write_dict_csv(
+        path,
+        ["source_id", "provider", "kind", "endpoint", "models", "base_weight"],
+        rows,
+    )
+    return path, len(rows)
+
+
+def write_ensemble_fact_from_long(long_rows: list[dict]):
+    """
+    Dashboard/BI fact table: numeric-friendly columns only.
+    Uses long rows and selects a stable subset.
+    """
+    if not long_rows:
+        return None, 0
+    fieldnames = [
+        "location_slug",
+        "target_date",
+        "jam",
+        "dominant_category",
+        "confidence_score",
+        "confidence_label",
+        "sources_used",
+        "sources_expected",
+        "coverage_fraction",
+        "weight_total",
+        "temp_mean",
+        "temp_std",
+        "rh_mean",
+        "rh_std",
+        "rain_mean",
+        "rain_std",
+        "heat_index_mean",
+        "heat_index_std",
+        "gap_mean_minutes",
+        "gap_max_minutes",
+        "pct_cerah",
+        "pct_cerah_berawan",
+        "pct_berawan",
+        "pct_hujan_ringan",
+        "pct_hujan_sedang",
+        "pct_hujan_lebat",
+    ]
+    rows = []
+    for r in long_rows:
+        rows.append({k: r.get(k, "") for k in fieldnames})
+    latest_path, versioned_path = write_combined_csv(
+        "ensemble_fact_all_locations",
+        fieldnames,
+        rows,
+    )
+    return latest_path or versioned_path, len(rows)
 
 
 def sync_observations_for_locations(base_args, locations):
@@ -3031,7 +3983,7 @@ def loop_daily(base_args, locations):
 
 def build_arg_parser():
     parser = argparse.ArgumentParser(
-        description="Multi-location multi-source weather ensemble collector."
+        description="Multi-location multi-source weather ensemble collector (single file)."
     )
     parser.add_argument(
         "--mode",
@@ -3063,6 +4015,12 @@ def build_arg_parser():
     parser.add_argument("--lookback-days", type=int, default=DEFAULT_EVALUATION_DAYS)
     parser.add_argument("--observations-csv", help="Path CSV observasi eksternal dengan kolom minimal tanggal dan jam")
     parser.add_argument("--retention-days", type=int, default=DEFAULT_RETENTION_DAYS)
+    parser.add_argument(
+        "--retention-max-mb",
+        type=int,
+        default=DEFAULT_RETENTION_MAX_MB,
+        help="Batas ukuran folder output per lokasi (MB). 0=nonaktif.",
+    )
     parser.add_argument("--run-daily", action="store_true", default=RUN_DAILY)
     parser.add_argument("--run-time", default=RUN_TIME)
     parser.add_argument(
@@ -3082,32 +4040,175 @@ def build_arg_parser():
         action="store_false",
         dest="save_raw_payloads",
     )
+    parser.add_argument("--compress-raw-payloads", action="store_true", default=COMPRESS_RAW_PAYLOADS)
+    parser.add_argument("--no-compress-raw-payloads", action="store_false", dest="compress_raw_payloads")
+    parser.add_argument(
+        "--auto-compress-raw-payloads",
+        action="store_true",
+        default=True,
+        help="Jika target jam banyak (mis. per jam), otomatis kompres raw payload (.json.gz).",
+    )
+    parser.add_argument(
+        "--no-auto-compress-raw-payloads",
+        action="store_false",
+        dest="auto_compress_raw_payloads",
+    )
     parser.add_argument("--debug", action="store_true", default=DEBUG)
     parser.add_argument("--no-debug", action="store_false", dest="debug")
+    parser.add_argument(
+        "--csv-delimiter",
+        default=",",
+        help="Delimiter untuk CSV. Untuk Excel Indonesia biasanya pakai ';'.",
+    )
+
+    # New hardening knobs
+    parser.add_argument("--http-timeout", type=int, default=HTTP_TIMEOUT_SECONDS)
+    parser.add_argument("--max-retry-http", type=int, default=MAX_RETRY_HTTP)
+    parser.add_argument("--max-workers", type=int, default=MAX_WORKERS)
+    parser.add_argument("--max-inflight-per-host", type=int, default=DEFAULT_MAX_INFLIGHT_PER_HOST)
+    parser.add_argument("--skip-existing", action="store_true", default=False)
+    parser.add_argument("--force", action="store_true", default=False)
+    parser.add_argument(
+        "--sources",
+        default="",
+        help="Batasi sumber dengan comma-separated source_id, contoh: BMKG,GFS,METNO. Kosong = semua.",
+    )
+    parser.add_argument(
+        "--targets",
+        default="",
+        help="Override TARGET_TIMES, contoh: 06:00,09:00,12:00,15:00 (HH:MM).",
+    )
+    parser.add_argument(
+        "--per-hour",
+        action="store_true",
+        default=False,
+        help="Set output menjadi per jam (00:00..23:00). Setara dengan --targets 00:00,01:00,...,23:00.",
+    )
+    parser.add_argument(
+        "--target-step-minutes",
+        type=int,
+        default=60,
+        help="Dipakai bersama --per-hour untuk interval menit (60=per jam, 30=per 30 menit, dst).",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+        help="Hanya tampilkan URL request per sumber/lokasi, tidak melakukan fetch.",
+    )
+    parser.add_argument(
+        "--no-combined",
+        action="store_true",
+        default=False,
+        help="Jangan tulis CSV gabungan (all_locations) dan BI artifacts (dim/fact).",
+    )
+    parser.add_argument("--enable-circuit-breaker", action="store_true", default=True)
+    parser.add_argument("--disable-circuit-breaker", action="store_false", dest="enable_circuit_breaker")
+    parser.add_argument("--circuit-base-seconds", type=int, default=20)
+    parser.add_argument("--circuit-max-backoff-seconds", type=int, default=15 * 60)
+    parser.add_argument("--disable-health", action="store_true", default=False)
+    parser.add_argument("--freeze-weights", action="store_true", default=False)
+    parser.add_argument(
+        "--metno-user-agent",
+        default="",
+        help="Override MET.no User-Agent (recommended: include contact info/email).",
+    )
     return parser
 
 
 def main():
     global DEBUG
+    global CSV_DELIMITER
     parser = build_arg_parser()
     args = parser.parse_args()
     DEBUG = args.debug
     refresh_location_presets(args.locations_file)
 
+    CSV_DELIMITER = args.csv_delimiter or ","
+    if CSV_DELIMITER not in {",", ";", "\t", "|"}:
+        raise ValueError("--csv-delimiter hanya mendukung: ',', ';', '\\t', '|'")
+
     if args.list_locations:
         print_available_locations()
         return
+
+    # Apply runtime overrides while keeping single-file global constants.
+    global TARGET_TIMES, ACTIVE_SOURCE_CONFIGS
+    if args.targets:
+        tokens = [t.strip() for t in args.targets.split(",") if t.strip()]
+        parsed = []
+        for t in tokens:
+            if len(t) != 5 or t[2] != ":":
+                raise ValueError(f"--targets invalid time format: {t}")
+            hh, mm = t.split(":")
+            if not (hh.isdigit() and mm.isdigit()):
+                raise ValueError(f"--targets invalid time: {t}")
+            h = int(hh)
+            m = int(mm)
+            if not (0 <= h <= 23 and 0 <= m <= 59):
+                raise ValueError(f"--targets invalid time range: {t}")
+            parsed.append(f"{h:02d}:{m:02d}")
+        if not parsed:
+            raise ValueError("--targets tidak boleh kosong")
+        TARGET_TIMES = parsed
+    elif args.per_hour:
+        TARGET_TIMES = build_hourly_targets(int(args.target_step_minutes))
+
+    if args.sources:
+        allowed = {s.strip().upper() for s in args.sources.split(",") if s.strip()}
+        if not allowed:
+            raise ValueError("--sources tidak boleh kosong jika diberikan")
+        selected = [c for c in ALL_SOURCE_CONFIGS if c["source_id"].upper() in allowed]
+        missing = sorted(allowed - {c["source_id"].upper() for c in ALL_SOURCE_CONFIGS})
+        if missing:
+            raise ValueError(f"--sources berisi source_id tidak dikenal: {', '.join(missing)}")
+        if not selected:
+            raise ValueError("--sources menghasilkan 0 sumber aktif")
+        ACTIVE_SOURCE_CONFIGS = selected
+    else:
+        ACTIVE_SOURCE_CONFIGS = list(ALL_SOURCE_CONFIGS)
+
+    # Storage hardening: per-hour (or many targets) tends to create large outputs.
+    if (
+        args.auto_compress_raw_payloads
+        and args.save_raw_payloads
+        and not args.compress_raw_payloads
+        and len(TARGET_TIMES) >= 24
+    ):
+        args.compress_raw_payloads = True
+        batch_info("auto-compress aktif: raw payload akan disimpan sebagai .json.gz")
 
     validate_common_args(args)
     locations = resolve_requested_locations(args)
     for location in locations:
         validate_location_config(location)
 
+    if args.dry_run:
+        batch_info("dry-run aktif: menampilkan URL request tanpa fetch.")
+        batch_info("Target hours:", ", ".join(TARGET_TIMES))
+        batch_info("Sumber aktif:", ", ".join(item["source_id"] for item in ACTIVE_SOURCE_CONFIGS))
+        for location in locations:
+            batch_info("Lokasi:", location.location_name, f"(slug={location.slug})")
+            location_args = clone_args_for_location(args, location)
+            for config in ACTIVE_SOURCE_CONFIGS:
+                print("-", config["source_id"], preview_request_url(config, location_args))
+        return
+
     if args.mode == "forecast":
         if args.run_daily:
             loop_daily(args, locations)
         else:
-            run_forecast_for_locations(args, locations)
+            forecast_rows = run_forecast_for_locations(args, locations)
+            # Exit code policy for automation:
+            # - 0: all ok/skipped
+            # - 2: any warning
+            # - 3: any error
+            any_error = any(r.get("run_status") == "error" for r in forecast_rows)
+            any_warning = any(r.get("run_status") == "warning" for r in forecast_rows)
+            if any_error:
+                sys.exit(3)
+            if any_warning:
+                sys.exit(2)
     elif args.mode == "sync-observations":
         sync_observations_for_locations(args, locations)
     elif args.mode == "evaluate":
@@ -3120,6 +4221,8 @@ def main():
         self_test_for_locations(args, locations)
     else:
         raise ValueError(f"Mode tidak dikenali: {args.mode}")
-    
+
+
 if __name__ == "__main__":
     main()
+
