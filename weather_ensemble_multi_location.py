@@ -8924,7 +8924,7 @@ def _anemos12_accuracy_html(rows, args):
     <section class='hero'><div class='chips'><span class='chip'>Status akurasi</span><span class='chip'>{matched}/{target} pasangan data</span></div><h1>Status Akurasi Prakiraan</h1><p>Halaman ini menunjukkan apakah prakiraan ANEMOS sudah memiliki cukup data pembanding observasi. Skor akan lebih bermakna setelah data terkumpul.</p></section>
     <div class='notice'><b>{_v6_esc(sentinel_public_disclaimer(args))}</b></div>
     <section class='panel'><h2>{'Data akurasi sudah mulai terbaca' if matched>=target else 'Data akurasi belum cukup'}</h2><div class='progress' style='--p:{pct}%'><span></span></div><p class='muted' style='margin-top:12px'>Target awal: minimal {target} pasangan prakiraan-observasi. Saat ini terkumpul {matched}/{target} pasangan.</p></section>
-    <section class='grid four'><article class='metric'><span>Error suhu</span><strong>{_anemos11_num(summary.get('temperature_mae_c'),'°C',1)}</strong><small>lebih kecil lebih baik</small></article><article class='metric'><span>Skor peluang hujan</span><strong>{_anemos11_num(summary.get('brier_rain'),'',3)}</strong><small>lebih kecil lebih baik</small></article><article class='metric'><span>Hujan terdeteksi</span><strong>{_anemos11_num(summary.get('pod_rain'),'%')}</strong><small>kemampuan menangkap hujan</small></article><article class='metric'><span>Alarm keliru</span><strong>{_anemos11_num(summary.get('far_rain'),'%')}</strong><small>semakin kecil semakin baik</small></article></section>
+    <section class='grid four'><article class='metric'><span>Error suhu</span><strong>{_anemos11_num(summary.get('temperature_mae_c'),'°C',1)}</strong><small>lebih kecil lebih baik</small></article><article class='metric'><span>Skor peluang hujan</span><strong>{_anemos11_num(summary.get('brier_rain', summary.get('rain_brier_score')),'',3)}</strong><small>lebih kecil lebih baik</small></article><article class='metric'><span>Hujan terdeteksi</span><strong>{_anemos11_num(summary.get('pod_rain', summary.get('rain_pod')),'%')}</strong><small>kemampuan menangkap hujan</small></article><article class='metric'><span>Alarm keliru</span><strong>{_anemos11_num(summary.get('far_rain', summary.get('rain_far')),'%')}</strong><small>semakin kecil semakin baik</small></article></section>
     <section class='panel'><div class='section-head'><h2>Bukti peluang hujan</h2><p>Tabel akan terisi setelah observasi terkumpul.</p></div><div class='table-scroll'><table><thead><tr><th>Kelompok peluang</th><th>Jumlah kasus</th><th>Rata-rata prakiraan</th><th>Hujan yang terjadi</th></tr></thead><tbody>{rows_html}</tbody></table></div></section>
     <section class='panel'><h2>Penjelasan singkat</h2><p>Sampai data observasi cukup, gunakan prakiraan sebagai panduan harian. Evaluasi akurasi akan bertambah otomatis seiring bertambahnya data.</p><div class='links'><a class='btn' href='sentinel_x_verification_summary.json'>Data verifikasi</a><a class='btn' href='sentinel_x_reliability.csv'>CSV peluang hujan</a><a class='btn' href='sentinel_x_verification_pairs.csv'>CSV pasangan data</a></div></section>
     <p class='footer'>ANEMOS · Status akurasi · Diperbarui {now.strftime('%H:%M')} {_v6_timezone_label(getattr(args,'timezone',DEFAULT_TIMEZONE))}</p>
@@ -8935,12 +8935,37 @@ def _anemos12_accuracy_html(rows, args):
 def sentinel_write_verification_artifacts(rows, args):
     verification_result = sentinel_compute_verification(rows, args)
     if isinstance(verification_result, tuple):
-        summary = verification_result[0] or {}; pairs = verification_result[1] if len(verification_result)>1 else []; reliability = verification_result[2] if len(verification_result)>2 else []
+        summary = verification_result[0] or {}
+        pairs = verification_result[1] if len(verification_result) > 1 else []
+        reliability_raw = verification_result[2] if len(verification_result) > 2 else []
     else:
-        summary = verification_result or {}; pairs = summary.get('matched_pairs') or []; reliability = summary.get('reliability_bins') or []
+        summary = verification_result or {}
+        pairs = summary.get('matched_pairs') or []
+        reliability_raw = summary.get('reliability_bins') or []
+
+    # ANEMOS v12.1 hotfix:
+    # sentinel_compute_verification() has used more than one reliability schema
+    # across versions. csv.DictWriter is strict, so normalize every row before
+    # writing. This prevents: ValueError: dict contains fields not in fieldnames.
+    reliability = []
+    for r in reliability_raw or []:
+        if not isinstance(r, dict):
+            continue
+        reliability.append({
+            'bin': r.get('bin', r.get('probability_bin', '')),
+            'n': r.get('n', 0),
+            'mean_forecast_pct': r.get('mean_forecast_pct', r.get('mean_forecast_probability', '')),
+            'observed_frequency_pct': r.get('observed_frequency_pct', r.get('observed_rain_frequency', '')),
+        })
+
+    pair_fieldnames = list(pairs[0].keys()) if pairs else [
+        'target_date', 'jam', 'forecast_rain_prob', 'observed_rain',
+        'forecast_temp_c', 'observed_temp_c'
+    ]
+
     write_json(path_output('sentinel_x_verification_summary.json'), summary)
-    write_dict_csv(path_output('sentinel_x_reliability.csv'), ['bin','n','mean_forecast_pct','observed_frequency_pct'], reliability if reliability else [])
-    write_dict_csv(path_output('sentinel_x_verification_pairs.csv'), list(pairs[0].keys()) if pairs else ['target_date','jam','forecast_rain_prob','observed_rain','forecast_temp_c','observed_temp_c'], pairs if pairs else [])
+    write_dict_csv(path_output('sentinel_x_reliability.csv'), ['bin','n','mean_forecast_pct','observed_frequency_pct'], reliability)
+    write_dict_csv(path_output('sentinel_x_verification_pairs.csv'), pair_fieldnames, pairs if pairs else [])
     atomic_write_text(path_output('sentinel_x_accuracy_public.html'), lambda f: f.write(_anemos12_accuracy_html(rows, args)))
     return summary
 
