@@ -6538,14 +6538,19 @@ def sentinel_write_root_public_index(locations, run_rows, args):
 # Goal: public-facing pages should feel like a simple local weather service,
 # not an internal/debug dashboard. Keep the data pipeline unchanged; replace
 # only the presentation and public language.
-SENTINEL_PUBLIC_UI_VERSION = "2026-06-03.public-friendly-v5"
+SENTINEL_PUBLIC_UI_VERSION = "2026-06-03.public-friendly-v6.1-fixed"
 
 
 def _v5_esc(value):
     return html.escape(str(value if value is not None else ""))
 
 
-def _v5_num(value, suffix="", digits=0, fallback="—"):
+def _v5_num(value, suffix="", digits=0, fallback="—", blank=None):
+    # Backward-compatible numeric formatter.
+    # v6 pages call this through _v6_num(..., blank="—"), while older v5 code
+    # used fallback="—". Support both names so GitHub Actions does not fail.
+    if blank is not None:
+        fallback = blank
     v = safe_float(value)
     if v is None:
         return fallback
