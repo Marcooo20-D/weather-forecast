@@ -8422,7 +8422,28 @@ def anemos_write_multiday_public_pages(args, forecast_dates=None, source_state_r
 
 
 def _anemos11_accuracy_html(rows, args):
-    summary = sentinel_compute_verification(rows, args)
+    verification_result = sentinel_compute_verification(rows, args)
+    if isinstance(verification_result, tuple):
+        summary = verification_result[0] or {}
+        pairs = verification_result[1] if len(verification_result) > 1 else []
+        reliability_raw = verification_result[2] if len(verification_result) > 2 else []
+    else:
+        summary = verification_result or {}
+        pairs = summary.get('matched_pairs') or [] if isinstance(summary, dict) else []
+        reliability_raw = summary.get('reliability_bins') or [] if isinstance(summary, dict) else []
+    summary = dict(summary or {})
+    reliability = []
+    for r in reliability_raw or []:
+        if not isinstance(r, dict):
+            continue
+        reliability.append({
+            'bin': r.get('bin') or r.get('probability_bin') or r.get('probability') or '',
+            'n': r.get('n', 0),
+            'mean_forecast_pct': r.get('mean_forecast_pct', r.get('mean_forecast_probability', r.get('mean_forecast', ''))),
+            'observed_frequency_pct': r.get('observed_frequency_pct', r.get('observed_rain_frequency', r.get('observed_frequency', ''))),
+        })
+    summary['matched_pairs'] = pairs or []
+    summary['reliability_bins'] = reliability
     matched = int(summary.get('matched_cases') or 0)
     target = max(1, int(getattr(args, 'verification_min_cases', 30) or 30))
     pct = min(100, round(matched / target * 100))
