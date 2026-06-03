@@ -13,6 +13,9 @@ import time
 import traceback
 import zlib
 import sys
+import sqlite3
+import html
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -197,7 +200,7 @@ ALL_SOURCE_CONFIGS = [
 ACTIVE_SOURCE_CONFIGS = list(ALL_SOURCE_CONFIGS)
 
 # Output schema version (helps downstream consumers tolerate new columns).
-OUTPUT_SCHEMA_VERSION = "2026-05-09.v2"
+OUTPUT_SCHEMA_VERSION = "2026-06-03.aether-v15"
 
 
 @dataclass(frozen=True)
@@ -1236,6 +1239,21 @@ def extract_open_meteo_points(target_date, payload, config, args):
     precipitations = hourly.get("precipitation") or []
     weather_codes = hourly.get("weather_code") or []
     wind_speeds = hourly.get("wind_speed_10m") or []
+    apparent_temperatures = hourly.get("apparent_temperature") or []
+    dew_points = hourly.get("dew_point_2m") or []
+    precipitation_probabilities = hourly.get("precipitation_probability") or []
+    cloud_covers = hourly.get("cloud_cover") or []
+    pressure_msl = hourly.get("pressure_msl") or []
+    surface_pressure = hourly.get("surface_pressure") or []
+    wind_directions = hourly.get("wind_direction_10m") or []
+    wind_gusts = hourly.get("wind_gusts_10m") or []
+    visibilities = hourly.get("visibility") or []
+    shortwave_radiation = hourly.get("shortwave_radiation") or []
+    direct_radiation = hourly.get("direct_radiation") or []
+    diffuse_radiation = hourly.get("diffuse_radiation") or []
+    direct_normal_irradiance = hourly.get("direct_normal_irradiance") or []
+    global_tilted_irradiance = hourly.get("global_tilted_irradiance") or []
+    cape = hourly.get("cape") or []
 
     candidates = []
     for idx, time_text in enumerate(times):
@@ -1256,6 +1274,21 @@ def extract_open_meteo_points(target_date, payload, config, args):
                 "rain_mm": rain_mm,
                 "wind_kmh": wind_kmh,
                 "weather_code": weather_codes[idx] if idx < len(weather_codes) else None,
+                "apparent_temp_c": safe_float(apparent_temperatures[idx] if idx < len(apparent_temperatures) else None),
+                "dew_point_c": safe_float(dew_points[idx] if idx < len(dew_points) else None),
+                "precip_prob_pct": safe_float(precipitation_probabilities[idx] if idx < len(precipitation_probabilities) else None),
+                "cloud_cover_pct": safe_float(cloud_covers[idx] if idx < len(cloud_covers) else None),
+                "pressure_msl_hpa": safe_float(pressure_msl[idx] if idx < len(pressure_msl) else None),
+                "surface_pressure_hpa": safe_float(surface_pressure[idx] if idx < len(surface_pressure) else None),
+                "wind_direction_deg": safe_float(wind_directions[idx] if idx < len(wind_directions) else None),
+                "wind_gusts_kmh": safe_float(wind_gusts[idx] if idx < len(wind_gusts) else None),
+                "visibility_m": safe_float(visibilities[idx] if idx < len(visibilities) else None),
+                "shortwave_radiation_wm2": safe_float(shortwave_radiation[idx] if idx < len(shortwave_radiation) else None),
+                "direct_radiation_wm2": safe_float(direct_radiation[idx] if idx < len(direct_radiation) else None),
+                "diffuse_radiation_wm2": safe_float(diffuse_radiation[idx] if idx < len(diffuse_radiation) else None),
+                "direct_normal_irradiance_wm2": safe_float(direct_normal_irradiance[idx] if idx < len(direct_normal_irradiance) else None),
+                "global_tilted_irradiance_wm2": safe_float(global_tilted_irradiance[idx] if idx < len(global_tilted_irradiance) else None),
+                "cape_jkg": safe_float(cape[idx] if idx < len(cape) else None),
             }
         )
 
@@ -1288,6 +1321,21 @@ def extract_open_meteo_points(target_date, payload, config, args):
             category=category,
             raw_condition=f"wmo:{match.get('weather_code')}",
             gap_minutes=gap_minutes,
+            cloud_cover_pct=match.get("cloud_cover_pct"),
+            pressure_msl_hpa=match.get("pressure_msl_hpa"),
+            surface_pressure_hpa=match.get("surface_pressure_hpa"),
+            wind_gusts_kmh=match.get("wind_gusts_kmh"),
+            wind_direction_deg=match.get("wind_direction_deg"),
+            dew_point_c=match.get("dew_point_c"),
+            apparent_temp_c=match.get("apparent_temp_c"),
+            precip_prob_pct=match.get("precip_prob_pct"),
+            visibility_m=match.get("visibility_m"),
+            shortwave_radiation_wm2=match.get("shortwave_radiation_wm2"),
+            direct_radiation_wm2=match.get("direct_radiation_wm2"),
+            diffuse_radiation_wm2=match.get("diffuse_radiation_wm2"),
+            direct_normal_irradiance_wm2=match.get("direct_normal_irradiance_wm2"),
+            global_tilted_irradiance_wm2=match.get("global_tilted_irradiance_wm2"),
+            cape_jkg=match.get("cape_jkg"),
         )
     return points
 
@@ -1494,6 +1542,23 @@ class ForecastPoint:
     category: str
     raw_condition: str
     gap_minutes: Optional[float]
+    # AETHER v15 optional intelligence fields. They are filled when a source provides them;
+    # otherwise the downstream engine uses robust heuristics/proxies.
+    cloud_cover_pct: Optional[float] = None
+    pressure_msl_hpa: Optional[float] = None
+    surface_pressure_hpa: Optional[float] = None
+    wind_gusts_kmh: Optional[float] = None
+    wind_direction_deg: Optional[float] = None
+    dew_point_c: Optional[float] = None
+    apparent_temp_c: Optional[float] = None
+    precip_prob_pct: Optional[float] = None
+    visibility_m: Optional[float] = None
+    shortwave_radiation_wm2: Optional[float] = None
+    direct_radiation_wm2: Optional[float] = None
+    diffuse_radiation_wm2: Optional[float] = None
+    direct_normal_irradiance_wm2: Optional[float] = None
+    global_tilted_irradiance_wm2: Optional[float] = None
+    cape_jkg: Optional[float] = None
 
 
 @dataclass
@@ -1549,26 +1614,33 @@ def fetch_open_meteo_forecast(target_date, config, args):
         "longitude": args.longitude,
         "timezone": args.timezone,
         "forecast_days": 3,
-        "hourly": ",".join(
-            [
-                "temperature_2m",
-                "relative_humidity_2m",
-                "precipitation",
-                "weather_code",
-                "wind_speed_10m",
-            ]
-        ),
+        "hourly": ",".join(aether_open_meteo_variables(args, include_extra=getattr(args, "aether_extra_vars", False))),
     }
     if config.get("models"):
         params["models"] = config["models"]
     url = build_url(config["endpoint"], params)
     try:
-        payload, status, duration_ms = fetch_json_with_retry(
-            url,
-            source_id=config["source_id"],
-            timeout=args.http_timeout,
-            max_retry=args.max_retry_http,
-        )
+        try:
+            payload, status, duration_ms = fetch_json_with_retry(
+                url,
+                source_id=config["source_id"],
+                timeout=args.http_timeout,
+                max_retry=args.max_retry_http,
+            )
+        except Exception as first_exc:
+            if not getattr(args, "aether_extra_vars", False):
+                raise
+            fallback_params = dict(params)
+            fallback_params["hourly"] = ",".join(aether_open_meteo_variables(args, include_extra=False))
+            fallback_url = build_url(config["endpoint"], fallback_params)
+            log_warning(config["source_id"], "extra vars gagal, fallback variabel dasar:", first_exc)
+            payload, status, duration_ms = fetch_json_with_retry(
+                fallback_url,
+                source_id=config["source_id"],
+                timeout=args.http_timeout,
+                max_retry=args.max_retry_http,
+            )
+            url = fallback_url
         points = extract_open_meteo_points(target_date, payload, config, args)
         return {
             "points": points,
@@ -1966,6 +2038,21 @@ def extract_archive_observations(target_date, payload, tz_name):
     precipitations = hourly.get("precipitation") or []
     weather_codes = hourly.get("weather_code") or []
     wind_speeds = hourly.get("wind_speed_10m") or []
+    apparent_temperatures = hourly.get("apparent_temperature") or []
+    dew_points = hourly.get("dew_point_2m") or []
+    precipitation_probabilities = hourly.get("precipitation_probability") or []
+    cloud_covers = hourly.get("cloud_cover") or []
+    pressure_msl = hourly.get("pressure_msl") or []
+    surface_pressure = hourly.get("surface_pressure") or []
+    wind_directions = hourly.get("wind_direction_10m") or []
+    wind_gusts = hourly.get("wind_gusts_10m") or []
+    visibilities = hourly.get("visibility") or []
+    shortwave_radiation = hourly.get("shortwave_radiation") or []
+    direct_radiation = hourly.get("direct_radiation") or []
+    diffuse_radiation = hourly.get("diffuse_radiation") or []
+    direct_normal_irradiance = hourly.get("direct_normal_irradiance") or []
+    global_tilted_irradiance = hourly.get("global_tilted_irradiance") or []
+    cape = hourly.get("cape") or []
 
     candidates = []
     for idx, time_text in enumerate(times):
@@ -2023,15 +2110,7 @@ def fetch_archive_observations(target_date, args):
         "timezone": args.timezone,
         "start_date": target_date.isoformat(),
         "end_date": target_date.isoformat(),
-        "hourly": ",".join(
-            [
-                "temperature_2m",
-                "relative_humidity_2m",
-                "precipitation",
-                "weather_code",
-                "wind_speed_10m",
-            ]
-        ),
+        "hourly": ",".join(aether_open_meteo_variables(args, include_extra=getattr(args, "aether_extra_vars", False))),
     }
     url = build_url(OBSERVATION_ARCHIVE_URL, params)
     payload, status, duration_ms = fetch_json_with_retry(url, source_id="OBSERVATION_ARCHIVE", timeout=args.http_timeout, max_retry=args.max_retry_http)
@@ -2713,6 +2792,9 @@ def save_outputs(target_date, results, args):
     bmkg_rows = build_bmkg_rows(results, target_date)
     ensemble_rows = build_ensemble_rows(points)
     canva_row = build_canva_row(ensemble_rows, target_date, args)
+    aether_payload = aether_v15_save_artifacts(
+        target_date, results, args, source_rows, status_rows, ensemble_rows
+    )
 
     write_csv(
         path_output("forecast.csv"),
@@ -2910,6 +2992,7 @@ def save_outputs(target_date, results, args):
         "retention_days": args.retention_days,
         "low_coverage_slots": low_coverage_slots,
         "run_status": "warning" if low_coverage_slots else "ok",
+        "aether_v15": aether_payload,
     }
     write_json(path_output("run_summary.json"), summary)
     write_json(path_output(f"run_summary_{stamp}.json"), summary)
@@ -3981,13 +4064,1110 @@ def loop_daily(base_args, locations):
             time.sleep(60)
 
 
+
+# -----------------------------------------------------------------------------
+# AETHER v15 — Single-File Local Weather Intelligence Autopilot
+# -----------------------------------------------------------------------------
+# This block deliberately stays in ONE file. It adds a post-processing intelligence
+# layer above the existing multi-source collector: SQLite ledger, probabilistic
+# quantiles, analog memory, microclimate correction, risk intelligence, solar/PV
+# proxy, forecast contract, dashboard/report, feedback, doctor mode, and a local
+# API server. It does not try to become a full NWP model; it turns external model
+# output into a local decision-support forecast.
+
+AETHER_VERSION = "AETHER v15.0 — Single-File Local Weather Intelligence Autopilot"
+AETHER_DB_FILENAME = "aether_v15_ledger.sqlite"
+AETHER_CSV_FILENAME = "aether_v15.csv"
+AETHER_JSON_FILENAME = "aether_v15.json"
+AETHER_DASHBOARD_FILENAME = "dashboard_aether_v15.html"
+AETHER_REPORT_FILENAME = "daily_report_aether_v15.md"
+AETHER_CONTRACT_FILENAME = "forecast_contract_aether_v15.json"
+AETHER_SOURCE_STATE_FILENAME = "source_state_aether_v15.csv"
+AETHER_FEEDBACK_FILENAME = "feedback_aether_v15.csv"
+AETHER_ROUTE_STATE_FILENAME = "aether_route_state.json"
+
+AETHER_BASIC_OPEN_METEO_VARIABLES = [
+    "temperature_2m",
+    "relative_humidity_2m",
+    "precipitation",
+    "weather_code",
+    "wind_speed_10m",
+]
+
+AETHER_EXTRA_OPEN_METEO_VARIABLES = [
+    "apparent_temperature",
+    "dew_point_2m",
+    "precipitation_probability",
+    "rain",
+    "cloud_cover",
+    "pressure_msl",
+    "surface_pressure",
+    "wind_direction_10m",
+    "wind_gusts_10m",
+    "visibility",
+    "shortwave_radiation",
+    "direct_radiation",
+    "diffuse_radiation",
+    "direct_normal_irradiance",
+    "global_tilted_irradiance",
+    "cape",
+]
+
+
+def aether_open_meteo_variables(args=None, include_extra=None):
+    if include_extra is None:
+        include_extra = bool(getattr(args, "aether_extra_vars", False)) if args is not None else False
+    variables = list(AETHER_BASIC_OPEN_METEO_VARIABLES)
+    if include_extra:
+        for item in AETHER_EXTRA_OPEN_METEO_VARIABLES:
+            if item not in variables:
+                variables.append(item)
+    return variables
+
+
+def aether_db_path():
+    return path_output(AETHER_DB_FILENAME)
+
+
+def aether_connect_db():
+    ensure_directory(ACTIVE_OUTPUT_DIR)
+    conn = sqlite3.connect(aether_db_path())
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def aether_init_db(conn):
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS forecast_runs (
+            run_id TEXT PRIMARY KEY,
+            generated_at TEXT,
+            aether_version TEXT,
+            location_slug TEXT,
+            location_name TEXT,
+            target_date TEXT,
+            timezone TEXT,
+            latitude REAL,
+            longitude REAL,
+            sources_total INTEGER,
+            sources_success INTEGER,
+            operational_status TEXT,
+            autopilot_route TEXT
+        );
+        CREATE TABLE IF NOT EXISTS source_forecasts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT,
+            target_datetime TEXT,
+            target_jam TEXT,
+            source_id TEXT,
+            provider TEXT,
+            source_datetime TEXT,
+            temp_c REAL,
+            rh_pct REAL,
+            rain_mm REAL,
+            wind_kmh REAL,
+            category TEXT,
+            point_weight REAL,
+            gap_minutes REAL,
+            raw_condition TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_source_forecasts_lookup
+        ON source_forecasts(target_datetime, source_id);
+        CREATE TABLE IF NOT EXISTS aether_forecasts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT,
+            target_datetime TEXT,
+            jam TEXT,
+            dominant_category TEXT,
+            trust_level TEXT,
+            operational_status TEXT,
+            autopilot_route TEXT,
+            weather_regime TEXT,
+            temp_p50 REAL,
+            temp_p90 REAL,
+            rain_p50 REAL,
+            rain_p90 REAL,
+            prob_rain REAL,
+            prob_heavy_rain REAL,
+            rain_risk_score REAL,
+            heavy_rain_risk_score REAL,
+            solar_score REAL,
+            uncertainty_score REAL,
+            explanation TEXT
+        );
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT,
+            location_slug TEXT,
+            target_date TEXT,
+            jam TEXT,
+            observed_category TEXT,
+            observed_rain_mm REAL,
+            observed_temp_c REAL,
+            note TEXT
+        );
+        CREATE TABLE IF NOT EXISTS route_state (
+            route_name TEXT PRIMARY KEY,
+            champion_score REAL,
+            challenger_score REAL,
+            promoted_at TEXT,
+            notes TEXT
+        );
+        """
+    )
+    conn.commit()
+
+
+def aether_value(value):
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except Exception:
+        return None
+
+
+def aether_round(value, digits=2):
+    if value is None:
+        return ""
+    try:
+        return round(float(value), digits)
+    except Exception:
+        return ""
+
+
+def aether_weighted_quantile(weighted_pairs, q):
+    valid = [(float(v), float(w)) for v, w in weighted_pairs if v is not None and w is not None and w > 0]
+    if not valid:
+        return None
+    valid.sort(key=lambda item: item[0])
+    total = sum(w for _, w in valid)
+    if total <= 0:
+        return None
+    threshold = q * total
+    cumulative = 0.0
+    for value, weight in valid:
+        cumulative += weight
+        if cumulative >= threshold:
+            return round(value, 3)
+    return round(valid[-1][0], 3)
+
+
+def aether_weighted_mean(weighted_pairs):
+    valid = [(float(v), float(w)) for v, w in weighted_pairs if v is not None and w is not None and w > 0]
+    if not valid:
+        return None
+    total = sum(w for _, w in valid)
+    if total <= 0:
+        return None
+    return round(sum(v * w for v, w in valid) / total, 3)
+
+
+def aether_get_weighted_attr(bucket, attr):
+    pairs = []
+    for point in bucket:
+        value = getattr(point, attr, None)
+        if value is not None:
+            pairs.append((value, point_weight(point)))
+    return pairs
+
+
+def aether_category_cloud_proxy(category):
+    return {
+        "Cerah": 15.0,
+        "Cerah Berawan": 45.0,
+        "Berawan": 75.0,
+        "Hujan Ringan": 88.0,
+        "Hujan Sedang": 94.0,
+        "Hujan Lebat": 98.0,
+    }.get(category, 70.0)
+
+
+def aether_microclimate_profile(args):
+    explicit = getattr(args, "microclimate", "auto") or "auto"
+    if explicit != "auto":
+        return explicit
+    slug = (getattr(args, "location_slug", "") or "").lower()
+    name = (getattr(args, "location_name", "") or "").lower()
+    text = f"{slug} {name}"
+    if "jatinangor" in text:
+        return "valley_highland"
+    if "dago" in text or "bandung" in text:
+        return "urban_highland"
+    if "arjawinangun" in text or "cirebon" in text:
+        return "lowland_agriculture"
+    return "generic_local"
+
+
+def aether_microclimate_adjustment(profile, hour, temp_c, rh_pct):
+    temp_adj = 0.0
+    rh_adj = 0.0
+    fog_bonus = 0.0
+    if profile == "valley_highland":
+        if 0 <= hour <= 7:
+            temp_adj -= 0.5
+            rh_adj += 4.0
+            fog_bonus += 8.0
+        elif 12 <= hour <= 16:
+            temp_adj += 0.2
+    elif profile == "urban_highland":
+        if 18 <= hour <= 23 or 0 <= hour <= 4:
+            temp_adj += 0.3
+        if 12 <= hour <= 17:
+            rh_adj -= 1.0
+    elif profile == "lowland_agriculture":
+        if 12 <= hour <= 16:
+            temp_adj += 0.4
+        if 4 <= hour <= 7:
+            rh_adj += 2.0
+    adjusted_temp = None if temp_c is None else round(float(temp_c) + temp_adj, 2)
+    adjusted_rh = None if rh_pct is None else round(clamp(float(rh_pct) + rh_adj, 0, 100), 2)
+    return adjusted_temp, adjusted_rh, round(fog_bonus, 2), round(temp_adj, 2), round(rh_adj, 2)
+
+
+def aether_target_datetime(target_date, jam, tz_name):
+    return parse_local_hour_string(target_date, jam, tz_name)
+
+
+def aether_lead_hours(target_date, jam, args):
+    try:
+        target_dt = aether_target_datetime(target_date, jam, args.timezone)
+        lead = (target_dt - now_local(args.timezone)).total_seconds() / 3600.0
+        return round(max(0.0, lead), 2)
+    except Exception:
+        return None
+
+
+def aether_lead_bucket(lead_hours):
+    if lead_hours is None:
+        return "unknown"
+    if lead_hours <= 3:
+        return "lead_0_3h"
+    if lead_hours <= 6:
+        return "lead_3_6h"
+    if lead_hours <= 12:
+        return "lead_6_12h"
+    if lead_hours <= 24:
+        return "lead_12_24h"
+    if lead_hours <= 48:
+        return "lead_24_48h"
+    return "lead_48h_plus"
+
+
+def aether_load_feedback_rows():
+    rows = []
+    path = path_output(AETHER_FEEDBACK_FILENAME)
+    if os.path.exists(path):
+        rows.extend(read_dict_csv(path))
+    return rows
+
+
+def aether_analog_probability(target_date, jam, args, temp_p50, rh_p50, model_prob_rain):
+    """Small analog memory using local observations/feedback when available.
+    It is intentionally conservative: no data means no analog override.
+    """
+    candidates = []
+    observed_paths = [observation_master_file(), path_output(AETHER_FEEDBACK_FILENAME)]
+    target_month = target_date.month
+    target_hour = int(jam.split(":")[0]) if jam and ":" in jam else 0
+    for path in observed_paths:
+        if not os.path.exists(path):
+            continue
+        for row in read_dict_csv(path):
+            row_jam = row.get("jam") or row.get("time") or row.get("target_jam") or ""
+            if row_jam[:2] != f"{target_hour:02d}":
+                continue
+            tanggal = row.get("tanggal") or row.get("target_date") or row.get("date") or ""
+            month_penalty = 0.0
+            try:
+                if len(tanggal) >= 10 and tanggal[4] == "-":
+                    m = parse_iso_date(tanggal[:10]).month
+                else:
+                    m = parse_display_date(tanggal[:10]).month
+                month_penalty = min(abs(m - target_month), 12 - abs(m - target_month)) * 2.0
+            except Exception:
+                month_penalty = 6.0
+            obs_temp = aether_value(row.get("temp_c") or row.get("observed_temp_c"))
+            obs_rh = aether_value(row.get("rh_pct"))
+            obs_rain = aether_value(row.get("rain_mm") or row.get("observed_rain_mm"))
+            cat = row.get("category") or row.get("observed_category") or ""
+            rain_event = (obs_rain is not None and obs_rain >= 0.1) or ("Hujan" in cat)
+            score = month_penalty
+            if temp_p50 is not None and obs_temp is not None:
+                score += abs(float(temp_p50) - obs_temp)
+            if rh_p50 is not None and obs_rh is not None:
+                score += abs(float(rh_p50) - obs_rh) / 8.0
+            candidates.append((score, 1.0 if rain_event else 0.0))
+    if len(candidates) < 8:
+        return None, 0
+    candidates.sort(key=lambda item: item[0])
+    selected = candidates[: min(50, len(candidates))]
+    analog = sum(value for _, value in selected) / len(selected) * 100.0
+    # Keep it as supporting memory, not a hard override.
+    blended = model_prob_rain if model_prob_rain is not None else analog
+    if model_prob_rain is not None:
+        blended = 0.75 * float(model_prob_rain) + 0.25 * analog
+    return round(blended, 1), len(selected)
+
+
+def aether_weather_regime(hour, prob_rain, prob_heavy, rh_p50, cloud_p50, uncertainty, solar_score):
+    if uncertainty is not None and uncertainty >= 75:
+        return "high_uncertainty"
+    if prob_heavy is not None and prob_heavy >= 35:
+        return "heavy_rain_threat"
+    if prob_rain is not None and prob_rain >= 65 and 12 <= hour <= 21:
+        return "convective_afternoon_evening"
+    if prob_rain is not None and prob_rain >= 55:
+        return "rainy_regime"
+    if rh_p50 is not None and rh_p50 >= 87 and (prob_rain or 0) < 35:
+        return "humid_stable"
+    if cloud_p50 is not None and cloud_p50 <= 35 and (prob_rain or 0) <= 25 and solar_score >= 6:
+        return "solar_clear_window"
+    return "normal_mixed"
+
+
+def aether_risk_label(score):
+    if score is None:
+        return "unknown"
+    if score >= 80:
+        return "very_high"
+    if score >= 60:
+        return "high"
+    if score >= 35:
+        return "medium"
+    return "low"
+
+
+def aether_trust_level(sources_used, confidence_score, uncertainty_score, coverage_fraction, source_health_mean):
+    if sources_used < 3 or coverage_fraction < 0.25:
+        return "DO_NOT_TRUST"
+    if confidence_score is None:
+        confidence_score = 0
+    if uncertainty_score is None:
+        uncertainty_score = 80
+    if source_health_mean is None:
+        source_health_mean = 0.7
+    score = 0.45 * confidence_score + 0.25 * (100 - uncertainty_score) + 0.20 * (coverage_fraction * 100) + 0.10 * (source_health_mean * 100)
+    if score >= 82:
+        return "HIGHLY_TRUSTED"
+    if score >= 67:
+        return "TRUSTED"
+    if score >= 45:
+        return "USABLE"
+    return "EXPERIMENTAL"
+
+
+def aether_operational_status(trust, rain_risk, uncertainty, sources_used):
+    if trust == "DO_NOT_TRUST" or sources_used < 3:
+        return "BLACK"
+    if (rain_risk is not None and rain_risk >= 80) or (uncertainty is not None and uncertainty >= 82):
+        return "RED"
+    if trust in {"EXPERIMENTAL", "USABLE"} or (rain_risk is not None and rain_risk >= 55) or (uncertainty is not None and uncertainty >= 60):
+        return "YELLOW"
+    return "GREEN"
+
+
+def aether_cost_loss_decision(probability, threshold, action_text, no_action_text):
+    if probability is None:
+        return "Tidak cukup data untuk rekomendasi cost-loss."
+    return action_text if probability >= threshold else no_action_text
+
+
+def aether_build_explanation(row):
+    reasons = []
+    if row["sources_used"]:
+        reasons.append(f"{row['sources_used']} source aktif dipakai")
+    if row["prob_rain"] != "" and float(row["prob_rain"]) >= 60:
+        reasons.append(f"peluang hujan tinggi ({row['prob_rain']}%)")
+    if row["prob_heavy_rain"] != "" and float(row["prob_heavy_rain"]) >= 25:
+        reasons.append(f"ada sinyal hujan lebat ({row['prob_heavy_rain']}%)")
+    if row["rain_p90"] != "" and float(row["rain_p90"]) >= 8:
+        reasons.append(f"rain P90 mencapai {row['rain_p90']} mm")
+    if row["uncertainty_score"] != "" and float(row["uncertainty_score"]) >= 60:
+        reasons.append("ketidakpastian model cukup besar")
+    if row["solar_score"] != "" and float(row["solar_score"]) >= 7:
+        reasons.append("potensi radiasi surya relatif baik")
+    if not reasons:
+        reasons.append("sinyal antar-source relatif netral")
+    return "Dipilih sebagai {} karena {}.".format(row["dominant_category"] or "forecast utama", "; ".join(reasons))
+
+
+def aether_build_rows(points, ensemble_rows, target_date, args):
+    grouped = {jam: [] for jam in TARGET_TIMES}
+    for point in points:
+        grouped.setdefault(point.target_time, []).append(point)
+
+    ensemble_by_jam = {row[0]: row for row in ensemble_rows}
+    micro_profile = aether_microclimate_profile(args)
+    rows = []
+    for jam in TARGET_TIMES:
+        bucket = grouped.get(jam) or []
+        ens = ensemble_by_jam.get(jam)
+        hour = int(jam.split(":")[0]) if jam and ":" in jam else 0
+        source_ids = sorted({p.source_id for p in bucket})
+        sources_used = len(bucket)
+        weights = [(p, point_weight(p)) for p in bucket]
+        weight_total = sum(w for _, w in weights)
+        expected_sources = max(len(ACTIVE_SOURCE_CONFIGS), 1)
+        coverage_fraction = round(sources_used / expected_sources, 4) if expected_sources else 0
+
+        temp_pairs = [(p.temp_c, w) for p, w in weights if p.temp_c is not None]
+        rh_pairs = [(p.rh_pct, w) for p, w in weights if p.rh_pct is not None]
+        rain_pairs = [(p.rain_mm, w) for p, w in weights if p.rain_mm is not None]
+        wind_pairs = [(p.wind_kmh, w) for p, w in weights if p.wind_kmh is not None]
+        hi_pairs = [(heat_index(p.temp_c, p.rh_pct), w) for p, w in weights if heat_index(p.temp_c, p.rh_pct) is not None]
+        cloud_pairs = aether_get_weighted_attr(bucket, "cloud_cover_pct")
+        sw_pairs = aether_get_weighted_attr(bucket, "shortwave_radiation_wm2")
+        gti_pairs = aether_get_weighted_attr(bucket, "global_tilted_irradiance_wm2")
+        precip_prob_pairs = aether_get_weighted_attr(bucket, "precip_prob_pct")
+        cape_pairs = aether_get_weighted_attr(bucket, "cape_jkg")
+
+        category_weights = {}
+        for p, w in weights:
+            category_weights[p.category] = category_weights.get(p.category, 0.0) + w
+        category_probs = {
+            cat: (category_weights.get(cat, 0.0) / weight_total * 100.0 if weight_total else 0.0)
+            for cat in CUACA_ORDER
+        }
+        dominant = max(category_weights, key=category_weights.get) if category_weights else ""
+        dominant_prob = category_probs.get(dominant, 0.0) if dominant else 0.0
+        category_disagreement = round(100.0 - dominant_prob, 2) if bucket else 100.0
+
+        prob_rain_cat = sum(category_probs.get(cat, 0.0) for cat in ("Hujan Ringan", "Hujan Sedang", "Hujan Lebat"))
+        prob_mod_heavy_cat = sum(category_probs.get(cat, 0.0) for cat in ("Hujan Sedang", "Hujan Lebat"))
+        prob_heavy_cat = category_probs.get("Hujan Lebat", 0.0)
+        precip_prob_mean = aether_weighted_mean(precip_prob_pairs)
+        prob_rain = prob_rain_cat if precip_prob_mean is None else 0.60 * prob_rain_cat + 0.40 * precip_prob_mean
+
+        rain_heavy_signal = 0.0
+        rain_moderate_signal = 0.0
+        if weight_total:
+            rain_heavy_signal = sum(w for p, w in weights if p.rain_mm is not None and p.rain_mm >= 10.0) / weight_total * 100.0
+            rain_moderate_signal = sum(w for p, w in weights if p.rain_mm is not None and p.rain_mm >= 5.0) / weight_total * 100.0
+        prob_heavy = max(prob_heavy_cat, 0.55 * prob_heavy_cat + 0.45 * rain_heavy_signal)
+        prob_mod_heavy = max(prob_mod_heavy_cat, 0.55 * prob_mod_heavy_cat + 0.45 * rain_moderate_signal)
+
+        q = lambda pairs, quant: aether_weighted_quantile(pairs, quant)
+        temp_p05, temp_p10, temp_p25, temp_p50, temp_p75, temp_p90, temp_p95 = [q(temp_pairs, x) for x in (0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95)]
+        rh_p10, rh_p50, rh_p90 = [q(rh_pairs, x) for x in (0.10, 0.50, 0.90)]
+        rain_p05, rain_p10, rain_p25, rain_p50, rain_p75, rain_p90, rain_p95 = [q(rain_pairs, x) for x in (0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95)]
+        wind_p50, wind_p90 = [q(wind_pairs, x) for x in (0.50, 0.90)]
+        hi_p50, hi_p90 = [q(hi_pairs, x) for x in (0.50, 0.90)]
+        cape_p50 = q(cape_pairs, 0.50)
+
+        cloud_p50 = q(cloud_pairs, 0.50)
+        if cloud_p50 is None and bucket:
+            cloud_proxy_pairs = [(aether_category_cloud_proxy(p.category), w) for p, w in weights]
+            cloud_p50 = q(cloud_proxy_pairs, 0.50)
+
+        # Analog memory after model probability is computed.
+        analog_prob, analog_n = aether_analog_probability(target_date, jam, args, temp_p50, rh_p50, prob_rain)
+        if analog_prob is not None:
+            prob_rain = analog_prob
+
+        temp_micro, rh_micro, fog_bonus, temp_adj, rh_adj = aether_microclimate_adjustment(micro_profile, hour, temp_p50, rh_p50)
+
+        # Solar/PV intelligence: use real radiation if present; otherwise clear-sky proxy.
+        sw_p50 = q(sw_pairs, 0.50)
+        gti_p50 = q(gti_pairs, 0.50)
+        if sw_p50 is None:
+            daylight = math.sin(math.pi * clamp((hour + 0.5 - 6.0) / 12.0, 0.0, 1.0))
+            clear_sky = max(0.0, daylight) * 950.0
+            cloud_loss = ((cloud_p50 or 70.0) / 100.0) * 0.70 + (prob_rain / 100.0) * 0.30
+            sw_p50 = round(clear_sky * clamp(1.0 - 0.85 * cloud_loss, 0.05, 1.0), 2)
+        solar_basis = gti_p50 if gti_p50 is not None else sw_p50
+        solar_score = round(clamp((solar_basis or 0.0) / 900.0 * 10.0 - (prob_rain / 100.0) * 2.0, 0.0, 10.0), 2)
+        cloud_loss_factor = round(clamp(((cloud_p50 or 70.0) / 100.0) * 0.75 + (prob_rain / 100.0) * 0.25, 0, 1), 3)
+        pv_power_index = round(clamp((solar_basis or 0.0) / 1000.0 * (1.0 - 0.004 * max((temp_micro or temp_p50 or 25.0) - 25.0, 0)), 0, 1.2), 3)
+
+        confidence_score = aether_value(ens[6]) if ens else None
+        source_health_values = [source_health_factor(p.source_id) for p in bucket]
+        source_health_mean = round(sum(source_health_values) / len(source_health_values), 4) if source_health_values else None
+        gap_values = [p.gap_minutes for p in bucket if p.gap_minutes is not None]
+        gap_mean = round(sum(gap_values) / len(gap_values), 2) if gap_values else None
+        freshness_uncertainty = clamp((gap_mean or 0.0) / 180.0 * 100.0, 0.0, 100.0)
+        health_uncertainty = 100.0 - (source_health_mean * 100.0 if source_health_mean is not None else 60.0)
+        lead_hours = aether_lead_hours(target_date, jam, args)
+        lead_uncertainty = clamp((lead_hours or 24.0) / 72.0 * 100.0, 5.0, 100.0)
+        rain_spread_uncertainty = clamp(((rain_p90 or 0.0) - (rain_p10 or 0.0)) / 15.0 * 100.0, 0.0, 100.0)
+        uncertainty_score = round(clamp(
+            0.32 * category_disagreement
+            + 0.20 * freshness_uncertainty
+            + 0.18 * health_uncertainty
+            + 0.15 * lead_uncertainty
+            + 0.15 * rain_spread_uncertainty,
+            0.0,
+            100.0,
+        ), 2)
+
+        rain_risk = round(clamp(
+            0.45 * prob_rain
+            + 0.23 * clamp((rain_p90 or 0.0) / 15.0 * 100.0, 0.0, 100.0)
+            + 0.14 * (rh_micro if rh_micro is not None else (rh_p50 or 70.0))
+            + 0.10 * category_disagreement
+            + 0.08 * (fog_bonus),
+            0.0,
+            100.0,
+        ), 2)
+        heavy_rain_risk = round(clamp(
+            0.42 * prob_heavy
+            + 0.32 * clamp((rain_p95 or rain_p90 or 0.0) / 25.0 * 100.0, 0.0, 100.0)
+            + 0.16 * category_disagreement
+            + 0.10 * clamp((cape_p50 or 0.0) / 1200.0 * 100.0, 0.0, 100.0),
+            0.0,
+            100.0,
+        ), 2)
+        flash_flood_proxy = round(clamp(0.45 * heavy_rain_risk + 0.35 * clamp((rain_p95 or 0.0) / 30.0 * 100.0, 0, 100) + 0.20 * prob_rain, 0, 100), 2)
+
+        preliminary_regime = aether_weather_regime(hour, prob_rain, prob_heavy, rh_micro or rh_p50, cloud_p50, uncertainty_score, solar_score)
+        trust = aether_trust_level(sources_used, confidence_score, uncertainty_score, coverage_fraction, source_health_mean)
+        operational_status = aether_operational_status(trust, rain_risk, uncertainty_score, sources_used)
+
+        if operational_status in {"BLACK", "RED"}:
+            autopilot_route = "CONSERVATIVE_RISK_FIRST"
+        elif preliminary_regime == "solar_clear_window" and solar_score >= 7:
+            autopilot_route = "SOLAR_OPTIMIZED"
+        elif preliminary_regime in {"convective_afternoon_evening", "heavy_rain_threat"}:
+            autopilot_route = "TROPICAL_RAIN_RISK"
+        elif analog_prob is not None and analog_n >= 20:
+            autopilot_route = "ANALOG_MEMORY_BLEND"
+        else:
+            autopilot_route = "CALIBRATED_PROBABILISTIC_ENSEMBLE"
+
+        best_case = "Berawan/Cerah berawan, hujan tidak signifikan."
+        if solar_score >= 7:
+            best_case = "Cuaca relatif cerah; jendela surya cukup baik."
+        most_likely = f"{dominant or 'Berawan'} dengan peluang hujan {round(prob_rain, 1)}%."
+        worst_case = "Hujan lokal lebih kuat dari median."
+        if rain_p95 is not None:
+            worst_case = f"Hujan lokal dapat mendekati P95 sekitar {round(rain_p95, 1)} mm pada jam ini."
+        umbrella_decision = aether_cost_loss_decision(
+            prob_rain,
+            getattr(args, "umbrella_threshold", 25.0),
+            "Bawa payung/jas hujan; cost-loss mendukung tindakan preventif.",
+            "Payung tidak wajib, tetapi tetap pantau update jika aktivitas luar ruang.",
+        )
+        solar_decision = "Prioritaskan aktivitas/charging surya pada jam ini." if solar_score >= 7 else "Potensi surya tidak optimal; gunakan estimasi konservatif."
+        fieldwork_decision = "Hindari aktivitas lapangan sensitif hujan." if rain_risk >= 60 else "Aktivitas lapangan masih mungkin, dengan monitoring ulang."
+
+        row = {
+            "tanggal": target_date.isoformat(),
+            "jam": jam,
+            "target_datetime": aether_target_datetime(target_date, jam, args.timezone).isoformat(),
+            "lead_hours": aether_round(lead_hours, 2),
+            "lead_bucket": aether_lead_bucket(lead_hours),
+            "location_slug": getattr(args, "location_slug", ""),
+            "location_name": getattr(args, "location_name", ""),
+            "microclimate_profile": micro_profile,
+            "sources_used": sources_used,
+            "sources_expected": expected_sources,
+            "source_list": ",".join(source_ids),
+            "coverage_fraction": aether_round(coverage_fraction, 4),
+            "source_health_mean": aether_round(source_health_mean, 4),
+            "gap_mean_minutes": aether_round(gap_mean, 2),
+            "dominant_category": dominant,
+            "dominant_probability": aether_round(dominant_prob, 1),
+            "prob_clear": aether_round(category_probs.get("Cerah", 0.0), 1),
+            "prob_partly_cloudy": aether_round(category_probs.get("Cerah Berawan", 0.0), 1),
+            "prob_cloudy": aether_round(category_probs.get("Berawan", 0.0), 1),
+            "prob_rain": aether_round(prob_rain, 1),
+            "prob_moderate_heavy_rain": aether_round(prob_mod_heavy, 1),
+            "prob_heavy_rain": aether_round(prob_heavy, 1),
+            "analog_prob_rain": aether_round(analog_prob, 1),
+            "analog_sample_size": analog_n,
+            "temp_p05": aether_round(temp_p05),
+            "temp_p10": aether_round(temp_p10),
+            "temp_p25": aether_round(temp_p25),
+            "temp_p50": aether_round(temp_p50),
+            "temp_p75": aether_round(temp_p75),
+            "temp_p90": aether_round(temp_p90),
+            "temp_p95": aether_round(temp_p95),
+            "temp_micro_p50": aether_round(temp_micro),
+            "temp_micro_adjustment": aether_round(temp_adj),
+            "rh_p10": aether_round(rh_p10),
+            "rh_p50": aether_round(rh_p50),
+            "rh_p90": aether_round(rh_p90),
+            "rh_micro_p50": aether_round(rh_micro),
+            "rh_micro_adjustment": aether_round(rh_adj),
+            "rain_p05": aether_round(rain_p05),
+            "rain_p10": aether_round(rain_p10),
+            "rain_p25": aether_round(rain_p25),
+            "rain_p50": aether_round(rain_p50),
+            "rain_p75": aether_round(rain_p75),
+            "rain_p90": aether_round(rain_p90),
+            "rain_p95": aether_round(rain_p95),
+            "wind_p50": aether_round(wind_p50),
+            "wind_p90": aether_round(wind_p90),
+            "heat_index_p50": aether_round(hi_p50),
+            "heat_index_p90": aether_round(hi_p90),
+            "cloud_cover_p50": aether_round(cloud_p50),
+            "shortwave_radiation_p50": aether_round(sw_p50),
+            "gti_p50": aether_round(gti_p50),
+            "cloud_loss_factor": aether_round(cloud_loss_factor, 3),
+            "solar_score": aether_round(solar_score, 2),
+            "pv_power_index": aether_round(pv_power_index, 3),
+            "cape_p50": aether_round(cape_p50),
+            "rain_risk_score": aether_round(rain_risk, 2),
+            "rain_risk_label": aether_risk_label(rain_risk),
+            "heavy_rain_risk_score": aether_round(heavy_rain_risk, 2),
+            "heavy_rain_risk_label": aether_risk_label(heavy_rain_risk),
+            "flash_flood_proxy_score": aether_round(flash_flood_proxy, 2),
+            "forecast_confidence_score": aether_round(confidence_score, 1),
+            "category_disagreement_score": aether_round(category_disagreement, 2),
+            "freshness_uncertainty": aether_round(freshness_uncertainty, 2),
+            "health_uncertainty": aether_round(health_uncertainty, 2),
+            "lead_uncertainty": aether_round(lead_uncertainty, 2),
+            "rain_spread_uncertainty": aether_round(rain_spread_uncertainty, 2),
+            "uncertainty_score": aether_round(uncertainty_score, 2),
+            "weather_regime": preliminary_regime,
+            "trust_level": trust,
+            "operational_status": operational_status,
+            "autopilot_route": autopilot_route,
+            "best_case_scenario": best_case,
+            "most_likely_scenario": most_likely,
+            "worst_case_scenario": worst_case,
+            "umbrella_decision": umbrella_decision,
+            "solar_decision": solar_decision,
+            "fieldwork_decision": fieldwork_decision,
+            "champion_route": "dynamic_calibrated_probabilistic",
+            "challenger_route": "analog_conservative" if analog_n >= 8 else "not_enough_analog_memory",
+            "explanation_strength": aether_round(clamp(100 - uncertainty_score + coverage_fraction * 20, 0, 100), 1),
+            "explanation": "",
+        }
+        row["explanation"] = aether_build_explanation(row)
+        rows.append(row)
+    return rows
+
+
+def aether_source_state_rows(results):
+    rows = []
+    for result in results:
+        health = SOURCE_HEALTH.get(result.source_id) or {}
+        failures = int(health.get("consecutive_failures", 0) or 0)
+        ema_success = aether_value(health.get("ema_success"))
+        ema_completeness = aether_value(health.get("ema_completeness"))
+        if result.success and failures == 0 and (ema_success is None or ema_success >= 0.75):
+            state = "ACTIVE"
+        elif failures >= 5 or (ema_success is not None and ema_success < 0.35):
+            state = "QUARANTINED"
+        elif not result.success or failures >= 2:
+            state = "DEGRADED"
+        elif failures == 1:
+            state = "RECOVERING"
+        else:
+            state = "ACTIVE"
+        rows.append(
+            {
+                "source_id": result.source_id,
+                "provider": result.provider,
+                "state": state,
+                "success": "yes" if result.success else "no",
+                "points_collected": len(result.points),
+                "ema_success": aether_round(ema_success, 4),
+                "ema_completeness": aether_round(ema_completeness, 4),
+                "consecutive_failures": failures,
+                "http_status": result.http_status if result.http_status is not None else "",
+                "duration_ms": result.duration_ms if result.duration_ms is not None else "",
+                "last_error": result.error,
+            }
+        )
+    return rows
+
+
+def aether_daily_summary(aether_rows, args):
+    if not aether_rows:
+        return {}
+    def row_float(row, key):
+        return aether_value(row.get(key))
+    max_rain = max(aether_rows, key=lambda r: row_float(r, "rain_risk_score") or -1)
+    max_heavy = max(aether_rows, key=lambda r: row_float(r, "heavy_rain_risk_score") or -1)
+    best_solar = max(aether_rows, key=lambda r: row_float(r, "solar_score") or -1)
+    worst_unc = max(aether_rows, key=lambda r: row_float(r, "uncertainty_score") or -1)
+    status_rank = {"GREEN": 1, "YELLOW": 2, "RED": 3, "BLACK": 4}
+    worst_status = max(aether_rows, key=lambda r: status_rank.get(r.get("operational_status"), 0)).get("operational_status")
+    rain_hours = [r["jam"] for r in aether_rows if (row_float(r, "prob_rain") or 0) >= 50]
+    solar_hours = [r["jam"] for r in aether_rows if (row_float(r, "solar_score") or 0) >= 7]
+    return {
+        "aether_version": AETHER_VERSION,
+        "generated_at": now_local(args.timezone).isoformat(),
+        "location_slug": getattr(args, "location_slug", ""),
+        "location_name": getattr(args, "location_name", ""),
+        "timezone": getattr(args, "timezone", DEFAULT_TIMEZONE),
+        "daily_operational_status": worst_status,
+        "peak_rain_risk_hour": max_rain.get("jam"),
+        "peak_rain_risk_score": max_rain.get("rain_risk_score"),
+        "peak_heavy_rain_risk_hour": max_heavy.get("jam"),
+        "peak_heavy_rain_risk_score": max_heavy.get("heavy_rain_risk_score"),
+        "best_solar_hour": best_solar.get("jam"),
+        "best_solar_score": best_solar.get("solar_score"),
+        "highest_uncertainty_hour": worst_unc.get("jam"),
+        "highest_uncertainty_score": worst_unc.get("uncertainty_score"),
+        "rain_window_hours": rain_hours,
+        "solar_window_hours": solar_hours,
+        "summary_text": aether_make_daily_narrative(aether_rows, max_rain, best_solar, worst_unc, worst_status),
+    }
+
+
+def aether_make_daily_narrative(aether_rows, max_rain, best_solar, worst_unc, worst_status):
+    rain_score = max_rain.get("rain_risk_score", "")
+    solar_score = best_solar.get("solar_score", "")
+    unc = worst_unc.get("uncertainty_score", "")
+    return (
+        f"Status operasional harian: {worst_status}. Risiko hujan tertinggi sekitar pukul "
+        f"{max_rain.get('jam')} dengan skor {rain_score}. Jendela surya terbaik sekitar pukul "
+        f"{best_solar.get('jam')} dengan skor {solar_score}. Ketidakpastian tertinggi muncul sekitar "
+        f"pukul {worst_unc.get('jam')} dengan skor {unc}. Gunakan rute autopilot dan trust level per jam "
+        "untuk keputusan aktivitas luar ruang maupun estimasi PV."
+    )
+
+
+def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+    def esc(x):
+        return html.escape(str(x if x is not None else ""))
+    rows_html = []
+    for r in aether_rows:
+        rows_html.append(
+            "<tr>"
+            f"<td>{esc(r['jam'])}</td>"
+            f"<td>{esc(r['dominant_category'])}</td>"
+            f"<td>{esc(r['prob_rain'])}%</td>"
+            f"<td>{esc(r['rain_p90'])}</td>"
+            f"<td>{esc(r['temp_micro_p50'] or r['temp_p50'])}</td>"
+            f"<td>{esc(r['solar_score'])}</td>"
+            f"<td>{esc(r['rain_risk_label'])}</td>"
+            f"<td>{esc(r['trust_level'])}</td>"
+            f"<td>{esc(r['operational_status'])}</td>"
+            f"<td>{esc(r['autopilot_route'])}</td>"
+            "</tr>"
+        )
+    source_html = []
+    for s in source_state_rows:
+        source_html.append(
+            "<tr>"
+            f"<td>{esc(s['source_id'])}</td>"
+            f"<td>{esc(s['state'])}</td>"
+            f"<td>{esc(s['success'])}</td>"
+            f"<td>{esc(s['points_collected'])}</td>"
+            f"<td>{esc(s['ema_success'])}</td>"
+            f"<td>{esc(s['duration_ms'])}</td>"
+            "</tr>"
+        )
+    rain_bars = []
+    for r in aether_rows:
+        prob = aether_value(r.get("prob_rain")) or 0
+        solar = aether_value(r.get("solar_score")) or 0
+        rain_bars.append(f"<div class='barrow'><span>{esc(r['jam'])}</span><div class='bar'><i style='width:{clamp(prob,0,100)}%'></i></div><b>{round(prob)}%</b><em>solar {solar}/10</em></div>")
+    document = f"""<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{esc(AETHER_VERSION)} — {esc(args.location_name)}</title>
+<style>
+body{{font-family:Arial,system-ui,sans-serif;margin:24px;background:#f7f8fb;color:#101828}}
+.card{{background:white;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin:14px 0;box-shadow:0 6px 18px rgba(16,24,40,.06)}}
+h1,h2{{margin:.2rem 0 1rem}} table{{width:100%;border-collapse:collapse;font-size:13px}} th,td{{border-bottom:1px solid #edf0f3;padding:8px;text-align:left}} th{{background:#f1f5f9}}
+.badge{{display:inline-block;padding:6px 10px;border-radius:99px;background:#eef2ff;margin-right:6px}}
+.barrow{{display:grid;grid-template-columns:55px 1fr 42px 90px;gap:10px;align-items:center;margin:6px 0}}
+.bar{{height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden}} .bar i{{display:block;height:100%;background:#334155}}
+small{{color:#667085}} code{{background:#f2f4f7;padding:2px 5px;border-radius:4px}}
+</style>
+</head>
+<body>
+<h1>{esc(AETHER_VERSION)}</h1>
+<div class="card">
+<span class="badge">Lokasi: {esc(args.location_name)}</span>
+<span class="badge">Status: {esc(daily.get('daily_operational_status',''))}</span>
+<span class="badge">Generated: {esc(daily.get('generated_at',''))}</span>
+<p>{esc(daily.get('summary_text',''))}</p>
+</div>
+<div class="card"><h2>Rain Probability & Solar Score</h2>{''.join(rain_bars)}</div>
+<div class="card"><h2>Hourly Intelligence Table</h2><table><thead><tr><th>Jam</th><th>Dominan</th><th>Prob Hujan</th><th>Rain P90</th><th>Temp μclimate</th><th>Solar</th><th>Risk</th><th>Trust</th><th>Status</th><th>Route</th></tr></thead><tbody>{''.join(rows_html)}</tbody></table></div>
+<div class="card"><h2>Source State</h2><table><thead><tr><th>Source</th><th>State</th><th>Success</th><th>Points</th><th>EMA Success</th><th>Latency</th></tr></thead><tbody>{''.join(source_html)}</tbody></table></div>
+<div class="card"><h2>Forecast Contract</h2><p>Forecast ini adalah local post-processing intelligence, bukan pengganti peringatan resmi BMKG. Gunakan status BLACK/RED/YELLOW/GREEN dan trust level sebagai batas kepercayaan.</p></div>
+</body></html>"""
+    write_json(path_output("dashboard_manifest_aether_v15.json"), {"dashboard": path_output(AETHER_DASHBOARD_FILENAME), "generated_at": now_local(args.timezone).isoformat()})
+    def writer_fn(f):
+        f.write(document)
+    atomic_write_text(path_output(AETHER_DASHBOARD_FILENAME), writer_fn)
+
+
+def aether_write_report(aether_rows, daily, args):
+    lines = []
+    lines.append(f"# {AETHER_VERSION}")
+    lines.append("")
+    lines.append(f"Lokasi: **{args.location_name}**  ")
+    lines.append(f"Generated: {daily.get('generated_at','')}  ")
+    lines.append(f"Status operasional harian: **{daily.get('daily_operational_status','')}**")
+    lines.append("")
+    lines.append("## Executive Summary")
+    lines.append(daily.get("summary_text", ""))
+    lines.append("")
+    lines.append("## Jam Kritis")
+    lines.append(f"- Risiko hujan tertinggi: **{daily.get('peak_rain_risk_hour')}** skor {daily.get('peak_rain_risk_score')}")
+    lines.append(f"- Risiko hujan lebat tertinggi: **{daily.get('peak_heavy_rain_risk_hour')}** skor {daily.get('peak_heavy_rain_risk_score')}")
+    lines.append(f"- Jendela surya terbaik: **{daily.get('best_solar_hour')}** skor {daily.get('best_solar_score')}")
+    lines.append(f"- Ketidakpastian tertinggi: **{daily.get('highest_uncertainty_hour')}** skor {daily.get('highest_uncertainty_score')}")
+    lines.append("")
+    lines.append("## Hourly Forecast")
+    lines.append("| Jam | Dominan | Prob Hujan | Rain P90 | Temp P50 μclimate | Solar | Risk | Trust | Status |")
+    lines.append("|---|---:|---:|---:|---:|---:|---|---|---|")
+    for r in aether_rows:
+        lines.append(f"| {r['jam']} | {r['dominant_category']} | {r['prob_rain']}% | {r['rain_p90']} | {r['temp_micro_p50'] or r['temp_p50']} | {r['solar_score']} | {r['rain_risk_label']} | {r['trust_level']} | {r['operational_status']} |")
+    lines.append("")
+    lines.append("## Catatan")
+    lines.append("Forecast ini memakai post-processing multi-source, analog memory jika data tersedia, microclimate correction heuristik, dan risk-first autopilot. Untuk keputusan keselamatan ekstrem, tetap rujuk peringatan resmi BMKG.")
+    def writer_fn(f):
+        f.write("\n".join(lines))
+    atomic_write_text(path_output(AETHER_REPORT_FILENAME), writer_fn)
+
+
+def aether_write_contract(daily, args):
+    payload = {
+        "aether_version": AETHER_VERSION,
+        "generated_at": now_local(args.timezone).isoformat(),
+        "location": getattr(args, "location_name", ""),
+        "status": daily.get("daily_operational_status"),
+        "validity_contract": {
+            "spatial_scope": "Local point forecast; hujan konvektif dapat meleset beberapa kilometer.",
+            "strongest_for": ["temperature tendency", "relative humidity tendency", "rain risk window", "solar potential window"],
+            "weakest_for": ["exact convective rain intensity", "street-scale rainfall", "extreme weather safety decision"],
+            "do_not_use_when": ["operational_status BLACK", "source coverage sangat rendah", "API banyak gagal", "keputusan keselamatan ekstrem tanpa rujukan resmi"],
+            "official_warning_note": "Gunakan peringatan resmi BMKG untuk cuaca ekstrem dan keselamatan publik.",
+        },
+    }
+    write_json(path_output(AETHER_CONTRACT_FILENAME), payload)
+
+
+def aether_store_ledger(run_id, target_date, results, source_rows, aether_rows, daily, args):
+    conn = aether_connect_db()
+    try:
+        aether_init_db(conn)
+        conn.execute(
+            """INSERT OR REPLACE INTO forecast_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                run_id,
+                now_local(args.timezone).isoformat(),
+                AETHER_VERSION,
+                getattr(args, "location_slug", ""),
+                getattr(args, "location_name", ""),
+                target_date.isoformat(),
+                getattr(args, "timezone", DEFAULT_TIMEZONE),
+                getattr(args, "latitude", None),
+                getattr(args, "longitude", None),
+                len(results),
+                sum(1 for r in results if r.success),
+                daily.get("daily_operational_status", ""),
+                "mixed_autopilot",
+            ),
+        )
+        for row in source_rows:
+            try:
+                target_dt = aether_target_datetime(target_date, row[3], args.timezone).isoformat()
+            except Exception:
+                target_dt = ""
+            conn.execute(
+                """INSERT INTO source_forecasts
+                (run_id,target_datetime,target_jam,source_id,provider,source_datetime,temp_c,rh_pct,rain_mm,wind_kmh,category,point_weight,gap_minutes,raw_condition)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    run_id, target_dt, row[3], row[1], row[2], row[4],
+                    aether_value(row[5]), aether_value(row[6]), aether_value(row[7]), aether_value(row[8]),
+                    row[11], aether_value(row[10]), aether_value(row[9]), row[12],
+                ),
+            )
+        for r in aether_rows:
+            conn.execute(
+                """INSERT INTO aether_forecasts
+                (run_id,target_datetime,jam,dominant_category,trust_level,operational_status,autopilot_route,weather_regime,temp_p50,temp_p90,rain_p50,rain_p90,prob_rain,prob_heavy_rain,rain_risk_score,heavy_rain_risk_score,solar_score,uncertainty_score,explanation)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (
+                    run_id, r.get("target_datetime"), r.get("jam"), r.get("dominant_category"), r.get("trust_level"),
+                    r.get("operational_status"), r.get("autopilot_route"), r.get("weather_regime"),
+                    aether_value(r.get("temp_p50")), aether_value(r.get("temp_p90")), aether_value(r.get("rain_p50")), aether_value(r.get("rain_p90")),
+                    aether_value(r.get("prob_rain")), aether_value(r.get("prob_heavy_rain")), aether_value(r.get("rain_risk_score")),
+                    aether_value(r.get("heavy_rain_risk_score")), aether_value(r.get("solar_score")), aether_value(r.get("uncertainty_score")),
+                    r.get("explanation"),
+                ),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def aether_v15_save_artifacts(target_date, results, args, source_rows, status_rows, ensemble_rows):
+    points = flatten_points(results)
+    aether_rows = aether_build_rows(points, ensemble_rows, target_date, args)
+    if aether_rows:
+        write_dict_csv(path_output(AETHER_CSV_FILENAME), list(aether_rows[0].keys()), aether_rows)
+        write_dict_csv(path_output(f"aether_v15_{target_date.strftime('%Y%m%d')}.csv"), list(aether_rows[0].keys()), aether_rows)
+    source_states = aether_source_state_rows(results)
+    if source_states:
+        write_dict_csv(path_output(AETHER_SOURCE_STATE_FILENAME), list(source_states[0].keys()), source_states)
+    daily = aether_daily_summary(aether_rows, args)
+    payload = {"daily": daily, "hourly": aether_rows, "source_states": source_states}
+    write_json(path_output(AETHER_JSON_FILENAME), payload)
+    write_json(path_output(f"aether_v15_{target_date.strftime('%Y%m%d')}.json"), payload)
+    aether_write_dashboard(aether_rows, source_states, daily, args)
+    aether_write_report(aether_rows, daily, args)
+    aether_write_contract(daily, args)
+    run_id = f"{getattr(args, 'location_slug', 'location')}_{target_date.strftime('%Y%m%d')}_{now_local(args.timezone).strftime('%Y%m%d%H%M%S')}"
+    try:
+        aether_store_ledger(run_id, target_date, results, source_rows, aether_rows, daily, args)
+    except Exception as exc:
+        log_warning("AETHER ledger gagal ditulis:", exc)
+    return {
+        "version": AETHER_VERSION,
+        "run_id": run_id,
+        "csv": path_output(AETHER_CSV_FILENAME),
+        "json": path_output(AETHER_JSON_FILENAME),
+        "dashboard": path_output(AETHER_DASHBOARD_FILENAME),
+        "report": path_output(AETHER_REPORT_FILENAME),
+        "contract": path_output(AETHER_CONTRACT_FILENAME),
+        "ledger": aether_db_path(),
+        "daily_operational_status": daily.get("daily_operational_status"),
+        "autopilot_summary": daily.get("summary_text"),
+    }
+
+
+def aether_regenerate_dashboard_for_location(args):
+    rows = read_dict_csv(path_output(AETHER_CSV_FILENAME))
+    states = read_dict_csv(path_output(AETHER_SOURCE_STATE_FILENAME))
+    daily_payload = read_json(path_output(AETHER_JSON_FILENAME), default={}) or {}
+    daily = daily_payload.get("daily") or aether_daily_summary(rows, args)
+    aether_write_dashboard(rows, states, daily, args)
+    aether_write_report(rows, daily, args)
+    return {"dashboard": path_output(AETHER_DASHBOARD_FILENAME), "report": path_output(AETHER_REPORT_FILENAME)}
+
+
+def aether_doctor_for_location(args):
+    checks = []
+    def add(name, ok, detail=""):
+        checks.append({"check": name, "ok": "yes" if ok else "no", "detail": str(detail)})
+    try:
+        ensure_directory(ACTIVE_OUTPUT_DIR)
+        add("output_dir_writable", True, ACTIVE_OUTPUT_DIR)
+    except Exception as exc:
+        add("output_dir_writable", False, exc)
+    try:
+        ZoneInfo(args.timezone)
+        add("timezone_valid", True, args.timezone)
+    except Exception as exc:
+        add("timezone_valid", False, exc)
+    try:
+        conn = aether_connect_db(); aether_init_db(conn); conn.close()
+        add("sqlite_ledger", True, aether_db_path())
+    except Exception as exc:
+        add("sqlite_ledger", False, exc)
+    try:
+        validate_location_config(LocationConfig(args.location_slug, args.location_name, args.adm4, args.latitude, args.longitude, args.timezone))
+        add("location_config", True, f"{args.latitude},{args.longitude} adm4={args.adm4}")
+    except Exception as exc:
+        add("location_config", False, exc)
+    for config in ACTIVE_SOURCE_CONFIGS:
+        add(f"preview_url_{config['source_id']}", True, preview_request_url(config, args))
+    add("metno_user_agent", True, getattr(args, "metno_user_agent", "") or "weather-ensemble-multi-location/3.1 (contact: local-script)")
+    add("target_hours", len(TARGET_TIMES) > 0, ",".join(TARGET_TIMES))
+    add("aether_extra_vars", True, "ON" if getattr(args, "aether_extra_vars", False) else "OFF; solar uses proxy if no radiation variables")
+    write_dict_csv(path_output("doctor_aether_v15.csv"), ["check", "ok", "detail"], checks)
+    write_json(path_output("doctor_aether_v15.json"), {"checks": checks, "generated_at": now_local(args.timezone).isoformat()})
+    return checks
+
+
+def aether_feedback_for_location(args):
+    target_date = args.feedback_date or args.target_date or now_local(args.timezone).date().isoformat()
+    jam = args.feedback_time or ""
+    if not jam:
+        raise ValueError("Mode feedback membutuhkan --feedback-time HH:MM")
+    row = {
+        "created_at": now_local(args.timezone).isoformat(),
+        "location_slug": getattr(args, "location_slug", ""),
+        "target_date": target_date,
+        "jam": jam,
+        "observed_category": args.feedback_category or "",
+        "observed_rain_mm": args.feedback_rain_mm if args.feedback_rain_mm is not None else "",
+        "observed_temp_c": args.feedback_temp_c if args.feedback_temp_c is not None else "",
+        "note": args.feedback_note or "",
+    }
+    existing = read_dict_csv(path_output(AETHER_FEEDBACK_FILENAME)) if os.path.exists(path_output(AETHER_FEEDBACK_FILENAME)) else []
+    rows = existing + [row]
+    write_dict_csv(path_output(AETHER_FEEDBACK_FILENAME), list(row.keys()), rows)
+    try:
+        conn = aether_connect_db(); aether_init_db(conn)
+        conn.execute(
+            "INSERT INTO feedback(created_at,location_slug,target_date,jam,observed_category,observed_rain_mm,observed_temp_c,note) VALUES (?,?,?,?,?,?,?,?)",
+            (row["created_at"], row["location_slug"], row["target_date"], row["jam"], row["observed_category"], aether_value(row["observed_rain_mm"]), aether_value(row["observed_temp_c"]), row["note"]),
+        )
+        conn.commit(); conn.close()
+    except Exception as exc:
+        log_warning("Gagal simpan feedback ke SQLite:", exc)
+    return row
+
+
+def aether_local_server(args):
+    root = root_output_dir()
+    port = int(getattr(args, "serve_port", 8000))
+    class Handler(BaseHTTPRequestHandler):
+        def _send(self, code, body, content_type="text/html; charset=utf-8"):
+            data = body.encode("utf-8") if isinstance(body, str) else body
+            self.send_response(code)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        def do_GET(self):
+            path = urllib.parse.urlparse(self.path).path
+            if path in {"/", "/status"}:
+                summary_path = root_output_path("forecast_batch_summary.json")
+                payload = read_json(summary_path, default={}) if os.path.exists(summary_path) else {"message": "No batch summary yet"}
+                self._send(200, json.dumps(payload, ensure_ascii=False, indent=2), "application/json; charset=utf-8")
+                return
+            if path == "/dashboard":
+                candidates = []
+                for dirpath, _, filenames in os.walk(root):
+                    if AETHER_DASHBOARD_FILENAME in filenames:
+                        candidates.append(os.path.join(dirpath, AETHER_DASHBOARD_FILENAME))
+                if not candidates:
+                    self._send(404, "Dashboard belum tersedia. Jalankan --mode forecast dulu.")
+                    return
+                candidates.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+                with open(candidates[0], "r", encoding="utf-8") as f:
+                    self._send(200, f.read())
+                return
+            if path == "/aether.json":
+                candidates = []
+                for dirpath, _, filenames in os.walk(root):
+                    if AETHER_JSON_FILENAME in filenames:
+                        candidates.append(os.path.join(dirpath, AETHER_JSON_FILENAME))
+                if not candidates:
+                    self._send(404, "{}", "application/json; charset=utf-8")
+                    return
+                candidates.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+                with open(candidates[0], "r", encoding="utf-8") as f:
+                    self._send(200, f.read(), "application/json; charset=utf-8")
+                return
+            self._send(404, "Not found")
+    print(f"[AETHER] Local server: http://localhost:{port}/dashboard")
+    HTTPServer(("127.0.0.1", port), Handler).serve_forever()
+
+
+def aether_self_test():
+    assert aether_weighted_quantile([(1, 1), (10, 1), (20, 2)], 0.5) in {10, 20}
+    assert aether_risk_label(10) == "low"
+    assert aether_risk_label(85) == "very_high"
+    assert aether_lead_bucket(2) == "lead_0_3h"
+    assert aether_microclimate_adjustment("valley_highland", 5, 24, 90)[0] < 24
+    return True
+
 def build_arg_parser():
     parser = argparse.ArgumentParser(
         description="Multi-location multi-source weather ensemble collector (single file)."
     )
     parser.add_argument(
         "--mode",
-        choices=["forecast", "sync-observations", "evaluate", "import-observations", "self-test"],
+        choices=["forecast", "sync-observations", "evaluate", "import-observations", "self-test", "doctor", "dashboard", "report", "feedback", "serve"],
         default="forecast",
         help="forecast = ambil prakiraan baru, sync-observations = sinkron data observasi historis, evaluate = hitung performa dan bobot sumber, import-observations = impor CSV observasi eksternal, self-test = assertion internal script",
     )
@@ -4113,6 +5293,18 @@ def build_arg_parser():
         default="",
         help="Override MET.no User-Agent (recommended: include contact info/email).",
     )
+
+    # AETHER v15 knobs
+    parser.add_argument("--aether-extra-vars", action="store_true", default=False, help="Minta variabel ekstra Open-Meteo jika tersedia; jika gagal, source akan fallback ke variabel dasar.")
+    parser.add_argument("--microclimate", default="auto", choices=["auto", "generic_local", "valley_highland", "urban_highland", "lowland_agriculture", "coastal"], help="Profil koreksi microclimate AETHER v15.")
+    parser.add_argument("--umbrella-threshold", type=float, default=25.0, help="Threshold cost-loss peluang hujan untuk rekomendasi payung.")
+    parser.add_argument("--feedback-date", help="Tanggal feedback YYYY-MM-DD untuk --mode feedback.")
+    parser.add_argument("--feedback-time", help="Jam feedback HH:MM untuk --mode feedback.")
+    parser.add_argument("--feedback-category", help="Kategori observasi feedback, misalnya Hujan Ringan.")
+    parser.add_argument("--feedback-rain-mm", type=float, help="Rain observed feedback dalam mm.")
+    parser.add_argument("--feedback-temp-c", type=float, help="Suhu observed feedback dalam Celsius.")
+    parser.add_argument("--feedback-note", default="", help="Catatan feedback manual.")
+    parser.add_argument("--serve-port", type=int, default=8000, help="Port local API server untuk --mode serve.")
     return parser
 
 
@@ -4194,6 +5386,29 @@ def main():
                 print("-", config["source_id"], preview_request_url(config, location_args))
         return
 
+    if args.mode == "serve":
+        aether_local_server(args)
+        return
+
+    if args.mode in {"doctor", "dashboard", "report", "feedback"}:
+        mode_rows = []
+        for location in locations:
+            location_args = clone_args_for_location(args, location)
+            validate_location_config(location)
+            prepare_location_context(location_args)
+            if args.mode == "doctor":
+                checks = aether_doctor_for_location(location_args)
+                ok_count = sum(1 for item in checks if item.get("ok") == "yes")
+                mode_rows.append({"location_slug": location.slug, "location_name": location.location_name, "checks_ok": ok_count, "checks_total": len(checks), "output_dir": ACTIVE_OUTPUT_DIR})
+            elif args.mode in {"dashboard", "report"}:
+                out = aether_regenerate_dashboard_for_location(location_args)
+                mode_rows.append({"location_slug": location.slug, "location_name": location.location_name, **out})
+            elif args.mode == "feedback":
+                row = aether_feedback_for_location(location_args)
+                mode_rows.append(row)
+        write_batch_summary(args.mode, mode_rows)
+        return
+
     if args.mode == "forecast":
         if args.run_daily:
             loop_daily(args, locations)
@@ -4219,6 +5434,8 @@ def main():
         import_observations_for_location(args, locations[0])
     elif args.mode == "self-test":
         self_test_for_locations(args, locations)
+        assert aether_self_test()
+        batch_info("AETHER v15 self-test selesai.")
     else:
         raise ValueError(f"Mode tidak dikenali: {args.mode}")
 
