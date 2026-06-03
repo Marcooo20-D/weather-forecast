@@ -7677,17 +7677,31 @@ def _v9_accuracy_status_text(summary):
 
 
 def sentinel_write_verification_artifacts(rows, args):
-    summary, reliability, pairs = sentinel_verify_forecasts(args)
+    # v9 fix: use the existing verification engine. The previous build called
+    # sentinel_verify_forecasts(), but that function does not exist in this
+    # single-file branch, causing GitHub Actions to fail after forecast fetch.
+    summary, pairs, reliability = sentinel_compute_verification(rows or [], args)
     write_json(path_output("sentinel_x_verification_summary.json"), summary)
-    write_dict_csv(path_output("sentinel_x_reliability.csv"), ["bin", "n", "mean_forecast_prob", "observed_rain_frequency"], reliability)
+    write_dict_csv(
+        path_output("sentinel_x_reliability.csv"),
+        ["probability_bin", "n", "mean_forecast_probability", "observed_rain_frequency"],
+        reliability,
+    )
     if pairs:
         write_dict_csv(path_output("sentinel_x_verification_pairs.csv"), list(pairs[0].keys()), pairs)
     else:
-        write_dict_csv(path_output("sentinel_x_verification_pairs.csv"), ["issued_at", "target_datetime", "lead_hour", "forecast_prob_rain", "observed_rain"], [])
+        write_dict_csv(
+            path_output("sentinel_x_verification_pairs.csv"),
+            ["target_date", "jam", "note"],
+            [{"target_date": "", "jam": "", "note": "No matched forecast-observation pairs yet."}],
+        )
     ctx = _v6_time_context(rows or [], args)
     title, note = _v9_accuracy_status_text(summary)
     matched = int(summary.get("matched_cases") or 0)
-    rel_rows = "".join(f"<tr><td>{_v6_esc(r.get('bin',''))}</td><td>{_v6_esc(r.get('n',0))}</td><td>{_v9_num(r.get('mean_forecast_prob'),'%')}</td><td>{_v9_num(r.get('observed_rain_frequency'),'%')}</td></tr>" for r in reliability)
+    rel_rows = "".join(
+        f"<tr><td>{_v6_esc(r.get('probability_bin',''))}</td><td>{_v6_esc(r.get('n',0))}</td><td>{_v9_num(r.get('mean_forecast_probability'),'%')}</td><td>{_v9_num(r.get('observed_rain_frequency'),'%')}</td></tr>"
+        for r in reliability
+    )
     doc = f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Akurasi prakiraan — {_v6_esc(getattr(args,'location_name',''))}</title><style>{_v9_css()}</style></head><body><main class='page'><nav class='top'><div class='brand'><div class='mark'></div><div><b>Akurasi Prakiraan</b><span>{_v6_esc(getattr(args,'location_name',''))} · {ctx['updated_label']}</span></div></div><div class='nav'><a href='command_center_sentinel_x.html'>Prakiraan</a><a href='sentinel_x_report.html'>Ringkasan</a><a href='../'>Pilih lokasi</a></div></nav><section class='hero'><div class='kicker'><span class='chip'>{_v6_esc(ctx['updated_label'])}</span><span class='chip'>{matched} pasangan data</span></div><h1>Status bukti prakiraan</h1><p>{_v6_esc(note)} Tujuannya agar pengguna tahu kapan prakiraan sudah terbukti, dan kapan masih sebatas panduan harian.</p></section><div class='notice'><b>{_v6_esc(sentinel_public_disclaimer(args))}</b></div><section class='date-strip'><article class='date-card'><span>Status</span><b>{_v6_esc(title)}</b></article><article class='date-card'><span>Kasus yang cocok</span><b>{matched}</b><p>Diperlukan riwayat observasi.</p></article><article class='date-card'><span>Lokasi</span><b>{_v6_esc(getattr(args,'location_name',''))}</b></article></section><section class='metrics'><article class='metric'><span>Error suhu</span><strong>{_v9_num(summary.get('temperature_mae_c'),'°C',1)}</strong><small>lebih kecil lebih baik</small></article><article class='metric'><span>Skor peluang hujan</span><strong>{_v9_num(summary.get('rain_brier_score'),'',2)}</strong><small>lebih kecil lebih baik</small></article><article class='metric'><span>Hujan terdeteksi</span><strong>{_v9_num(summary.get('rain_pod'),'%')}</strong><small>kemampuan menangkap hujan</small></article><article class='metric'><span>Alarm keliru</span><strong>{_v9_num(summary.get('rain_far'),'%')}</strong><small>semakin kecil semakin baik</small></article></section><section class='panel'><div class='section-title'><h2>Bukti peluang hujan</h2><p>Tabel akan terisi setelah observasi terkumpul.</p></div><div class='table-scroll'><table><tr><th>Kelompok peluang</th><th>Jumlah kasus</th><th>Rata-rata prakiraan</th><th>Hujan yang terjadi</th></tr>{rel_rows}</table></div></section><section class='panel'><h2>Penjelasan singkat</h2><p>Untuk sementara, halaman prakiraan utama lebih tepat digunakan sebagai panduan aktivitas harian. Nilai akurasi historis baru bisa dinilai setelah cukup banyak prakiraan dibandingkan dengan kondisi sebenarnya.</p><div class='links'><a class='pill' href='sentinel_x_verification_summary.json'>Data verifikasi</a><a class='pill' href='sentinel_x_reliability.csv'>CSV peluang hujan</a><a class='pill' href='sentinel_x_verification_pairs.csv'>CSV pasangan data</a></div></section></main></body></html>"""
     atomic_write_text(path_output("sentinel_x_accuracy_public.html"), lambda f: f.write(doc))
     return {"summary": path_output("sentinel_x_verification_summary.json"), "reliability": path_output("sentinel_x_reliability.csv"), "html": path_output("sentinel_x_accuracy_public.html")}
