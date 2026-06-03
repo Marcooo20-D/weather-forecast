@@ -8,9 +8,14 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: daily-forecast
+  cancel-in-progress: true
+
 jobs:
   forecast:
     runs-on: ubuntu-22.04
+    timeout-minutes: 12
 
     steps:
       - uses: actions/checkout@v4
@@ -19,14 +24,38 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run forecast
+      - name: Run AETHER Sentinel X forecast
+        timeout-minutes: 8
         run: |
-          python weather_ensemble_multi_location.py --mode forecast --timezone Asia/Jakarta || echo "forecast failed"
+          python aether_sentinel_x_public_operational_v2.py \
+            --mode forecast \
+            --locations all \
+            --timezone Asia/Jakarta \
+            --public-base-url https://marcooo20-d.github.io/weather-forecast \
+            --no-debug \
+            --no-save-raw-payloads
 
-      - name: Debug files
+      - name: Generate public index
         run: |
-          echo "=== FILE LIST ==="
-          ls -R
+          python aether_sentinel_x_public_operational_v2.py \
+            --mode public-index \
+            --locations all \
+            --timezone Asia/Jakarta \
+            --public-base-url https://marcooo20-d.github.io/weather-forecast \
+            --no-debug \
+            --no-save-raw-payloads
+
+      - name: Clean internal files before deploy
+        run: |
+          find outputs -name "*.sqlite" -delete || true
+          find outputs -name "*.db" -delete || true
+          find outputs -type d -name "logs" -prune -exec rm -rf {} + || true
+          find outputs -type d -name "raw_payloads" -prune -exec rm -rf {} + || true
+
+      - name: Debug public files
+        run: |
+          echo "=== TOP OUTPUT FILES ==="
+          find outputs -maxdepth 2 -type f | sort | head -120
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
