@@ -7453,5 +7453,303 @@ def sentinel_x_save_artifacts(target_date, results, args, source_rows, status_ro
     return {"version": AETHER_VERSION, "run_id": run_id, "csv": path_output(AETHER_CSV_FILENAME), "json": path_output(AETHER_JSON_FILENAME), "dashboard": path_output(AETHER_DASHBOARD_FILENAME), "report": path_output(AETHER_REPORT_FILENAME), "contract": path_output(AETHER_CONTRACT_FILENAME), "ledger": aether_db_path(), "daily_operational_status": daily.get("daily_operational_status"), "autopilot_summary": daily.get("summary_text")}
 
 
+# =============================================================================
+# v9 PUBLIC APP CLEAN UI
+# - Removes overly casual and overly technical wording from public pages.
+# - Uses a wider app-like layout, clearer valid date/update time, and weather variables.
+# - Keeps technical data available but moves it behind detail sections.
+# =============================================================================
+SENTINEL_PUBLIC_UI_VERSION = "v9_public_app_clean"
+
+
+def sentinel_public_disclaimer(args=None):
+    return "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat."
+
+
+def _v9_css():
+    return """
+    :root{
+      --bg:#eef5ff; --paper:#ffffff; --ink:#071526; --muted:#64748b;
+      --blue:#1d4ed8; --blue2:#2563eb; --dark:#071526; --line:#d8e3f2;
+      --green:#16a34a; --yellow:#ca8a04; --orange:#ea580c; --red:#dc2626;
+      --soft:#f8fbff; --shadow:0 22px 60px rgba(15,23,42,.12);
+    }
+    *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#eaf4ff 0,#f7fbff 62%,#eef5ff 100%);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px;line-height:1.55} a{color:#0b57d0;text-decoration:none;font-weight:800}.page{width:min(1180px,calc(100% - 48px));margin:28px auto 80px}.top{height:60px;display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:12px}.mark{width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#001a4d,#2f7dff);box-shadow:0 8px 20px rgba(37,99,235,.25)}.brand b{display:block;font-size:18px}.brand span{display:block;color:var(--muted);font-size:13px}.nav{display:flex;gap:10px;flex-wrap:wrap}.pill,.nav a{display:inline-flex;align-items:center;justify-content:center;border:1px solid #9cc3ff;background:#eef6ff;border-radius:999px;padding:9px 14px;font-size:13px;color:#0757c8;font-weight:900}.hero{position:relative;overflow:hidden;border-radius:30px;padding:42px;background:radial-gradient(circle at 92% 12%,rgba(255,255,255,.20),transparent 17%),linear-gradient(135deg,#06142c 0%,#123c9c 48%,#2f7dff 100%);color:white;box-shadow:var(--shadow);margin-bottom:18px}.hero h1{font-size:clamp(34px,4.3vw,62px);letter-spacing:-.055em;line-height:.96;margin:12px 0 14px}.hero p{max-width:820px;font-size:18px;color:#e9f2ff;margin:0}.kicker{display:flex;gap:10px;flex-wrap:wrap}.chip{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:900;color:#fff}.notice{background:#fff7ed;border:1px solid #fdba74;border-radius:16px;padding:13px 16px;font-weight:900;color:#7c2d12;margin:16px 0 18px}.date-strip{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px;margin-bottom:18px}.date-card,.card,.panel,.metric,.decision,.period-card,.hour-row,.loc-card{background:var(--paper);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 26px rgba(15,23,42,.06)}.date-card{padding:16px}.date-card span,.metric span,.var-card span{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;color:var(--muted)}.date-card b{display:block;font-size:21px;margin-top:4px}.date-card p{margin:4px 0 0;color:var(--muted)}.lead-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(310px,.9fr);gap:18px;margin-bottom:18px}.decision{padding:26px;background:linear-gradient(135deg,#06142c,#0d2f6f);color:white}.badge{display:inline-flex;border-radius:999px;padding:8px 12px;font-size:13px;font-weight:900;margin-bottom:12px}.badge.low{background:#dcfce7;color:#166534}.badge.medium{background:#fef3c7;color:#92400e}.badge.high{background:#ffedd5;color:#9a3412}.badge.critical{background:#fee2e2;color:#991b1b}.decision h2{font-size:clamp(26px,3vw,42px);line-height:1;margin:4px 0 12px;letter-spacing:-.045em}.decision p{color:#dbeafe;margin:0;font-size:17px}.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.metric{padding:20px}.metric strong{display:block;font-size:34px;line-height:1;margin:8px 0 4px;letter-spacing:-.04em}.metric small{color:var(--muted)}.panel{padding:24px;margin:18px 0}.section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:14px}.section-title h2,.panel h2{font-size:26px;letter-spacing:-.03em;margin:0}.section-title p,.muted{color:var(--muted);margin:0}.variables{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.var-card{padding:18px;background:#fbfdff;border:1px solid var(--line);border-radius:18px}.var-card strong{display:block;font-size:28px;margin:8px 0 4px;letter-spacing:-.04em}.var-card small{color:var(--muted)}.periods{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.period-card{padding:18px;border-top:5px solid #dbeafe}.period-card.low{border-top-color:#22c55e}.period-card.medium{border-top-color:#f59e0b}.period-card.high,.period-card.critical{border-top-color:#ef4444}.period-card h3{font-size:20px;margin:0 0 8px}.period-card .cond{font-weight:900;margin-bottom:8px}.mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.mini-stats span{background:#f6f9ff;border:1px solid var(--line);border-radius:12px;padding:10px;color:var(--muted);font-size:12px}.mini-stats b{display:block;color:var(--ink);font-size:16px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.big{font-size:22px;font-weight:900;margin:8px 0 8px}.scenario-list{list-style:none;padding:0;margin:0}.scenario-list li{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid var(--line);font-weight:800}.hour-list{display:grid;gap:10px}.hour-row{display:grid;grid-template-columns:100px 1.25fr repeat(6,110px) 1.2fr;align-items:center;gap:12px;padding:14px 16px;border-left:7px solid #22c55e}.hour-row.medium{border-left-color:#f59e0b}.hour-row.high,.hour-row.critical{border-left-color:#ef4444}.hour-row .time{font-size:18px;font-weight:950}.hour-row .condition b{display:block}.hour-row .condition small{color:var(--muted)}.hour-row .cell{background:#f8fbff;border:1px solid var(--line);border-radius:12px;padding:9px 10px;min-height:56px}.hour-row .cell b{display:block;font-size:15px}.hour-row .cell small{display:block;font-size:11px;color:var(--muted);margin-top:2px}.note{color:var(--muted);font-size:14px}.table-scroll{overflow:auto}table{width:100%;border-collapse:collapse}th,td{padding:12px;border-bottom:1px solid var(--line);text-align:left}th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}.portal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:22px 0}.loc-card{padding:24px}.loc-card h2{font-size:27px;margin:0 0 10px}.loc-card p{color:var(--muted);min-height:54px}.data-box{background:#fff;border:1px solid var(--line);border-radius:24px;padding:24px;margin-top:18px}.footer-note{text-align:center;color:var(--muted);font-size:13px;margin:32px 0}.plain-list{margin:0;padding-left:20px}.plain-list li{margin:7px 0}@media(max-width:1050px){.lead-grid,.two,.date-strip{grid-template-columns:1fr}.metrics,.variables,.periods,.portal-grid{grid-template-columns:repeat(2,1fr)}.hour-row{grid-template-columns:90px 1fr repeat(2,100px)}.hour-row .note{grid-column:1/-1}}@media(max-width:680px){.page{width:min(100% - 24px,1180px);margin:16px auto 50px}.hero{padding:28px}.metrics,.variables,.periods,.portal-grid{grid-template-columns:1fr}.hour-row{grid-template-columns:1fr 1fr}.hour-row .condition,.hour-row .note{grid-column:1/-1}.top{height:auto;align-items:flex-start;flex-direction:column}.nav a,.pill{padding:8px 11px}.hero p{font-size:16px}}
+    """
+
+
+def _v9_num(value, suffix="", digits=0, fallback="—"):
+    v = safe_float(value)
+    if v is None:
+        return fallback
+    if digits == 0:
+        return f"{round(v):.0f}{suffix}"
+    return f"{v:.{digits}f}{suffix}"
+
+
+def _v9_risk(score):
+    v = safe_float(score)
+    if v is None:
+        return "belum pasti", "medium", "pantau perubahan kondisi sekitar"
+    if v >= 75:
+        return "tinggi", "high", "sebaiknya siapkan rencana cadangan"
+    if v >= 45:
+        return "sedang", "medium", "siapkan payung bila beraktivitas luar ruang"
+    return "rendah", "low", "aktivitas relatif lebih aman"
+
+
+def _v9_icon(category):
+    text = str(category or "").lower()
+    if "hujan" in text:
+        return "🌧️"
+    if "cerah" in text:
+        return "🌤️"
+    if "berawan" in text:
+        return "☁️"
+    return "🌦️"
+
+
+def _v9_peak(rows, key):
+    best = None
+    for row in rows or []:
+        val = safe_float(row.get(key))
+        if val is None:
+            continue
+        if best is None or val > safe_float(best.get(key)):
+            best = row
+    return best or (rows[0] if rows else {})
+
+
+def _v9_avg(rows, key):
+    vals = [safe_float(r.get(key)) for r in rows or [] if safe_float(r.get(key)) is not None]
+    return sum(vals) / len(vals) if vals else None
+
+
+def _v9_clean_summary(rows, args):
+    loc = getattr(args, "location_name", "lokasi ini")
+    peak = _v9_peak(rows, "prob_rain")
+    peak_threat = _v9_peak(rows, "rain_threat_score")
+    prob = safe_float(peak.get("prob_rain")) or 0
+    risk_word, _, _ = _v9_risk(peak_threat.get("rain_threat_score"))
+    jam = peak.get("jam", "—")
+    cat = peak.get("dominant_category", "cuaca berubah")
+    if prob >= 65:
+        lead = f"Peluang hujan di {loc} cukup menonjol, terutama sekitar pukul {jam}."
+    elif prob >= 35:
+        lead = f"Cuaca di {loc} masih cukup aman untuk aktivitas harian, tetapi peluang hujan meningkat pada beberapa jam tertentu."
+    else:
+        lead = f"Cuaca di {loc} cenderung relatif aman, dengan peluang hujan yang tidak terlalu besar."
+    return f"{lead} Kondisi yang paling perlu diperhatikan adalah {cat.lower()} dengan tingkat risiko hujan {risk_word}. Gunakan prakiraan ini sebagai panduan harian dan tetap perhatikan kondisi langit di sekitar."
+
+
+def _v9_decision(rows, args):
+    peak_prob = _v9_peak(rows, "prob_rain")
+    peak_threat = _v9_peak(rows, "rain_threat_score")
+    prob = safe_float(peak_prob.get("prob_rain")) or 0
+    threat = safe_float(peak_threat.get("rain_threat_score")) or 0
+    jam = peak_prob.get("jam") or peak_threat.get("jam") or "—"
+    risk_word, cls, hint = _v9_risk(max(prob, threat))
+    if max(prob, threat) >= 70:
+        title = f"Sebaiknya siapkan payung, terutama mendekati pukul {jam}."
+        short = "Perlu lebih waspada"
+    elif max(prob, threat) >= 45:
+        title = f"Aktivitas masih memungkinkan, tetapi payung disarankan bila keluar sekitar pukul {jam}."
+        short = "Waspada ringan"
+    else:
+        title = "Aktivitas harian relatif aman, tetap pantau perubahan cuaca."
+        short = "Relatif aman"
+    return title, short, risk_word, cls, hint, jam
+
+
+def _v9_time_windows(rows):
+    if not rows:
+        return "—", "—"
+    sorted_by_risk = sorted(rows, key=lambda r: safe_float(r.get("rain_threat_score")) or 0, reverse=True)
+    risky = ", ".join(r.get("jam", "") for r in sorted_by_risk[:3] if r.get("jam")) or "—"
+    sorted_safe = sorted(rows, key=lambda r: (safe_float(r.get("rain_threat_score")) or 0) + (safe_float(r.get("prob_rain")) or 0))
+    best = ", ".join(r.get("jam", "") for r in sorted_safe[:3] if r.get("jam")) or "—"
+    return risky, best
+
+
+def _v9_variable_cards(rows):
+    temp = _v9_avg(rows, "temp_p50")
+    temp_max = _v9_peak(rows, "temp_p50")
+    rh = _v9_avg(rows, "rh_p50")
+    hi = _v9_peak(rows, "heat_index_p50")
+    apparent = _v9_peak(rows, "apparent_temperature_c")
+    dew = _v9_avg(rows, "dew_point_c")
+    rain = _v9_peak(rows, "prob_rain")
+    wind = _v9_peak(rows, "wind_p50")
+    gust = _v9_peak(rows, "gust_p90")
+    pressure = _v9_avg(rows, "pressure_msl_hpa")
+    cloud = _v9_avg(rows, "cloud_p50")
+    visible = _v9_peak(rows, "visibility_p10")
+    items = [
+        ("Suhu rata-rata", _v9_num(temp,"°C",1), f"tertinggi sekitar {_v9_num(temp_max.get('temp_p50'),'°C',1)} pada {temp_max.get('jam','—')}"),
+        ("Kelembapan", _v9_num(rh,"%",0), "semakin tinggi, udara terasa lebih lembap"),
+        ("Heat index", _v9_num(hi.get('heat_index_p50'),"°C",1), f"tertinggi sekitar {hi.get('jam','—')}"),
+        ("Terasa seperti", _v9_num(apparent.get('apparent_temperature_c'),"°C",1), "gabungan suhu dan kelembapan"),
+        ("Titik embun", _v9_num(dew,"°C",1), "indikasi kelembapan udara"),
+        ("Peluang hujan", _v9_num(rain.get('prob_rain'),"%",0), f"tertinggi sekitar {rain.get('jam','—')}"),
+        ("Angin", _v9_num(wind.get('wind_p50')," km/jam",1), f"tertinggi sekitar {wind.get('jam','—')}"),
+        ("Hembusan", _v9_num(gust.get('gust_p90')," km/jam",1), "potensi hembusan angin"),
+        ("Tekanan udara", _v9_num(pressure," hPa",1), "jika tersedia dari sumber model"),
+        ("Awan", _v9_num(cloud,"%",0), "perkiraan tutupan awan"),
+        ("Jarak pandang", _v9_num(visible.get('visibility_p10')," m",0), "nilai rendah berarti visibilitas berkurang"),
+    ]
+    return "".join(f"<article class='var-card'><span>{_v6_esc(k)}</span><strong>{_v6_esc(v)}</strong><small>{_v6_esc(d)}</small></article>" for k,v,d in items)
+
+
+def _v9_period_card(name, rows):
+    if not rows:
+        return f"<article class='period-card'><h3>{_v6_esc(name)}</h3><p class='muted'>Data belum tersedia.</p></article>"
+    rain = _v9_avg(rows, "prob_rain") or 0
+    temp = _v9_avg(rows, "temp_p50")
+    rh = _v9_avg(rows, "rh_p50")
+    peak = _v9_peak(rows, "rain_threat_score")
+    risk_word, cls, _ = _v9_risk(peak.get("rain_threat_score"))
+    cats = {}
+    for r in rows:
+        c = r.get("dominant_category", "Berawan")
+        cats[c] = cats.get(c, 0) + 1
+    cat = max(cats, key=cats.get) if cats else "Berawan"
+    return f"""
+    <article class='period-card {cls}'>
+      <h3>{_v9_icon(cat)} {_v6_esc(name)}</h3>
+      <div class='cond'>{_v6_esc(cat)}</div>
+      <p class='muted'>Risiko hujan {risk_word}. Jam perhatian: <b>{_v6_esc(peak.get('jam','—'))}</b>.</p>
+      <div class='mini-stats'><span>Suhu<br><b>{_v9_num(temp,'°C',1)}</b></span><span>RH<br><b>{_v9_num(rh,'%')}</b></span><span>Hujan<br><b>{_v9_num(rain,'%')}</b></span><span>Risiko<br><b>{_v6_esc(risk_word)}</b></span></div>
+    </article>"""
+
+
+def _v9_hour_row(row):
+    risk_word, cls, _ = _v9_risk(row.get("rain_threat_score"))
+    cat = row.get("dominant_category", "—")
+    note = "Pantau langit sekitar." if cls == "low" else "Disarankan lebih siap jika beraktivitas di luar ruang."
+    return f"""
+    <article class='hour-row {cls}'>
+      <div class='time'>{_v6_esc(row.get('jam','—'))}</div>
+      <div class='condition'><b>{_v9_icon(cat)} {_v6_esc(cat)}</b><small>{_v6_esc(note)}</small></div>
+      <div class='cell'><b>{_v9_num(row.get('temp_p50'),'°C',1)}</b><small>Suhu</small></div>
+      <div class='cell'><b>{_v9_num(row.get('rh_p50'),'%')}</b><small>Kelembapan</small></div>
+      <div class='cell'><b>{_v9_num(row.get('heat_index_p50'),'°C',1)}</b><small>Heat index</small></div>
+      <div class='cell'><b>{_v9_num(row.get('prob_rain'),'%')}</b><small>Peluang hujan</small></div>
+      <div class='cell'><b>{_v9_num(row.get('wind_p50'),' km/jam',1)}</b><small>Angin</small></div>
+      <div class='cell'><b>{_v6_esc(risk_word)}</b><small>Risiko</small></div>
+      <div class='note'>{_v6_esc(str(row.get('decision_recommendation','')).replace('Risiko relatif terkendali; keputusan normal masih masuk akal dengan pemantauan berkala.','Aktivitas masih dapat dilakukan dengan pemantauan cuaca sekitar.'))}</div>
+    </article>"""
+
+
+def _v9_hour_rows(rows):
+    return "".join(_v9_hour_row(r) for r in (rows or []))
+
+
+def _v9_scenarios(peak):
+    scenarios = peak.get("multi_reality_scenarios") if isinstance(peak, dict) else None
+    if not isinstance(scenarios, dict):
+        scenarios = {
+            "Tidak hujan langsung": 40,
+            "Hujan di sekitar lokasi": 20,
+            "Hujan ringan": 25,
+            "Hujan sedang singkat": 10,
+            "Hujan lebat lokal": 5,
+        }
+    labels = {
+        "dry_miss": "Tidak hujan langsung",
+        "nearby_rain_only": "Hujan di sekitar lokasi",
+        "direct_light_rain": "Hujan ringan",
+        "direct_moderate_rain": "Hujan sedang singkat",
+        "convective_burst": "Hujan lebat lokal",
+    }
+    items = []
+    for k, v in scenarios.items():
+        name = labels.get(k, str(k).replace("_", " ").capitalize())
+        items.append((name, safe_float(v) or 0))
+    items.sort(key=lambda x: x[1], reverse=True)
+    return "".join(f"<li><span>{_v6_esc(name)}</span><b>{_v9_num(val,'%')}</b></li>" for name, val in items[:5])
+
+
+def _v9_accuracy_status_text(summary):
+    matched = int(summary.get("matched_cases") or 0)
+    if matched < 30:
+        return "Data akurasi belum cukup", "Halaman ini belum menampilkan klaim akurasi karena pasangan prakiraan dan observasi masih sedikit."
+    return "Akurasi mulai dapat dibaca", "Jumlah data mulai cukup untuk melihat pola awal, tetapi tetap perlu pembaruan berkala."
+
+
+def sentinel_write_verification_artifacts(rows, args):
+    summary, reliability, pairs = sentinel_verify_forecasts(args)
+    write_json(path_output("sentinel_x_verification_summary.json"), summary)
+    write_dict_csv(path_output("sentinel_x_reliability.csv"), ["bin", "n", "mean_forecast_prob", "observed_rain_frequency"], reliability)
+    if pairs:
+        write_dict_csv(path_output("sentinel_x_verification_pairs.csv"), list(pairs[0].keys()), pairs)
+    else:
+        write_dict_csv(path_output("sentinel_x_verification_pairs.csv"), ["issued_at", "target_datetime", "lead_hour", "forecast_prob_rain", "observed_rain"], [])
+    ctx = _v6_time_context(rows or [], args)
+    title, note = _v9_accuracy_status_text(summary)
+    matched = int(summary.get("matched_cases") or 0)
+    rel_rows = "".join(f"<tr><td>{_v6_esc(r.get('bin',''))}</td><td>{_v6_esc(r.get('n',0))}</td><td>{_v9_num(r.get('mean_forecast_prob'),'%')}</td><td>{_v9_num(r.get('observed_rain_frequency'),'%')}</td></tr>" for r in reliability)
+    doc = f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Akurasi prakiraan — {_v6_esc(getattr(args,'location_name',''))}</title><style>{_v9_css()}</style></head><body><main class='page'><nav class='top'><div class='brand'><div class='mark'></div><div><b>Akurasi Prakiraan</b><span>{_v6_esc(getattr(args,'location_name',''))} · {ctx['updated_label']}</span></div></div><div class='nav'><a href='command_center_sentinel_x.html'>Prakiraan</a><a href='sentinel_x_report.html'>Ringkasan</a><a href='../'>Pilih lokasi</a></div></nav><section class='hero'><div class='kicker'><span class='chip'>{_v6_esc(ctx['updated_label'])}</span><span class='chip'>{matched} pasangan data</span></div><h1>Status bukti prakiraan</h1><p>{_v6_esc(note)} Tujuannya agar pengguna tahu kapan prakiraan sudah terbukti, dan kapan masih sebatas panduan harian.</p></section><div class='notice'><b>{_v6_esc(sentinel_public_disclaimer(args))}</b></div><section class='date-strip'><article class='date-card'><span>Status</span><b>{_v6_esc(title)}</b></article><article class='date-card'><span>Kasus yang cocok</span><b>{matched}</b><p>Diperlukan riwayat observasi.</p></article><article class='date-card'><span>Lokasi</span><b>{_v6_esc(getattr(args,'location_name',''))}</b></article></section><section class='metrics'><article class='metric'><span>Error suhu</span><strong>{_v9_num(summary.get('temperature_mae_c'),'°C',1)}</strong><small>lebih kecil lebih baik</small></article><article class='metric'><span>Skor peluang hujan</span><strong>{_v9_num(summary.get('rain_brier_score'),'',2)}</strong><small>lebih kecil lebih baik</small></article><article class='metric'><span>Hujan terdeteksi</span><strong>{_v9_num(summary.get('rain_pod'),'%')}</strong><small>kemampuan menangkap hujan</small></article><article class='metric'><span>Alarm keliru</span><strong>{_v9_num(summary.get('rain_far'),'%')}</strong><small>semakin kecil semakin baik</small></article></section><section class='panel'><div class='section-title'><h2>Bukti peluang hujan</h2><p>Tabel akan terisi setelah observasi terkumpul.</p></div><div class='table-scroll'><table><tr><th>Kelompok peluang</th><th>Jumlah kasus</th><th>Rata-rata prakiraan</th><th>Hujan yang terjadi</th></tr>{rel_rows}</table></div></section><section class='panel'><h2>Penjelasan singkat</h2><p>Untuk sementara, halaman prakiraan utama lebih tepat digunakan sebagai panduan aktivitas harian. Nilai akurasi historis baru bisa dinilai setelah cukup banyak prakiraan dibandingkan dengan kondisi sebenarnya.</p><div class='links'><a class='pill' href='sentinel_x_verification_summary.json'>Data verifikasi</a><a class='pill' href='sentinel_x_reliability.csv'>CSV peluang hujan</a><a class='pill' href='sentinel_x_verification_pairs.csv'>CSV pasangan data</a></div></section></main></body></html>"""
+    atomic_write_text(path_output("sentinel_x_accuracy_public.html"), lambda f: f.write(doc))
+    return {"summary": path_output("sentinel_x_verification_summary.json"), "reliability": path_output("sentinel_x_reliability.csv"), "html": path_output("sentinel_x_accuracy_public.html")}
+
+
+def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+    if getattr(args, "disable_sentinel_command_center", False):
+        return ""
+    rows = aether_rows or []
+    ctx = _v6_time_context(rows, args)
+    _v8_write_variables_csv(rows)
+    title, short, risk_word, risk_cls, hint, jam = _v9_decision(rows, args)
+    summary = _v9_clean_summary(rows, args)
+    risky, best = _v9_time_windows(rows)
+    peak_prob = _v9_peak(rows, "prob_rain")
+    peak_failure = _v9_peak(rows, "forecast_failure_risk")
+    groups = _v5_group_rows(rows)
+    periods = ''.join(_v9_period_card(name, groups.get(name, [])) for name in ["Pagi", "Siang", "Sore", "Malam"])
+    variables = _v9_variable_cards(rows)
+    hours = _v9_hour_rows(rows)
+    scenarios = _v9_scenarios(_v9_peak(rows, "rain_threat_score"))
+    certainty = max(0, 100 - (safe_float(peak_failure.get("forecast_failure_risk")) or 0))
+    doc = f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Prakiraan cuaca — {_v6_esc(getattr(args,'location_name',''))}</title><style>{_v9_css()}</style></head><body><main class='page'><nav class='top'><div class='brand'><div class='mark'></div><div><b>Prakiraan Cuaca Lokal</b><span>{_v6_esc(getattr(args,'location_name',''))} · {ctx['updated_label']}</span></div></div><div class='nav'><a href='sentinel_x_report.html'>Ringkasan</a><a href='sentinel_x_accuracy_public.html'>Akurasi</a><a href='../'>Pilih lokasi</a></div></nav><section class='hero'><div class='kicker'><span class='chip'>{_v6_esc(ctx['valid_label'])}</span><span class='chip'>{_v6_esc(ctx['updated_label'])}</span><span class='chip'>{_v6_esc(getattr(args,'location_name',''))}</span></div><h1>Prakiraan Cuaca Lokal</h1><p>{_v6_esc(summary)}</p></section><div class='notice'><b>{_v6_esc(sentinel_public_disclaimer(args))}</b></div><section class='date-strip'><article class='date-card'><span>Berlaku untuk</span><b>{_v6_esc(ctx['target_label'])}</b><p>00.00–23.59 {ctx['tz_label']}</p></article><article class='date-card'><span>Terakhir diperbarui</span><b>{_v6_esc(ctx['updated_label'].replace('Diperbarui ',''))}</b></article><article class='date-card'><span>Lokasi</span><b>{_v6_esc(getattr(args,'location_name',''))}</b></article></section><section class='lead-grid'><article class='decision'><span class='badge {risk_cls}'>{_v6_esc(short)}</span><h2>{_v6_esc(title)}</h2><p>Jam yang perlu diperhatikan: <b>{_v6_esc(risky)}</b>. Waktu yang relatif lebih aman: <b>{_v6_esc(best)}</b>. { _v6_esc(hint.capitalize()) }.</p></article><div class='metrics'><article class='metric'><span>Peluang hujan tertinggi</span><strong>{_v9_num(peak_prob.get('prob_rain'),'%')}</strong><small>sekitar { _v6_esc(peak_prob.get('jam','—')) }</small></article><article class='metric'><span>Tingkat risiko</span><strong>{_v6_esc(risk_word)}</strong><small>berdasarkan gabungan beberapa sumber</small></article><article class='metric'><span>Kepercayaan prakiraan</span><strong>{_v9_num(certainty,'%')}</strong><small>dapat menurun saat hujan lokal sulit dipastikan</small></article><article class='metric'><span>Data akurasi</span><strong>{_v6_esc(str(read_json(path_output('sentinel_x_verification_summary.json'), default={}).get('matched_cases',0)))}</strong><small>pasangan prakiraan-observasi</small></article></div></section><section class='panel'><div class='section-title'><h2>Variabel cuaca utama</h2><p>Suhu, kelembapan, heat index, hujan, angin, awan, dan jarak pandang.</p></div><div class='variables'>{variables}</div></section><section class='panel'><div class='section-title'><h2>Ringkasan pagi sampai malam</h2><p>Gunakan bagian ini untuk melihat perubahan cuaca dalam sehari.</p></div><div class='periods'>{periods}</div></section><section class='two'><section class='panel'><h2>Saran aktivitas</h2><p class='big'>{_v6_esc(title)}</p><p class='muted'>Jika kondisi langit berubah cepat, gunakan kondisi aktual di sekitar sebagai prioritas.</p></section><section class='panel'><h2>Kemungkinan kondisi</h2><ul class='scenario-list'>{scenarios}</ul></section></section><section class='panel'><div class='section-title'><h2>Rincian per jam</h2><p>Pilih jam yang sesuai dengan rencana aktivitas.</p></div><div class='hour-list'>{hours}</div></section><details class='panel'><summary><b>Sumber data dan file publik</b></summary><p class='muted'>Bagian ini untuk pengguna yang ingin melihat data lebih rinci.</p><div class='links'><a class='pill' href='sentinel_x_variables.csv'>CSV variabel</a><a class='pill' href='sentinel_x.csv'>CSV lengkap</a><a class='pill' href='sentinel_x.json'>JSON</a><a class='pill' href='sentinel_x_forecast_contract.json'>Batas penggunaan</a></div></details><section class='panel'><h2>Catatan penggunaan</h2><ul class='plain-list'><li>Prakiraan ini digunakan sebagai panduan aktivitas harian.</li><li>Ini bukan peringatan resmi cuaca ekstrem.</li><li>Untuk kondisi berbahaya, ikuti informasi BMKG dan kondisi setempat.</li><li>Hujan lokal dapat bergeser beberapa kilometer atau berubah beberapa jam.</li></ul></section><p class='footer-note'>AETHER Sentinel X · {ctx['valid_label']} · {ctx['updated_label']}</p></main></body></html>"""
+    atomic_write_text(path_output(AETHER_DASHBOARD_FILENAME), lambda f: f.write(doc))
+    write_json(path_output("command_center_manifest_sentinel_x.json"), {"dashboard": path_output(AETHER_DASHBOARD_FILENAME), "accuracy": path_output("sentinel_x_accuracy_public.html"), "report_html": path_output(AETHER_REPORT_HTML_FILENAME), "variables_csv": path_output("sentinel_x_variables.csv"), "generated_at": now_local(args.timezone).isoformat(), "ui_version": SENTINEL_PUBLIC_UI_VERSION, "valid_date": ctx["target_label"]})
+    return path_output(AETHER_DASHBOARD_FILENAME)
+
+
+def aether_write_report(aether_rows, daily, args):
+    rows = aether_rows or []
+    ctx = _v6_time_context(rows, args)
+    _v8_write_variables_csv(rows)
+    title, short, risk_word, risk_cls, hint, jam = _v9_decision(rows, args)
+    summary = _v9_clean_summary(rows, args)
+    groups = _v5_group_rows(rows)
+    periods = ''.join(_v9_period_card(name, groups.get(name, [])) for name in ["Pagi", "Siang", "Sore", "Malam"])
+    variables = _v9_variable_cards(rows)
+    hours = _v9_hour_rows(rows)
+    atomic_write_text(path_output(AETHER_REPORT_FILENAME), lambda f: f.write(f"# Ringkasan cuaca\n\nBuka versi HTML: `sentinel_x_report.html`.\n\n{ctx['valid_label']}\n{ctx['updated_label']}\n"))
+    doc = f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Ringkasan cuaca — {_v6_esc(getattr(args,'location_name',''))}</title><style>{_v9_css()}</style></head><body><main class='page'><nav class='top'><div class='brand'><div class='mark'></div><div><b>Ringkasan Cuaca</b><span>{_v6_esc(getattr(args,'location_name',''))} · {ctx['updated_label']}</span></div></div><div class='nav'><a href='command_center_sentinel_x.html'>Prakiraan</a><a href='sentinel_x_accuracy_public.html'>Akurasi</a><a href='../'>Pilih lokasi</a></div></nav><section class='hero'><div class='kicker'><span class='chip'>{_v6_esc(ctx['valid_label'])}</span><span class='chip'>{_v6_esc(ctx['updated_label'])}</span></div><h1>Ringkasan Cuaca Hari Ini</h1><p>{_v6_esc(summary)}</p></section><div class='notice'><b>{_v6_esc(sentinel_public_disclaimer(args))}</b></div><section class='date-strip'><article class='date-card'><span>Berlaku untuk</span><b>{_v6_esc(ctx['target_label'])}</b><p>00.00–23.59 {ctx['tz_label']}</p></article><article class='date-card'><span>Terakhir diperbarui</span><b>{_v6_esc(ctx['updated_label'].replace('Diperbarui ',''))}</b></article><article class='date-card'><span>Lokasi</span><b>{_v6_esc(getattr(args,'location_name',''))}</b></article></section><section class='panel'><h2>Saran singkat</h2><p class='big'>{_v6_esc(title)}</p><p class='muted'>{_v6_esc(hint.capitalize())}. Gunakan sebagai panduan aktivitas harian dan tetap perhatikan kondisi aktual.</p></section><section class='panel'><div class='section-title'><h2>Variabel cuaca utama</h2><p>Ringkasan suhu, kelembapan, heat index, hujan, angin, awan, dan jarak pandang.</p></div><div class='variables'>{variables}</div></section><section class='panel'><div class='section-title'><h2>Pagi, siang, sore, malam</h2><p>Ringkasan perubahan kondisi dalam sehari.</p></div><div class='periods'>{periods}</div></section><section class='panel'><div class='section-title'><h2>Rincian per jam</h2><p>Fokus pada jam aktivitas.</p></div><div class='hour-list'>{hours}</div></section><section class='panel'><h2>Batas penggunaan</h2><ul class='plain-list'><li>Gunakan sebagai panduan aktivitas harian.</li><li>Ini bukan peringatan resmi cuaca ekstrem.</li><li>Untuk kondisi berbahaya, ikuti informasi BMKG dan kondisi setempat.</li></ul><div class='links'><a class='pill' href='sentinel_x_variables.csv'>CSV variabel</a><a class='pill' href='sentinel_x.csv'>CSV lengkap</a></div></section></main></body></html>"""
+    atomic_write_text(path_output(AETHER_REPORT_HTML_FILENAME), lambda f: f.write(doc))
+    return path_output(AETHER_REPORT_HTML_FILENAME)
+
+
+def sentinel_write_root_public_index(locations, run_rows, args):
+    base_url = (getattr(args, "public_base_url", "") or "").rstrip("/")
+    now = now_local(DEFAULT_TIMEZONE)
+    updated = f"Diperbarui {_v6_format_date_id(now.date())}, {now.strftime('%H:%M')} WIB"
+    cards = []
+    for loc in locations:
+        prefix = f"{base_url}/{loc.slug}/" if base_url else f"{loc.slug}/"
+        cards.append(f"""
+        <article class='loc-card'>
+          <h2>{_v6_esc(loc.location_name)}</h2>
+          <p>Prakiraan harian, suhu, kelembapan, heat index, peluang hujan, angin, dan saran aktivitas.</p>
+          <div class='links'><a class='pill' href='{prefix}{AETHER_DASHBOARD_FILENAME}'>Lihat prakiraan</a><a class='pill' href='{prefix}{AETHER_REPORT_HTML_FILENAME}'>Ringkasan</a><a class='pill' href='{prefix}sentinel_x_accuracy_public.html'>Akurasi</a><a class='pill' href='{prefix}sentinel_x_variables.csv'>CSV variabel</a></div>
+        </article>""")
+    doc = f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Portal Prakiraan Cuaca Lokal</title><style>{_v9_css()}</style></head><body><main class='page'><section class='hero'><div class='kicker'><span class='chip'>Portal publik</span><span class='chip'>{_v6_esc(updated)}</span></div><h1>Portal Prakiraan Cuaca Lokal</h1><p>Pilih lokasi untuk melihat prakiraan harian, variabel cuaca utama, peluang hujan, dan saran aktivitas. Halaman ini dibuat untuk penggunaan harian masyarakat.</p></section><div class='notice'><b>{_v6_esc(sentinel_public_disclaimer(args))}</b></div><section class='portal-grid'>{''.join(cards)}</section><section class='data-box'><h2>Data terbuka</h2><p class='muted'>File berikut dapat digunakan untuk analisis, arsip, atau pembuatan dashboard lanjutan.</p><div class='links'><a class='pill' href='ensemble_all_locations.csv'>Ensemble CSV</a><a class='pill' href='forecast_all_locations.csv'>Forecast CSV</a><a class='pill' href='source_status_all_locations.csv'>Status sumber</a><a class='pill' href='forecast_batch_summary.json'>Ringkasan batch</a></div></section><p class='footer-note'>AETHER Sentinel X · {updated}</p></main></body></html>"""
+    atomic_write_text(root_output_path("index.html"), lambda f: f.write(doc))
+    write_json(root_output_path("sentinel_x_public_portal_manifest.json"), {"generated_at": now.isoformat(), "locations": [loc.slug for loc in locations], "index": root_output_path("index.html"), "disclaimer": sentinel_public_disclaimer(args), "ui_version": SENTINEL_PUBLIC_UI_VERSION})
+    return root_output_path("index.html")
+
+
 if __name__ == "__main__":
     main()
