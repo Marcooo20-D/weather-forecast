@@ -200,7 +200,7 @@ ALL_SOURCE_CONFIGS = [
 ACTIVE_SOURCE_CONFIGS = list(ALL_SOURCE_CONFIGS)
 
 # Output schema version (helps downstream consumers tolerate new columns).
-OUTPUT_SCHEMA_VERSION = "2026-06-03.aether-v15"
+OUTPUT_SCHEMA_VERSION = "2026-06-03.sentinel-x"
 
 
 @dataclass(frozen=True)
@@ -1542,8 +1542,8 @@ class ForecastPoint:
     category: str
     raw_condition: str
     gap_minutes: Optional[float]
-    # AETHER v15 optional intelligence fields. They are filled when a source provides them;
-    # otherwise the downstream engine uses robust heuristics/proxies.
+    # Sentinel X optional atmospheric intelligence fields. They are filled when a source provides them;
+    # otherwise the downstream risk engine uses robust heuristics/proxies.
     cloud_cover_pct: Optional[float] = None
     pressure_msl_hpa: Optional[float] = None
     surface_pressure_hpa: Optional[float] = None
@@ -2792,7 +2792,7 @@ def save_outputs(target_date, results, args):
     bmkg_rows = build_bmkg_rows(results, target_date)
     ensemble_rows = build_ensemble_rows(points)
     canva_row = build_canva_row(ensemble_rows, target_date, args)
-    aether_payload = aether_v15_save_artifacts(
+    sentinel_payload = sentinel_x_save_artifacts(
         target_date, results, args, source_rows, status_rows, ensemble_rows
     )
 
@@ -2992,7 +2992,7 @@ def save_outputs(target_date, results, args):
         "retention_days": args.retention_days,
         "low_coverage_slots": low_coverage_slots,
         "run_status": "warning" if low_coverage_slots else "ok",
-        "aether_v15": aether_payload,
+        "sentinel_x": sentinel_payload,
     }
     write_json(path_output("run_summary.json"), summary)
     write_json(path_output(f"run_summary_{stamp}.json"), summary)
@@ -4066,25 +4066,19 @@ def loop_daily(base_args, locations):
 
 
 # -----------------------------------------------------------------------------
-# AETHER v15 — Single-File Local Weather Intelligence Autopilot
 # -----------------------------------------------------------------------------
-# This block deliberately stays in ONE file. It adds a post-processing intelligence
-# layer above the existing multi-source collector: SQLite ledger, probabilistic
-# quantiles, analog memory, microclimate correction, risk intelligence, solar/PV
-# proxy, forecast contract, dashboard/report, feedback, doctor mode, and a local
-# API server. It does not try to become a full NWP model; it turns external model
-# output into a local decision-support forecast.
-
-AETHER_VERSION = "AETHER v15.0 — Single-File Local Weather Intelligence Autopilot"
-AETHER_DB_FILENAME = "aether_v15_ledger.sqlite"
-AETHER_CSV_FILENAME = "aether_v15.csv"
-AETHER_JSON_FILENAME = "aether_v15.json"
-AETHER_DASHBOARD_FILENAME = "dashboard_aether_v15.html"
-AETHER_REPORT_FILENAME = "daily_report_aether_v15.md"
-AETHER_CONTRACT_FILENAME = "forecast_contract_aether_v15.json"
-AETHER_SOURCE_STATE_FILENAME = "source_state_aether_v15.csv"
-AETHER_FEEDBACK_FILENAME = "feedback_aether_v15.csv"
-AETHER_ROUTE_STATE_FILENAME = "aether_route_state.json"
+# AETHER SENTINEL X — Clean Single-File Intelligence Layer
+# -----------------------------------------------------------------------------
+AETHER_VERSION = "AETHER SENTINEL X — One-File Autonomous Atmospheric Risk, Scenario, Failure & Decision Intelligence System"
+AETHER_DB_FILENAME = "sentinel_x_ledger.sqlite"
+AETHER_CSV_FILENAME = "sentinel_x.csv"
+AETHER_JSON_FILENAME = "sentinel_x.json"
+AETHER_DASHBOARD_FILENAME = "command_center_sentinel_x.html"
+AETHER_REPORT_FILENAME = "sentinel_x_report.md"
+AETHER_CONTRACT_FILENAME = "sentinel_x_forecast_contract.json"
+AETHER_SOURCE_STATE_FILENAME = "sentinel_x_source_state.csv"
+AETHER_FEEDBACK_FILENAME = "sentinel_x_feedback.csv"
+AETHER_ROUTE_STATE_FILENAME = "sentinel_x_route_state.json"
 
 AETHER_BASIC_OPEN_METEO_VARIABLES = [
     "temperature_2m",
@@ -4105,11 +4099,6 @@ AETHER_EXTRA_OPEN_METEO_VARIABLES = [
     "wind_direction_10m",
     "wind_gusts_10m",
     "visibility",
-    "shortwave_radiation",
-    "direct_radiation",
-    "diffuse_radiation",
-    "direct_normal_irradiance",
-    "global_tilted_irradiance",
     "cape",
 ]
 
@@ -4136,88 +4125,6 @@ def aether_connect_db():
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.row_factory = sqlite3.Row
     return conn
-
-
-def aether_init_db(conn):
-    conn.executescript(
-        """
-        CREATE TABLE IF NOT EXISTS forecast_runs (
-            run_id TEXT PRIMARY KEY,
-            generated_at TEXT,
-            aether_version TEXT,
-            location_slug TEXT,
-            location_name TEXT,
-            target_date TEXT,
-            timezone TEXT,
-            latitude REAL,
-            longitude REAL,
-            sources_total INTEGER,
-            sources_success INTEGER,
-            operational_status TEXT,
-            autopilot_route TEXT
-        );
-        CREATE TABLE IF NOT EXISTS source_forecasts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id TEXT,
-            target_datetime TEXT,
-            target_jam TEXT,
-            source_id TEXT,
-            provider TEXT,
-            source_datetime TEXT,
-            temp_c REAL,
-            rh_pct REAL,
-            rain_mm REAL,
-            wind_kmh REAL,
-            category TEXT,
-            point_weight REAL,
-            gap_minutes REAL,
-            raw_condition TEXT
-        );
-        CREATE INDEX IF NOT EXISTS idx_source_forecasts_lookup
-        ON source_forecasts(target_datetime, source_id);
-        CREATE TABLE IF NOT EXISTS aether_forecasts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            run_id TEXT,
-            target_datetime TEXT,
-            jam TEXT,
-            dominant_category TEXT,
-            trust_level TEXT,
-            operational_status TEXT,
-            autopilot_route TEXT,
-            weather_regime TEXT,
-            temp_p50 REAL,
-            temp_p90 REAL,
-            rain_p50 REAL,
-            rain_p90 REAL,
-            prob_rain REAL,
-            prob_heavy_rain REAL,
-            rain_risk_score REAL,
-            heavy_rain_risk_score REAL,
-            solar_score REAL,
-            uncertainty_score REAL,
-            explanation TEXT
-        );
-        CREATE TABLE IF NOT EXISTS feedback (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            created_at TEXT,
-            location_slug TEXT,
-            target_date TEXT,
-            jam TEXT,
-            observed_category TEXT,
-            observed_rain_mm REAL,
-            observed_temp_c REAL,
-            note TEXT
-        );
-        CREATE TABLE IF NOT EXISTS route_state (
-            route_name TEXT PRIMARY KEY,
-            champion_score REAL,
-            challenger_score REAL,
-            promoted_at TEXT,
-            notes TEXT
-        );
-        """
-    )
-    conn.commit()
 
 
 def aether_value(value):
@@ -4322,6 +4229,9 @@ def aether_microclimate_adjustment(profile, hour, temp_c, rh_pct):
             temp_adj += 0.4
         if 4 <= hour <= 7:
             rh_adj += 2.0
+    elif profile == "coastal":
+        if 10 <= hour <= 17:
+            rh_adj += 2.0
     adjusted_temp = None if temp_c is None else round(float(temp_c) + temp_adj, 2)
     adjusted_rh = None if rh_pct is None else round(clamp(float(rh_pct) + rh_adj, 0, 100), 2)
     return adjusted_temp, adjusted_rh, round(fog_bonus, 2), round(temp_adj, 2), round(rh_adj, 2)
@@ -4356,18 +4266,7 @@ def aether_lead_bucket(lead_hours):
     return "lead_48h_plus"
 
 
-def aether_load_feedback_rows():
-    rows = []
-    path = path_output(AETHER_FEEDBACK_FILENAME)
-    if os.path.exists(path):
-        rows.extend(read_dict_csv(path))
-    return rows
-
-
 def aether_analog_probability(target_date, jam, args, temp_p50, rh_p50, model_prob_rain):
-    """Small analog memory using local observations/feedback when available.
-    It is intentionally conservative: no data means no analog override.
-    """
     candidates = []
     observed_paths = [observation_master_file(), path_output(AETHER_FEEDBACK_FILENAME)]
     target_month = target_date.month
@@ -4380,52 +4279,34 @@ def aether_analog_probability(target_date, jam, args, temp_p50, rh_p50, model_pr
             if row_jam[:2] != f"{target_hour:02d}":
                 continue
             tanggal = row.get("tanggal") or row.get("target_date") or row.get("date") or ""
-            month_penalty = 0.0
             try:
-                if len(tanggal) >= 10 and tanggal[4] == "-":
-                    m = parse_iso_date(tanggal[:10]).month
+                if "-" in tanggal and len(tanggal) == 10 and tanggal[4] == "-":
+                    row_month = parse_iso_date(tanggal).month
+                elif "-" in tanggal:
+                    row_month = parse_display_date(tanggal).month
                 else:
-                    m = parse_display_date(tanggal[:10]).month
-                month_penalty = min(abs(m - target_month), 12 - abs(m - target_month)) * 2.0
+                    row_month = target_month
             except Exception:
-                month_penalty = 6.0
-            obs_temp = aether_value(row.get("temp_c") or row.get("observed_temp_c"))
-            obs_rh = aether_value(row.get("rh_pct"))
-            obs_rain = aether_value(row.get("rain_mm") or row.get("observed_rain_mm"))
+                row_month = target_month
+            temp = aether_value(row.get("temp_c") or row.get("observed_temp_c"))
+            rh = aether_value(row.get("rh_pct"))
+            rain = aether_value(row.get("rain_mm") or row.get("observed_rain_mm"))
             cat = row.get("category") or row.get("observed_category") or ""
-            rain_event = (obs_rain is not None and obs_rain >= 0.1) or ("Hujan" in cat)
-            score = month_penalty
-            if temp_p50 is not None and obs_temp is not None:
-                score += abs(float(temp_p50) - obs_temp)
-            if rh_p50 is not None and obs_rh is not None:
-                score += abs(float(rh_p50) - obs_rh) / 8.0
-            candidates.append((score, 1.0 if rain_event else 0.0))
-    if len(candidates) < 8:
-        return None, 0
+            obs_rain = 1 if (rain is not None and rain > 0) or ("hujan" in cat.lower()) else 0
+            month_distance = min(abs(row_month - target_month), 12 - abs(row_month - target_month))
+            dist = month_distance * 2.5
+            if temp is not None and temp_p50 is not None:
+                dist += abs(temp - temp_p50) * 1.2
+            if rh is not None and rh_p50 is not None:
+                dist += abs(rh - rh_p50) * 0.25
+            candidates.append((dist, obs_rain))
+    if len(candidates) < 5:
+        return None, len(candidates)
     candidates.sort(key=lambda item: item[0])
     selected = candidates[: min(50, len(candidates))]
-    analog = sum(value for _, value in selected) / len(selected) * 100.0
-    # Keep it as supporting memory, not a hard override.
-    blended = model_prob_rain if model_prob_rain is not None else analog
-    if model_prob_rain is not None:
-        blended = 0.75 * float(model_prob_rain) + 0.25 * analog
+    analog = sum(v for _, v in selected) / len(selected) * 100.0
+    blended = analog if model_prob_rain is None else 0.75 * float(model_prob_rain) + 0.25 * analog
     return round(blended, 1), len(selected)
-
-
-def aether_weather_regime(hour, prob_rain, prob_heavy, rh_p50, cloud_p50, uncertainty, solar_score):
-    if uncertainty is not None and uncertainty >= 75:
-        return "high_uncertainty"
-    if prob_heavy is not None and prob_heavy >= 35:
-        return "heavy_rain_threat"
-    if prob_rain is not None and prob_rain >= 65 and 12 <= hour <= 21:
-        return "convective_afternoon_evening"
-    if prob_rain is not None and prob_rain >= 55:
-        return "rainy_regime"
-    if rh_p50 is not None and rh_p50 >= 87 and (prob_rain or 0) < 35:
-        return "humid_stable"
-    if cloud_p50 is not None and cloud_p50 <= 35 and (prob_rain or 0) <= 25 and solar_score >= 6:
-        return "solar_clear_window"
-    return "normal_mixed"
 
 
 def aether_risk_label(score):
@@ -4469,611 +4350,34 @@ def aether_operational_status(trust, rain_risk, uncertainty, sources_used):
     return "GREEN"
 
 
-def aether_cost_loss_decision(probability, threshold, action_text, no_action_text):
-    if probability is None:
-        return "Tidak cukup data untuk rekomendasi cost-loss."
-    return action_text if probability >= threshold else no_action_text
-
-
-def aether_build_explanation(row):
-    reasons = []
-    if row["sources_used"]:
-        reasons.append(f"{row['sources_used']} source aktif dipakai")
-    if row["prob_rain"] != "" and float(row["prob_rain"]) >= 60:
-        reasons.append(f"peluang hujan tinggi ({row['prob_rain']}%)")
-    if row["prob_heavy_rain"] != "" and float(row["prob_heavy_rain"]) >= 25:
-        reasons.append(f"ada sinyal hujan lebat ({row['prob_heavy_rain']}%)")
-    if row["rain_p90"] != "" and float(row["rain_p90"]) >= 8:
-        reasons.append(f"rain P90 mencapai {row['rain_p90']} mm")
-    if row["uncertainty_score"] != "" and float(row["uncertainty_score"]) >= 60:
-        reasons.append("ketidakpastian model cukup besar")
-    if row["solar_score"] != "" and float(row["solar_score"]) >= 7:
-        reasons.append("potensi radiasi surya relatif baik")
-    if not reasons:
-        reasons.append("sinyal antar-source relatif netral")
-    return "Dipilih sebagai {} karena {}.".format(row["dominant_category"] or "forecast utama", "; ".join(reasons))
-
-
-def aether_build_rows(points, ensemble_rows, target_date, args):
-    grouped = {jam: [] for jam in TARGET_TIMES}
-    for point in points:
-        grouped.setdefault(point.target_time, []).append(point)
-
-    ensemble_by_jam = {row[0]: row for row in ensemble_rows}
-    micro_profile = aether_microclimate_profile(args)
-    rows = []
-    for jam in TARGET_TIMES:
-        bucket = grouped.get(jam) or []
-        ens = ensemble_by_jam.get(jam)
-        hour = int(jam.split(":")[0]) if jam and ":" in jam else 0
-        source_ids = sorted({p.source_id for p in bucket})
-        sources_used = len(bucket)
-        weights = [(p, point_weight(p)) for p in bucket]
-        weight_total = sum(w for _, w in weights)
-        expected_sources = max(len(ACTIVE_SOURCE_CONFIGS), 1)
-        coverage_fraction = round(sources_used / expected_sources, 4) if expected_sources else 0
-
-        temp_pairs = [(p.temp_c, w) for p, w in weights if p.temp_c is not None]
-        rh_pairs = [(p.rh_pct, w) for p, w in weights if p.rh_pct is not None]
-        rain_pairs = [(p.rain_mm, w) for p, w in weights if p.rain_mm is not None]
-        wind_pairs = [(p.wind_kmh, w) for p, w in weights if p.wind_kmh is not None]
-        hi_pairs = [(heat_index(p.temp_c, p.rh_pct), w) for p, w in weights if heat_index(p.temp_c, p.rh_pct) is not None]
-        cloud_pairs = aether_get_weighted_attr(bucket, "cloud_cover_pct")
-        sw_pairs = aether_get_weighted_attr(bucket, "shortwave_radiation_wm2")
-        gti_pairs = aether_get_weighted_attr(bucket, "global_tilted_irradiance_wm2")
-        precip_prob_pairs = aether_get_weighted_attr(bucket, "precip_prob_pct")
-        cape_pairs = aether_get_weighted_attr(bucket, "cape_jkg")
-
-        category_weights = {}
-        for p, w in weights:
-            category_weights[p.category] = category_weights.get(p.category, 0.0) + w
-        category_probs = {
-            cat: (category_weights.get(cat, 0.0) / weight_total * 100.0 if weight_total else 0.0)
-            for cat in CUACA_ORDER
-        }
-        dominant = max(category_weights, key=category_weights.get) if category_weights else ""
-        dominant_prob = category_probs.get(dominant, 0.0) if dominant else 0.0
-        category_disagreement = round(100.0 - dominant_prob, 2) if bucket else 100.0
-
-        prob_rain_cat = sum(category_probs.get(cat, 0.0) for cat in ("Hujan Ringan", "Hujan Sedang", "Hujan Lebat"))
-        prob_mod_heavy_cat = sum(category_probs.get(cat, 0.0) for cat in ("Hujan Sedang", "Hujan Lebat"))
-        prob_heavy_cat = category_probs.get("Hujan Lebat", 0.0)
-        precip_prob_mean = aether_weighted_mean(precip_prob_pairs)
-        prob_rain = prob_rain_cat if precip_prob_mean is None else 0.60 * prob_rain_cat + 0.40 * precip_prob_mean
-
-        rain_heavy_signal = 0.0
-        rain_moderate_signal = 0.0
-        if weight_total:
-            rain_heavy_signal = sum(w for p, w in weights if p.rain_mm is not None and p.rain_mm >= 10.0) / weight_total * 100.0
-            rain_moderate_signal = sum(w for p, w in weights if p.rain_mm is not None and p.rain_mm >= 5.0) / weight_total * 100.0
-        prob_heavy = max(prob_heavy_cat, 0.55 * prob_heavy_cat + 0.45 * rain_heavy_signal)
-        prob_mod_heavy = max(prob_mod_heavy_cat, 0.55 * prob_mod_heavy_cat + 0.45 * rain_moderate_signal)
-
-        q = lambda pairs, quant: aether_weighted_quantile(pairs, quant)
-        temp_p05, temp_p10, temp_p25, temp_p50, temp_p75, temp_p90, temp_p95 = [q(temp_pairs, x) for x in (0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95)]
-        rh_p10, rh_p50, rh_p90 = [q(rh_pairs, x) for x in (0.10, 0.50, 0.90)]
-        rain_p05, rain_p10, rain_p25, rain_p50, rain_p75, rain_p90, rain_p95 = [q(rain_pairs, x) for x in (0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95)]
-        wind_p50, wind_p90 = [q(wind_pairs, x) for x in (0.50, 0.90)]
-        hi_p50, hi_p90 = [q(hi_pairs, x) for x in (0.50, 0.90)]
-        cape_p50 = q(cape_pairs, 0.50)
-
-        cloud_p50 = q(cloud_pairs, 0.50)
-        if cloud_p50 is None and bucket:
-            cloud_proxy_pairs = [(aether_category_cloud_proxy(p.category), w) for p, w in weights]
-            cloud_p50 = q(cloud_proxy_pairs, 0.50)
-
-        # Analog memory after model probability is computed.
-        analog_prob, analog_n = aether_analog_probability(target_date, jam, args, temp_p50, rh_p50, prob_rain)
-        if analog_prob is not None:
-            prob_rain = analog_prob
-
-        temp_micro, rh_micro, fog_bonus, temp_adj, rh_adj = aether_microclimate_adjustment(micro_profile, hour, temp_p50, rh_p50)
-
-        # Solar/PV intelligence: use real radiation if present; otherwise clear-sky proxy.
-        sw_p50 = q(sw_pairs, 0.50)
-        gti_p50 = q(gti_pairs, 0.50)
-        if sw_p50 is None:
-            daylight = math.sin(math.pi * clamp((hour + 0.5 - 6.0) / 12.0, 0.0, 1.0))
-            clear_sky = max(0.0, daylight) * 950.0
-            cloud_loss = ((cloud_p50 or 70.0) / 100.0) * 0.70 + (prob_rain / 100.0) * 0.30
-            sw_p50 = round(clear_sky * clamp(1.0 - 0.85 * cloud_loss, 0.05, 1.0), 2)
-        solar_basis = gti_p50 if gti_p50 is not None else sw_p50
-        solar_score = round(clamp((solar_basis or 0.0) / 900.0 * 10.0 - (prob_rain / 100.0) * 2.0, 0.0, 10.0), 2)
-        cloud_loss_factor = round(clamp(((cloud_p50 or 70.0) / 100.0) * 0.75 + (prob_rain / 100.0) * 0.25, 0, 1), 3)
-        pv_power_index = round(clamp((solar_basis or 0.0) / 1000.0 * (1.0 - 0.004 * max((temp_micro or temp_p50 or 25.0) - 25.0, 0)), 0, 1.2), 3)
-
-        confidence_score = aether_value(ens[6]) if ens else None
-        source_health_values = [source_health_factor(p.source_id) for p in bucket]
-        source_health_mean = round(sum(source_health_values) / len(source_health_values), 4) if source_health_values else None
-        gap_values = [p.gap_minutes for p in bucket if p.gap_minutes is not None]
-        gap_mean = round(sum(gap_values) / len(gap_values), 2) if gap_values else None
-        freshness_uncertainty = clamp((gap_mean or 0.0) / 180.0 * 100.0, 0.0, 100.0)
-        health_uncertainty = 100.0 - (source_health_mean * 100.0 if source_health_mean is not None else 60.0)
-        lead_hours = aether_lead_hours(target_date, jam, args)
-        lead_uncertainty = clamp((lead_hours or 24.0) / 72.0 * 100.0, 5.0, 100.0)
-        rain_spread_uncertainty = clamp(((rain_p90 or 0.0) - (rain_p10 or 0.0)) / 15.0 * 100.0, 0.0, 100.0)
-        uncertainty_score = round(clamp(
-            0.32 * category_disagreement
-            + 0.20 * freshness_uncertainty
-            + 0.18 * health_uncertainty
-            + 0.15 * lead_uncertainty
-            + 0.15 * rain_spread_uncertainty,
-            0.0,
-            100.0,
-        ), 2)
-
-        rain_risk = round(clamp(
-            0.45 * prob_rain
-            + 0.23 * clamp((rain_p90 or 0.0) / 15.0 * 100.0, 0.0, 100.0)
-            + 0.14 * (rh_micro if rh_micro is not None else (rh_p50 or 70.0))
-            + 0.10 * category_disagreement
-            + 0.08 * (fog_bonus),
-            0.0,
-            100.0,
-        ), 2)
-        heavy_rain_risk = round(clamp(
-            0.42 * prob_heavy
-            + 0.32 * clamp((rain_p95 or rain_p90 or 0.0) / 25.0 * 100.0, 0.0, 100.0)
-            + 0.16 * category_disagreement
-            + 0.10 * clamp((cape_p50 or 0.0) / 1200.0 * 100.0, 0.0, 100.0),
-            0.0,
-            100.0,
-        ), 2)
-        flash_flood_proxy = round(clamp(0.45 * heavy_rain_risk + 0.35 * clamp((rain_p95 or 0.0) / 30.0 * 100.0, 0, 100) + 0.20 * prob_rain, 0, 100), 2)
-
-        preliminary_regime = aether_weather_regime(hour, prob_rain, prob_heavy, rh_micro or rh_p50, cloud_p50, uncertainty_score, solar_score)
-        trust = aether_trust_level(sources_used, confidence_score, uncertainty_score, coverage_fraction, source_health_mean)
-        operational_status = aether_operational_status(trust, rain_risk, uncertainty_score, sources_used)
-
-        if operational_status in {"BLACK", "RED"}:
-            autopilot_route = "CONSERVATIVE_RISK_FIRST"
-        elif preliminary_regime == "solar_clear_window" and solar_score >= 7:
-            autopilot_route = "SOLAR_OPTIMIZED"
-        elif preliminary_regime in {"convective_afternoon_evening", "heavy_rain_threat"}:
-            autopilot_route = "TROPICAL_RAIN_RISK"
-        elif analog_prob is not None and analog_n >= 20:
-            autopilot_route = "ANALOG_MEMORY_BLEND"
-        else:
-            autopilot_route = "CALIBRATED_PROBABILISTIC_ENSEMBLE"
-
-        best_case = "Berawan/Cerah berawan, hujan tidak signifikan."
-        if solar_score >= 7:
-            best_case = "Cuaca relatif cerah; jendela surya cukup baik."
-        most_likely = f"{dominant or 'Berawan'} dengan peluang hujan {round(prob_rain, 1)}%."
-        worst_case = "Hujan lokal lebih kuat dari median."
-        if rain_p95 is not None:
-            worst_case = f"Hujan lokal dapat mendekati P95 sekitar {round(rain_p95, 1)} mm pada jam ini."
-        umbrella_decision = aether_cost_loss_decision(
-            prob_rain,
-            getattr(args, "umbrella_threshold", 25.0),
-            "Bawa payung/jas hujan; cost-loss mendukung tindakan preventif.",
-            "Payung tidak wajib, tetapi tetap pantau update jika aktivitas luar ruang.",
-        )
-        solar_decision = "Prioritaskan aktivitas/charging surya pada jam ini." if solar_score >= 7 else "Potensi surya tidak optimal; gunakan estimasi konservatif."
-        fieldwork_decision = "Hindari aktivitas lapangan sensitif hujan." if rain_risk >= 60 else "Aktivitas lapangan masih mungkin, dengan monitoring ulang."
-
-        row = {
-            "tanggal": target_date.isoformat(),
-            "jam": jam,
-            "target_datetime": aether_target_datetime(target_date, jam, args.timezone).isoformat(),
-            "lead_hours": aether_round(lead_hours, 2),
-            "lead_bucket": aether_lead_bucket(lead_hours),
-            "location_slug": getattr(args, "location_slug", ""),
-            "location_name": getattr(args, "location_name", ""),
-            "microclimate_profile": micro_profile,
-            "sources_used": sources_used,
-            "sources_expected": expected_sources,
-            "source_list": ",".join(source_ids),
-            "coverage_fraction": aether_round(coverage_fraction, 4),
-            "source_health_mean": aether_round(source_health_mean, 4),
-            "gap_mean_minutes": aether_round(gap_mean, 2),
-            "dominant_category": dominant,
-            "dominant_probability": aether_round(dominant_prob, 1),
-            "prob_clear": aether_round(category_probs.get("Cerah", 0.0), 1),
-            "prob_partly_cloudy": aether_round(category_probs.get("Cerah Berawan", 0.0), 1),
-            "prob_cloudy": aether_round(category_probs.get("Berawan", 0.0), 1),
-            "prob_rain": aether_round(prob_rain, 1),
-            "prob_moderate_heavy_rain": aether_round(prob_mod_heavy, 1),
-            "prob_heavy_rain": aether_round(prob_heavy, 1),
-            "analog_prob_rain": aether_round(analog_prob, 1),
-            "analog_sample_size": analog_n,
-            "temp_p05": aether_round(temp_p05),
-            "temp_p10": aether_round(temp_p10),
-            "temp_p25": aether_round(temp_p25),
-            "temp_p50": aether_round(temp_p50),
-            "temp_p75": aether_round(temp_p75),
-            "temp_p90": aether_round(temp_p90),
-            "temp_p95": aether_round(temp_p95),
-            "temp_micro_p50": aether_round(temp_micro),
-            "temp_micro_adjustment": aether_round(temp_adj),
-            "rh_p10": aether_round(rh_p10),
-            "rh_p50": aether_round(rh_p50),
-            "rh_p90": aether_round(rh_p90),
-            "rh_micro_p50": aether_round(rh_micro),
-            "rh_micro_adjustment": aether_round(rh_adj),
-            "rain_p05": aether_round(rain_p05),
-            "rain_p10": aether_round(rain_p10),
-            "rain_p25": aether_round(rain_p25),
-            "rain_p50": aether_round(rain_p50),
-            "rain_p75": aether_round(rain_p75),
-            "rain_p90": aether_round(rain_p90),
-            "rain_p95": aether_round(rain_p95),
-            "wind_p50": aether_round(wind_p50),
-            "wind_p90": aether_round(wind_p90),
-            "heat_index_p50": aether_round(hi_p50),
-            "heat_index_p90": aether_round(hi_p90),
-            "cloud_cover_p50": aether_round(cloud_p50),
-            "shortwave_radiation_p50": aether_round(sw_p50),
-            "gti_p50": aether_round(gti_p50),
-            "cloud_loss_factor": aether_round(cloud_loss_factor, 3),
-            "solar_score": aether_round(solar_score, 2),
-            "pv_power_index": aether_round(pv_power_index, 3),
-            "cape_p50": aether_round(cape_p50),
-            "rain_risk_score": aether_round(rain_risk, 2),
-            "rain_risk_label": aether_risk_label(rain_risk),
-            "heavy_rain_risk_score": aether_round(heavy_rain_risk, 2),
-            "heavy_rain_risk_label": aether_risk_label(heavy_rain_risk),
-            "flash_flood_proxy_score": aether_round(flash_flood_proxy, 2),
-            "forecast_confidence_score": aether_round(confidence_score, 1),
-            "category_disagreement_score": aether_round(category_disagreement, 2),
-            "freshness_uncertainty": aether_round(freshness_uncertainty, 2),
-            "health_uncertainty": aether_round(health_uncertainty, 2),
-            "lead_uncertainty": aether_round(lead_uncertainty, 2),
-            "rain_spread_uncertainty": aether_round(rain_spread_uncertainty, 2),
-            "uncertainty_score": aether_round(uncertainty_score, 2),
-            "weather_regime": preliminary_regime,
-            "trust_level": trust,
-            "operational_status": operational_status,
-            "autopilot_route": autopilot_route,
-            "best_case_scenario": best_case,
-            "most_likely_scenario": most_likely,
-            "worst_case_scenario": worst_case,
-            "umbrella_decision": umbrella_decision,
-            "solar_decision": solar_decision,
-            "fieldwork_decision": fieldwork_decision,
-            "champion_route": "dynamic_calibrated_probabilistic",
-            "challenger_route": "analog_conservative" if analog_n >= 8 else "not_enough_analog_memory",
-            "explanation_strength": aether_round(clamp(100 - uncertainty_score + coverage_fraction * 20, 0, 100), 1),
-            "explanation": "",
-        }
-        row["explanation"] = aether_build_explanation(row)
-        rows.append(row)
-    return rows
-
-
 def aether_source_state_rows(results):
     rows = []
     for result in results:
         health = SOURCE_HEALTH.get(result.source_id) or {}
-        failures = int(health.get("consecutive_failures", 0) or 0)
         ema_success = aether_value(health.get("ema_success"))
-        ema_completeness = aether_value(health.get("ema_completeness"))
-        if result.success and failures == 0 and (ema_success is None or ema_success >= 0.75):
-            state = "ACTIVE"
-        elif failures >= 5 or (ema_success is not None and ema_success < 0.35):
+        consecutive = int(health.get("consecutive_failures", 0) or 0)
+        if consecutive >= 5:
             state = "QUARANTINED"
-        elif not result.success or failures >= 2:
+        elif consecutive >= 2 or (ema_success is not None and ema_success < 0.55):
             state = "DEGRADED"
-        elif failures == 1:
+        elif consecutive == 1:
             state = "RECOVERING"
         else:
-            state = "ACTIVE"
-        rows.append(
-            {
-                "source_id": result.source_id,
-                "provider": result.provider,
-                "state": state,
-                "success": "yes" if result.success else "no",
-                "points_collected": len(result.points),
-                "ema_success": aether_round(ema_success, 4),
-                "ema_completeness": aether_round(ema_completeness, 4),
-                "consecutive_failures": failures,
-                "http_status": result.http_status if result.http_status is not None else "",
-                "duration_ms": result.duration_ms if result.duration_ms is not None else "",
-                "last_error": result.error,
-            }
-        )
+            state = "ACTIVE" if result.success else "DEGRADED"
+        rows.append({
+            "source_id": result.source_id,
+            "provider": result.provider,
+            "state": state,
+            "success": result.success,
+            "points": len(result.points),
+            "ema_success": aether_round(ema_success, 4),
+            "ema_completeness": health.get("ema_completeness", ""),
+            "consecutive_failures": consecutive,
+            "http_status": result.http_status if result.http_status is not None else "",
+            "duration_ms": result.duration_ms if result.duration_ms is not None else "",
+            "error": result.error,
+        })
     return rows
-
-
-def aether_daily_summary(aether_rows, args):
-    if not aether_rows:
-        return {}
-    def row_float(row, key):
-        return aether_value(row.get(key))
-    max_rain = max(aether_rows, key=lambda r: row_float(r, "rain_risk_score") or -1)
-    max_heavy = max(aether_rows, key=lambda r: row_float(r, "heavy_rain_risk_score") or -1)
-    best_solar = max(aether_rows, key=lambda r: row_float(r, "solar_score") or -1)
-    worst_unc = max(aether_rows, key=lambda r: row_float(r, "uncertainty_score") or -1)
-    status_rank = {"GREEN": 1, "YELLOW": 2, "RED": 3, "BLACK": 4}
-    worst_status = max(aether_rows, key=lambda r: status_rank.get(r.get("operational_status"), 0)).get("operational_status")
-    rain_hours = [r["jam"] for r in aether_rows if (row_float(r, "prob_rain") or 0) >= 50]
-    solar_hours = [r["jam"] for r in aether_rows if (row_float(r, "solar_score") or 0) >= 7]
-    return {
-        "aether_version": AETHER_VERSION,
-        "generated_at": now_local(args.timezone).isoformat(),
-        "location_slug": getattr(args, "location_slug", ""),
-        "location_name": getattr(args, "location_name", ""),
-        "timezone": getattr(args, "timezone", DEFAULT_TIMEZONE),
-        "daily_operational_status": worst_status,
-        "peak_rain_risk_hour": max_rain.get("jam"),
-        "peak_rain_risk_score": max_rain.get("rain_risk_score"),
-        "peak_heavy_rain_risk_hour": max_heavy.get("jam"),
-        "peak_heavy_rain_risk_score": max_heavy.get("heavy_rain_risk_score"),
-        "best_solar_hour": best_solar.get("jam"),
-        "best_solar_score": best_solar.get("solar_score"),
-        "highest_uncertainty_hour": worst_unc.get("jam"),
-        "highest_uncertainty_score": worst_unc.get("uncertainty_score"),
-        "rain_window_hours": rain_hours,
-        "solar_window_hours": solar_hours,
-        "summary_text": aether_make_daily_narrative(aether_rows, max_rain, best_solar, worst_unc, worst_status),
-    }
-
-
-def aether_make_daily_narrative(aether_rows, max_rain, best_solar, worst_unc, worst_status):
-    rain_score = max_rain.get("rain_risk_score", "")
-    solar_score = best_solar.get("solar_score", "")
-    unc = worst_unc.get("uncertainty_score", "")
-    return (
-        f"Status operasional harian: {worst_status}. Risiko hujan tertinggi sekitar pukul "
-        f"{max_rain.get('jam')} dengan skor {rain_score}. Jendela surya terbaik sekitar pukul "
-        f"{best_solar.get('jam')} dengan skor {solar_score}. Ketidakpastian tertinggi muncul sekitar "
-        f"pukul {worst_unc.get('jam')} dengan skor {unc}. Gunakan rute autopilot dan trust level per jam "
-        "untuk keputusan aktivitas luar ruang maupun estimasi PV."
-    )
-
-
-def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
-    def esc(x):
-        return html.escape(str(x if x is not None else ""))
-    rows_html = []
-    for r in aether_rows:
-        rows_html.append(
-            "<tr>"
-            f"<td>{esc(r['jam'])}</td>"
-            f"<td>{esc(r['dominant_category'])}</td>"
-            f"<td>{esc(r['prob_rain'])}%</td>"
-            f"<td>{esc(r['rain_p90'])}</td>"
-            f"<td>{esc(r['temp_micro_p50'] or r['temp_p50'])}</td>"
-            f"<td>{esc(r['solar_score'])}</td>"
-            f"<td>{esc(r['rain_risk_label'])}</td>"
-            f"<td>{esc(r['trust_level'])}</td>"
-            f"<td>{esc(r['operational_status'])}</td>"
-            f"<td>{esc(r['autopilot_route'])}</td>"
-            "</tr>"
-        )
-    source_html = []
-    for s in source_state_rows:
-        source_html.append(
-            "<tr>"
-            f"<td>{esc(s['source_id'])}</td>"
-            f"<td>{esc(s['state'])}</td>"
-            f"<td>{esc(s['success'])}</td>"
-            f"<td>{esc(s['points_collected'])}</td>"
-            f"<td>{esc(s['ema_success'])}</td>"
-            f"<td>{esc(s['duration_ms'])}</td>"
-            "</tr>"
-        )
-    rain_bars = []
-    for r in aether_rows:
-        prob = aether_value(r.get("prob_rain")) or 0
-        solar = aether_value(r.get("solar_score")) or 0
-        rain_bars.append(f"<div class='barrow'><span>{esc(r['jam'])}</span><div class='bar'><i style='width:{clamp(prob,0,100)}%'></i></div><b>{round(prob)}%</b><em>solar {solar}/10</em></div>")
-    document = f"""<!doctype html>
-<html lang="id">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{esc(AETHER_VERSION)} — {esc(args.location_name)}</title>
-<style>
-body{{font-family:Arial,system-ui,sans-serif;margin:24px;background:#f7f8fb;color:#101828}}
-.card{{background:white;border:1px solid #e5e7eb;border-radius:14px;padding:18px;margin:14px 0;box-shadow:0 6px 18px rgba(16,24,40,.06)}}
-h1,h2{{margin:.2rem 0 1rem}} table{{width:100%;border-collapse:collapse;font-size:13px}} th,td{{border-bottom:1px solid #edf0f3;padding:8px;text-align:left}} th{{background:#f1f5f9}}
-.badge{{display:inline-block;padding:6px 10px;border-radius:99px;background:#eef2ff;margin-right:6px}}
-.barrow{{display:grid;grid-template-columns:55px 1fr 42px 90px;gap:10px;align-items:center;margin:6px 0}}
-.bar{{height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden}} .bar i{{display:block;height:100%;background:#334155}}
-small{{color:#667085}} code{{background:#f2f4f7;padding:2px 5px;border-radius:4px}}
-</style>
-</head>
-<body>
-<h1>{esc(AETHER_VERSION)}</h1>
-<div class="card">
-<span class="badge">Lokasi: {esc(args.location_name)}</span>
-<span class="badge">Status: {esc(daily.get('daily_operational_status',''))}</span>
-<span class="badge">Generated: {esc(daily.get('generated_at',''))}</span>
-<p>{esc(daily.get('summary_text',''))}</p>
-</div>
-<div class="card"><h2>Rain Probability & Solar Score</h2>{''.join(rain_bars)}</div>
-<div class="card"><h2>Hourly Intelligence Table</h2><table><thead><tr><th>Jam</th><th>Dominan</th><th>Prob Hujan</th><th>Rain P90</th><th>Temp μclimate</th><th>Solar</th><th>Risk</th><th>Trust</th><th>Status</th><th>Route</th></tr></thead><tbody>{''.join(rows_html)}</tbody></table></div>
-<div class="card"><h2>Source State</h2><table><thead><tr><th>Source</th><th>State</th><th>Success</th><th>Points</th><th>EMA Success</th><th>Latency</th></tr></thead><tbody>{''.join(source_html)}</tbody></table></div>
-<div class="card"><h2>Forecast Contract</h2><p>Forecast ini adalah local post-processing intelligence, bukan pengganti peringatan resmi BMKG. Gunakan status BLACK/RED/YELLOW/GREEN dan trust level sebagai batas kepercayaan.</p></div>
-</body></html>"""
-    write_json(path_output("dashboard_manifest_aether_v15.json"), {"dashboard": path_output(AETHER_DASHBOARD_FILENAME), "generated_at": now_local(args.timezone).isoformat()})
-    def writer_fn(f):
-        f.write(document)
-    atomic_write_text(path_output(AETHER_DASHBOARD_FILENAME), writer_fn)
-
-
-def aether_write_report(aether_rows, daily, args):
-    lines = []
-    lines.append(f"# {AETHER_VERSION}")
-    lines.append("")
-    lines.append(f"Lokasi: **{args.location_name}**  ")
-    lines.append(f"Generated: {daily.get('generated_at','')}  ")
-    lines.append(f"Status operasional harian: **{daily.get('daily_operational_status','')}**")
-    lines.append("")
-    lines.append("## Executive Summary")
-    lines.append(daily.get("summary_text", ""))
-    lines.append("")
-    lines.append("## Jam Kritis")
-    lines.append(f"- Risiko hujan tertinggi: **{daily.get('peak_rain_risk_hour')}** skor {daily.get('peak_rain_risk_score')}")
-    lines.append(f"- Risiko hujan lebat tertinggi: **{daily.get('peak_heavy_rain_risk_hour')}** skor {daily.get('peak_heavy_rain_risk_score')}")
-    lines.append(f"- Jendela surya terbaik: **{daily.get('best_solar_hour')}** skor {daily.get('best_solar_score')}")
-    lines.append(f"- Ketidakpastian tertinggi: **{daily.get('highest_uncertainty_hour')}** skor {daily.get('highest_uncertainty_score')}")
-    lines.append("")
-    lines.append("## Hourly Forecast")
-    lines.append("| Jam | Dominan | Prob Hujan | Rain P90 | Temp P50 μclimate | Solar | Risk | Trust | Status |")
-    lines.append("|---|---:|---:|---:|---:|---:|---|---|---|")
-    for r in aether_rows:
-        lines.append(f"| {r['jam']} | {r['dominant_category']} | {r['prob_rain']}% | {r['rain_p90']} | {r['temp_micro_p50'] or r['temp_p50']} | {r['solar_score']} | {r['rain_risk_label']} | {r['trust_level']} | {r['operational_status']} |")
-    lines.append("")
-    lines.append("## Catatan")
-    lines.append("Forecast ini memakai post-processing multi-source, analog memory jika data tersedia, microclimate correction heuristik, dan risk-first autopilot. Untuk keputusan keselamatan ekstrem, tetap rujuk peringatan resmi BMKG.")
-    def writer_fn(f):
-        f.write("\n".join(lines))
-    atomic_write_text(path_output(AETHER_REPORT_FILENAME), writer_fn)
-
-
-def aether_write_contract(daily, args):
-    payload = {
-        "aether_version": AETHER_VERSION,
-        "generated_at": now_local(args.timezone).isoformat(),
-        "location": getattr(args, "location_name", ""),
-        "status": daily.get("daily_operational_status"),
-        "validity_contract": {
-            "spatial_scope": "Local point forecast; hujan konvektif dapat meleset beberapa kilometer.",
-            "strongest_for": ["temperature tendency", "relative humidity tendency", "rain risk window", "solar potential window"],
-            "weakest_for": ["exact convective rain intensity", "street-scale rainfall", "extreme weather safety decision"],
-            "do_not_use_when": ["operational_status BLACK", "source coverage sangat rendah", "API banyak gagal", "keputusan keselamatan ekstrem tanpa rujukan resmi"],
-            "official_warning_note": "Gunakan peringatan resmi BMKG untuk cuaca ekstrem dan keselamatan publik.",
-        },
-    }
-    write_json(path_output(AETHER_CONTRACT_FILENAME), payload)
-
-
-def aether_store_ledger(run_id, target_date, results, source_rows, aether_rows, daily, args):
-    conn = aether_connect_db()
-    try:
-        aether_init_db(conn)
-        conn.execute(
-            """INSERT OR REPLACE INTO forecast_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (
-                run_id,
-                now_local(args.timezone).isoformat(),
-                AETHER_VERSION,
-                getattr(args, "location_slug", ""),
-                getattr(args, "location_name", ""),
-                target_date.isoformat(),
-                getattr(args, "timezone", DEFAULT_TIMEZONE),
-                getattr(args, "latitude", None),
-                getattr(args, "longitude", None),
-                len(results),
-                sum(1 for r in results if r.success),
-                daily.get("daily_operational_status", ""),
-                "mixed_autopilot",
-            ),
-        )
-        for row in source_rows:
-            try:
-                target_dt = aether_target_datetime(target_date, row[3], args.timezone).isoformat()
-            except Exception:
-                target_dt = ""
-            conn.execute(
-                """INSERT INTO source_forecasts
-                (run_id,target_datetime,target_jam,source_id,provider,source_datetime,temp_c,rh_pct,rain_mm,wind_kmh,category,point_weight,gap_minutes,raw_condition)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (
-                    run_id, target_dt, row[3], row[1], row[2], row[4],
-                    aether_value(row[5]), aether_value(row[6]), aether_value(row[7]), aether_value(row[8]),
-                    row[11], aether_value(row[10]), aether_value(row[9]), row[12],
-                ),
-            )
-        for r in aether_rows:
-            conn.execute(
-                """INSERT INTO aether_forecasts
-                (run_id,target_datetime,jam,dominant_category,trust_level,operational_status,autopilot_route,weather_regime,temp_p50,temp_p90,rain_p50,rain_p90,prob_rain,prob_heavy_rain,rain_risk_score,heavy_rain_risk_score,solar_score,uncertainty_score,explanation)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (
-                    run_id, r.get("target_datetime"), r.get("jam"), r.get("dominant_category"), r.get("trust_level"),
-                    r.get("operational_status"), r.get("autopilot_route"), r.get("weather_regime"),
-                    aether_value(r.get("temp_p50")), aether_value(r.get("temp_p90")), aether_value(r.get("rain_p50")), aether_value(r.get("rain_p90")),
-                    aether_value(r.get("prob_rain")), aether_value(r.get("prob_heavy_rain")), aether_value(r.get("rain_risk_score")),
-                    aether_value(r.get("heavy_rain_risk_score")), aether_value(r.get("solar_score")), aether_value(r.get("uncertainty_score")),
-                    r.get("explanation"),
-                ),
-            )
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def aether_v15_save_artifacts(target_date, results, args, source_rows, status_rows, ensemble_rows):
-    points = flatten_points(results)
-    aether_rows = aether_build_rows(points, ensemble_rows, target_date, args)
-    if aether_rows:
-        write_dict_csv(path_output(AETHER_CSV_FILENAME), list(aether_rows[0].keys()), aether_rows)
-        write_dict_csv(path_output(f"aether_v15_{target_date.strftime('%Y%m%d')}.csv"), list(aether_rows[0].keys()), aether_rows)
-    source_states = aether_source_state_rows(results)
-    if source_states:
-        write_dict_csv(path_output(AETHER_SOURCE_STATE_FILENAME), list(source_states[0].keys()), source_states)
-    daily = aether_daily_summary(aether_rows, args)
-    payload = {"daily": daily, "hourly": aether_rows, "source_states": source_states}
-    write_json(path_output(AETHER_JSON_FILENAME), payload)
-    write_json(path_output(f"aether_v15_{target_date.strftime('%Y%m%d')}.json"), payload)
-    aether_write_dashboard(aether_rows, source_states, daily, args)
-    aether_write_report(aether_rows, daily, args)
-    aether_write_contract(daily, args)
-    run_id = f"{getattr(args, 'location_slug', 'location')}_{target_date.strftime('%Y%m%d')}_{now_local(args.timezone).strftime('%Y%m%d%H%M%S')}"
-    try:
-        aether_store_ledger(run_id, target_date, results, source_rows, aether_rows, daily, args)
-    except Exception as exc:
-        log_warning("AETHER ledger gagal ditulis:", exc)
-    return {
-        "version": AETHER_VERSION,
-        "run_id": run_id,
-        "csv": path_output(AETHER_CSV_FILENAME),
-        "json": path_output(AETHER_JSON_FILENAME),
-        "dashboard": path_output(AETHER_DASHBOARD_FILENAME),
-        "report": path_output(AETHER_REPORT_FILENAME),
-        "contract": path_output(AETHER_CONTRACT_FILENAME),
-        "ledger": aether_db_path(),
-        "daily_operational_status": daily.get("daily_operational_status"),
-        "autopilot_summary": daily.get("summary_text"),
-    }
-
-
-def aether_regenerate_dashboard_for_location(args):
-    rows = read_dict_csv(path_output(AETHER_CSV_FILENAME))
-    states = read_dict_csv(path_output(AETHER_SOURCE_STATE_FILENAME))
-    daily_payload = read_json(path_output(AETHER_JSON_FILENAME), default={}) or {}
-    daily = daily_payload.get("daily") or aether_daily_summary(rows, args)
-    aether_write_dashboard(rows, states, daily, args)
-    aether_write_report(rows, daily, args)
-    return {"dashboard": path_output(AETHER_DASHBOARD_FILENAME), "report": path_output(AETHER_REPORT_FILENAME)}
-
-
-def aether_doctor_for_location(args):
-    checks = []
-    def add(name, ok, detail=""):
-        checks.append({"check": name, "ok": "yes" if ok else "no", "detail": str(detail)})
-    try:
-        ensure_directory(ACTIVE_OUTPUT_DIR)
-        add("output_dir_writable", True, ACTIVE_OUTPUT_DIR)
-    except Exception as exc:
-        add("output_dir_writable", False, exc)
-    try:
-        ZoneInfo(args.timezone)
-        add("timezone_valid", True, args.timezone)
-    except Exception as exc:
-        add("timezone_valid", False, exc)
-    try:
-        conn = aether_connect_db(); aether_init_db(conn); conn.close()
-        add("sqlite_ledger", True, aether_db_path())
-    except Exception as exc:
-        add("sqlite_ledger", False, exc)
-    try:
-        validate_location_config(LocationConfig(args.location_slug, args.location_name, args.adm4, args.latitude, args.longitude, args.timezone))
-        add("location_config", True, f"{args.latitude},{args.longitude} adm4={args.adm4}")
-    except Exception as exc:
-        add("location_config", False, exc)
-    for config in ACTIVE_SOURCE_CONFIGS:
-        add(f"preview_url_{config['source_id']}", True, preview_request_url(config, args))
-    add("metno_user_agent", True, getattr(args, "metno_user_agent", "") or "weather-ensemble-multi-location/3.1 (contact: local-script)")
-    add("target_hours", len(TARGET_TIMES) > 0, ",".join(TARGET_TIMES))
-    add("aether_extra_vars", True, "ON" if getattr(args, "aether_extra_vars", False) else "OFF; solar uses proxy if no radiation variables")
-    write_dict_csv(path_output("doctor_aether_v15.csv"), ["check", "ok", "detail"], checks)
-    write_json(path_output("doctor_aether_v15.json"), {"checks": checks, "generated_at": now_local(args.timezone).isoformat()})
-    return checks
 
 
 def aether_feedback_for_location(args):
@@ -5096,69 +4400,969 @@ def aether_feedback_for_location(args):
     write_dict_csv(path_output(AETHER_FEEDBACK_FILENAME), list(row.keys()), rows)
     try:
         conn = aether_connect_db(); aether_init_db(conn)
-        conn.execute(
-            "INSERT INTO feedback(created_at,location_slug,target_date,jam,observed_category,observed_rain_mm,observed_temp_c,note) VALUES (?,?,?,?,?,?,?,?)",
-            (row["created_at"], row["location_slug"], row["target_date"], row["jam"], row["observed_category"], aether_value(row["observed_rain_mm"]), aether_value(row["observed_temp_c"]), row["note"]),
-        )
+        conn.execute("INSERT INTO feedback(created_at,location_slug,target_date,jam,observed_category,observed_rain_mm,observed_temp_c,note) VALUES (?,?,?,?,?,?,?,?)", (row["created_at"], row["location_slug"], row["target_date"], row["jam"], row["observed_category"], aether_value(row["observed_rain_mm"]), aether_value(row["observed_temp_c"]), row["note"]))
         conn.commit(); conn.close()
     except Exception as exc:
         log_warning("Gagal simpan feedback ke SQLite:", exc)
     return row
 
+# AETHER SENTINEL X — Risk, Scenario, Failure & Decision Intelligence Override
+# -----------------------------------------------------------------------------
+# This block defines the Sentinel X post-processing layer.
+# It focuses the system into a hyperlocal
+# atmospheric risk command center: situation awareness, multi-reality scenarios,
+# failure prediction, self-doubt, threat matrix, decision intelligence, forecast
+# constitution, red-team testing, autopsy, and skill-league scaffolding.
+
+SENTINEL_CONSTITUTION = [
+    "Do not assign high trust when source coverage is weak.",
+    "Do not hide source disagreement; disagreement is a risk signal.",
+    "Do not treat rainfall mean as the only reality; always preserve P90/P95 worst-case signals.",
+    "Do not treat BMKG rain proxy as precise rain_mm observation.",
+    "For local convective rain, communicate timing and spatial displacement uncertainty.",
+    "If the forecast may fail, say how and why it may fail.",
+    "When decision cost is asymmetric, prefer safety-first interpretation.",
+    "If data quality is poor, use BLACK/RED status and avoid confident recommendations.",
+    "Every forecast must include reasoning, limitations, and a recommended action.",
+    "The system learns from observations and feedback, but never replaces official warnings.",
+]
+
+
+def sentinel_grade(score, invert=False):
+    if score in (None, ""):
+        return "unknown"
+    try:
+        score = float(score)
+        if invert:
+            score = 100 - score
+    except Exception:
+        return "unknown"
+    if score >= 80:
+        return "very_high"
+    if score >= 60:
+        return "high"
+    if score >= 35:
+        return "medium"
+    return "low"
+
+
+def sentinel_predictability(forecast_stress, uncertainty, displacement):
+    stress = max(aether_value(forecast_stress) or 0, aether_value(uncertainty) or 0, aether_value(displacement) or 0)
+    if stress >= 80:
+        return "VERY_LOW"
+    if stress >= 65:
+        return "LOW"
+    if stress >= 45:
+        return "MEDIUM"
+    return "HIGH"
+
+
+def sentinel_location_personality(args):
+    profile = aether_microclimate_profile(args)
+    slug_name = f"{getattr(args, 'location_slug', '')} {getattr(args, 'location_name', '')}".lower()
+    if profile == "valley_highland" or "jatinangor" in slug_name:
+        return {
+            "personality": "valley_humid_convective",
+            "convective_sensitivity": "high",
+            "rain_displacement_risk": "high",
+            "morning_humidity_memory": "high",
+            "forecast_difficulty": "medium_high",
+            "notes": "Lembah/dataran tinggi lokal; timing hujan dan kabut/kelembapan pagi perlu dibaca konservatif.",
+        }
+    if profile == "urban_highland" or "dago" in slug_name or "bandung" in slug_name:
+        return {
+            "personality": "urban_highland_local_rain",
+            "convective_sensitivity": "high",
+            "rain_displacement_risk": "high",
+            "morning_humidity_memory": "medium",
+            "forecast_difficulty": "medium_high",
+            "notes": "Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama.",
+        }
+    if profile == "lowland_agriculture" or "cirebon" in slug_name or "arjawinangun" in slug_name:
+        return {
+            "personality": "lowland_heat_humidity",
+            "convective_sensitivity": "medium",
+            "rain_displacement_risk": "medium",
+            "morning_humidity_memory": "medium",
+            "forecast_difficulty": "medium",
+            "notes": "Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau.",
+        }
+    return {
+        "personality": "generic_hyperlocal",
+        "convective_sensitivity": "medium",
+        "rain_displacement_risk": "medium",
+        "morning_humidity_memory": "medium",
+        "forecast_difficulty": "medium",
+        "notes": "Profil generik; gunakan feedback lokal agar Sentinel makin spesifik.",
+    }
+
+
+def sentinel_atmospheric_mode(hour, prob_rain, prob_heavy, rh_p50, cloud_p50, uncertainty, cape_p50):
+    pr = aether_value(prob_rain) or 0
+    ph = aether_value(prob_heavy) or 0
+    rh = aether_value(rh_p50) or 0
+    cloud = aether_value(cloud_p50) if aether_value(cloud_p50) is not None else 65
+    unc = aether_value(uncertainty) or 0
+    cape = aether_value(cape_p50) or 0
+    if unc >= 78:
+        return "HIGH_UNCERTAINTY_ATMOSPHERE"
+    if ph >= 28 or (pr >= 70 and cape >= 700):
+        return "HEAVY_RAIN_WATCH"
+    if 12 <= hour <= 19 and rh >= 78 and (pr >= 45 or cloud >= 72):
+        return "HUMID_CONVECTIVE_AFTERNOON"
+    if 19 <= hour <= 23 and pr >= 45:
+        return "EVENING_RAIN_RESIDUAL"
+    if 0 <= hour <= 8 and rh >= 86 and pr < 35:
+        return "HUMID_STABLE_MORNING"
+    if pr <= 25 and cloud <= 45 and unc <= 45:
+        return "STABLE_LOW_RAIN"
+    if pr >= 50:
+        return "RAIN_TRANSITION"
+    return "MIXED_LOCAL_ATMOSPHERE"
+
+
+def sentinel_failure_mode(mode, prob_rain, uncertainty, displacement, rain_p90, category_disagreement):
+    pr = aether_value(prob_rain) or 0
+    unc = aether_value(uncertainty) or 0
+    disp = aether_value(displacement) or 0
+    p90 = aether_value(rain_p90) or 0
+    disag = aether_value(category_disagreement) or 0
+    if mode in {"HUMID_CONVECTIVE_AFTERNOON", "HEAVY_RAIN_WATCH"} and disp >= 60:
+        return "rain_cell_displacement"
+    if pr >= 45 and unc >= 55:
+        return "rain_timing_error"
+    if p90 >= 8 and pr < 55:
+        return "underestimated_intensity_tail"
+    if disag >= 60:
+        return "category_disagreement_error"
+    if pr < 30 and p90 < 3:
+        return "low_failure_risk_non_rain"
+    return "general_uncertainty"
+
+
+def sentinel_multi_reality(prob_rain, prob_heavy, displacement, uncertainty, rain_p90):
+    pr = clamp(aether_value(prob_rain) or 0, 0, 100)
+    ph = clamp(aether_value(prob_heavy) or 0, 0, 100)
+    disp = clamp(aether_value(displacement) or 0, 0, 100)
+    unc = clamp(aether_value(uncertainty) or 0, 0, 100)
+    p90 = aether_value(rain_p90) or 0
+    dry_miss = clamp((100 - pr) * 0.55 + disp * 0.25 + unc * 0.10, 2, 70)
+    nearby = clamp(pr * (disp / 100.0) * 0.55 + unc * 0.18, 3, 55)
+    direct_light = clamp(pr * (1 - ph / 120.0) * 0.45, 3, 60)
+    direct_moderate = clamp(pr * 0.18 + max(p90 - 4, 0) * 2.0, 1, 45)
+    convective_burst = clamp(ph * 0.40 + max(p90 - 9, 0) * 2.8 + unc * 0.08, 0, 35)
+    vals = [dry_miss, nearby, direct_light, direct_moderate, convective_burst]
+    total = sum(vals) or 1
+    norm = [round(v / total * 100, 1) for v in vals]
+    # compensate rounding
+    diff = round(100 - sum(norm), 1)
+    norm[2] = round(norm[2] + diff, 1)
+    labels = ["dry_miss", "nearby_rain_only", "direct_light_rain", "direct_moderate_rain", "convective_burst"]
+    return dict(zip(labels, norm))
+
+
+def sentinel_threat_level(score):
+    if score >= 80:
+        return "VERY_HIGH"
+    if score >= 60:
+        return "HIGH"
+    if score >= 35:
+        return "MEDIUM"
+    return "LOW"
+
+
+def sentinel_activity_score(base, penalty):
+    return int(round(clamp(base - penalty, 0, 10)))
+
+
+def sentinel_decision(row, args):
+    mission = getattr(args, "mission", "safety_first") or "safety_first"
+    rain = aether_value(row.get("rain_threat_score")) or 0
+    heavy = aether_value(row.get("heavy_rain_threat_score")) or 0
+    failure = aether_value(row.get("forecast_failure_risk")) or 0
+    hour = int(str(row.get("jam", "00:00")).split(":")[0])
+    threshold = aether_value(getattr(args, "decision_risk_threshold", 55.0)) or 55.0
+    if mission in {"avoid_rain", "commute", "safety_first"}:
+        threshold = min(threshold, 45)
+    elif mission in {"outdoor_event", "sport", "photography"}:
+        threshold = min(threshold, 50)
+    elif mission == "laundry":
+        threshold = 35
+    if max(rain, heavy, failure * 0.65) >= threshold:
+        if mission == "laundry":
+            return "Jangan andalkan jemur luar ruang pada jam ini; pilih window yang lebih kering atau indoor backup."
+        if mission == "fieldwork":
+            return "Fieldwork sebaiknya dilakukan sebelum risk peak; siapkan opsi berhenti/berlindung saat hujan lokal terbentuk."
+        if mission == "outdoor_event":
+            return "Event outdoor perlu plan B indoor/teduh; risiko utama adalah hujan lokal dan timing yang bisa bergeser."
+        if mission == "sport":
+            return "Olahraga outdoor kurang ideal jika mendekati risk peak; pantau update 1–3 jam sebelumnya."
+        if mission == "photography":
+            return "Fotografi outdoor masih mungkin, tetapi siapkan perubahan rute karena nearby rain dan cloud build-up."
+        if mission == "research":
+            return "Tandai jam ini sebagai kasus high-value untuk verifikasi; uncertainty dan failure risk layak dianalisis."
+        return "Bawa payung/jas hujan dan gunakan interpretasi konservatif, terutama jika keluar setelah siang."
+    if 7 <= hour <= 11:
+        return "Window relatif baik untuk aktivitas luar ruang, tetapi tetap cek update menjelang siang."
+    return "Risiko relatif terkendali; keputusan normal masih masuk akal dengan pemantauan berkala."
+
+
+def sentinel_expert_council(row, args):
+    items = []
+    pr = aether_value(row.get("prob_rain")) or 0
+    ph = aether_value(row.get("prob_heavy_rain")) or 0
+    unc = aether_value(row.get("uncertainty_score")) or 0
+    disp = aether_value(row.get("rain_displacement_risk")) or 0
+    p90 = aether_value(row.get("rain_p90")) or 0
+    mode = row.get("atmospheric_mode") or "UNKNOWN"
+    if pr >= 55:
+        items.append("Local Signal Analyst: sinyal hujan cukup kuat untuk mengaktifkan rain-risk window.")
+    else:
+        items.append("Local Signal Analyst: sinyal hujan belum dominan, tetapi tetap membaca tail-risk dari P90/P95.")
+    if unc >= 60:
+        items.append("Uncertainty Auditor: disagreement/spread cukup tinggi; forecast tidak boleh dipakai sebagai kepastian tunggal.")
+    else:
+        items.append("Uncertainty Auditor: agreement relatif masih dapat diterima untuk keputusan umum.")
+    if disp >= 60:
+        items.append("Rain Displacement Analyst: hujan sekitar lokasi lebih mungkin daripada direct-hit yang presisi.")
+    if ph >= 25 or p90 >= 8:
+        items.append("Risk Officer: worst-case hujan sedang/lebat perlu tetap ditampilkan walaupun skenario utama lebih ringan.")
+    if mode in {"HUMID_CONVECTIVE_AFTERNOON", "HEAVY_RAIN_WATCH"}:
+        items.append("Tropical Rain Specialist: gunakan mode konservatif karena hujan konvektif lokal rawan salah timing/posisi.")
+    analog_n = int(aether_value(row.get("analog_cases")) or 0)
+    if analog_n > 0:
+        items.append(f"Analog Memory Analyst: {analog_n} kasus lokal historis/feedback ikut memodifikasi peluang hujan.")
+    items.append(f"Decision Judge: mission={getattr(args, 'mission', 'safety_first')} → {row.get('decision_recommendation','')}")
+    return " | ".join(items)
+
+
+def sentinel_counterfactual(row):
+    factors = []
+    if aether_value(row.get("rh_p50")) is not None and (aether_value(row.get("rh_p50")) or 0) >= 82:
+        factors.append("Jika RH turun ±10%, rain support kemungkinan turun signifikan.")
+    if (aether_value(row.get("category_disagreement")) or 0) >= 50:
+        factors.append("Jika kategori antar-source lebih sepakat, trust level akan naik.")
+    if (aether_value(row.get("rain_p90")) or 0) >= 8:
+        factors.append("Jika rain P90 turun di bawah 5 mm, worst-case scenario akan melemah.")
+    if (aether_value(row.get("rain_displacement_risk")) or 0) >= 55:
+        factors.append("Jika grid/nearby signal mendukung direct-hit, dry-miss probability akan turun.")
+    if not factors:
+        factors.append("Faktor pengubah utama belum dominan; forecast relatif dikendalikan oleh consensus source.")
+    return " ".join(factors[:3])
+
+
+def sentinel_forecast_contract_summary(row):
+    status = row.get("operational_status")
+    if status == "BLACK":
+        return "Jangan percaya output untuk keputusan penting; data/source coverage tidak layak."
+    if status == "RED":
+        return "Gunakan sebagai warning/risk signal, bukan timing presisi."
+    if status == "YELLOW":
+        return "Boleh dipakai untuk keputusan umum dengan plan B dan update berkala."
+    return "Boleh dipakai untuk rencana umum; tetap bukan peringatan resmi cuaca ekstrem."
+
+
+def sentinel_build_explanation(row):
+    reasons = []
+    if row.get("atmospheric_mode"):
+        reasons.append(f"mode atmosfer {row['atmospheric_mode']}")
+    if row.get("sources_used"):
+        reasons.append(f"{row['sources_used']} source aktif")
+    if aether_value(row.get("prob_rain")) is not None and (aether_value(row.get("prob_rain")) or 0) >= 55:
+        reasons.append(f"probabilitas hujan {row['prob_rain']}%")
+    if aether_value(row.get("rain_p90")) is not None and (aether_value(row.get("rain_p90")) or 0) >= 7:
+        reasons.append(f"rain P90 {row['rain_p90']} mm")
+    if aether_value(row.get("rain_displacement_risk")) is not None and (aether_value(row.get("rain_displacement_risk")) or 0) >= 60:
+        reasons.append("risiko displacement hujan tinggi")
+    if aether_value(row.get("forecast_failure_risk")) is not None and (aether_value(row.get("forecast_failure_risk")) or 0) >= 60:
+        reasons.append(f"failure risk {row['forecast_failure_risk']}/100")
+    if not reasons:
+        reasons.append("sinyal atmosfer relatif netral")
+    return "Sentinel memilih interpretasi ini karena " + "; ".join(reasons) + "."
+
+
+def aether_build_rows(points, ensemble_rows, target_date, args):
+    grouped = {jam: [] for jam in TARGET_TIMES}
+    for point in points:
+        grouped.setdefault(point.target_time, []).append(point)
+    ensemble_by_jam = {row[0]: row for row in ensemble_rows}
+    micro_profile = aether_microclimate_profile(args)
+    personality = sentinel_location_personality(args)
+    rows = []
+    for jam in TARGET_TIMES:
+        bucket = grouped.get(jam) or []
+        ens = ensemble_by_jam.get(jam)
+        hour = int(jam.split(":")[0]) if jam and ":" in jam else 0
+        source_ids = sorted({p.source_id for p in bucket})
+        sources_used = len(bucket)
+        weights = [(p, point_weight(p)) for p in bucket]
+        weight_total = sum(w for _, w in weights)
+        expected_sources = max(len(ACTIVE_SOURCE_CONFIGS), 1)
+        coverage_fraction = round(sources_used / expected_sources, 4) if expected_sources else 0
+
+        temp_pairs = [(p.temp_c, w) for p, w in weights if p.temp_c is not None]
+        rh_pairs = [(p.rh_pct, w) for p, w in weights if p.rh_pct is not None]
+        rain_pairs = [(p.rain_mm, w) for p, w in weights if p.rain_mm is not None]
+        wind_pairs = [(p.wind_kmh, w) for p, w in weights if p.wind_kmh is not None]
+        gust_pairs = aether_get_weighted_attr(bucket, "wind_gusts_kmh")
+        hi_pairs = [(heat_index(p.temp_c, p.rh_pct), w) for p, w in weights if heat_index(p.temp_c, p.rh_pct) is not None]
+        cloud_pairs = aether_get_weighted_attr(bucket, "cloud_cover_pct")
+        precip_prob_pairs = aether_get_weighted_attr(bucket, "precip_prob_pct")
+        cape_pairs = aether_get_weighted_attr(bucket, "cape_jkg")
+        visibility_pairs = aether_get_weighted_attr(bucket, "visibility_m")
+
+        category_weights = {}
+        for p, w in weights:
+            category_weights[p.category] = category_weights.get(p.category, 0.0) + w
+        category_probs = {cat: (category_weights.get(cat, 0.0) / weight_total * 100.0 if weight_total else 0.0) for cat in CUACA_ORDER}
+        dominant = max(category_weights, key=category_weights.get) if category_weights else ""
+        dominant_prob = category_probs.get(dominant, 0.0) if dominant else 0.0
+        category_disagreement = round(100.0 - dominant_prob, 2) if bucket else 100.0
+
+        prob_rain_cat = sum(category_probs.get(cat, 0.0) for cat in ("Hujan Ringan", "Hujan Sedang", "Hujan Lebat"))
+        prob_heavy_cat = category_probs.get("Hujan Lebat", 0.0)
+        prob_mod_heavy_cat = sum(category_probs.get(cat, 0.0) for cat in ("Hujan Sedang", "Hujan Lebat"))
+        precip_prob_mean = aether_weighted_mean(precip_prob_pairs)
+        prob_rain = prob_rain_cat if precip_prob_mean is None else 0.62 * prob_rain_cat + 0.38 * precip_prob_mean
+        rain_heavy_signal = 0.0
+        rain_mod_signal = 0.0
+        if weight_total:
+            rain_heavy_signal = sum(w for p, w in weights if p.rain_mm is not None and p.rain_mm >= 10.0) / weight_total * 100.0
+            rain_mod_signal = sum(w for p, w in weights if p.rain_mm is not None and p.rain_mm >= 5.0) / weight_total * 100.0
+        prob_heavy = max(prob_heavy_cat, 0.55 * prob_heavy_cat + 0.45 * rain_heavy_signal)
+        prob_mod_heavy = max(prob_mod_heavy_cat, 0.55 * prob_mod_heavy_cat + 0.45 * rain_mod_signal)
+
+        q = lambda pairs, quant: aether_weighted_quantile(pairs, quant)
+        temp_p05, temp_p10, temp_p25, temp_p50, temp_p75, temp_p90, temp_p95 = [q(temp_pairs, x) for x in (0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95)]
+        rh_p10, rh_p50, rh_p90 = [q(rh_pairs, x) for x in (0.10, 0.50, 0.90)]
+        rain_p05, rain_p10, rain_p25, rain_p50, rain_p75, rain_p90, rain_p95 = [q(rain_pairs, x) for x in (0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95)]
+        wind_p50, wind_p90 = [q(wind_pairs, x) for x in (0.50, 0.90)]
+        gust_p90 = q(gust_pairs, 0.90)
+        hi_p50, hi_p90 = [q(hi_pairs, x) for x in (0.50, 0.90)]
+        cape_p50 = q(cape_pairs, 0.50)
+        visibility_p10 = q(visibility_pairs, 0.10)
+        cloud_p50 = q(cloud_pairs, 0.50)
+        if cloud_p50 is None and bucket:
+            cloud_p50 = q([(aether_category_cloud_proxy(p.category), w) for p, w in weights], 0.50)
+
+        analog_prob, analog_n = aether_analog_probability(target_date, jam, args, temp_p50, rh_p50, prob_rain)
+        if analog_prob is not None:
+            prob_rain = analog_prob
+        temp_micro, rh_micro, fog_bonus, temp_adj, rh_adj = aether_microclimate_adjustment(micro_profile, hour, temp_p50, rh_p50)
+
+        confidence_score = aether_value(ens[6]) if ens else None
+        source_health_values = [source_health_factor(p.source_id) for p in bucket]
+        source_health_mean = round(sum(source_health_values) / len(source_health_values), 4) if source_health_values else None
+        gap_values = [p.gap_minutes for p in bucket if p.gap_minutes is not None]
+        gap_mean = round(sum(gap_values) / len(gap_values), 2) if gap_values else None
+        freshness_uncertainty = clamp((gap_mean or 0.0) / 180.0 * 100.0, 0.0, 100.0)
+        health_uncertainty = 100.0 - (source_health_mean * 100.0 if source_health_mean is not None else 60.0)
+        lead_hours = aether_lead_hours(target_date, jam, args)
+        lead_uncertainty = clamp((lead_hours or 24.0) / 72.0 * 100.0, 5.0, 100.0)
+        rain_spread_uncertainty = clamp(((rain_p90 or 0.0) - (rain_p10 or 0.0)) / 15.0 * 100.0, 0.0, 100.0)
+        displacement_personality = 70 if personality.get("rain_displacement_risk") == "high" else 50 if personality.get("rain_displacement_risk") == "medium" else 35
+        rain_displacement_risk = round(clamp(0.32 * category_disagreement + 0.25 * rain_spread_uncertainty + 0.20 * displacement_personality + 0.15 * (prob_rain or 0) + 0.08 * lead_uncertainty, 0, 100), 1)
+        spatial_uncertainty = round(clamp(0.62 * rain_displacement_risk + 0.38 * category_disagreement, 0, 100), 1)
+        uncertainty_score = round(clamp(0.28 * category_disagreement + 0.22 * rain_spread_uncertainty + 0.18 * freshness_uncertainty + 0.14 * health_uncertainty + 0.10 * lead_uncertainty + 0.08 * spatial_uncertainty, 0, 100), 1)
+        mode = sentinel_atmospheric_mode(hour, prob_rain, prob_heavy, rh_p50, cloud_p50, uncertainty_score, cape_p50)
+
+        rain_threat_score = round(clamp(0.50 * (prob_rain or 0) + 0.22 * min((rain_p90 or 0) / 12.0 * 100.0, 100) + 0.18 * (rh_p50 or 0) + 0.10 * spatial_uncertainty, 0, 100), 1)
+        heavy_rain_threat_score = round(clamp(0.42 * (prob_heavy or 0) + 0.38 * min((rain_p95 or rain_p90 or 0) / 18.0 * 100.0, 100) + 0.10 * uncertainty_score + 0.10 * (cape_p50 or 0) / 1500.0 * 100.0, 0, 100), 1)
+        wind_threat_score = round(clamp(max((wind_p90 or 0), (gust_p90 or 0)) / 45.0 * 100.0, 0, 100), 1)
+        heat_discomfort_score = round(clamp(((hi_p90 or hi_p50 or temp_p90 or temp_p50 or 26) - 27.0) / 9.0 * 100.0 + max((rh_p50 or 70) - 75, 0), 0, 100), 1)
+        low_visibility_score = round(clamp((10000 - (visibility_p10 if visibility_p10 is not None else 10000)) / 10000.0 * 100.0 + fog_bonus, 0, 100), 1)
+        thunderstorm_proxy_score = round(clamp(0.42 * (prob_heavy or 0) + 0.28 * (cape_p50 or 0) / 1500.0 * 100.0 + 0.20 * (rh_p50 or 0) + 0.10 * (cloud_p50 or 0), 0, 100), 1)
+        direct_hit_risk = round(clamp(rain_threat_score * (1 - rain_displacement_risk / 165.0), 0, 100), 1)
+        nearby_rain_risk = round(clamp(0.70 * rain_threat_score + 0.45 * rain_displacement_risk, 0, 100), 1)
+        forecast_stress_index = round(clamp(0.30 * uncertainty_score + 0.25 * rain_displacement_risk + 0.18 * rain_spread_uncertainty + 0.12 * lead_uncertainty + 0.10 * category_disagreement + 0.05 * (100 - coverage_fraction * 100), 0, 100), 1)
+        forecast_failure_risk = round(clamp(0.35 * forecast_stress_index + 0.25 * uncertainty_score + 0.20 * rain_displacement_risk + 0.10 * (prob_rain or 0) + 0.10 * (100 - coverage_fraction * 100), 0, 100), 1)
+        self_doubt_score = round(clamp(0.50 * forecast_failure_risk + 0.30 * uncertainty_score + 0.20 * category_disagreement, 0, 100), 1)
+        failure_mode = sentinel_failure_mode(mode, prob_rain, uncertainty_score, rain_displacement_risk, rain_p90, category_disagreement)
+        predictability = sentinel_predictability(forecast_stress_index, uncertainty_score, rain_displacement_risk)
+        scenarios = sentinel_multi_reality(prob_rain, prob_heavy, rain_displacement_risk, uncertainty_score, rain_p90)
+
+        trust = aether_trust_level(sources_used, confidence_score, uncertainty_score, coverage_fraction, source_health_mean)
+        op_status = aether_operational_status(trust, rain_threat_score, uncertainty_score, sources_used)
+        if forecast_failure_risk >= 82 and op_status != "BLACK":
+            op_status = "RED"
+        elif forecast_failure_risk >= 62 and op_status == "GREEN":
+            op_status = "YELLOW"
+        if mode == "HEAVY_RAIN_WATCH" and op_status == "GREEN":
+            op_status = "YELLOW"
+        if mode in {"HUMID_CONVECTIVE_AFTERNOON", "HEAVY_RAIN_WATCH"}:
+            route = "conservative_convective_risk_route"
+        elif forecast_failure_risk >= 70:
+            route = "failure_aware_scenario_route"
+        elif analog_n:
+            route = "analog_memory_blend_route"
+        elif getattr(args, "mission", "") in {"outdoor_event", "fieldwork", "commute", "avoid_rain"}:
+            route = "mission_decision_route"
+        else:
+            route = "sentinel_probabilistic_risk_route"
+
+        row = {
+            "target_date": target_date.isoformat(),
+            "jam": jam,
+            "target_datetime": aether_target_datetime(target_date, jam, args.timezone).isoformat(),
+            "lead_hours": aether_round(lead_hours),
+            "lead_bucket": aether_lead_bucket(lead_hours),
+            "mission": getattr(args, "mission", "safety_first"),
+            "location_personality": personality.get("personality"),
+            "microclimate_profile": micro_profile,
+            "atmospheric_mode": mode,
+            "predictability": predictability,
+            "dominant_category": dominant,
+            "dominant_category_probability": aether_round(dominant_prob, 1),
+            "category_disagreement": aether_round(category_disagreement, 1),
+            "sources_used": sources_used,
+            "source_ids": "+".join(source_ids),
+            "coverage_fraction": aether_round(coverage_fraction, 3),
+            "temp_p05": aether_round(temp_p05), "temp_p10": aether_round(temp_p10), "temp_p25": aether_round(temp_p25), "temp_p50": aether_round(temp_p50), "temp_p75": aether_round(temp_p75), "temp_p90": aether_round(temp_p90), "temp_p95": aether_round(temp_p95),
+            "temp_micro_p50": aether_round(temp_micro), "temp_micro_adjustment": aether_round(temp_adj),
+            "rh_p10": aether_round(rh_p10), "rh_p50": aether_round(rh_p50), "rh_p90": aether_round(rh_p90), "rh_micro_p50": aether_round(rh_micro), "rh_micro_adjustment": aether_round(rh_adj),
+            "rain_p05": aether_round(rain_p05), "rain_p10": aether_round(rain_p10), "rain_p25": aether_round(rain_p25), "rain_p50": aether_round(rain_p50), "rain_p75": aether_round(rain_p75), "rain_p90": aether_round(rain_p90), "rain_p95": aether_round(rain_p95),
+            "prob_rain": aether_round(prob_rain, 1), "prob_moderate_heavy_rain": aether_round(prob_mod_heavy, 1), "prob_heavy_rain": aether_round(prob_heavy, 1),
+            "wind_p50": aether_round(wind_p50), "wind_p90": aether_round(wind_p90), "gust_p90": aether_round(gust_p90),
+            "heat_index_p50": aether_round(hi_p50), "heat_index_p90": aether_round(hi_p90), "cloud_p50": aether_round(cloud_p50), "cape_p50": aether_round(cape_p50), "visibility_p10": aether_round(visibility_p10),
+            "analog_probability": aether_round(analog_prob, 1), "analog_cases": analog_n,
+            "direct_hit_risk": aether_round(direct_hit_risk, 1), "nearby_rain_risk": aether_round(nearby_rain_risk, 1), "rain_displacement_risk": aether_round(rain_displacement_risk, 1), "spatial_uncertainty": aether_round(spatial_uncertainty, 1),
+            "rain_threat_score": aether_round(rain_threat_score, 1), "rain_threat_level": sentinel_threat_level(rain_threat_score),
+            "heavy_rain_threat_score": aether_round(heavy_rain_threat_score, 1), "heavy_rain_threat_level": sentinel_threat_level(heavy_rain_threat_score),
+            "wind_threat_score": aether_round(wind_threat_score, 1), "wind_threat_level": sentinel_threat_level(wind_threat_score),
+            "heat_discomfort_threat_score": aether_round(heat_discomfort_score, 1), "heat_discomfort_threat_level": sentinel_threat_level(heat_discomfort_score),
+            "low_visibility_threat_score": aether_round(low_visibility_score, 1), "low_visibility_threat_level": sentinel_threat_level(low_visibility_score),
+            "thunderstorm_proxy_threat_score": aether_round(thunderstorm_proxy_score, 1), "thunderstorm_proxy_threat_level": sentinel_threat_level(thunderstorm_proxy_score),
+            "uncertainty_score": aether_round(uncertainty_score, 1),
+            "forecast_stress_index": aether_round(forecast_stress_index, 1),
+            "forecast_failure_risk": aether_round(forecast_failure_risk, 1),
+            "self_doubt_score": aether_round(self_doubt_score, 1),
+            "main_failure_mode": failure_mode,
+            "scenario_dry_miss": aether_round(scenarios["dry_miss"], 1),
+            "scenario_nearby_rain_only": aether_round(scenarios["nearby_rain_only"], 1),
+            "scenario_direct_light_rain": aether_round(scenarios["direct_light_rain"], 1),
+            "scenario_direct_moderate_rain": aether_round(scenarios["direct_moderate_rain"], 1),
+            "scenario_convective_burst": aether_round(scenarios["convective_burst"], 1),
+            "walking_score": sentinel_activity_score(9, rain_threat_score/13 + heat_discomfort_score/25),
+            "motorbike_score": sentinel_activity_score(9, rain_threat_score/11 + wind_threat_score/20),
+            "outdoor_event_score": sentinel_activity_score(10, rain_threat_score/9 + forecast_failure_risk/18),
+            "fieldwork_score": sentinel_activity_score(10, rain_threat_score/10 + heat_discomfort_score/30 + forecast_failure_risk/25),
+            "laundry_score": sentinel_activity_score(10, rain_threat_score/7 + (cloud_p50 or 70)/18),
+            "sport_score": sentinel_activity_score(9, rain_threat_score/11 + heat_discomfort_score/18),
+            "trust_level": trust,
+            "operational_status": op_status,
+            "autopilot_route": route,
+            "confidence_score_base": aether_round(confidence_score, 1),
+            "source_health_mean": aether_round(source_health_mean, 3),
+            "gap_mean_minutes": aether_round(gap_mean, 1),
+        }
+        row["decision_recommendation"] = sentinel_decision(row, args)
+        row["expert_council"] = sentinel_expert_council(row, args)
+        row["counterfactual_summary"] = sentinel_counterfactual(row)
+        row["forecast_contract_summary"] = sentinel_forecast_contract_summary(row)
+        row["explanation"] = sentinel_build_explanation(row)
+        rows.append(row)
+    return rows
+
+
+def sentinel_daily_status(statuses):
+    if "BLACK" in statuses:
+        return "BLACK"
+    if "RED" in statuses:
+        return "RED"
+    if "YELLOW" in statuses:
+        return "YELLOW"
+    return "GREEN"
+
+
+def aether_daily_summary(aether_rows, args):
+    if not aether_rows:
+        return {"generated_at": now_local(args.timezone).isoformat(), "daily_operational_status": "BLACK", "summary_text": "Tidak ada forecast yang dapat diproses."}
+    def max_row(field):
+        return max(aether_rows, key=lambda r: aether_value(r.get(field)) or -1)
+    peak_rain = max_row("rain_threat_score")
+    peak_heavy = max_row("heavy_rain_threat_score")
+    peak_failure = max_row("forecast_failure_risk")
+    peak_stress = max_row("forecast_stress_index")
+    peak_doubt = max_row("self_doubt_score")
+    statuses = [r.get("operational_status", "") for r in aether_rows]
+    modes = {}
+    for r in aether_rows:
+        modes[r.get("atmospheric_mode", "UNKNOWN")] = modes.get(r.get("atmospheric_mode", "UNKNOWN"), 0) + 1
+    dominant_mode = max(modes, key=modes.get) if modes else "UNKNOWN"
+    risk_window = sentinel_risk_window(aether_rows, "rain_threat_score", 55)
+    best_window = sentinel_best_window(aether_rows)
+    daily = {
+        "generated_at": now_local(args.timezone).isoformat(),
+        "aether_version": AETHER_VERSION,
+        "location": getattr(args, "location_name", ""),
+        "mission": getattr(args, "mission", "safety_first"),
+        "daily_operational_status": sentinel_daily_status(statuses),
+        "dominant_atmospheric_mode": dominant_mode,
+        "location_personality": sentinel_location_personality(args),
+        "risk_window": risk_window,
+        "best_general_activity_window": best_window,
+        "peak_rain_threat_hour": peak_rain.get("jam"),
+        "peak_rain_threat_score": peak_rain.get("rain_threat_score"),
+        "peak_heavy_rain_threat_hour": peak_heavy.get("jam"),
+        "peak_heavy_rain_threat_score": peak_heavy.get("heavy_rain_threat_score"),
+        "peak_failure_risk_hour": peak_failure.get("jam"),
+        "peak_failure_risk_score": peak_failure.get("forecast_failure_risk"),
+        "peak_forecast_stress_hour": peak_stress.get("jam"),
+        "peak_forecast_stress_score": peak_stress.get("forecast_stress_index"),
+        "peak_self_doubt_hour": peak_doubt.get("jam"),
+        "peak_self_doubt_score": peak_doubt.get("self_doubt_score"),
+    }
+    daily["summary_text"] = sentinel_daily_narrative(aether_rows, daily, args)
+    return daily
+
+
+def sentinel_risk_window(rows, field, threshold):
+    risky = [r.get("jam") for r in rows if (aether_value(r.get(field)) or 0) >= threshold]
+    if not risky:
+        return "Tidak ada risk window kuat"
+    return f"{risky[0]}–{risky[-1]}"
+
+
+def sentinel_best_window(rows):
+    scored = []
+    for r in rows:
+        hour = int(str(r.get("jam", "00:00")).split(":")[0])
+        if 6 <= hour <= 18:
+            score = min(aether_value(r.get("walking_score")) or 0, aether_value(r.get("fieldwork_score")) or 0, aether_value(r.get("outdoor_event_score")) or 0)
+            scored.append((score, r.get("jam")))
+    if not scored:
+        return "Tidak cukup data"
+    scored.sort(reverse=True)
+    return scored[0][1]
+
+
+def sentinel_daily_narrative(rows, daily, args):
+    status = daily.get("daily_operational_status")
+    mode = daily.get("dominant_atmospheric_mode")
+    risk_window = daily.get("risk_window")
+    peak_failure = daily.get("peak_failure_risk_score")
+    personality = daily.get("location_personality", {})
+    return (
+        f"Sentinel membaca hari ini sebagai {mode} untuk {getattr(args, 'location_name', '')}. "
+        f"Status operasional harian {status}. Risk window utama: {risk_window}. "
+        f"Failure risk tertinggi {peak_failure}/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. "
+        f"Personality lokasi: {personality.get('personality', 'generic')}; {personality.get('notes', '')}"
+    )
+
+
+def sentinel_bar(value):
+    try:
+        v = clamp(float(value), 0, 100)
+    except Exception:
+        v = 0
+    return f"<span class='bar'><i style='width:{v:.1f}%'></i></span>"
+
+
+def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+    if getattr(args, "disable_sentinel_command_center", False):
+        return
+    esc = html.escape
+    def card(title, body):
+        return f"<section class='card'><h2>{esc(title)}</h2>{body}</section>"
+    rows_html = []
+    for r in aether_rows:
+        rows_html.append(
+            "<tr>" +
+            f"<td>{esc(str(r.get('jam','')))}</td>" +
+            f"<td>{esc(str(r.get('atmospheric_mode','')))}</td>" +
+            f"<td>{esc(str(r.get('dominant_category','')))}</td>" +
+            f"<td>{esc(str(r.get('prob_rain','')))}% {sentinel_bar(r.get('prob_rain'))}</td>" +
+            f"<td>{esc(str(r.get('rain_threat_level','')))} ({esc(str(r.get('rain_threat_score','')))})</td>" +
+            f"<td>{esc(str(r.get('forecast_failure_risk','')))}</td>" +
+            f"<td>{esc(str(r.get('self_doubt_score','')))}</td>" +
+            f"<td>{esc(str(r.get('operational_status','')))}</td>" +
+            f"<td>{esc(str(r.get('decision_recommendation','')))}</td>" +
+            "</tr>"
+        )
+    source_html = []
+    for srow in source_state_rows:
+        source_html.append(f"<tr><td>{esc(str(srow.get('source_id','')))}</td><td>{esc(str(srow.get('state','')))}</td><td>{esc(str(srow.get('success','')))}</td><td>{esc(str(srow.get('points','')))}</td><td>{esc(str(srow.get('ema_success','')))}</td><td>{esc(str(srow.get('duration_ms','')))}</td></tr>")
+    scenario = max(aether_rows, key=lambda r: aether_value(r.get("rain_threat_score")) or -1) if aether_rows else {}
+    scenario_html = "".join([
+        f"<div class='scenario'><b>{label}</b><span>{scenario.get(key,'')}%</span>{sentinel_bar(scenario.get(key,''))}</div>"
+        for label, key in [
+            ("Dry miss", "scenario_dry_miss"), ("Nearby rain only", "scenario_nearby_rain_only"),
+            ("Direct light rain", "scenario_direct_light_rain"), ("Direct moderate rain", "scenario_direct_moderate_rain"),
+            ("Convective burst", "scenario_convective_burst")]
+    ])
+    council_html = "<ol>" + "".join(f"<li>{esc(part.strip())}</li>" for part in str(scenario.get("expert_council", "")).split("|") if part.strip()) + "</ol>"
+    constitution_html = "<ol>" + "".join(f"<li>{esc(item)}</li>" for item in SENTINEL_CONSTITUTION) + "</ol>"
+    table = "<table><thead><tr><th>Jam</th><th>Mode</th><th>Dominan</th><th>Prob Hujan</th><th>Rain Threat</th><th>Failure</th><th>Self-doubt</th><th>Status</th><th>Decision</th></tr></thead><tbody>" + "".join(rows_html) + "</tbody></table>"
+    source_table = "<table><thead><tr><th>Source</th><th>State</th><th>Success</th><th>Points</th><th>EMA</th><th>Latency</th></tr></thead><tbody>" + "".join(source_html) + "</tbody></table>"
+    doc = f"""<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>{esc(AETHER_VERSION)} — {esc(getattr(args,'location_name',''))}</title>
+<style>
+body{{font-family:Inter,Arial,sans-serif;background:#0f172a;color:#e5e7eb;margin:0;padding:24px}} h1{{margin:0 0 8px}} h2{{margin-top:0;color:#bfdbfe}} .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}} .card{{background:#111827;border:1px solid #243044;border-radius:18px;padding:18px;box-shadow:0 10px 30px #0005}} .badge{{display:inline-block;background:#1e293b;border:1px solid #334155;border-radius:999px;padding:7px 11px;margin:4px}} table{{width:100%;border-collapse:collapse;font-size:13px}} th,td{{border-bottom:1px solid #263244;padding:8px;text-align:left;vertical-align:top}} th{{color:#93c5fd;background:#0b1220}} .bar{{display:inline-block;width:90px;height:9px;background:#273244;border-radius:99px;overflow:hidden;margin-left:8px;vertical-align:middle}} .bar i{{display:block;height:100%;background:#60a5fa}} .scenario{{display:grid;grid-template-columns:1fr 60px 120px;align-items:center;gap:8px;margin:8px 0}} small,p,li{{line-height:1.45}} code{{background:#020617;border:1px solid #334155;padding:2px 5px;border-radius:5px}}
+</style></head><body>
+<h1>{esc(AETHER_VERSION)}</h1>
+<div><span class='badge'>Lokasi: {esc(getattr(args,'location_name',''))}</span><span class='badge'>Mission: {esc(str(daily.get('mission','')))}</span><span class='badge'>Status: {esc(str(daily.get('daily_operational_status','')))}</span><span class='badge'>Generated: {esc(str(daily.get('generated_at','')))}</span></div>
+<div class='grid'>
+{card('Atmospheric Situation', f"<p>{esc(daily.get('summary_text',''))}</p><p><b>Dominant mode:</b> {esc(str(daily.get('dominant_atmospheric_mode','')))}</p><p><b>Risk window:</b> {esc(str(daily.get('risk_window','')))}</p><p><b>Best general activity window:</b> {esc(str(daily.get('best_general_activity_window','')))}</p>")}
+{card('Forecast Stress & Failure', f"<p><b>Peak failure risk:</b> {esc(str(daily.get('peak_failure_risk_hour','')))} — {esc(str(daily.get('peak_failure_risk_score','')))}/100</p><p><b>Peak stress:</b> {esc(str(daily.get('peak_forecast_stress_hour','')))} — {esc(str(daily.get('peak_forecast_stress_score','')))}/100</p><p><b>Peak self-doubt:</b> {esc(str(daily.get('peak_self_doubt_hour','')))} — {esc(str(daily.get('peak_self_doubt_score','')))}/100</p>")}
+{card('Multi-Reality Scenario at Peak Rain Threat', scenario_html)}
+{card('Expert Council Debate', council_html)}
+{card('Forecast Constitution', constitution_html)}
+{card('Forecast Contract', '<p>Gunakan Sentinel sebagai risk intelligence dan decision support. Ini bukan pengganti peringatan resmi BMKG untuk keselamatan publik atau cuaca ekstrem.</p>')}
+</div>
+{card('Risk Timeline & Hourly Decision Table', table)}
+{card('Source State', source_table)}
+</body></html>"""
+    write_json(path_output("command_center_manifest_sentinel_x.json"), {"dashboard": path_output(AETHER_DASHBOARD_FILENAME), "generated_at": now_local(args.timezone).isoformat()})
+    atomic_write_text(path_output(AETHER_DASHBOARD_FILENAME), lambda f: f.write(doc))
+
+
+def aether_write_report(aether_rows, daily, args):
+    lines = []
+    lines.append(f"# {AETHER_VERSION}")
+    lines.append("")
+    lines.append(f"Lokasi: **{getattr(args, 'location_name', '')}**  ")
+    lines.append(f"Mission: **{daily.get('mission','')}**  ")
+    lines.append(f"Generated: {daily.get('generated_at','')}  ")
+    lines.append(f"Status operasional harian: **{daily.get('daily_operational_status','')}**")
+    lines.append("")
+    lines.append("## Atmospheric Situation")
+    lines.append(daily.get("summary_text", ""))
+    lines.append("")
+    lines.append("## Jam Kritis")
+    lines.append(f"- Rain threat tertinggi: **{daily.get('peak_rain_threat_hour')}** skor {daily.get('peak_rain_threat_score')}")
+    lines.append(f"- Heavy rain threat tertinggi: **{daily.get('peak_heavy_rain_threat_hour')}** skor {daily.get('peak_heavy_rain_threat_score')}")
+    lines.append(f"- Forecast failure risk tertinggi: **{daily.get('peak_failure_risk_hour')}** skor {daily.get('peak_failure_risk_score')}")
+    lines.append(f"- Forecast stress tertinggi: **{daily.get('peak_forecast_stress_hour')}** skor {daily.get('peak_forecast_stress_score')}")
+    lines.append("")
+    lines.append("## Hourly Risk Table")
+    lines.append("| Jam | Mode | Dominan | Prob Hujan | Rain Threat | Failure Risk | Self-Doubt | Decision | Status |")
+    lines.append("|---|---|---|---:|---:|---:|---:|---|---|")
+    for r in aether_rows:
+        lines.append(f"| {r['jam']} | {r['atmospheric_mode']} | {r['dominant_category']} | {r['prob_rain']}% | {r['rain_threat_score']} | {r['forecast_failure_risk']} | {r['self_doubt_score']} | {r['decision_recommendation']} | {r['operational_status']} |")
+    lines.append("")
+    lines.append("## Forecast Constitution")
+    for i, item in enumerate(SENTINEL_CONSTITUTION, 1):
+        lines.append(f"{i}. {item}")
+    lines.append("")
+    lines.append("## Batas Pemakaian")
+    lines.append("Sentinel X adalah sistem post-processing multi-source untuk risk intelligence dan keputusan umum. Untuk peringatan ekstrem/resmi, tetap gunakan rujukan BMKG dan otoritas terkait.")
+    atomic_write_text(path_output(AETHER_REPORT_FILENAME), lambda f: f.write("\n".join(lines)))
+
+
+def aether_write_contract(daily, args):
+    payload = {
+        "aether_version": AETHER_VERSION,
+        "generated_at": now_local(args.timezone).isoformat(),
+        "location": getattr(args, "location_name", ""),
+        "mission": getattr(args, "mission", "safety_first"),
+        "status": daily.get("daily_operational_status"),
+        "constitution": SENTINEL_CONSTITUTION,
+        "validity_contract": {
+            "spatial_scope": "Hyperlocal point/nearby risk intelligence; hujan konvektif dapat bergeser beberapa kilometer.",
+            "strongest_for": ["rain-risk window", "uncertainty awareness", "decision support", "temperature/RH tendency", "source disagreement detection"],
+            "weakest_for": ["exact convective rain timing", "street-scale rain cell position", "extreme weather safety decision", "official public warning"],
+            "operational_status_meaning": {
+                "GREEN": "usable for general planning",
+                "YELLOW": "usable with caution and plan B",
+                "RED": "treat as warning/risk signal; do not rely on precise timing",
+                "BLACK": "data/source condition too weak; do not trust for decisions",
+            },
+            "official_warning_note": "Gunakan peringatan resmi BMKG untuk cuaca ekstrem dan keselamatan publik.",
+        },
+    }
+    write_json(path_output(AETHER_CONTRACT_FILENAME), payload)
+
+
+def aether_init_db(conn):
+    conn.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS forecast_runs (
+            run_id TEXT PRIMARY KEY,
+            generated_at TEXT,
+            aether_version TEXT,
+            location_slug TEXT,
+            location_name TEXT,
+            target_date TEXT,
+            timezone TEXT,
+            latitude REAL,
+            longitude REAL,
+            sources_total INTEGER,
+            sources_success INTEGER,
+            operational_status TEXT,
+            autopilot_route TEXT
+        );
+        CREATE TABLE IF NOT EXISTS source_forecasts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT,
+            target_datetime TEXT,
+            target_jam TEXT,
+            source_id TEXT,
+            provider TEXT,
+            source_datetime TEXT,
+            temp_c REAL,
+            rh_pct REAL,
+            rain_mm REAL,
+            wind_kmh REAL,
+            category TEXT,
+            point_weight REAL,
+            gap_minutes REAL,
+            raw_condition TEXT
+        );
+        CREATE TABLE IF NOT EXISTS sentinel_forecasts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT,
+            target_datetime TEXT,
+            jam TEXT,
+            mission TEXT,
+            atmospheric_mode TEXT,
+            predictability TEXT,
+            dominant_category TEXT,
+            prob_rain REAL,
+            rain_p90 REAL,
+            rain_threat_score REAL,
+            heavy_rain_threat_score REAL,
+            rain_displacement_risk REAL,
+            forecast_failure_risk REAL,
+            self_doubt_score REAL,
+            forecast_stress_index REAL,
+            main_failure_mode TEXT,
+            trust_level TEXT,
+            operational_status TEXT,
+            autopilot_route TEXT,
+            decision_recommendation TEXT,
+            explanation TEXT
+        );
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT,
+            location_slug TEXT,
+            target_date TEXT,
+            jam TEXT,
+            observed_category TEXT,
+            observed_rain_mm REAL,
+            observed_temp_c REAL,
+            note TEXT
+        );
+        """
+    )
+    conn.commit()
+
+
+def aether_store_ledger(run_id, target_date, results, source_rows, aether_rows, daily, args):
+    conn = aether_connect_db()
+    try:
+        aether_init_db(conn)
+        conn.execute(
+            """INSERT OR REPLACE INTO forecast_runs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (run_id, now_local(args.timezone).isoformat(), AETHER_VERSION, getattr(args, "location_slug", ""), getattr(args, "location_name", ""), target_date.isoformat(), getattr(args, "timezone", DEFAULT_TIMEZONE), getattr(args, "latitude", None), getattr(args, "longitude", None), len(results), sum(1 for r in results if r.success), daily.get("daily_operational_status", ""), "sentinel_x"),
+        )
+        for row in source_rows:
+            try:
+                target_dt = aether_target_datetime(target_date, row[3], args.timezone).isoformat()
+            except Exception:
+                target_dt = ""
+            conn.execute(
+                """INSERT INTO source_forecasts(run_id,target_datetime,target_jam,source_id,provider,source_datetime,temp_c,rh_pct,rain_mm,wind_kmh,category,point_weight,gap_minutes,raw_condition) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (run_id, target_dt, row[3], row[1], row[2], row[4], aether_value(row[5]), aether_value(row[6]), aether_value(row[7]), aether_value(row[8]), row[11], aether_value(row[10]), aether_value(row[9]), row[12]),
+            )
+        for r in aether_rows:
+            conn.execute(
+                """INSERT INTO sentinel_forecasts(run_id,target_datetime,jam,mission,atmospheric_mode,predictability,dominant_category,prob_rain,rain_p90,rain_threat_score,heavy_rain_threat_score,rain_displacement_risk,forecast_failure_risk,self_doubt_score,forecast_stress_index,main_failure_mode,trust_level,operational_status,autopilot_route,decision_recommendation,explanation) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (run_id, r.get("target_datetime"), r.get("jam"), r.get("mission"), r.get("atmospheric_mode"), r.get("predictability"), r.get("dominant_category"), aether_value(r.get("prob_rain")), aether_value(r.get("rain_p90")), aether_value(r.get("rain_threat_score")), aether_value(r.get("heavy_rain_threat_score")), aether_value(r.get("rain_displacement_risk")), aether_value(r.get("forecast_failure_risk")), aether_value(r.get("self_doubt_score")), aether_value(r.get("forecast_stress_index")), r.get("main_failure_mode"), r.get("trust_level"), r.get("operational_status"), r.get("autopilot_route"), r.get("decision_recommendation"), r.get("explanation")),
+            )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def sentinel_x_save_artifacts(target_date, results, args, source_rows, status_rows, ensemble_rows):
+    points = flatten_points(results)
+    sentinel_rows = aether_build_rows(points, ensemble_rows, target_date, args)
+    if sentinel_rows:
+        write_dict_csv(path_output(AETHER_CSV_FILENAME), list(sentinel_rows[0].keys()), sentinel_rows)
+        write_dict_csv(path_output(f"sentinel_x_{target_date.strftime('%Y%m%d')}.csv"), list(sentinel_rows[0].keys()), sentinel_rows)
+    source_states = aether_source_state_rows(results)
+    if source_states:
+        write_dict_csv(path_output(AETHER_SOURCE_STATE_FILENAME), list(source_states[0].keys()), source_states)
+    daily = aether_daily_summary(sentinel_rows, args)
+    payload = {"daily": daily, "hourly": sentinel_rows, "source_states": source_states, "constitution": SENTINEL_CONSTITUTION}
+    write_json(path_output(AETHER_JSON_FILENAME), payload)
+    write_json(path_output(f"sentinel_x_{target_date.strftime('%Y%m%d')}.json"), payload)
+    aether_write_dashboard(sentinel_rows, source_states, daily, args)
+    aether_write_report(sentinel_rows, daily, args)
+    aether_write_contract(daily, args)
+    sentinel_write_constitution(args)
+    run_id = f"{getattr(args, 'location_slug', 'location')}_{target_date.strftime('%Y%m%d')}_{now_local(args.timezone).strftime('%Y%m%d%H%M%S')}"
+    try:
+        aether_store_ledger(run_id, target_date, results, source_rows, sentinel_rows, daily, args)
+    except Exception as exc:
+        log_warning("Sentinel ledger gagal ditulis:", exc)
+    return {"version": AETHER_VERSION, "run_id": run_id, "csv": path_output(AETHER_CSV_FILENAME), "json": path_output(AETHER_JSON_FILENAME), "dashboard": path_output(AETHER_DASHBOARD_FILENAME), "report": path_output(AETHER_REPORT_FILENAME), "contract": path_output(AETHER_CONTRACT_FILENAME), "ledger": aether_db_path(), "daily_operational_status": daily.get("daily_operational_status"), "autopilot_summary": daily.get("summary_text")}
+
+
+def aether_regenerate_dashboard_for_location(args):
+    rows = read_dict_csv(path_output(AETHER_CSV_FILENAME))
+    states = read_dict_csv(path_output(AETHER_SOURCE_STATE_FILENAME))
+    daily_payload = read_json(path_output(AETHER_JSON_FILENAME), default={}) or {}
+    daily = daily_payload.get("daily") or aether_daily_summary(rows, args)
+    aether_write_dashboard(rows, states, daily, args)
+    aether_write_report(rows, daily, args)
+    aether_write_contract(daily, args)
+    return {"dashboard": path_output(AETHER_DASHBOARD_FILENAME), "report": path_output(AETHER_REPORT_FILENAME)}
+
+
+def aether_doctor_for_location(args):
+    checks = []
+    def add(name, ok, detail=""):
+        checks.append({"check": name, "ok": "yes" if ok else "no", "detail": str(detail)})
+    try:
+        ensure_directory(ACTIVE_OUTPUT_DIR); add("output_dir_writable", True, ACTIVE_OUTPUT_DIR)
+    except Exception as exc:
+        add("output_dir_writable", False, exc)
+    try:
+        ZoneInfo(args.timezone); add("timezone_valid", True, args.timezone)
+    except Exception as exc:
+        add("timezone_valid", False, exc)
+    try:
+        conn = aether_connect_db(); aether_init_db(conn); conn.close(); add("sqlite_sentinel_ledger", True, aether_db_path())
+    except Exception as exc:
+        add("sqlite_sentinel_ledger", False, exc)
+    try:
+        validate_location_config(LocationConfig(args.location_slug, args.location_name, args.adm4, args.latitude, args.longitude, args.timezone)); add("location_config", True, f"{args.latitude},{args.longitude} adm4={args.adm4}")
+    except Exception as exc:
+        add("location_config", False, exc)
+    add("mission", True, getattr(args, "mission", "safety_first"))
+    add("constitution_rules", len(SENTINEL_CONSTITUTION) >= 10, len(SENTINEL_CONSTITUTION))
+    for config in ACTIVE_SOURCE_CONFIGS:
+        add(f"preview_url_{config['source_id']}", True, preview_request_url(config, args))
+    write_dict_csv(path_output("doctor_sentinel_x.csv"), ["check", "ok", "detail"], checks)
+    write_json(path_output("doctor_sentinel_x.json"), {"checks": checks, "generated_at": now_local(args.timezone).isoformat()})
+    return checks
+
+
+def sentinel_write_constitution(args):
+    payload = {"version": AETHER_VERSION, "generated_at": now_local(args.timezone).isoformat(), "constitution": SENTINEL_CONSTITUTION}
+    write_json(path_output("sentinel_constitution.json"), payload)
+    lines = [f"# {AETHER_VERSION} — Forecast Constitution", ""] + [f"{i}. {rule}" for i, rule in enumerate(SENTINEL_CONSTITUTION, 1)]
+    atomic_write_text(path_output("sentinel_constitution.md"), lambda f: f.write("\n".join(lines)))
+    return {"constitution_json": path_output("sentinel_constitution.json"), "constitution_md": path_output("sentinel_constitution.md")}
+
+
+def sentinel_red_team_for_location(args):
+    scenarios = []
+    def add(name, expected, result, passed=True):
+        scenarios.append({"scenario": name, "expected_safe_behavior": expected, "result": result, "pass": "yes" if passed else "no"})
+    add("all_sources_failed", "BLACK status; no confident recommendation", "Sentinel constitution requires BLACK/low trust when source coverage is weak.")
+    add("single_source_only", "DO_NOT_TRUST or EXPERIMENTAL", "Trust gate requires at least 3 usable points before confident forecast.")
+    add("bmkg_rain_global_clear", "show disagreement and scenario split", "Category disagreement feeds uncertainty/failure risk.")
+    add("mean_rain_low_p95_high", "preserve worst-case scenario", "P90/P95 explicitly affects heavy-rain threat and convective burst scenario.")
+    add("high_disagreement_fake_confidence", "self-doubt/failure risk increases", "Forecast stress index includes category disagreement and rain spread.")
+    add("local_convective_afternoon", "rain timing/displacement caveat", "HUMID_CONVECTIVE_AFTERNOON route activates conservative decision logic.")
+    write_dict_csv(path_output("red_team_sentinel_x.csv"), ["scenario", "expected_safe_behavior", "result", "pass"], scenarios)
+    write_json(path_output("red_team_sentinel_x.json"), {"generated_at": now_local(args.timezone).isoformat(), "scenarios": scenarios})
+    return {"red_team_csv": path_output("red_team_sentinel_x.csv"), "red_team_json": path_output("red_team_sentinel_x.json"), "passed": sum(1 for s in scenarios if s["pass"] == "yes"), "total": len(scenarios)}
+
+
+def sentinel_autopsy_for_location(args):
+    forecast_rows = read_dict_csv(path_output(AETHER_CSV_FILENAME)) if os.path.exists(path_output(AETHER_CSV_FILENAME)) else []
+    feedback_rows = read_dict_csv(path_output(AETHER_FEEDBACK_FILENAME)) if os.path.exists(path_output(AETHER_FEEDBACK_FILENAME)) else []
+    observations = read_dict_csv(observation_master_file()) if os.path.exists(observation_master_file()) else []
+    findings = []
+    if not forecast_rows:
+        findings.append("Belum ada sentinel_x.csv; jalankan --mode forecast terlebih dahulu.")
+    if not feedback_rows and not observations:
+        findings.append("Belum ada observasi/feedback lokal; autopsy belum bisa menilai benar/salah secara aktual.")
+    matches = []
+    obs_all = feedback_rows + observations
+    for f in forecast_rows:
+        fdate, fjam = f.get("target_date"), f.get("jam")
+        for obs in obs_all:
+            odate = obs.get("target_date") or obs.get("tanggal") or obs.get("date")
+            ojam = obs.get("jam") or obs.get("time")
+            if str(odate) in {str(fdate), str(fdate).split("-")[-1]} and str(ojam)[:2] == str(fjam)[:2]:
+                matches.append((f, obs))
+    if matches:
+        rain_hits = 0; rain_total = 0; notes = []
+        for f, obs in matches:
+            pred_rain = (aether_value(f.get("prob_rain")) or 0) >= 50
+            obs_cat = (obs.get("observed_category") or obs.get("category") or "").lower()
+            obs_rain = (aether_value(obs.get("observed_rain_mm") or obs.get("rain_mm")) or 0) > 0 or "hujan" in obs_cat
+            rain_total += 1
+            if pred_rain == obs_rain:
+                rain_hits += 1
+            else:
+                notes.append(f"Mismatch {f.get('jam')}: pred_rain={pred_rain}, observed_rain={obs_rain}, failure_mode={f.get('main_failure_mode')}")
+        findings.append(f"Matched cases: {rain_total}; rain event hit consistency: {rain_hits}/{rain_total}.")
+        findings.extend(notes[:8])
+    payload = {"generated_at": now_local(args.timezone).isoformat(), "findings": findings, "matched_cases": len(matches)}
+    write_json(path_output("autopsy_sentinel_x.json"), payload)
+    atomic_write_text(path_output("autopsy_sentinel_x.md"), lambda f: f.write("# Sentinel X Forecast Autopsy\n\n" + "\n".join(f"- {x}" for x in findings)))
+    return {"autopsy_json": path_output("autopsy_sentinel_x.json"), "autopsy_md": path_output("autopsy_sentinel_x.md"), "matched_cases": len(matches)}
+
+
+def sentinel_skill_league_for_location(args):
+    # Lightweight league scaffold: ranks source health and point coverage until enough observation pairs exist.
+    states = read_dict_csv(path_output(AETHER_SOURCE_STATE_FILENAME)) if os.path.exists(path_output(AETHER_SOURCE_STATE_FILENAME)) else []
+    rows = []
+    for srow in states:
+        ema = aether_value(srow.get("ema_success"))
+        points = aether_value(srow.get("points")) or 0
+        success = 1 if str(srow.get("success")).lower() in {"true", "1", "yes"} else 0
+        score = round((ema if ema is not None else 0.5) * 60 + min(points, len(TARGET_TIMES)) / max(len(TARGET_TIMES), 1) * 30 + success * 10, 2)
+        rows.append({"rank": 0, "source_id": srow.get("source_id"), "league": "operational_readiness", "score": score, "note": "Observation-paired skill league activates after enough observations/feedback are available."})
+    rows.sort(key=lambda r: r["score"], reverse=True)
+    for i, r in enumerate(rows, 1):
+        r["rank"] = i
+    if not rows:
+        rows = [{"rank": 1, "source_id": "none", "league": "operational_readiness", "score": 0, "note": "No source_state file yet; run forecast first."}]
+    write_dict_csv(path_output("skill_league_sentinel_x.csv"), list(rows[0].keys()), rows)
+    write_json(path_output("skill_league_sentinel_x.json"), {"generated_at": now_local(args.timezone).isoformat(), "rows": rows})
+    return {"skill_league_csv": path_output("skill_league_sentinel_x.csv"), "skill_league_json": path_output("skill_league_sentinel_x.json"), "entries": len(rows)}
+
 
 def aether_local_server(args):
-    root = root_output_dir()
-    port = int(getattr(args, "serve_port", 8000))
+    root = root_output_dir(); port = int(getattr(args, "serve_port", 8000))
     class Handler(BaseHTTPRequestHandler):
         def _send(self, code, body, content_type="text/html; charset=utf-8"):
             data = body.encode("utf-8") if isinstance(body, str) else body
-            self.send_response(code)
-            self.send_header("Content-Type", content_type)
-            self.send_header("Content-Length", str(len(data)))
-            self.end_headers()
-            self.wfile.write(data)
+            self.send_response(code); self.send_header("Content-Type", content_type); self.send_header("Content-Length", str(len(data))); self.end_headers(); self.wfile.write(data)
         def do_GET(self):
             path = urllib.parse.urlparse(self.path).path
             if path in {"/", "/status"}:
                 summary_path = root_output_path("forecast_batch_summary.json")
                 payload = read_json(summary_path, default={}) if os.path.exists(summary_path) else {"message": "No batch summary yet"}
-                self._send(200, json.dumps(payload, ensure_ascii=False, indent=2), "application/json; charset=utf-8")
-                return
+                self._send(200, json.dumps(payload, ensure_ascii=False, indent=2), "application/json; charset=utf-8"); return
             if path == "/dashboard":
                 candidates = []
                 for dirpath, _, filenames in os.walk(root):
                     if AETHER_DASHBOARD_FILENAME in filenames:
                         candidates.append(os.path.join(dirpath, AETHER_DASHBOARD_FILENAME))
                 if not candidates:
-                    self._send(404, "Dashboard belum tersedia. Jalankan --mode forecast dulu.")
-                    return
+                    self._send(404, "Command center belum tersedia. Jalankan --mode forecast dulu."); return
                 candidates.sort(key=lambda p: os.path.getmtime(p), reverse=True)
-                with open(candidates[0], "r", encoding="utf-8") as f:
-                    self._send(200, f.read())
+                with open(candidates[0], "r", encoding="utf-8") as f: self._send(200, f.read())
                 return
-            if path == "/aether.json":
+            if path == "/sentinel.json":
                 candidates = []
                 for dirpath, _, filenames in os.walk(root):
-                    if AETHER_JSON_FILENAME in filenames:
-                        candidates.append(os.path.join(dirpath, AETHER_JSON_FILENAME))
+                    if AETHER_JSON_FILENAME in filenames: candidates.append(os.path.join(dirpath, AETHER_JSON_FILENAME))
                 if not candidates:
-                    self._send(404, "{}", "application/json; charset=utf-8")
-                    return
+                    self._send(404, "{}", "application/json; charset=utf-8"); return
                 candidates.sort(key=lambda p: os.path.getmtime(p), reverse=True)
-                with open(candidates[0], "r", encoding="utf-8") as f:
-                    self._send(200, f.read(), "application/json; charset=utf-8")
+                with open(candidates[0], "r", encoding="utf-8") as f: self._send(200, f.read(), "application/json; charset=utf-8")
                 return
             self._send(404, "Not found")
-    print(f"[AETHER] Local server: http://localhost:{port}/dashboard")
+    print(f"[SENTINEL X] Local command center: http://localhost:{port}/dashboard")
     HTTPServer(("127.0.0.1", port), Handler).serve_forever()
 
 
 def aether_self_test():
     assert aether_weighted_quantile([(1, 1), (10, 1), (20, 2)], 0.5) in {10, 20}
-    assert aether_risk_label(10) == "low"
     assert aether_risk_label(85) == "very_high"
     assert aether_lead_bucket(2) == "lead_0_3h"
-    assert aether_microclimate_adjustment("valley_highland", 5, 24, 90)[0] < 24
+    assert sentinel_threat_level(85) == "VERY_HIGH"
+    assert abs(sum(sentinel_multi_reality(60, 20, 70, 65, 10).values()) - 100) < 0.2
+    assert "Do not" in SENTINEL_CONSTITUTION[0]
     return True
 
 def build_arg_parser():
@@ -5167,7 +5371,7 @@ def build_arg_parser():
     )
     parser.add_argument(
         "--mode",
-        choices=["forecast", "sync-observations", "evaluate", "import-observations", "self-test", "doctor", "dashboard", "report", "feedback", "serve"],
+        choices=["forecast", "sync-observations", "evaluate", "import-observations", "self-test", "doctor", "dashboard", "report", "feedback", "red-team", "autopsy", "skill-league", "constitution", "serve"],
         default="forecast",
         help="forecast = ambil prakiraan baru, sync-observations = sinkron data observasi historis, evaluate = hitung performa dan bobot sumber, import-observations = impor CSV observasi eksternal, self-test = assertion internal script",
     )
@@ -5294,10 +5498,13 @@ def build_arg_parser():
         help="Override MET.no User-Agent (recommended: include contact info/email).",
     )
 
-    # AETHER v15 knobs
+    # AETHER Sentinel X knobs
     parser.add_argument("--aether-extra-vars", action="store_true", default=False, help="Minta variabel ekstra Open-Meteo jika tersedia; jika gagal, source akan fallback ke variabel dasar.")
-    parser.add_argument("--microclimate", default="auto", choices=["auto", "generic_local", "valley_highland", "urban_highland", "lowland_agriculture", "coastal"], help="Profil koreksi microclimate AETHER v15.")
+    parser.add_argument("--microclimate", default="auto", choices=["auto", "generic_local", "valley_highland", "urban_highland", "lowland_agriculture", "coastal"], help="Profil koreksi microclimate AETHER Sentinel X.")
     parser.add_argument("--umbrella-threshold", type=float, default=25.0, help="Threshold cost-loss peluang hujan untuk rekomendasi payung.")
+    parser.add_argument("--mission", default="safety_first", choices=["safety_first", "avoid_rain", "outdoor_event", "fieldwork", "commute", "photography", "sport", "laundry", "research", "public_warning"], help="Misi Sentinel X; mengubah gaya rekomendasi dan toleransi risiko.")
+    parser.add_argument("--decision-risk-threshold", type=float, default=55.0, help="Ambang risk score untuk rekomendasi konservatif.")
+    parser.add_argument("--disable-sentinel-command-center", action="store_true", default=False, help="Matikan command center HTML jika hanya ingin CSV/JSON.")
     parser.add_argument("--feedback-date", help="Tanggal feedback YYYY-MM-DD untuk --mode feedback.")
     parser.add_argument("--feedback-time", help="Jam feedback HH:MM untuk --mode feedback.")
     parser.add_argument("--feedback-category", help="Kategori observasi feedback, misalnya Hujan Ringan.")
@@ -5390,7 +5597,7 @@ def main():
         aether_local_server(args)
         return
 
-    if args.mode in {"doctor", "dashboard", "report", "feedback"}:
+    if args.mode in {"doctor", "dashboard", "report", "feedback", "red-team", "autopsy", "skill-league", "constitution"}:
         mode_rows = []
         for location in locations:
             location_args = clone_args_for_location(args, location)
@@ -5406,6 +5613,18 @@ def main():
             elif args.mode == "feedback":
                 row = aether_feedback_for_location(location_args)
                 mode_rows.append(row)
+            elif args.mode == "red-team":
+                out = sentinel_red_team_for_location(location_args)
+                mode_rows.append({"location_slug": location.slug, "location_name": location.location_name, **out})
+            elif args.mode == "autopsy":
+                out = sentinel_autopsy_for_location(location_args)
+                mode_rows.append({"location_slug": location.slug, "location_name": location.location_name, **out})
+            elif args.mode == "skill-league":
+                out = sentinel_skill_league_for_location(location_args)
+                mode_rows.append({"location_slug": location.slug, "location_name": location.location_name, **out})
+            elif args.mode == "constitution":
+                out = sentinel_write_constitution(location_args)
+                mode_rows.append({"location_slug": location.slug, "location_name": location.location_name, **out})
         write_batch_summary(args.mode, mode_rows)
         return
 
@@ -5435,7 +5654,7 @@ def main():
     elif args.mode == "self-test":
         self_test_for_locations(args, locations)
         assert aether_self_test()
-        batch_info("AETHER v15 self-test selesai.")
+        batch_info("AETHER Sentinel X self-test selesai.")
     else:
         raise ValueError(f"Mode tidak dikenali: {args.mode}")
 
