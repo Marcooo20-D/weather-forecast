@@ -10938,5 +10938,388 @@ def sentinel_write_root_public_index(locations, run_rows, args):
 
 
 
+# -----------------------------------------------------------------------------
+# ANEMOS v21.1 emergency hardening patch
+# Purpose: keep the main pipeline from crashing when a renderer receives HTML/text
+# instead of a dict/list. This block intentionally overrides the v21 helpers above.
+# -----------------------------------------------------------------------------
+
+def _anemos21_safe_dict(value):
+    return value if isinstance(value, dict) else {}
+
+
+def _anemos21_safe_list(value):
+    if isinstance(value, list):
+        return value
+    if isinstance(value, tuple):
+        return list(value)
+    return []
+
+
+def _anemos21_hour_rows(day):
+    day = _anemos21_safe_dict(day)
+    rows = day.get("key_hours") or day.get("important_hours") or day.get("hours") or []
+    return [r for r in _anemos21_safe_list(rows) if isinstance(r, dict)]
+
+
+def _anemos21_period_rows(day):
+    day = _anemos21_safe_dict(day)
+    rows = day.get("periods") or day.get("day_parts") or []
+    return [r for r in _anemos21_safe_list(rows) if isinstance(r, dict)]
+
+
+def _anemos21_activity_rows(day):
+    day = _anemos21_safe_dict(day)
+    rows = day.get("activity_matrix") or day.get("activities") or []
+    rows = [r for r in _anemos21_safe_list(rows) if isinstance(r, dict)]
+    if rows:
+        return rows
+    try:
+        fallback = []
+        for x in _anemos13_activity_advice(day) or []:
+            if isinstance(x, dict):
+                fallback.append({
+                    "activity": x.get("label") or x.get("activity"),
+                    "status": x.get("value") or x.get("status"),
+                    "advice": x.get("advice") or "",
+                    "priority_hour": day.get("peak_rain_hour"),
+                    "risk_class": _v21_risk_class(day.get("peak_rain_probability")),
+                })
+        return fallback
+    except Exception:
+        return []
+
+
+def _v21_day(api, idx=0):
+    api = _anemos21_safe_dict(api)
+    days = _anemos21_safe_list(api.get("days"))
+    if 0 <= idx < len(days) and isinstance(days[idx], dict):
+        return days[idx]
+    return {}
+
+
+def _v21_summary_sentence(day):
+    day = _anemos21_safe_dict(day)
+    p = day.get("peak_rain_probability")
+    h = day.get("peak_rain_hour") or "—"
+    cls = _v21_risk_class(p, day.get("risk"))
+    existing = day.get("summary_sentence") or day.get("advice")
+    if existing:
+        return str(existing)
+    if cls == "high":
+        return f"Kurangi aktivitas luar ruang. Perhatikan peluang hujan sekitar {h}."
+    if cls == "rain":
+        return f"Aktivitas masih bisa dilakukan, tetapi siapkan payung sekitar {h}."
+    if cls == "watch":
+        return f"Cuaca relatif aman, tetapi tetap pantau perubahan awan sekitar {h}."
+    return "Aktivitas harian relatif aman dengan pemantauan biasa."
+
+
+def _v21_hero(api, args, page="full"):
+    api = _anemos21_safe_dict(api)
+    loc = api.get("location_name") or getattr(args, "location_name", "Lokasi")
+    d = _v21_day(api, 0)
+    period = api.get("period_label") or d.get("date_label") or "Hari ini"
+    updated = api.get("updated_label") or "baru diperbarui"
+    p = d.get("peak_rain_probability")
+    h = d.get("peak_rain_hour") or "—"
+    status = _v21_risk_label(p, d.get("risk"))
+    if page == "3day":
+        title = "Prakiraan 3 hari"
+        subtitle = f"Ringkasan {loc}: bandingkan hari ini, besok, dan lusa tanpa membaca tabel panjang."
+    elif page == "activity":
+        title = "Saran aktivitas"
+        subtitle = _v21_summary_sentence(d)
+    elif page == "portal":
+        title = "Cuaca lokal yang langsung bisa dipakai."
+        subtitle = "Pilih lokasi untuk melihat prakiraan hari ini dan beberapa hari ke depan."
+    else:
+        title = f"Prakiraan {loc}"
+        subtitle = _v21_summary_sentence(d)
+    return f"""
+    <section class='hero'>
+      <div class='hero-main'>
+        <div class='kicker'><span class='pill'>ANEMOS</span><span class='pill'>{_v21_esc(period)}</span><span class='pill'>Diperbarui { _v21_esc(updated) }</span></div>
+        <h1>{_v21_esc(title)}</h1>
+        <p>{_v21_esc(subtitle)}</p>
+      </div>
+      <aside class='hero-side'>
+        {_v21_metric('Peluang hujan', _v21_pct(p), f'sekitar {h}')}
+        {_v21_metric('Status', status, 'ringkasan risiko')}
+      </aside>
+    </section>
+    <div class='notice'>{_v21_esc(sentinel_public_disclaimer(args))}</div>
+    """
+
+
+def _v21_decision(api, args):
+    api = _anemos21_safe_dict(api)
+    d = _v21_day(api, 0)
+    p = d.get("peak_rain_probability")
+    h = d.get("peak_rain_hour") or "—"
+    cls = _v21_risk_class(p, d.get("risk"))
+    status = _v21_risk_label(p, d.get("risk"))
+    try:
+        acc = int((read_json(path_output('sentinel_x_verification_summary.json'), default={}) or {}).get('matched_cases', 0) or 0)
+    except Exception:
+        acc = 0
+    return f"""
+    <section class='decision'>
+      <article class='decision-card'>
+        <span class='risk-badge {cls}'>{_v21_esc(status)}</span>
+        <h2>{_v21_esc(_v21_summary_sentence(d))}</h2>
+        <p>Jam yang paling perlu diperhatikan: <b>{_v21_esc(h)}</b>. Gunakan sebagai panduan aktivitas harian dan tetap lihat kondisi sekitar.</p>
+      </article>
+      <section class='metric-grid'>
+        {_v21_metric('Suhu rata-rata', _v21_num(d.get('avg_temperature_c'), '°C', 1), 'perkiraan harian')}
+        {_v21_metric('Kelembapan', _v21_pct(d.get('avg_humidity_pct')), 'rata-rata')}
+        {_v21_metric('Heat index', _v21_num(d.get('max_heat_index_c') or d.get('avg_temperature_c'), '°C', 1), 'terasa seperti')}
+        {_v21_metric('Data akurasi', str(acc), 'pasangan observasi')}
+      </section>
+    </section>
+    """
+
+
+def _v21_day_cards(days, limit=3):
+    day_rows = [d for d in _anemos21_safe_list(days) if isinstance(d, dict)]
+    if not day_rows:
+        return "<p class='muted'>Ringkasan hari belum tersedia.</p>"
+    out = []
+    for d in day_rows[:limit]:
+        cls = _v21_risk_class(d.get('peak_rain_probability'), d.get('risk'))
+        out.append(f"""
+        <article class='day-card {cls}'>
+          <span class='label'>{_v21_esc(d.get('day_tag'))} · {_v21_esc(d.get('date_label') or d.get('date'))}</span>
+          <h3>{_v21_esc(_v21_risk_label(d.get('peak_rain_probability'), d.get('risk')))}</h3>
+          <p>{_v21_esc(_v21_summary_sentence(d))}</p>
+          <div class='mini-row'><span>Hujan<b>{_v21_pct(d.get('peak_rain_probability'))}</b></span><span>Jam<b>{_v21_esc(d.get('peak_rain_hour'))}</b></span><span>Suhu<b>{_v21_num(d.get('avg_temperature_c'),'°C',1)}</b></span></div>
+        </article>
+        """)
+    return "".join(out)
+
+
+def _v21_rain_chart(day):
+    rows = _anemos21_hour_rows(day)[:10]
+    if not rows:
+        return "<p class='muted'>Data peluang hujan belum tersedia.</p>"
+    bars, labs = [], []
+    for h in rows:
+        p = _v21_float(h.get('rain_probability'), 0) or 0
+        if 0 <= p <= 1:
+            p *= 100
+        cls = _v21_risk_class(p, h.get('risk'))
+        bars.append(f"<div class='bar {cls}' style='--h:{max(4,min(100,p))}%' data-v='{_v21_pct(p)}'></div>")
+        labs.append(f"<span>{_v21_esc(str(h.get('hour',''))[:2])}</span>")
+    return f"<div class='bars'>{''.join(bars)}</div><div class='axis'>{''.join(labs)}</div>"
+
+
+def _v21_temp_chart(day):
+    rows = _anemos21_hour_rows(day)[:10]
+    pts = []
+    for h in rows:
+        t = _v21_float(h.get('temp_c'), None)
+        if t is not None:
+            pts.append((str(h.get('hour',''))[:2], t))
+    if len(pts) < 2:
+        return "<p class='muted'>Data suhu belum cukup untuk grafik.</p>"
+    w, ht, pad = 620, 190, 30
+    vals = [v for _, v in pts]
+    mn, mx = min(vals), max(vals)
+    if abs(mx - mn) < 0.1:
+        mn -= 1
+        mx += 1
+    coords = []
+    for i, (lab, val) in enumerate(pts):
+        x = pad + i * ((w - 2 * pad) / max(1, len(pts)-1))
+        y = ht - pad - ((val - mn) / (mx - mn)) * (ht - 2 * pad)
+        coords.append((x, y, lab, val))
+    poly = " ".join(f"{x:.1f},{y:.1f}" for x, y, _, _ in coords)
+    marks = "".join(f"<circle cx='{x:.1f}' cy='{y:.1f}' r='4'/><text x='{x:.1f}' y='{y-9:.1f}' text-anchor='middle'>{val:.0f}°</text><text class='x' x='{x:.1f}' y='{ht-6}' text-anchor='middle'>{_v21_esc(lab)}</text>" for x, y, lab, val in coords)
+    return f"<svg class='temp-svg' viewBox='0 0 {w} {ht}' role='img' aria-label='Grafik suhu'><style>polyline{{fill:none;stroke:#1769ff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}}circle{{fill:white;stroke:#1769ff;stroke-width:4}}text{{font:800 12px system-ui;fill:#0b244c}}.x{{fill:#66758c;font-size:11px}}</style><polyline points='{poly}'/>{marks}</svg>"
+
+
+def _v21_variables(day):
+    day = _anemos21_safe_dict(day)
+    items = [
+        ('Suhu', _v21_num(day.get('avg_temperature_c'), '°C', 1), 'rata-rata'),
+        ('Terasa', _v21_num(day.get('max_heat_index_c') or day.get('avg_temperature_c'), '°C', 1), 'heat index'),
+        ('RH', _v21_pct(day.get('avg_humidity_pct')), 'kelembapan'),
+        ('Hujan', _v21_pct(day.get('peak_rain_probability')), f"sekitar {day.get('peak_rain_hour') or '—'}"),
+        ('Angin', _v21_num(day.get('max_wind_kmh'), ' km/jam', 1), 'maksimum'),
+        ('Kondisi', day.get('condition') or '—', 'dominan'),
+    ]
+    return "".join(f"<article class='var'><span>{_v21_esc(a)}</span><b>{_v21_esc(b)}</b><small>{_v21_esc(c)}</small></article>" for a,b,c in items)
+
+
+def _v21_periods(day):
+    periods = _anemos21_period_rows(day)
+    if not periods:
+        return "<p class='muted'>Ringkasan bagian hari belum tersedia.</p>"
+    out = []
+    for p in periods[:4]:
+        prob = p.get('rain_probability') or p.get('peak_rain_probability')
+        cls = _v21_risk_class(prob, p.get('risk'))
+        out.append(f"""
+        <article class='period {cls}'>
+          <h3>{_v21_esc(p.get('label') or p.get('period') or p.get('name'))}</h3>
+          <p>{_v21_esc(p.get('condition') or p.get('summary') or 'Pantau kondisi sekitar.')}</p>
+          <div class='mini-row'><span>Suhu<b>{_v21_num(p.get('temp_c') or p.get('avg_temperature_c'),'°C',1)}</b></span><span>Hujan<b>{_v21_pct(prob)}</b></span><span>Risiko<b>{_v21_esc(_v21_risk_label(prob, p.get('risk')))}</b></span></div>
+        </article>
+        """)
+    return "".join(out)
+
+
+def _v21_activity(day):
+    items = _anemos21_activity_rows(day)
+    if not items:
+        return "<p class='muted'>Saran aktivitas belum tersedia.</p>"
+    out = []
+    for a in items[:6]:
+        cls = _v21_risk_class(None, a.get('risk_class') or a.get('risk'))
+        out.append(f"""
+        <article class='activity {cls}'>
+          <h3>{_v21_esc(a.get('activity') or a.get('label'))}</h3>
+          <b>{_v21_esc(a.get('status') or a.get('value'))}</b>
+          <p>{_v21_esc(a.get('advice'), '')}</p>
+          <small>Fokus: {_v21_esc(a.get('priority_hour') or a.get('hour'))}</small>
+        </article>
+        """)
+    return "".join(out)
+
+
+def _v21_hours(day, limit=10):
+    rows = _anemos21_hour_rows(day)
+    if not rows:
+        return "<p class='muted'>Jam penting belum tersedia.</p>"
+    out = []
+    for h in rows[:limit]:
+        p = h.get('rain_probability')
+        cls = _v21_risk_class(p, h.get('risk'))
+        out.append(f"""
+        <article class='hour-row {cls}'>
+          <div class='time'>{_v21_esc(h.get('hour'))}</div>
+          <div class='cond'><b>{_v21_esc(h.get('condition') or '—')}</b><small>{_v21_esc(h.get('advice'), 'Pantau kondisi sekitar.')}</small></div>
+          <div class='cell'><b>{_v21_num(h.get('temp_c'), '°C', 1)}</b><small>Suhu</small></div>
+          <div class='cell'><b>{_v21_pct(h.get('humidity_pct'))}</b><small>RH</small></div>
+          <div class='cell'><b>{_v21_num(h.get('heat_index_c'), '°C', 1)}</b><small>Terasa</small></div>
+          <div class='cell'><b>{_v21_pct(p)}</b><small>Hujan</small></div>
+          <div class='cell'><b>{_v21_esc(_v21_risk_label(p, h.get('risk')))}</b><small>Risiko</small></div>
+        </article>
+        """)
+    return "".join(out)
+
+
+def _v21_share(api):
+    api = _anemos21_safe_dict(api)
+    loc = api.get('location_name') or 'Lokasi'
+    d = _v21_day(api, 0)
+    return (f"ANEMOS · {loc}\n"
+            f"{d.get('date_label') or d.get('date') or 'Hari ini'}\n"
+            f"{_v21_summary_sentence(d)}\n"
+            f"Peluang hujan tertinggi {_v21_pct(d.get('peak_rain_probability'))} sekitar {d.get('peak_rain_hour') or '—'}.\n"
+            "Bukan peringatan resmi; untuk cuaca ekstrem ikuti BMKG.")
+
+
+def _anemos21_detail_html(api, args, page="full"):
+    api = _anemos21_safe_dict(api)
+    try:
+        api = _anemos20_enhance_api(api, args)
+    except Exception:
+        pass
+    api["version"] = ANEMOS_PUBLIC_VERSION
+    days = [d for d in _anemos21_safe_list(api.get("days")) if isinstance(d, dict)]
+    today = days[0] if days else {}
+    active = "today" if page in ("full", "today") else ("3day" if page == "3day" else ("activity" if page == "activity" else "home"))
+    loc = api.get("location_name") or getattr(args, "location_name", "Lokasi")
+    sections = []
+    sections.append(_v21_hero(api, args, page))
+    sections.append(_v21_decision(api, args))
+    sections.append(f"<section class='panel'><div class='section-head'><h2>3 hari ke depan</h2><p>Ringkas, tanpa tabel panjang.</p></div><div class='grid g3'>{_v21_day_cards(days, 3)}</div></section>")
+    if page in ("full", "today"):
+        sections.append(f"<section class='grid g2'><article class='panel'><div class='section-head'><h2>Peluang hujan</h2><p>Jam yang paling perlu diperhatikan.</p></div>{_v21_rain_chart(today)}</article><article class='panel'><div class='section-head'><h2>Suhu</h2><p>Perubahan suhu pada jam utama.</p></div>{_v21_temp_chart(today)}</article></section>")
+        sections.append(f"<section class='panel'><div class='section-head'><h2>Kondisi utama</h2><p>Variabel penting untuk keputusan harian.</p></div><div class='var-grid'>{_v21_variables(today)}</div></section>")
+        sections.append(f"<section class='panel'><div class='section-head'><h2>Pagi, siang, sore, malam</h2><p>Supaya cepat dibaca.</p></div><div class='periods'>{_v21_periods(today)}</div></section>")
+    if page in ("full", "activity"):
+        sections.append(f"<section class='panel'><div class='section-head'><h2>Saran aktivitas</h2><p>Bahasa dibuat praktis, bukan panjang.</p></div><div class='activity-grid'>{_v21_activity(today)}</div></section>")
+        sections.append(f"<section class='grid g2'><article class='share'><h2>Share singkat</h2><p>Teks siap disalin ke WhatsApp/grup.</p><textarea readonly>{_v21_esc(_v21_share(api))}</textarea></article><article class='notes card'><h2>Catatan</h2><ul><li>Prakiraan ini panduan aktivitas, bukan peringatan resmi.</li><li>Hujan lokal bisa bergeser beberapa kilometer atau berubah beberapa jam.</li><li>Untuk cuaca ekstrem, ikuti BMKG dan kondisi setempat.</li></ul></article></section>")
+    if page == "3day":
+        detail = []
+        for d in days[:3]:
+            detail.append(f"<section class='panel'><div class='section-head'><h2>{_v21_esc(d.get('day_tag') or d.get('date_label') or d.get('date'))}</h2><p>{_v21_esc(_v21_summary_sentence(d))}</p></div><div class='periods'>{_v21_periods(d)}</div><div class='hour-list' style='margin-top:14px'>{_v21_hours(d, 8)}</div></section>")
+        sections.append("".join(detail))
+    else:
+        sections.append(f"<section class='panel'><div class='section-head'><h2>Jam penting</h2><p>Dipilih dari jam utama dan jam rawan.</p></div><div class='hour-list'>{_v21_hours(today, 10)}</div></section>")
+    sections.append("<details class='panel'><summary><b>Data publik</b></summary><p style='color:var(--muted)'>Untuk analisis, arsip, atau integrasi dashboard.</p><div class='nav'><a class='btn' href='anemos_daily_outlook.csv'>CSV harian</a><a class='btn' href='anemos_hourly_compact.csv'>CSV jam penting</a><a class='btn' href='anemos_api_v1.json'>JSON API</a><a class='btn' href='sentinel_x.csv'>CSV lengkap</a></div></details>")
+    return f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>ANEMOS — {_v21_esc(loc)}</title><meta name='theme-color' content='#1769ff'><style>{_anemos21_css()}</style></head><body>{_anemos21_topbar(api,args,active)}<main class='app'>{''.join(sections)}<p class='footer'>ANEMOS · {ANEMOS_PUBLIC_VERSION} · {_v21_esc(api.get('period_label'))} · Diperbarui {_v21_esc(api.get('updated_label'))}</p></main></body></html>"""
+
+
+def write_dict_csv(path, fieldnames=None, rows=None):
+    if rows is None and isinstance(fieldnames, (list, tuple)) and fieldnames and isinstance(fieldnames[0], dict):
+        rows = fieldnames
+        fieldnames = None
+    rows = [r for r in _anemos21_safe_list(rows) if isinstance(r, dict)]
+    alias_map = {
+        "bin": ["probability_bin"],
+        "probability_bin": ["bin"],
+        "mean_forecast_pct": ["mean_forecast_probability"],
+        "mean_forecast_probability": ["mean_forecast_pct"],
+        "observed_frequency_pct": ["observed_rain_frequency"],
+        "observed_rain_frequency": ["observed_frequency_pct"],
+        "n": ["cases", "matched_cases"],
+        "cases": ["n", "matched_cases"],
+    }
+    safe_fieldnames = list(fieldnames or [])
+    if not safe_fieldnames:
+        for row in rows:
+            for key in row.keys():
+                if key not in safe_fieldnames:
+                    safe_fieldnames.append(key)
+    if not safe_fieldnames:
+        safe_fieldnames = ["empty"]
+    def pick(row, name):
+        if name in row:
+            return row.get(name, "")
+        for alt in alias_map.get(name, []):
+            if alt in row:
+                return row.get(alt, "")
+        return ""
+    safe_rows = [{name: pick(row, name) for name in safe_fieldnames} for row in rows]
+    def writer_fn(f):
+        writer = csv.DictWriter(f, fieldnames=safe_fieldnames, delimiter=CSV_DELIMITER, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(safe_rows)
+    atomic_write_text(path, writer_fn, newline="")
+
+
+def sentinel_write_verification_artifacts(rows, args):
+    verification_result = sentinel_compute_verification(rows or [], args)
+    if isinstance(verification_result, tuple):
+        summary = _anemos21_safe_dict(verification_result[0] if len(verification_result) > 0 else {})
+        pairs = _anemos21_safe_list(verification_result[1] if len(verification_result) > 1 else [])
+        reliability_raw = _anemos21_safe_list(verification_result[2] if len(verification_result) > 2 else [])
+    else:
+        summary = _anemos21_safe_dict(verification_result)
+        pairs = _anemos21_safe_list(summary.get('matched_pairs'))
+        reliability_raw = _anemos21_safe_list(summary.get('reliability_bins'))
+    reliability = []
+    for r in reliability_raw:
+        if not isinstance(r, dict):
+            continue
+        reliability.append({
+            'bin': r.get('bin', r.get('probability_bin', '')),
+            'n': r.get('n', r.get('cases', 0)),
+            'mean_forecast_pct': r.get('mean_forecast_pct', r.get('mean_forecast_probability', '')),
+            'observed_frequency_pct': r.get('observed_frequency_pct', r.get('observed_rain_frequency', '')),
+        })
+    pairs = [p for p in pairs if isinstance(p, dict)]
+    pair_fieldnames = list(pairs[0].keys()) if pairs else ['target_date','jam','forecast_rain_prob','observed_rain','forecast_temp_c','observed_temp_c']
+    write_json(path_output('sentinel_x_verification_summary.json'), summary)
+    write_dict_csv(path_output('sentinel_x_reliability.csv'), ['bin','n','mean_forecast_pct','observed_frequency_pct'], reliability)
+    write_dict_csv(path_output('sentinel_x_verification_pairs.csv'), pair_fieldnames, pairs)
+    atomic_write_text(path_output('sentinel_x_accuracy_public.html'), lambda f: f.write(_anemos21_accuracy_html(rows or [], args)))
+    return summary
+
+
+
 if __name__ == "__main__":
     main()
