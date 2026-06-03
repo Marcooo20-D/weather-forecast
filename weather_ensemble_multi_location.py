@@ -6168,6 +6168,243 @@ def main():
         raise ValueError(f"Mode tidak dikenali: {args.mode}")
 
 
+# ============================================================================
+# AETHER SENTINEL X PUBLIC-OPERATIONAL v3 — POLISHED PUBLIC UI OVERRIDES
+# ----------------------------------------------------------------------------
+# These overrides are intentionally placed before main() is called. They keep
+# the forecasting/risk engine intact, but replace the public-facing HTML outputs
+# with a cleaner, full-width, mobile-friendly command center and report pages.
+# ============================================================================
+
+SENTINEL_PUBLIC_UI_VERSION = "sentinel-x-public-operational-v3-polished-ui"
+AETHER_REPORT_HTML_FILENAME = "sentinel_x_report.html"
+
+
+def _sx_fmt(value, suffix="", blank="—"):
+    if value is None or value == "":
+        return blank
+    try:
+        num = float(value)
+        if num.is_integer():
+            return f"{int(num)}{suffix}"
+        return f"{round(num, 1)}{suffix}"
+    except Exception:
+        return f"{value}{suffix}"
+
+
+def _sx_status_color(status):
+    return {"GREEN": "#16a34a", "YELLOW": "#f59e0b", "RED": "#ef4444", "BLACK": "#020617"}.get(str(status), "#64748b")
+
+
+def _sx_status_class(status):
+    return {"GREEN": "ok", "YELLOW": "watch", "RED": "danger", "BLACK": "black"}.get(str(status), "neutral")
+
+
+def _sx_metric_card(title, value, note="", tone="neutral"):
+    return f"""<article class=\"metric {tone}\"><p>{html.escape(str(title))}</p><strong>{value}</strong><span>{html.escape(str(note))}</span></article>"""
+
+
+def _sx_empty(value, fallback="Belum tersedia"):
+    return fallback if value is None or value == "" else value
+
+
+def sentinel_write_verification_artifacts(rows, args):
+    summary, pairs, reliability = sentinel_compute_verification(rows, args)
+    write_json(path_output("sentinel_x_verification_summary.json"), summary)
+    if pairs:
+        write_dict_csv(path_output("sentinel_x_verification_pairs.csv"), list(pairs[0].keys()), pairs)
+    else:
+        write_dict_csv(path_output("sentinel_x_verification_pairs.csv"), ["target_date", "jam", "note"], [{"target_date": "", "jam": "", "note": "No matched forecast-observation pairs yet."}])
+    write_dict_csv(path_output("sentinel_x_reliability.csv"), ["probability_bin", "n", "mean_forecast_probability", "observed_rain_frequency"], reliability)
+
+    esc = html.escape
+    status = str(summary.get("calibration_status", "UNKNOWN"))
+    enough = status == "VERIFIED_ENOUGH_DATA"
+    status_note = "Skor sudah mulai bisa dinilai dari data pasangan forecast-observasi." if enough else "Data observasi belum cukup. Skor risiko masih ditampilkan sebagai sinyal heuristic, bukan klaim akurasi final."
+    rel_rows = "".join(
+        f"<tr><td>{esc(str(r['probability_bin']))}</td><td>{r['n']}</td><td>{_sx_fmt(r['mean_forecast_probability'], '%')}</td><td>{_sx_fmt(r['observed_rain_frequency'], '%')}</td></tr>"
+        for r in reliability
+    )
+    doc = f"""<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Akuntabilitas Sentinel X — {esc(getattr(args,'location_name',''))}</title>
+<style>
+:root{{--bg:#eef3f8;--ink:#0f172a;--muted:#64748b;--line:#dbe4ef;--card:#ffffff;--blue:#2563eb;--warn:#f59e0b;--green:#16a34a;--red:#ef4444;}}
+*{{box-sizing:border-box}}body{{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.55}}a{{color:#1d4ed8;font-weight:700}}.wrap{{width:min(1240px,calc(100% - 36px));margin:0 auto;padding:28px 0 44px}}.hero{{background:linear-gradient(135deg,#0f172a,#1e3a8a);color:white;padding:36px;border-radius:28px;margin:22px 0;box-shadow:0 18px 50px rgba(15,23,42,.22)}}.hero h1{{font-size:clamp(28px,4vw,48px);margin:0 0 8px}}.hero p{{max-width:880px;margin:0;color:#dbeafe}}.notice{{background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;border-radius:20px;padding:16px 18px;margin:18px 0;font-weight:650}}.metrics{{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}}.metric{{background:white;border:1px solid var(--line);border-radius:22px;padding:18px;min-width:0;box-shadow:0 12px 28px rgba(15,23,42,.06)}}.metric p{{margin:0;color:var(--muted);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.03em}}.metric strong{{display:block;font-size:clamp(20px,2.5vw,34px);line-height:1.05;margin:9px 0;word-break:break-word}}.metric span{{color:var(--muted);font-size:13px}}.metric.good{{border-color:#bbf7d0;background:#f0fdf4}}.metric.watch{{border-color:#fed7aa;background:#fff7ed}}section.card{{background:white;border:1px solid var(--line);border-radius:24px;padding:22px;margin:16px 0;box-shadow:0 12px 28px rgba(15,23,42,.05)}}h2{{margin:0 0 14px;font-size:24px}}.table-scroll{{overflow:auto;border:1px solid var(--line);border-radius:18px}}table{{width:100%;border-collapse:collapse;background:white;min-width:760px}}th{{background:#f8fafc;color:#334155;font-size:13px;text-align:left;padding:12px}}td{{border-top:1px solid var(--line);padding:12px;vertical-align:top}}td:first-child,th:first-child{{font-weight:800}}.links{{display:flex;flex-wrap:wrap;gap:10px}}.pill{{display:inline-block;text-decoration:none;border:1px solid #bfdbfe;background:#eff6ff;border-radius:999px;padding:9px 12px}}@media(max-width:860px){{.metrics{{grid-template-columns:1fr 1fr}}.hero{{padding:24px}}}}@media(max-width:560px){{.metrics{{grid-template-columns:1fr}}.wrap{{width:min(100% - 20px,1240px)}}}}
+</style></head><body><main class=\"wrap\"><div class=\"hero\"><h1>Akuntabilitas Forecast</h1><p>{esc(getattr(args,'location_name',''))} · halaman ini menunjukkan apakah prediksi Sentinel sudah punya bukti historis yang cukup.</p></div><div class=\"notice\"><b>{esc(sentinel_public_disclaimer(args))}</b><br>{esc(status_note)}</div>
+<div class=\"metrics\">
+{_sx_metric_card('Status kalibrasi', esc(status.replace('_',' ')), status_note, 'good' if enough else 'watch')}
+{_sx_metric_card('Matched cases', esc(str(summary.get('matched_cases',0))), f"Minimum {summary.get('verification_min_cases','')} kasus", 'neutral')}
+{_sx_metric_card('Brier hujan', esc(str(_sx_empty(summary.get('rain_brier_score')))), 'Lebih kecil lebih baik', 'neutral')}
+{_sx_metric_card('MAE suhu', esc(str(_sx_empty(summary.get('temperature_mae_c')))), 'Derajat Celsius', 'neutral')}
+{_sx_metric_card('POD hujan', esc(str(_sx_empty(summary.get('rain_pod')))), 'Kemampuan menangkap kejadian hujan', 'neutral')}
+{_sx_metric_card('FAR hujan', esc(str(_sx_empty(summary.get('rain_far')))), 'Alarm hujan yang keliru', 'neutral')}
+{_sx_metric_card('CSI hujan', esc(str(_sx_empty(summary.get('rain_csi')))), 'Skor deteksi event hujan', 'neutral')}
+{_sx_metric_card('Category accuracy', esc(str(_sx_empty(summary.get('category_accuracy')))), 'Kecocokan kategori cuaca', 'neutral')}
+</div>
+<section class=\"card\"><h2>Reliability probabilitas hujan</h2><p>Jika data belum cukup, tabel ini wajar masih kosong. Setelah observasi terkumpul, bagian ini akan menunjukkan apakah probabilitas hujan Sentinel terlalu rendah, terlalu tinggi, atau sudah realistis.</p><div class=\"table-scroll\"><table><tr><th>Bin probabilitas</th><th>Jumlah kasus</th><th>Rata-rata forecast</th><th>Frekuensi hujan observasi</th></tr>{rel_rows}</table></div></section>
+<section class=\"card\"><h2>File data</h2><div class=\"links\"><a class=\"pill\" href=\"sentinel_x_verification_summary.json\">Verification JSON</a><a class=\"pill\" href=\"sentinel_x_reliability.csv\">Reliability CSV</a><a class=\"pill\" href=\"sentinel_x_verification_pairs.csv\">Matched pairs CSV</a><a class=\"pill\" href=\"command_center_sentinel_x.html\">Kembali ke Command Center</a></div></section>
+</main></body></html>"""
+    atomic_write_text(path_output("sentinel_x_accuracy_public.html"), lambda f: f.write(doc))
+    return summary
+
+
+def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+    if getattr(args, "disable_sentinel_command_center", False):
+        return None
+    esc = html.escape
+    rows = aether_rows or []
+    disclaimer = sentinel_public_disclaimer(args)
+    status = str(daily.get('daily_operational_status','UNKNOWN'))
+    risk_status = _sx_status_class(status)
+    peak_rain = max(rows, key=lambda r: aether_value(r.get("rain_threat_score")) or -1) if rows else {}
+    peak_failure = max(rows, key=lambda r: aether_value(r.get("forecast_failure_risk")) or -1) if rows else {}
+    peak_stress = max(rows, key=lambda r: aether_value(r.get("forecast_stress_index")) or -1) if rows else {}
+    scenarios = peak_rain or {}
+    verification = read_json(path_output("sentinel_x_verification_summary.json"), default={}) or {}
+    cal_status = str(verification.get('calibration_status','unknown'))
+    heuristic_note = "Belum cukup data verifikasi; skor risiko masih heuristic." if cal_status != "VERIFIED_ENOUGH_DATA" else "Skor sudah memiliki dukungan data observasi minimum."
+
+    def status_badge(value):
+        return f"<span class=\"status-badge {_sx_status_class(value)}\">{esc(str(value))}</span>"
+
+    scenario_items = [
+        ("Dry miss", "scenario_dry_miss", "Hujan berpotensi meleset dari titik utama."),
+        ("Nearby rain only", "scenario_nearby_rain_only", "Hujan dekat lokasi, titik utama bisa hanya mendung."),
+        ("Direct light rain", "scenario_direct_light_rain", "Lokasi utama terkena hujan ringan."),
+        ("Direct moderate rain", "scenario_direct_moderate_rain", "Hujan sedang singkat langsung mengenai lokasi."),
+        ("Convective burst", "scenario_convective_burst", "Skenario burst lokal yang sulit diprediksi timing-nya."),
+    ]
+    scenario_html = "".join(f"<article class=\"scenario\"><div><b>{esc(label)}</b><small>{esc(desc)}</small></div><strong>{_sx_fmt(scenarios.get(key),'%')}</strong></article>" for label, key, desc in scenario_items)
+
+    def risk_bar(value):
+        v = aether_value(value)
+        if v is None:
+            v = 0
+        v = max(0, min(100, float(v)))
+        return f"<div class=\"riskbar\"><span style=\"width:{v}%\"></span></div><b>{round(v,1)}</b>"
+
+    if rows:
+        table_rows = "".join(
+            f"<tr class=\"row-{_sx_status_class(r.get('operational_status',''))}\">"
+            f"<td><b>{esc(str(r.get('jam','')))}</b></td>"
+            f"<td>{esc(str(r.get('dominant_category','')))}</td>"
+            f"<td>{_sx_fmt(r.get('prob_rain'),'%')}</td>"
+            f"<td>{risk_bar(r.get('rain_threat_score'))}</td>"
+            f"<td>{risk_bar(r.get('nearby_rain_risk'))}</td>"
+            f"<td>{risk_bar(r.get('forecast_failure_risk'))}</td>"
+            f"<td>{status_badge(r.get('operational_status',''))}</td>"
+            f"<td>{esc(str(r.get('decision_recommendation','')))}</td>"
+            f"</tr>" for r in rows
+        )
+    else:
+        table_rows = "<tr><td colspan='8'>Tidak ada data forecast.</td></tr>"
+
+    source_html = "".join(
+        f"<tr><td><b>{esc(str(s.get('source_id','')))}</b></td><td>{esc(str(s.get('state','')))}</td><td>{esc(str(s.get('success','')))}</td><td>{_sx_fmt(s.get('duration_ms'),' ms')}</td></tr>"
+        for s in (source_state_rows or [])
+    ) or "<tr><td colspan='4'>Belum ada source state.</td></tr>"
+
+    top_action = rows[int(len(rows)/2)].get('decision_recommendation','') if rows else daily.get('summary_text','')
+    last_update = now_local(getattr(args, 'timezone', DEFAULT_TIMEZONE)).strftime('%d %b %Y %H:%M')
+    doc = f"""<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>AETHER Sentinel X — {esc(getattr(args,'location_name',''))}</title>
+<style>
+:root{{--bg:#eef3f8;--ink:#0f172a;--muted:#64748b;--line:#dbe4ef;--card:#ffffff;--dark:#07111f;--blue:#2563eb;--green:#16a34a;--yellow:#f59e0b;--red:#ef4444;}}
+*{{box-sizing:border-box}}html{{scroll-behavior:smooth}}body{{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:radial-gradient(circle at top left,#dbeafe 0,#eef3f8 34%,#f8fafc 100%);color:var(--ink);line-height:1.55}}a{{color:#1d4ed8;font-weight:800;text-decoration:none}}a:hover{{text-decoration:underline}}.shell{{width:min(1480px,calc(100% - 40px));margin:0 auto;padding:22px 0 48px}}.hero{{position:relative;overflow:hidden;background:linear-gradient(135deg,#07111f,#10295a 56%,#1d4ed8);border-radius:34px;color:white;padding:34px;box-shadow:0 24px 80px rgba(15,23,42,.28);margin:18px 0 18px}}.hero:after{{content:"";position:absolute;right:-90px;top:-100px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,.11)}}.topline{{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}}.chip{{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:8px 12px;font-weight:800;color:#e0f2fe}}.hero h1{{font-size:clamp(34px,5vw,68px);line-height:1;margin:0 0 14px;letter-spacing:-.04em}}.hero p{{max-width:950px;color:#dbeafe;font-size:clamp(16px,1.6vw,20px);margin:0}}.notice{{background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;border-radius:22px;padding:16px 18px;margin:16px 0;font-weight:650}}.metrics{{display:grid;grid-template-columns:1.25fr repeat(3,1fr);gap:16px;margin:18px 0}}.metric{{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:26px;padding:20px;box-shadow:0 14px 36px rgba(15,23,42,.08);min-width:0}}.metric p{{margin:0;color:var(--muted);font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}}.metric strong{{display:block;font-size:clamp(28px,3.8vw,48px);line-height:1.05;margin:10px 0;letter-spacing:-.04em;word-break:break-word}}.metric small,.metric span{{color:var(--muted);display:block}}.metric.primary{{background:#0f172a;color:white;border-color:#1e293b}}.metric.primary p,.metric.primary span{{color:#cbd5e1}}.status-badge{{display:inline-flex;align-items:center;justify-content:center;color:white;padding:7px 11px;border-radius:999px;font-weight:900;font-size:12px;letter-spacing:.04em}}.status-badge.ok{{background:var(--green)}}.status-badge.watch{{background:var(--yellow);color:#451a03}}.status-badge.danger{{background:var(--red)}}.status-badge.black{{background:#020617}}.status-badge.neutral{{background:#64748b}}.layout{{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,.55fr);gap:18px;align-items:start}}.card{{background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:0 14px 36px rgba(15,23,42,.06);margin-bottom:18px}}.card h2{{margin:0 0 12px;font-size:clamp(21px,2vw,30px);letter-spacing:-.03em}}.card p{{margin-top:0}}.summary{{font-size:18px}}.scenario-grid{{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}}.scenario{{border:1px solid var(--line);background:#f8fafc;border-radius:18px;padding:15px;min-height:132px;display:flex;flex-direction:column;justify-content:space-between}}.scenario small{{display:block;color:var(--muted);margin-top:7px;line-height:1.35}}.scenario strong{{font-size:30px;letter-spacing:-.04em}}.table-scroll{{overflow:auto;border:1px solid var(--line);border-radius:20px;background:white}}table{{width:100%;border-collapse:collapse;min-width:1040px;background:white}}th{{background:#f8fafc;color:#334155;font-size:12px;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:13px;position:sticky;top:0;z-index:1}}td{{border-top:1px solid var(--line);padding:13px;vertical-align:top}}tr.row-watch td{{background:#fffbeb}}tr.row-danger td{{background:#fef2f2}}.riskbar{{height:9px;background:#e2e8f0;border-radius:999px;overflow:hidden;min-width:84px;margin-bottom:5px}}.riskbar span{{display:block;height:100%;background:linear-gradient(90deg,#16a34a,#f59e0b,#ef4444);border-radius:999px}}.links{{display:flex;flex-wrap:wrap;gap:10px}}.pill{{display:inline-flex;align-items:center;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:999px;padding:10px 13px;font-weight:900}}.source-table table{{min-width:520px}}.footer-note{{color:var(--muted);font-size:13px;margin-top:16px}}@media(max-width:1120px){{.layout{{grid-template-columns:1fr}}.metrics{{grid-template-columns:1fr 1fr}}.scenario-grid{{grid-template-columns:1fr 1fr}}}}@media(max-width:620px){{.shell{{width:min(100% - 20px,1480px)}}.hero{{padding:24px;border-radius:24px}}.metrics{{grid-template-columns:1fr}}.scenario-grid{{grid-template-columns:1fr}}}}
+</style></head><body><main class=\"shell\"><section class=\"hero\"><div class=\"topline\"><span class=\"chip\">AETHER SENTINEL X</span><span class=\"chip\">{esc(getattr(args,'location_name',''))}</span><span class=\"chip\">Updated {esc(last_update)}</span></div><h1>Command Center Cuaca Lokal</h1><p>Ringkasan risiko atmosfer, skenario hujan, peluang kegagalan forecast, dan rekomendasi keputusan harian untuk masyarakat.</p></section><div class=\"notice\"><b>{esc(disclaimer)}</b><br>Halaman ini adalah pendukung keputusan harian. Untuk cuaca ekstrem dan keselamatan, tetap rujuk informasi resmi.</div>
+<section class=\"metrics\">
+{_sx_metric_card('Status operasional', status_badge(status), daily.get('summary_text',''), 'primary')}
+{_sx_metric_card('Puncak risiko hujan', esc(str(peak_rain.get('jam','—'))), f"Rain threat {_sx_fmt(peak_rain.get('rain_threat_score'))}", risk_status)}
+{_sx_metric_card('Failure risk tertinggi', esc(str(_sx_empty(peak_failure.get('forecast_failure_risk')))), esc(str(peak_failure.get('main_failure_mode','Timing/posisi hujan lokal'))), 'neutral')}
+{_sx_metric_card('Forecast stress', esc(str(_sx_empty(peak_stress.get('forecast_stress_index')))), 'Semakin tinggi, semakin sulit diprediksi', 'neutral')}
+</section>
+<div class=\"layout\"><div>
+<section class=\"card\"><h2>Ringkasan paling penting</h2><p class=\"summary\">{esc(str(daily.get('summary_text','')))}</p><div class=\"links\"><a class=\"pill\" href=\"sentinel_x_accuracy_public.html\">Akurasi & Akuntabilitas</a><a class=\"pill\" href=\"sentinel_x_report.html\">Laporan visual</a><a class=\"pill\" href=\"sentinel_x.csv\">Data CSV</a><a class=\"pill\" href=\"sentinel_x_forecast_contract.json\">Forecast Contract</a></div></section>
+<section class=\"card\"><h2>Multi-Reality Scenario at Peak Risk</h2><div class=\"scenario-grid\">{scenario_html}</div></section>
+<section class=\"card\"><h2>Timeline Risiko & Rekomendasi</h2><div class=\"table-scroll\"><table><tr><th>Jam</th><th>Cuaca</th><th>Prob. Hujan</th><th>Rain Threat</th><th>Nearby Risk</th><th>Failure Risk</th><th>Status</th><th>Rekomendasi</th></tr>{table_rows}</table></div></section>
+</div><aside>
+<section class=\"card\"><h2>Situation Awareness</h2><p><b>Mode atmosfer:</b><br>{esc(str(daily.get('dominant_atmospheric_mode','')))}</p><p><b>Risk window:</b><br>{esc(str(daily.get('risk_window','')))}</p><p><b>Best window:</b><br>{esc(str(daily.get('best_window','')))}</p><p><b>Kalibrasi:</b><br>{esc(cal_status.replace('_',' '))}</p><p class=\"footer-note\">{esc(heuristic_note)}</p></section>
+<section class=\"card source-table\"><h2>Source Health</h2><div class=\"table-scroll\"><table><tr><th>Source</th><th>State</th><th>Success</th><th>Latency</th></tr>{source_html}</table></div></section>
+<section class=\"card\"><h2>Forecast Constitution</h2><ol>{''.join(f'<li>{esc(item)}</li>' for item in SENTINEL_CONSTITUTION[:6])}</ol><p><a href=\"sentinel_constitution.md\">Lihat semua prinsip</a></p></section>
+</aside></div>
+</main></body></html>"""
+    atomic_write_text(path_output(AETHER_DASHBOARD_FILENAME), lambda f: f.write(doc))
+    write_json(path_output("command_center_manifest_sentinel_x.json"), {"dashboard": path_output(AETHER_DASHBOARD_FILENAME), "accuracy": path_output("sentinel_x_accuracy_public.html"), "report_html": path_output(AETHER_REPORT_HTML_FILENAME), "generated_at": now_local(args.timezone).isoformat(), "ui_version": SENTINEL_PUBLIC_UI_VERSION})
+    return path_output(AETHER_DASHBOARD_FILENAME)
+
+
+def aether_write_report(aether_rows, daily, args):
+    verification = read_json(path_output("sentinel_x_verification_summary.json"), default={}) or {}
+    esc = html.escape
+    md_lines = [
+        f"# {AETHER_VERSION}", "", f"Lokasi: {getattr(args,'location_name','')}", f"Mission: {getattr(args,'mission','safety_first')}", "",
+        f"> **Disclaimer:** {sentinel_public_disclaimer(args)}", "",
+        "## Ringkasan Publik", daily.get("summary_text", ""), "",
+        "## Status Operasional", f"- Daily status: {daily.get('daily_operational_status','')}", f"- Dominant atmospheric mode: {daily.get('dominant_atmospheric_mode','')}", f"- Risk window: {daily.get('risk_window','')}", f"- Best window: {daily.get('best_window','')}", "",
+        "## Akuntabilitas & Kalibrasi", f"- Calibration status: {verification.get('calibration_status','unknown')}", f"- Matched cases: {verification.get('matched_cases',0)}", f"- Rain Brier Score: {verification.get('rain_brier_score','')}", f"- Temperature MAE: {verification.get('temperature_mae_c','')}", "",
+        "## Catatan Ilmiah", "Risk, trust, self-doubt, dan failure score dianggap *heuristic* sampai jumlah pasangan forecast-observasi memenuhi ambang verifikasi.", "",
+        "## Forecast Constitution", "",
+    ]
+    md_lines += [f"{i}. {item}" for i, item in enumerate(SENTINEL_CONSTITUTION, 1)]
+    atomic_write_text(path_output(AETHER_REPORT_FILENAME), lambda f: f.write("\n".join(md_lines)))
+
+    risk_window = esc(str(daily.get('risk_window','')))
+    best_window = esc(str(daily.get('best_window','')))
+    status = esc(str(daily.get('daily_operational_status','')))
+    rows = aether_rows or []
+    top_rows = rows[:24]
+    table = "".join(f"<tr><td>{esc(str(r.get('jam','')))}</td><td>{esc(str(r.get('dominant_category','')))}</td><td>{_sx_fmt(r.get('prob_rain'),'%')}</td><td>{_sx_fmt(r.get('rain_threat_score'))}</td><td>{esc(str(r.get('decision_recommendation','')))}</td></tr>" for r in top_rows)
+    constitution = "".join(f"<li>{esc(item)}</li>" for item in SENTINEL_CONSTITUTION)
+    doc = f"""<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Laporan Sentinel X — {esc(getattr(args,'location_name',''))}</title><style>
+body{{margin:0;font-family:Inter,ui-sans-serif,system-ui,"Segoe UI",Arial,sans-serif;background:#f8fafc;color:#0f172a;line-height:1.62}}.wrap{{width:min(1120px,calc(100% - 36px));margin:auto;padding:32px 0}}.hero{{background:linear-gradient(135deg,#0f172a,#1e40af);color:white;border-radius:28px;padding:34px;margin-bottom:18px}}h1{{font-size:clamp(30px,4vw,52px);margin:0}}.hero p{{color:#dbeafe}}.warn{{background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;border-radius:18px;padding:14px;margin:16px 0;font-weight:650}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}}.card{{background:white;border:1px solid #e2e8f0;border-radius:22px;padding:20px;margin:16px 0;box-shadow:0 12px 28px rgba(15,23,42,.06)}}.kpi strong{{font-size:32px;display:block}}table{{width:100%;border-collapse:collapse;min-width:860px}}th,td{{padding:11px;border-bottom:1px solid #e2e8f0;text-align:left}}th{{background:#f1f5f9}}.scroll{{overflow:auto;border:1px solid #e2e8f0;border-radius:16px}}a{{color:#1d4ed8;font-weight:800}}
+</style></head><body><main class=\"wrap\"><section class=\"hero\"><h1>Laporan Harian Sentinel X</h1><p>{esc(getattr(args,'location_name',''))} · Mission {esc(str(getattr(args,'mission','safety_first')))}</p></section><div class=\"warn\"><b>{esc(sentinel_public_disclaimer(args))}</b></div><section class=\"card\"><h2>Ringkasan publik</h2><p>{esc(str(daily.get('summary_text','')))}</p></section><div class=\"grid\"><section class=\"card kpi\"><span>Status</span><strong>{status}</strong></section><section class=\"card kpi\"><span>Risk window</span><strong>{risk_window}</strong></section><section class=\"card kpi\"><span>Best window</span><strong>{best_window}</strong></section><section class=\"card kpi\"><span>Matched cases</span><strong>{esc(str(verification.get('matched_cases',0)))}</strong></section></div><section class=\"card\"><h2>Timeline singkat</h2><div class=\"scroll\"><table><tr><th>Jam</th><th>Cuaca</th><th>Prob. hujan</th><th>Rain threat</th><th>Rekomendasi</th></tr>{table}</table></div></section><section class=\"card\"><h2>Forecast Constitution</h2><ol>{constitution}</ol></section><p><a href=\"command_center_sentinel_x.html\">Kembali ke Command Center</a> · <a href=\"sentinel_x_report.md\">Versi Markdown mentah</a></p></main></body></html>"""
+    atomic_write_text(path_output(AETHER_REPORT_HTML_FILENAME), lambda f: f.write(doc))
+    return path_output(AETHER_REPORT_FILENAME)
+
+
+def sentinel_write_root_public_index(locations, run_rows, args):
+    base_url = (getattr(args, "public_base_url", "") or "").rstrip("/")
+    esc = html.escape
+    cards = []
+    for loc in locations:
+        slug = loc.slug
+        display = esc(loc.location_name)
+        prefix = f"{base_url}/{slug}/" if base_url else f"{slug}/"
+        row = next((r for r in run_rows if r.get("location_slug") == slug), {})
+        status = esc(str(row.get("run_status", "unknown")))
+        cards.append(f"""<article class=\"loc-card\"><div class=\"loc-top\"><h2>{display}</h2><span>{status}</span></div><p>Dashboard risiko cuaca, akuntabilitas, laporan harian, dan data publik.</p><div class=\"links\"><a href=\"{prefix}{AETHER_DASHBOARD_FILENAME}\">Command Center</a><a href=\"{prefix}sentinel_x_accuracy_public.html\">Akurasi</a><a href=\"{prefix}{AETHER_REPORT_HTML_FILENAME}\">Laporan Visual</a><a href=\"{prefix}{AETHER_CONTRACT_FILENAME}\">Kontrak</a></div></article>""")
+    doc = f"""<!doctype html><html lang=\"id\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>AETHER Sentinel X Public Portal</title><style>
+:root{{--bg:#eef3f8;--ink:#0f172a;--muted:#64748b;--line:#dbe4ef;--blue:#2563eb}}*{{box-sizing:border-box}}body{{margin:0;font-family:Inter,ui-sans-serif,system-ui,"Segoe UI",Arial,sans-serif;background:radial-gradient(circle at top left,#dbeafe 0,#eef3f8 36%,#f8fafc 100%);color:var(--ink);line-height:1.55}}.wrap{{width:min(1320px,calc(100% - 36px));margin:auto;padding:28px 0 48px}}.hero{{background:linear-gradient(135deg,#07111f,#1d4ed8);color:white;border-radius:34px;padding:38px;margin:20px 0;box-shadow:0 24px 80px rgba(15,23,42,.25)}}h1{{font-size:clamp(36px,5vw,68px);line-height:1;margin:0 0 12px;letter-spacing:-.04em}}.hero p{{color:#dbeafe;max-width:920px;font-size:18px}}.warn{{background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;border-radius:22px;padding:16px;margin:18px 0;font-weight:700}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}}.loc-card,.card{{background:white;border:1px solid var(--line);border-radius:26px;padding:22px;box-shadow:0 14px 36px rgba(15,23,42,.07)}}.loc-top{{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}}.loc-top h2{{margin:0;font-size:28px}}.loc-top span{{background:#dcfce7;color:#166534;border-radius:999px;padding:6px 10px;font-weight:900}}.links{{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}}a{{color:#1d4ed8;font-weight:900;text-decoration:none}}.links a{{background:#eff6ff;border:1px solid #bfdbfe;border-radius:999px;padding:10px 13px}}.data-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}}.data-grid a{{background:white;border:1px solid var(--line);border-radius:16px;padding:14px;display:block}}
+</style></head><body><main class=\"wrap\"><section class=\"hero\"><h1>AETHER Sentinel X</h1><p>Portal publik untuk risiko cuaca lokal, skenario atmosfer, akuntabilitas forecast, dan rekomendasi keputusan harian.</p></section><div class=\"warn\"><b>{esc(sentinel_public_disclaimer(args))}</b></div><section class=\"grid\">{''.join(cards)}</section><section class=\"card\" style=\"margin-top:18px\"><h2>Data publik</h2><div class=\"data-grid\"><a href=\"ensemble_all_locations.csv\">ensemble_all_locations.csv</a><a href=\"forecast_all_locations.csv\">forecast_all_locations.csv</a><a href=\"ensemble_fact_all_locations.csv\">ensemble_fact_all_locations.csv</a><a href=\"source_status_all_locations.csv\">source_status_all_locations.csv</a><a href=\"forecast_batch_summary.json\">forecast_batch_summary.json</a><a href=\"dim_locations.csv\">dim_locations.csv</a></div></section></main></body></html>"""
+    atomic_write_text(root_output_path("index.html"), lambda f: f.write(doc))
+    write_json(root_output_path("sentinel_x_public_portal_manifest.json"), {"generated_at": now_local(DEFAULT_TIMEZONE).isoformat(), "locations": [loc.slug for loc in locations], "index": root_output_path("index.html"), "disclaimer": sentinel_public_disclaimer(args), "ui_version": SENTINEL_PUBLIC_UI_VERSION})
+    return root_output_path("index.html")
+
+
+def sentinel_write_publish_manifest(args):
+    payload = {
+        "generated_at": now_local(args.timezone).isoformat(),
+        "public_version": SENTINEL_PUBLIC_UI_VERSION,
+        "location": getattr(args, "location_name", ""),
+        "public_files": [
+            AETHER_DASHBOARD_FILENAME, AETHER_CSV_FILENAME, AETHER_JSON_FILENAME, AETHER_REPORT_HTML_FILENAME,
+            AETHER_REPORT_FILENAME, AETHER_CONTRACT_FILENAME, "sentinel_x_accuracy_public.html", "sentinel_x_verification_summary.json",
+            "sentinel_x_reliability.csv", "sentinel_constitution.md", "sentinel_x_public_links.md",
+            "forecast_autopsy_latest.html", "sentinel_x_red_team_public.html",
+        ],
+        "internal_or_do_not_publish": ["*.sqlite", "*.db", "raw_payloads/", "logs/", "source_health.json", "command_center_manifest_sentinel_x.json"],
+        "public_disclaimer": sentinel_public_disclaimer(args),
+    }
+    write_json(path_output("sentinel_x_publish_manifest.json"), payload)
+    lines = ["# Sentinel X public links", "", f"Disclaimer: {sentinel_public_disclaimer(args)}", ""]
+    for item in payload["public_files"]:
+        lines.append(f"- `{item}`")
+    lines += ["", "## Do not publish as public-facing files", ""] + [f"- `{item}`" for item in payload["internal_or_do_not_publish"]]
+    atomic_write_text(path_output("sentinel_x_public_links.md"), lambda f: f.write("\n".join(lines)))
+    gitignore_path = root_output_path(".sentinel_public_gitignore_template")
+    atomic_write_text(gitignore_path, lambda f: f.write("\n".join(["*.sqlite", "*.db", "**/logs/", "**/raw_payloads/", "**/source_health.json", "**/command_center_manifest_sentinel_x.json"])))
+    return path_output("sentinel_x_publish_manifest.json")
+
+
+
 if __name__ == "__main__":
     main()
 
