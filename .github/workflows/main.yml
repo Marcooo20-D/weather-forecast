@@ -27,7 +27,7 @@ jobs:
       - name: Run AETHER Sentinel X forecast
         timeout-minutes: 8
         run: |
-          python aether_sentinel_x_public_operational_v2.py \
+          python weather_ensemble_multi_location.py \
             --mode forecast \
             --locations all \
             --timezone Asia/Jakarta \
@@ -37,7 +37,7 @@ jobs:
 
       - name: Generate public index
         run: |
-          python aether_sentinel_x_public_operational_v2.py \
+          python weather_ensemble_multi_location.py \
             --mode public-index \
             --locations all \
             --timezone Asia/Jakarta \
