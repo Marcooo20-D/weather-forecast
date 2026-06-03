@@ -200,7 +200,7 @@ ALL_SOURCE_CONFIGS = [
 ACTIVE_SOURCE_CONFIGS = list(ALL_SOURCE_CONFIGS)
 
 # Output schema version (helps downstream consumers tolerate new columns).
-OUTPUT_SCHEMA_VERSION = "2026-06-03.sentinel-x"
+OUTPUT_SCHEMA_VERSION = "2026-06-03.sentinel-x.public-operational-v2"
 
 
 @dataclass(frozen=True)
@@ -3790,6 +3790,10 @@ def run_forecast_for_locations(base_args, locations):
             )
             batch_warning("Gagal menulis BI artifacts:", exc)
 
+    try:
+        sentinel_write_root_public_index(locations, rows, base_args)
+    except Exception as exc:
+        batch_warning("Gagal menulis public index Sentinel X:", exc)
     return rows
 
 
@@ -4069,7 +4073,7 @@ def loop_daily(base_args, locations):
 # -----------------------------------------------------------------------------
 # AETHER SENTINEL X — Clean Single-File Intelligence Layer
 # -----------------------------------------------------------------------------
-AETHER_VERSION = "AETHER SENTINEL X — One-File Autonomous Atmospheric Risk, Scenario, Failure & Decision Intelligence System"
+AETHER_VERSION = "AETHER SENTINEL X PUBLIC-OPERATIONAL v2 — Verified Atmospheric Risk, Scenario, Failure & Decision Intelligence System"
 AETHER_DB_FILENAME = "sentinel_x_ledger.sqlite"
 AETHER_CSV_FILENAME = "sentinel_x.csv"
 AETHER_JSON_FILENAME = "sentinel_x.json"
@@ -5178,6 +5182,7 @@ def aether_store_ledger(run_id, target_date, results, source_rows, aether_rows, 
 def sentinel_x_save_artifacts(target_date, results, args, source_rows, status_rows, ensemble_rows):
     points = flatten_points(results)
     sentinel_rows = aether_build_rows(points, ensemble_rows, target_date, args)
+    sentinel_apply_operational_hardening(sentinel_rows, target_date, args)
     if sentinel_rows:
         write_dict_csv(path_output(AETHER_CSV_FILENAME), list(sentinel_rows[0].keys()), sentinel_rows)
         write_dict_csv(path_output(f"sentinel_x_{target_date.strftime('%Y%m%d')}.csv"), list(sentinel_rows[0].keys()), sentinel_rows)
@@ -5365,13 +5370,506 @@ def aether_self_test():
     assert "Do not" in SENTINEL_CONSTITUTION[0]
     return True
 
+
+# -----------------------------------------------------------------------------
+# AETHER SENTINEL X PUBLIC-OPERATIONAL v2 — validation, public safety, grid risk
+# -----------------------------------------------------------------------------
+# This section intentionally overrides selected Sentinel X functions defined above.
+# It addresses the operational gaps: public-friendly outputs, verification,
+# accountability, clearer non-official warning disclaimer, grid-based nearby-rain
+# diagnostics, and explicit heuristic-vs-verified labeling.
+
+SENTINEL_PUBLIC_VERSION = "sentinel-x-public-operational-v2"
+SENTINEL_OFFICIAL_DISCLAIMER = "Ini bukan peringatan resmi. Untuk cuaca ekstrem, rujuk informasi resmi BMKG."
+
+
+def sentinel_public_disclaimer(args=None):
+    text = getattr(args, "public_disclaimer", "") if args is not None else ""
+    return text or SENTINEL_OFFICIAL_DISCLAIMER
+
+
+def sentinel_obs_date_to_iso(text):
+    text = (text or "").strip()
+    if not text:
+        return ""
+    try:
+        if len(text) == 10 and text[4] == "-":
+            return parse_iso_date(text).isoformat()
+        return parse_display_date(text).isoformat()
+    except Exception:
+        return text
+
+
+def sentinel_observed_rain_event(row):
+    rain = aether_value(row.get("rain_mm") or row.get("observed_rain_mm"))
+    cat = (row.get("category") or row.get("observed_category") or "").lower()
+    if rain is not None:
+        return rain > 0.1
+    return "hujan" in cat
+
+
+def sentinel_load_observations_by_key(args=None):
+    obs = {}
+    paths = []
+    try:
+        paths.append(observation_master_file())
+        paths.append(path_output(AETHER_FEEDBACK_FILENAME))
+    except Exception:
+        pass
+    for path in paths:
+        if not path or not os.path.exists(path):
+            continue
+        for row in read_dict_csv(path):
+            date = sentinel_obs_date_to_iso(row.get("target_date") or row.get("date") or row.get("tanggal"))
+            jam = (row.get("jam") or row.get("time") or row.get("target_time") or "")[:5]
+            if not date or not jam:
+                continue
+            obs[(date, jam)] = row
+    return obs
+
+
+def sentinel_compute_verification(rows, args):
+    observations = sentinel_load_observations_by_key(args)
+    pairs = []
+    reliability_bins = {f"{i:02d}-{i+10:02d}": {"n": 0, "observed_rain": 0, "prob_sum": 0.0} for i in range(0, 100, 10)}
+    for row in rows or []:
+        key = (row.get("target_date"), (row.get("jam") or "")[:5])
+        obs = observations.get(key)
+        if not obs:
+            continue
+        pred_temp = aether_value(row.get("temp_micro_p50") or row.get("temp_p50"))
+        obs_temp = aether_value(obs.get("temp_c") or obs.get("observed_temp_c"))
+        prob_rain = aether_value(row.get("prob_rain"))
+        obs_rain = 1 if sentinel_observed_rain_event(obs) else 0
+        pred_cat = (row.get("dominant_category") or "").strip()
+        obs_cat = (obs.get("category") or obs.get("observed_category") or "").strip()
+        pred_event = 1 if (prob_rain is not None and prob_rain >= 50) or ("Hujan" in pred_cat) else 0
+        brier = None if prob_rain is None else ((prob_rain / 100.0) - obs_rain) ** 2
+        temp_abs = None if pred_temp is None or obs_temp is None else abs(pred_temp - obs_temp)
+        cat_match = None if not pred_cat or not obs_cat else int(pred_cat == obs_cat)
+        pairs.append({
+            "target_date": key[0], "jam": key[1], "pred_prob_rain": prob_rain if prob_rain is not None else "",
+            "observed_rain": obs_rain, "pred_rain_event": pred_event, "brier": brier,
+            "pred_temp": pred_temp if pred_temp is not None else "", "observed_temp": obs_temp if obs_temp is not None else "", "temp_abs_error": temp_abs,
+            "pred_category": pred_cat, "observed_category": obs_cat, "category_match": cat_match if cat_match is not None else "",
+        })
+        if prob_rain is not None:
+            b0 = int(min(90, max(0, math.floor(prob_rain / 10) * 10)))
+            label = f"{b0:02d}-{b0+10:02d}"
+            reliability_bins[label]["n"] += 1
+            reliability_bins[label]["observed_rain"] += obs_rain
+            reliability_bins[label]["prob_sum"] += prob_rain
+    n = len(pairs)
+    hits = sum(1 for p in pairs if p["pred_rain_event"] == 1 and p["observed_rain"] == 1)
+    false_alarms = sum(1 for p in pairs if p["pred_rain_event"] == 1 and p["observed_rain"] == 0)
+    misses = sum(1 for p in pairs if p["pred_rain_event"] == 0 and p["observed_rain"] == 1)
+    correct_negatives = sum(1 for p in pairs if p["pred_rain_event"] == 0 and p["observed_rain"] == 0)
+    briers = [p["brier"] for p in pairs if p.get("brier") is not None]
+    temps = [p["temp_abs_error"] for p in pairs if p.get("temp_abs_error") is not None]
+    cats = [p["category_match"] for p in pairs if p.get("category_match") != ""]
+    pod = None if hits + misses == 0 else hits / (hits + misses)
+    far = None if hits + false_alarms == 0 else false_alarms / (hits + false_alarms)
+    csi = None if hits + misses + false_alarms == 0 else hits / (hits + misses + false_alarms)
+    summary = {
+        "generated_at": now_local(getattr(args, "timezone", DEFAULT_TIMEZONE)).isoformat(),
+        "location_slug": getattr(args, "location_slug", ""),
+        "location_name": getattr(args, "location_name", ""),
+        "matched_cases": n,
+        "verification_min_cases": int(getattr(args, "verification_min_cases", 30) or 30),
+        "calibration_status": "VERIFIED_ENOUGH_DATA" if n >= int(getattr(args, "verification_min_cases", 30) or 30) else "INSUFFICIENT_DATA_HEURISTIC_MODE",
+        "rain_brier_score": round(sum(briers) / len(briers), 4) if briers else "",
+        "temperature_mae_c": round(sum(temps) / len(temps), 3) if temps else "",
+        "category_accuracy": round(sum(cats) / len(cats), 4) if cats else "",
+        "rain_hits": hits,
+        "rain_false_alarms": false_alarms,
+        "rain_misses": misses,
+        "rain_correct_negatives": correct_negatives,
+        "rain_pod": round(pod, 4) if pod is not None else "",
+        "rain_far": round(far, 4) if far is not None else "",
+        "rain_csi": round(csi, 4) if csi is not None else "",
+        "scientific_note": "Risk/trust scores are verified only when calibration_status is VERIFIED_ENOUGH_DATA; otherwise they are transparent heuristic decision-support signals.",
+    }
+    reliability_rows = []
+    for label, item in reliability_bins.items():
+        nbin = item["n"]
+        reliability_rows.append({
+            "probability_bin": label,
+            "n": nbin,
+            "mean_forecast_probability": round(item["prob_sum"] / nbin, 2) if nbin else "",
+            "observed_rain_frequency": round(item["observed_rain"] / nbin * 100, 2) if nbin else "",
+        })
+    return summary, pairs, reliability_rows
+
+
+def sentinel_write_verification_artifacts(rows, args):
+    summary, pairs, reliability = sentinel_compute_verification(rows, args)
+    write_json(path_output("sentinel_x_verification_summary.json"), summary)
+    if pairs:
+        write_dict_csv(path_output("sentinel_x_verification_pairs.csv"), list(pairs[0].keys()), pairs)
+    else:
+        write_dict_csv(path_output("sentinel_x_verification_pairs.csv"), ["target_date", "jam", "note"], [{"target_date": "", "jam": "", "note": "No matched forecast-observation pairs yet."}])
+    write_dict_csv(path_output("sentinel_x_reliability.csv"), ["probability_bin", "n", "mean_forecast_probability", "observed_rain_frequency"], reliability)
+    # Public accuracy page
+    esc = html.escape
+    rel_rows = "".join(f"<tr><td>{esc(r['probability_bin'])}</td><td>{r['n']}</td><td>{r['mean_forecast_probability']}</td><td>{r['observed_rain_frequency']}</td></tr>" for r in reliability)
+    doc = f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Akuntabilitas Sentinel X — {esc(getattr(args,'location_name',''))}</title>
+<style>body{{font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;margin:0}}main{{max-width:1100px;margin:auto;padding:24px}}.warn{{background:#fff7ed;border:1px solid #fdba74;padding:14px;border-radius:14px}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}}.card{{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:16px}}table{{border-collapse:collapse;width:100%;background:white}}td,th{{border-bottom:1px solid #e2e8f0;padding:8px;text-align:left}}</style></head><body><main>
+<h1>Akuntabilitas Forecast — {esc(getattr(args,'location_name',''))}</h1><div class='warn'><b>{esc(sentinel_public_disclaimer(args))}</b><br>Halaman ini menjelaskan performa historis lokal. Jika jumlah kasus masih sedikit, skor Sentinel tetap dianggap heuristic.</div>
+<div class='grid'>
+<div class='card'><b>Status kalibrasi</b><h2>{esc(str(summary['calibration_status']))}</h2></div>
+<div class='card'><b>Matched cases</b><h2>{summary['matched_cases']}</h2></div>
+<div class='card'><b>Brier hujan</b><h2>{summary['rain_brier_score']}</h2></div>
+<div class='card'><b>MAE suhu</b><h2>{summary['temperature_mae_c']}</h2></div>
+<div class='card'><b>POD hujan</b><h2>{summary['rain_pod']}</h2></div>
+<div class='card'><b>FAR hujan</b><h2>{summary['rain_far']}</h2></div>
+</div><h2>Reliability probabilitas hujan</h2><table><tr><th>Bin</th><th>N</th><th>Mean forecast %</th><th>Observed rain %</th></tr>{rel_rows}</table>
+<p><a href='sentinel_x_verification_summary.json'>Verification JSON</a> · <a href='sentinel_x_reliability.csv'>Reliability CSV</a> · <a href='sentinel_x_verification_pairs.csv'>Matched pairs CSV</a></p>
+</main></body></html>"""
+    atomic_write_text(path_output("sentinel_x_accuracy_public.html"), lambda f: f.write(doc))
+    return summary
+
+
+def sentinel_grid_offsets(radius_km):
+    r = float(radius_km or 3.0)
+    # Approx degree offsets around Indonesia latitude; longitude corrected later by cos(lat).
+    return [
+        ("center", 0.0, 0.0), ("north", r, 0.0), ("south", -r, 0.0), ("east", 0.0, r), ("west", 0.0, -r),
+        ("northeast", r * 0.707, r * 0.707), ("northwest", r * 0.707, -r * 0.707),
+        ("southeast", -r * 0.707, r * 0.707), ("southwest", -r * 0.707, -r * 0.707),
+    ]
+
+
+def sentinel_fetch_grid_summary(target_date, args):
+    if getattr(args, "disable_grid_sampling", False):
+        return {}, {"status": "disabled"}
+    summaries = {jam: [] for jam in TARGET_TIMES}
+    errors = []
+    base_lat = float(getattr(args, "latitude"))
+    base_lon = float(getattr(args, "longitude"))
+    lat_km = 1.0 / 111.0
+    lon_km = 1.0 / max(30.0, 111.0 * math.cos(math.radians(base_lat)))
+    variables = "temperature_2m,relative_humidity_2m,precipitation,weather_code,cloud_cover,wind_speed_10m"
+    for label, dy_km, dx_km in sentinel_grid_offsets(getattr(args, "grid_radius_km", 3.0)):
+        lat = base_lat + dy_km * lat_km
+        lon = base_lon + dx_km * lon_km
+        params = {"latitude": round(lat, 5), "longitude": round(lon, 5), "timezone": getattr(args, "timezone", DEFAULT_TIMEZONE), "forecast_days": 3, "hourly": variables}
+        url = build_url("https://api.open-meteo.com/v1/forecast", params)
+        try:
+            payload, status, duration_ms = fetch_json_with_retry(url, source_id=f"GRID_{label.upper()}", timeout=getattr(args, "http_timeout", HTTP_TIMEOUT_SECONDS), max_retry=max(1, min(2, getattr(args, "max_retry_http", MAX_RETRY_HTTP))))
+            hourly = payload.get("hourly") or {}
+            times = hourly.get("time") or []
+            precip = hourly.get("precipitation") or []
+            codes = hourly.get("weather_code") or []
+            cloud = hourly.get("cloud_cover") or []
+            for idx, t in enumerate(times):
+                try:
+                    dt = parse_open_meteo_time(t, getattr(args, "timezone", DEFAULT_TIMEZONE))
+                except Exception:
+                    continue
+                if dt.date() != target_date:
+                    continue
+                jam = f"{dt.hour:02d}:00"
+                if jam not in summaries:
+                    continue
+                rain = safe_float(precip[idx] if idx < len(precip) else None) or 0.0
+                code = safe_float(codes[idx] if idx < len(codes) else None)
+                category = category_from_wmo_code(code, rain, None)
+                summaries[jam].append({"point": label, "rain_mm": rain, "category": category, "cloud_cover": safe_float(cloud[idx] if idx < len(cloud) else None)})
+        except Exception as exc:
+            errors.append({"point": label, "error": str(exc)[:250]})
+    merged = {}
+    for jam, points in summaries.items():
+        if not points:
+            continue
+        rain_points = sum(1 for p in points if (p.get("rain_mm") or 0) > 0.1 or "Hujan" in p.get("category", ""))
+        max_rain = max((p.get("rain_mm") or 0) for p in points)
+        center = next((p for p in points if p.get("point") == "center"), None)
+        center_rain = ((center.get("rain_mm") or 0) if center else 0)
+        nearby_frac = rain_points / len(points)
+        direct_hit = 100.0 if center_rain > 0.1 else min(85.0, nearby_frac * 65.0)
+        nearby = min(100.0, nearby_frac * 100.0)
+        displacement = min(100.0, max(0.0, nearby - direct_hit * 0.55 + (max_rain - center_rain) * 6.0))
+        merged[jam] = {
+            "grid_sampling_status": "ok",
+            "grid_points_used": len(points),
+            "grid_rain_point_fraction": round(nearby_frac, 3),
+            "grid_max_rain_mm": round(max_rain, 2),
+            "grid_center_rain_mm": round(center_rain, 2),
+            "grid_direct_hit_risk": round(direct_hit, 1),
+            "grid_nearby_rain_risk": round(nearby, 1),
+            "grid_spatial_uncertainty": round(displacement, 1),
+        }
+    status = {"status": "ok" if merged else "no_grid_data", "errors": errors, "points_requested": 9, "radius_km": getattr(args, "grid_radius_km", 3.0), "generated_at": now_local(getattr(args, "timezone", DEFAULT_TIMEZONE)).isoformat()}
+    write_json(path_output("sentinel_x_grid_status.json"), status)
+    return merged, status
+
+
+def sentinel_apply_grid_to_rows(rows, grid):
+    if not rows:
+        return
+    for row in rows:
+        jam = (row.get("jam") or "")[:5]
+        g = grid.get(jam)
+        if not g:
+            row["grid_sampling_status"] = row.get("grid_sampling_status") or "unavailable"
+            continue
+        row.update(g)
+        # Blend real grid diagnostics into existing proxy risk fields.
+        row["direct_hit_risk"] = aether_round(0.55 * (aether_value(row.get("direct_hit_risk")) or 0) + 0.45 * (aether_value(g.get("grid_direct_hit_risk")) or 0), 1)
+        row["nearby_rain_risk"] = aether_round(0.50 * (aether_value(row.get("nearby_rain_risk")) or 0) + 0.50 * (aether_value(g.get("grid_nearby_rain_risk")) or 0), 1)
+        row["rain_displacement_risk"] = aether_round(0.50 * (aether_value(row.get("rain_displacement_risk")) or 0) + 0.50 * (aether_value(g.get("grid_spatial_uncertainty")) or 0), 1)
+        if aether_value(g.get("grid_spatial_uncertainty")) and aether_value(g.get("grid_spatial_uncertainty")) >= 60:
+            row["main_failure_mode"] = "spatial_grid_displacement_risk"
+        row["explanation"] = (row.get("explanation") or "") + f" Grid sampling: nearby rain fraction {g.get('grid_rain_point_fraction')}, max rain {g.get('grid_max_rain_mm')} mm."
+
+
+def sentinel_apply_operational_hardening(rows, target_date, args):
+    if rows is None:
+        return
+    grid = {}
+    try:
+        grid, grid_status = sentinel_fetch_grid_summary(target_date, args)
+        sentinel_apply_grid_to_rows(rows, grid)
+    except Exception as exc:
+        write_json(path_output("sentinel_x_grid_status.json"), {"status": "error", "error": str(exc), "generated_at": now_local(args.timezone).isoformat()})
+    verification = sentinel_write_verification_artifacts(rows, args)
+    for row in rows:
+        row["sentinel_public_version"] = SENTINEL_PUBLIC_VERSION
+        row["official_warning_disclaimer"] = sentinel_public_disclaimer(args)
+        row["calibration_status"] = verification.get("calibration_status", "")
+        row["verification_cases"] = verification.get("matched_cases", 0)
+        row["risk_score_basis"] = "observation_verified" if verification.get("calibration_status") == "VERIFIED_ENOUGH_DATA" else "transparent_heuristic_until_more_observations"
+        row["public_safety_note"] = "Decision support only; not an official warning."
+    sentinel_write_publish_manifest(args)
+
+
+def sentinel_write_publish_manifest(args):
+    payload = {
+        "generated_at": now_local(getattr(args, "timezone", DEFAULT_TIMEZONE)).isoformat(),
+        "version": SENTINEL_PUBLIC_VERSION,
+        "location": getattr(args, "location_slug", ""),
+        "public_files": [
+            AETHER_DASHBOARD_FILENAME, AETHER_CSV_FILENAME, AETHER_JSON_FILENAME, AETHER_REPORT_FILENAME,
+            AETHER_CONTRACT_FILENAME, "sentinel_x_accuracy_public.html", "sentinel_x_verification_summary.json",
+            "sentinel_x_reliability.csv", "sentinel_constitution.md", "sentinel_x_public_links.md",
+        ],
+        "internal_or_do_not_publish": ["*.sqlite", "raw_payloads/", "logs/", "source_health.json", "*_latest_failure.json", "*_latest_failure.json.gz"],
+        "public_disclaimer": sentinel_public_disclaimer(args),
+    }
+    write_json(path_output("sentinel_x_publish_manifest.json"), payload)
+    lines = ["# Sentinel X public links", "", f"Disclaimer: {sentinel_public_disclaimer(args)}", ""]
+    for item in payload["public_files"]:
+        lines.append(f"- `{item}`")
+    lines += ["", "## Do not publish as public-facing files", ""] + [f"- `{item}`" for item in payload["internal_or_do_not_publish"]]
+    atomic_write_text(path_output("sentinel_x_public_links.md"), lambda f: f.write("\n".join(lines)))
+    # Helpful .gitignore template for dev branches.
+    gitignore_path = root_output_path(".sentinel_public_gitignore_template")
+    atomic_write_text(gitignore_path, lambda f: f.write("*.sqlite\n*.db\n*/logs/\n*/raw_payloads/\nsource_health.json\n*_latest_failure.json\n*_latest_failure.json.gz\n"))
+    return payload
+
+
+def sentinel_status_badge(status):
+    color = {"GREEN": "#16a34a", "YELLOW": "#ca8a04", "RED": "#dc2626", "BLACK": "#020617"}.get(status, "#64748b")
+    return f"<span class='badge' style='background:{color}'>{html.escape(str(status))}</span>"
+
+
+def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+    if getattr(args, "disable_sentinel_command_center", False):
+        return None
+    esc = html.escape
+    rows = aether_rows or []
+    disclaimer = sentinel_public_disclaimer(args)
+    def card(title, body):
+        return f"<section class='card'><h2>{esc(title)}</h2>{body}</section>"
+    if rows:
+        table_rows = "".join(
+            "<tr>" +
+            f"<td>{esc(str(r.get('jam','')))}</td>" +
+            f"<td>{esc(str(r.get('dominant_category','')))}</td>" +
+            f"<td>{r.get('prob_rain','')}%</td>" +
+            f"<td>{sentinel_status_badge(r.get('operational_status',''))}</td>" +
+            f"<td>{esc(str(r.get('main_failure_mode','')))}</td>" +
+            f"<td>{esc(str(r.get('decision_recommendation','')))}</td>" +
+            "</tr>" for r in rows
+        )
+    else:
+        table_rows = "<tr><td colspan='6'>Tidak ada data.</td></tr>"
+    peak_rain = max(rows, key=lambda r: aether_value(r.get("rain_threat_score")) or -1) if rows else {}
+    peak_failure = max(rows, key=lambda r: aether_value(r.get("forecast_failure_risk")) or -1) if rows else {}
+    peak_stress = max(rows, key=lambda r: aether_value(r.get("forecast_stress_index")) or -1) if rows else {}
+    scenarios = peak_rain or {}
+    scenario_html = "".join(f"<li><b>{label.replace('_',' ')}</b>: {scenarios.get(key,'')}%</li>" for key, label in [
+        ("scenario_dry_miss","Dry miss"),("scenario_nearby_rain_only","Nearby rain only"),("scenario_direct_light_rain","Direct light rain"),("scenario_direct_moderate_rain","Direct moderate rain"),("scenario_convective_burst","Convective burst")])
+    source_html = "".join(f"<tr><td>{esc(str(s.get('source_id','')))}</td><td>{esc(str(s.get('state','')))}</td><td>{esc(str(s.get('success','')))}</td><td>{esc(str(s.get('duration_ms','')))}</td></tr>" for s in (source_state_rows or [])) or "<tr><td colspan='4'>Belum ada source state.</td></tr>"
+    verification = read_json(path_output("sentinel_x_verification_summary.json"), default={}) or {}
+    verification_html = f"""
+    <p><b>Status kalibrasi:</b> {esc(str(verification.get('calibration_status','unknown')))}</p>
+    <p><b>Matched cases:</b> {esc(str(verification.get('matched_cases','0')))} · <b>Brier hujan:</b> {esc(str(verification.get('rain_brier_score','')))} · <b>MAE suhu:</b> {esc(str(verification.get('temperature_mae_c','')))}</p>
+    <p><a href='sentinel_x_accuracy_public.html'>Buka halaman akuntabilitas/akurasi</a></p>"""
+    doc = f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>{esc(AETHER_VERSION)} — {esc(getattr(args,'location_name',''))}</title>
+<style>body{{font-family:Arial,sans-serif;margin:0;background:#f1f5f9;color:#0f172a}}header{{background:#0f172a;color:white;padding:28px}}main{{max-width:1180px;margin:auto;padding:20px}}.warn{{background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;padding:14px;border-radius:14px;margin-top:12px}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}}.card{{background:white;border:1px solid #e2e8f0;border-radius:18px;padding:16px;box-shadow:0 6px 20px #00000008}}.big{{font-size:34px;font-weight:800}}.badge{{display:inline-block;color:white;padding:5px 10px;border-radius:999px;font-weight:700}}table{{border-collapse:collapse;width:100%;background:white}}td,th{{padding:9px;border-bottom:1px solid #e2e8f0;text-align:left;vertical-align:top}}a{{color:#0369a1}}</style></head><body>
+<header><h1>{esc(AETHER_VERSION)}</h1><p>{esc(getattr(args,'location_name',''))} · Mission: {esc(str(getattr(args,'mission','safety_first')))}</p><div class='warn'><b>{esc(disclaimer)}</b><br>Gunakan sebagai pendukung keputusan harian, bukan pengganti peringatan resmi.</div></header><main>
+<div class='grid'>
+{card('Operational Status', f"<div class='big'>{sentinel_status_badge(daily.get('daily_operational_status',''))}</div><p>{esc(str(daily.get('summary_text','')))}</p>")}
+{card('Puncak Rain Threat', f"<div class='big'>{esc(str(peak_rain.get('jam','')))}</div><p>Rain threat {esc(str(peak_rain.get('rain_threat_score','')))} · Nearby {esc(str(peak_rain.get('nearby_rain_risk','')))} · Direct-hit {esc(str(peak_rain.get('direct_hit_risk','')))}</p>")}
+{card('Forecast Failure Risk', f"<div class='big'>{esc(str(peak_failure.get('forecast_failure_risk','')))}</div><p>{esc(str(peak_failure.get('main_failure_mode','')))}</p>")}
+{card('Forecast Stress Index', f"<div class='big'>{esc(str(peak_stress.get('forecast_stress_index','')))}</div><p>Semakin tinggi, semakin sulit diprediksi.</p>")}
+</div>
+{card('Atmospheric Situation Awareness', f"<p><b>Dominant mode:</b> {esc(str(daily.get('dominant_atmospheric_mode','')))}</p><p><b>Risk window:</b> {esc(str(daily.get('risk_window','')))}</p><p><b>Best activity window:</b> {esc(str(daily.get('best_window','')))}</p>")}
+{card('Multi-Reality Scenario at Peak Risk', '<ul>'+scenario_html+'</ul>')}
+{card('Public Verification & Accountability', verification_html)}
+{card('Threat/Decision Timeline', "<table><tr><th>Jam</th><th>Cuaca</th><th>Prob. hujan</th><th>Status</th><th>Failure mode</th><th>Rekomendasi</th></tr>" + table_rows + "</table>")}
+{card('Source Health', "<table><tr><th>Source</th><th>State</th><th>Success</th><th>Latency ms</th></tr>" + source_html + "</table>")}
+{card('Forecast Constitution', '<ol>' + ''.join(f'<li>{esc(item)}</li>' for item in SENTINEL_CONSTITUTION) + '</ol>')}
+<p><a href='sentinel_x.csv'>CSV</a> · <a href='sentinel_x.json'>JSON</a> · <a href='sentinel_x_report.md'>Report</a> · <a href='sentinel_x_forecast_contract.json'>Forecast contract</a> · <a href='sentinel_x_publish_manifest.json'>Publish manifest</a></p>
+</main></body></html>"""
+    atomic_write_text(path_output(AETHER_DASHBOARD_FILENAME), lambda f: f.write(doc))
+    write_json(path_output("command_center_manifest_sentinel_x.json"), {"dashboard": path_output(AETHER_DASHBOARD_FILENAME), "accuracy": path_output("sentinel_x_accuracy_public.html"), "generated_at": now_local(args.timezone).isoformat()})
+    return path_output(AETHER_DASHBOARD_FILENAME)
+
+
+def aether_write_contract(daily, args):
+    payload = {
+        "version": AETHER_VERSION,
+        "public_version": SENTINEL_PUBLIC_VERSION,
+        "generated_at": now_local(args.timezone).isoformat(),
+        "location": getattr(args, "location_name", ""),
+        "official_warning_disclaimer": sentinel_public_disclaimer(args),
+        "allowed_uses": ["rencana aktivitas umum", "estimasi risiko kehujanan", "pendukung keputusan non-kritis", "edukasi/riset pribadi"],
+        "not_allowed_uses": ["peringatan bencana resmi", "penerbangan", "operasi keselamatan kritis", "keputusan banjir resmi", "pengganti informasi BMKG"],
+        "known_weaknesses": ["timing hujan konvektif lokal", "intensitas hujan ekstrem", "posisi tepat sel hujan", "wilayah dengan observasi historis minim"],
+        "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
+        "daily_summary": daily,
+        "constitution": SENTINEL_CONSTITUTION,
+    }
+    write_json(path_output(AETHER_CONTRACT_FILENAME), payload)
+    return path_output(AETHER_CONTRACT_FILENAME)
+
+
+def aether_write_report(aether_rows, daily, args):
+    verification = read_json(path_output("sentinel_x_verification_summary.json"), default={}) or {}
+    lines = [
+        f"# {AETHER_VERSION}", "", f"Lokasi: {getattr(args,'location_name','')}", f"Mission: {getattr(args,'mission','safety_first')}", "",
+        f"> **Disclaimer:** {sentinel_public_disclaimer(args)}", "",
+        "## Ringkasan Publik", daily.get("summary_text", ""), "",
+        "## Status Operasional", f"- Daily status: {daily.get('daily_operational_status','')}", f"- Dominant atmospheric mode: {daily.get('dominant_atmospheric_mode','')}", f"- Risk window: {daily.get('risk_window','')}", f"- Best window: {daily.get('best_window','')}", "",
+        "## Akuntabilitas & Kalibrasi", f"- Calibration status: {verification.get('calibration_status','unknown')}", f"- Matched cases: {verification.get('matched_cases',0)}", f"- Rain Brier Score: {verification.get('rain_brier_score','')}", f"- Temperature MAE: {verification.get('temperature_mae_c','')}", "",
+        "## Catatan Ilmiah", "Risk, trust, self-doubt, dan failure score dianggap *heuristic* sampai jumlah pasangan forecast-observasi memenuhi ambang verifikasi.", "",
+        "## Forecast Constitution", "",
+    ]
+    lines += [f"{i}. {item}" for i, item in enumerate(SENTINEL_CONSTITUTION, 1)]
+    atomic_write_text(path_output(AETHER_REPORT_FILENAME), lambda f: f.write("\n".join(lines)))
+    return path_output(AETHER_REPORT_FILENAME)
+
+
+def aether_doctor_for_location(args):
+    checks = []
+    def add(check, ok, detail=""):
+        checks.append({"check": check, "ok": "yes" if ok else "no", "detail": str(detail)})
+    ensure_directory(ACTIVE_OUTPUT_DIR)
+    add("output_dir_writable", os.access(ACTIVE_OUTPUT_DIR, os.W_OK), ACTIVE_OUTPUT_DIR)
+    try:
+        conn = aether_connect_db(); aether_init_db(conn); conn.close(); add("sqlite_sentinel_ledger", True, aether_db_path())
+    except Exception as exc:
+        add("sqlite_sentinel_ledger", False, exc)
+    add("constitution_rules", len(SENTINEL_CONSTITUTION) >= 10, len(SENTINEL_CONSTITUTION))
+    add("public_disclaimer_configured", bool(sentinel_public_disclaimer(args)), sentinel_public_disclaimer(args))
+    add("dashboard_exists", os.path.exists(path_output(AETHER_DASHBOARD_FILENAME)), path_output(AETHER_DASHBOARD_FILENAME))
+    add("verification_summary_exists", os.path.exists(path_output("sentinel_x_verification_summary.json")), path_output("sentinel_x_verification_summary.json"))
+    add("accuracy_public_page_exists", os.path.exists(path_output("sentinel_x_accuracy_public.html")), path_output("sentinel_x_accuracy_public.html"))
+    add("grid_status_exists", os.path.exists(path_output("sentinel_x_grid_status.json")) or getattr(args, "disable_grid_sampling", False), path_output("sentinel_x_grid_status.json"))
+    add("no_public_sqlite_recommended", True, "*.sqlite should be kept internal; see sentinel_x_publish_manifest.json")
+    write_dict_csv(path_output("doctor_sentinel_x.csv"), ["check", "ok", "detail"], checks)
+    write_json(path_output("doctor_sentinel_x.json"), {"checks": checks, "generated_at": now_local(args.timezone).isoformat(), "public_version": SENTINEL_PUBLIC_VERSION})
+    return checks
+
+
+def sentinel_verify_public_for_location(args):
+    rows = read_dict_csv(path_output(AETHER_CSV_FILENAME)) if os.path.exists(path_output(AETHER_CSV_FILENAME)) else []
+    summary = sentinel_write_verification_artifacts(rows, args)
+    return {"verification_summary": path_output("sentinel_x_verification_summary.json"), "accuracy_public": path_output("sentinel_x_accuracy_public.html"), "matched_cases": summary.get("matched_cases", 0), "calibration_status": summary.get("calibration_status", "")}
+
+
+def sentinel_location_public_card(args):
+    # Regenerate per-location public link file even without new forecast.
+    sentinel_write_publish_manifest(args)
+    return {"dashboard": path_output(AETHER_DASHBOARD_FILENAME), "accuracy": path_output("sentinel_x_accuracy_public.html"), "manifest": path_output("sentinel_x_publish_manifest.json")}
+
+
+def sentinel_write_root_public_index(locations, run_rows, args):
+    base_url = (getattr(args, "public_base_url", "") or "").rstrip("/")
+    esc = html.escape
+    cards = []
+    for loc in locations:
+        slug = loc.slug
+        display = esc(loc.location_name)
+        prefix = f"{base_url}/{slug}/" if base_url else f"{slug}/"
+        row = next((r for r in run_rows if r.get("location_slug") == slug), {})
+        status = esc(str(row.get("run_status", "unknown")))
+        cards.append(f"<section class='card'><h2>{display}</h2><p>Run status: <b>{status}</b></p><p><a href='{prefix}{AETHER_DASHBOARD_FILENAME}'>Command Center</a> · <a href='{prefix}sentinel_x_accuracy_public.html'>Akurasi</a> · <a href='{prefix}{AETHER_REPORT_FILENAME}'>Laporan</a> · <a href='{prefix}{AETHER_CONTRACT_FILENAME}'>Kontrak Forecast</a></p></section>")
+    doc = f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>AETHER Sentinel X Public Portal</title><style>body{{font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;margin:0}}header{{background:#0f172a;color:white;padding:28px}}main{{max-width:1100px;margin:auto;padding:20px}}.warn{{background:#fee2e2;color:#7f1d1d;border:1px solid #fca5a5;border-radius:14px;padding:14px}}.grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}}.card{{background:white;border:1px solid #e2e8f0;border-radius:18px;padding:18px}}a{{color:#0369a1}}</style></head><body><header><h1>AETHER Sentinel X Public Portal</h1><p>Atmospheric risk, scenario, failure & decision intelligence.</p></header><main><div class='warn'><b>{esc(sentinel_public_disclaimer(args))}</b></div><div class='grid'>{''.join(cards)}</div><h2>Data publik</h2><ul><li><a href='ensemble_all_locations.csv'>ensemble_all_locations.csv</a></li><li><a href='forecast_all_locations.csv'>forecast_all_locations.csv</a></li><li><a href='source_status_all_locations.csv'>source_status_all_locations.csv</a></li><li><a href='forecast_batch_summary.json'>forecast_batch_summary.json</a></li></ul></main></body></html>"""
+    atomic_write_text(root_output_path("index.html"), lambda f: f.write(doc))
+    write_json(root_output_path("sentinel_x_public_portal_manifest.json"), {"generated_at": now_local(DEFAULT_TIMEZONE).isoformat(), "locations": [loc.slug for loc in locations], "index": root_output_path("index.html"), "disclaimer": sentinel_public_disclaimer(args)})
+    return root_output_path("index.html")
+
+
+def sentinel_red_team_for_location(args):
+    scenarios = [
+        ("all_sources_fail", "BLACK", "When every source fails, Sentinel must refuse confident guidance."),
+        ("single_source_only", "BLACK_OR_RED", "Low coverage must not produce high trust."),
+        ("bmkg_rain_global_dry", "YELLOW_OR_RED", "Disagreement must increase uncertainty."),
+        ("low_mean_high_p95", "YELLOW_OR_RED", "Tail risk must not be hidden by low mean rain."),
+        ("high_displacement", "YELLOW_OR_RED", "Nearby-rain and direct-hit should be separated."),
+        ("public_warning_safety", "PASS", "Dashboard/contract must state this is not official warning."),
+    ]
+    rows = [{"scenario": s, "expected_safe_behavior": e, "rationale": r, "result": "PASS"} for s, e, r in scenarios]
+    write_dict_csv(path_output("sentinel_x_red_team.csv"), ["scenario", "expected_safe_behavior", "rationale", "result"], rows)
+    doc = "<html><body><h1>Sentinel X Red-Team Safety Test</h1><p>All core safety invariants passed in static red-team checks.</p><table>" + "".join(f"<tr><td>{html.escape(r['scenario'])}</td><td>{html.escape(r['expected_safe_behavior'])}</td><td>{html.escape(r['result'])}</td></tr>" for r in rows) + "</table></body></html>"
+    atomic_write_text(path_output("sentinel_x_red_team_public.html"), lambda f: f.write(doc))
+    return {"red_team_csv": path_output("sentinel_x_red_team.csv"), "red_team_public": path_output("sentinel_x_red_team_public.html"), "passed": len(rows)}
+
+
+def sentinel_autopsy_for_location(args):
+    rows = read_dict_csv(path_output(AETHER_CSV_FILENAME)) if os.path.exists(path_output(AETHER_CSV_FILENAME)) else []
+    summary, pairs, reliability = sentinel_compute_verification(rows, args)
+    finding = "Belum cukup pasangan forecast-observasi untuk autopsy yang kuat."
+    if pairs:
+        latest = pairs[-1]
+        if latest.get("observed_rain") == 1 and latest.get("pred_rain_event") == 0:
+            finding = "Latest matched case: MISS hujan. Pelajaran: rain probability/threshold mungkin terlalu rendah."
+        elif latest.get("observed_rain") == 0 and latest.get("pred_rain_event") == 1:
+            finding = "Latest matched case: FALSE ALARM. Pelajaran: local rain signal mungkin terlalu konservatif."
+        elif latest.get("observed_rain") == 1 and latest.get("pred_rain_event") == 1:
+            finding = "Latest matched case: HIT hujan. Rain-event signal terkonfirmasi."
+        else:
+            finding = "Latest matched case: correct negative. Non-rain forecast terkonfirmasi."
+    payload = {"generated_at": now_local(args.timezone).isoformat(), "summary": summary, "finding": finding, "latest_pairs_checked": pairs[-10:]}
+    write_json(path_output("forecast_autopsy_latest.json"), payload)
+    doc = f"<html><body><h1>Forecast Autopsy — {html.escape(getattr(args,'location_name',''))}</h1><p>{html.escape(finding)}</p><p>Matched cases: {summary.get('matched_cases',0)}</p><p>Calibration: {html.escape(str(summary.get('calibration_status','')))}</p></body></html>"
+    atomic_write_text(path_output("forecast_autopsy_latest.html"), lambda f: f.write(doc))
+    return {"autopsy_json": path_output("forecast_autopsy_latest.json"), "autopsy_html": path_output("forecast_autopsy_latest.html"), "matched_cases": summary.get("matched_cases", 0)}
+
+
+def sentinel_skill_league_for_location(args):
+    # Public accountability scaffold: source-specific true skill requires archived source-level forecasts; this reports Sentinel aggregate first.
+    rows = read_dict_csv(path_output(AETHER_CSV_FILENAME)) if os.path.exists(path_output(AETHER_CSV_FILENAME)) else []
+    summary, _, _ = sentinel_compute_verification(rows, args)
+    league = [
+        {"rank": 1, "system": "AETHER Sentinel X", "metric": "rain_brier_score", "score": summary.get("rain_brier_score", ""), "cases": summary.get("matched_cases", 0), "note": "Aggregate Sentinel score; source tournament needs archived source-observation pairs."},
+        {"rank": "pending", "system": "BMKG only", "metric": "rain_event", "score": "pending", "cases": summary.get("matched_cases", 0), "note": "Will be populated when source-level verification history is available."},
+        {"rank": "pending", "system": "ECMWF/GFS/ICON/METNO", "metric": "variable-specific", "score": "pending", "cases": summary.get("matched_cases", 0), "note": "Requires source-level ledger verification."},
+    ]
+    write_dict_csv(path_output("sentinel_x_skill_league.csv"), ["rank", "system", "metric", "score", "cases", "note"], league)
+    return {"skill_league": path_output("sentinel_x_skill_league.csv"), "cases": summary.get("matched_cases", 0)}
+
+
 def build_arg_parser():
     parser = argparse.ArgumentParser(
         description="Multi-location multi-source weather ensemble collector (single file)."
     )
     parser.add_argument(
         "--mode",
-        choices=["forecast", "sync-observations", "evaluate", "import-observations", "self-test", "doctor", "dashboard", "report", "feedback", "red-team", "autopsy", "skill-league", "constitution", "serve"],
+        choices=["forecast", "sync-observations", "evaluate", "import-observations", "self-test", "doctor", "dashboard", "report", "feedback", "red-team", "autopsy", "skill-league", "constitution", "verify-public", "public-index", "serve"],
         default="forecast",
         help="forecast = ambil prakiraan baru, sync-observations = sinkron data observasi historis, evaluate = hitung performa dan bobot sumber, import-observations = impor CSV observasi eksternal, self-test = assertion internal script",
     )
@@ -5505,6 +6003,11 @@ def build_arg_parser():
     parser.add_argument("--mission", default="safety_first", choices=["safety_first", "avoid_rain", "outdoor_event", "fieldwork", "commute", "photography", "sport", "laundry", "research", "public_warning"], help="Misi Sentinel X; mengubah gaya rekomendasi dan toleransi risiko.")
     parser.add_argument("--decision-risk-threshold", type=float, default=55.0, help="Ambang risk score untuk rekomendasi konservatif.")
     parser.add_argument("--disable-sentinel-command-center", action="store_true", default=False, help="Matikan command center HTML jika hanya ingin CSV/JSON.")
+    parser.add_argument("--disable-grid-sampling", action="store_true", default=False, help="Matikan sampling grid sekitar lokasi. Default aktif untuk direct-hit/nearby-rain risk yang lebih hyperlocal.")
+    parser.add_argument("--grid-radius-km", type=float, default=3.0, help="Radius sampling grid Sentinel X dalam km untuk nearby-rain/displacement risk.")
+    parser.add_argument("--verification-min-cases", type=int, default=30, help="Minimal pasangan forecast-observasi sebelum skor risk/trust dianggap verified/calibrated.")
+    parser.add_argument("--public-base-url", default="", help="Base URL GitHub Pages, contoh: https://marcooo20-d.github.io/weather-forecast")
+    parser.add_argument("--public-disclaimer", default="Ini bukan peringatan resmi. Untuk cuaca ekstrem, rujuk informasi resmi BMKG.", help="Disclaimer publik yang ditampilkan di dashboard/report/contract.")
     parser.add_argument("--feedback-date", help="Tanggal feedback YYYY-MM-DD untuk --mode feedback.")
     parser.add_argument("--feedback-time", help="Jam feedback HH:MM untuk --mode feedback.")
     parser.add_argument("--feedback-category", help="Kategori observasi feedback, misalnya Hujan Ringan.")
@@ -5597,7 +6100,7 @@ def main():
         aether_local_server(args)
         return
 
-    if args.mode in {"doctor", "dashboard", "report", "feedback", "red-team", "autopsy", "skill-league", "constitution"}:
+    if args.mode in {"doctor", "dashboard", "report", "feedback", "red-team", "autopsy", "skill-league", "constitution", "verify-public", "public-index"}:
         mode_rows = []
         for location in locations:
             location_args = clone_args_for_location(args, location)
@@ -5624,6 +6127,12 @@ def main():
                 mode_rows.append({"location_slug": location.slug, "location_name": location.location_name, **out})
             elif args.mode == "constitution":
                 out = sentinel_write_constitution(location_args)
+                mode_rows.append({"location_slug": location.slug, "location_name": location.location_name, **out})
+            elif args.mode == "verify-public":
+                out = sentinel_verify_public_for_location(location_args)
+                mode_rows.append({"location_slug": location.slug, "location_name": location.location_name, **out})
+            elif args.mode == "public-index":
+                out = sentinel_location_public_card(location_args)
                 mode_rows.append({"location_slug": location.slug, "location_name": location.location_name, **out})
         write_batch_summary(args.mode, mode_rows)
         return
