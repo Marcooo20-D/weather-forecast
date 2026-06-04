@@ -58,17 +58,27 @@ jobs:
             --no-save-raw-payloads
 
       - name: Run LANGIT v60 forecast
-        timeout-minutes: 12
+        timeout-minutes: 25
+        env:
+          PYTHONUNBUFFERED: "1"
         run: |
           python weather_ensemble_multi_location.py \
             --mode forecast \
             --locations all \
             --timezone Asia/Jakarta \
             --public-base-url https://marcooo20-d.github.io/weather-forecast \
+            --http-timeout 8 \
+            --max-retry-http 1 \
+            --max-workers 8 \
+            --max-inflight-per-host 3 \
+            --target-step-minutes 180 \
             --no-debug \
             --no-save-raw-payloads
 
       - name: Generate LANGIT public portal
+        timeout-minutes: 8
+        env:
+          PYTHONUNBUFFERED: "1"
         run: |
           python weather_ensemble_multi_location.py \
             --mode public-index \
@@ -79,6 +89,9 @@ jobs:
             --no-save-raw-payloads
 
       - name: Verify public output
+        timeout-minutes: 5
+        env:
+          PYTHONUNBUFFERED: "1"
         run: |
           python weather_ensemble_multi_location.py \
             --mode verify-public \
