@@ -1,64 +1,200 @@
-name: Daily Forecast
+name: LANGIT v60 Forecast OS
 
 on:
   workflow_dispatch:
+    inputs:
+      locations:
+        description: "Lokasi yang dijalankan: all / dago / jatinangor / arjawinangun / comma-separated"
+        required: false
+        default: "all"
+      debug:
+        description: "Aktifkan debug log"
+        required: false
+        type: choice
+        options: ["false", "true"]
+        default: "false"
   schedule:
-    - cron: "0 11 * * *"
+    # WIB: 07:00, 11:00, 15:00, 18:00
+    - cron: "0 0,4,8,11 * * *"
 
 permissions:
   contents: write
 
 concurrency:
-  group: daily-forecast
+  group: langit-v60-forecast
   cancel-in-progress: true
 
 jobs:
   forecast:
     runs-on: ubuntu-22.04
-    timeout-minutes: 12
+    timeout-minutes: 24
+
+    env:
+      TZ: Asia/Jakarta
+      PUBLIC_BASE_URL: https://marcooo20-d.github.io/weather-forecast
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout main generator
+        uses: actions/checkout@v4
+        with:
+          ref: main
 
-      - uses: actions/setup-python@v5
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: "pip"
 
-      - name: Run AETHER Sentinel X forecast
-        timeout-minutes: 8
+      - name: Install runtime helpers
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade certifi
+
+      - name: Resolve workflow inputs
+        id: vars
+        shell: bash
+        run: |
+          LOCATIONS="${{ github.event.inputs.locations }}"
+          DEBUG_INPUT="${{ github.event.inputs.debug }}"
+
+          if [ -z "$LOCATIONS" ]; then
+            LOCATIONS="all"
+          fi
+
+          if [ "$DEBUG_INPUT" = "true" ]; then
+            DEBUG_FLAG="--debug"
+          else
+            DEBUG_FLAG="--no-debug"
+          fi
+
+          echo "locations=$LOCATIONS" >> "$GITHUB_OUTPUT"
+          echo "debug_flag=$DEBUG_FLAG" >> "$GITHUB_OUTPUT"
+
+      - name: Syntax check main script
+        run: |
+          python -m py_compile weather_ensemble_multi_location.py
+
+      - name: Dry-run source URLs
         run: |
           python weather_ensemble_multi_location.py \
             --mode forecast \
-            --locations all \
+            --locations "${{ steps.vars.outputs.locations }}" \
             --timezone Asia/Jakarta \
-            --public-base-url https://marcooo20-d.github.io/weather-forecast \
-            --no-debug \
+            --public-base-url "$PUBLIC_BASE_URL" \
+            --per-hour \
+            --target-step-minutes 60 \
+            --aether-extra-vars \
+            --dry-run \
+            ${{ steps.vars.outputs.debug_flag }} \
             --no-save-raw-payloads
 
-      - name: Generate public index
+      - name: Run LANGIT v60 forecast
+        id: forecast
+        shell: bash
+        timeout-minutes: 14
+        run: |
+          set +e
+          python weather_ensemble_multi_location.py \
+            --mode forecast \
+            --locations "${{ steps.vars.outputs.locations }}" \
+            --timezone Asia/Jakarta \
+            --public-base-url "$PUBLIC_BASE_URL" \
+            --per-hour \
+            --target-step-minutes 60 \
+            --aether-extra-vars \
+            --mission safety_first \
+            --microclimate auto \
+            --grid-radius-km 4 \
+            --umbrella-threshold 25 \
+            --decision-risk-threshold 55 \
+            --max-workers 6 \
+            --max-inflight-per-host 2 \
+            --http-timeout 25 \
+            --max-retry-http 4 \
+            --retention-days 14 \
+            --retention-max-mb 150 \
+            --public-disclaimer "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat." \
+            ${{ steps.vars.outputs.debug_flag }} \
+            --no-save-raw-payloads
+          RC=$?
+          echo "forecast_exit_code=$RC" >> "$GITHUB_OUTPUT"
+
+          if [ "$RC" = "0" ]; then
+            echo "Forecast selesai normal."
+          elif [ "$RC" = "2" ]; then
+            echo "::warning::Forecast selesai dengan warning, tetapi deploy tetap dilanjutkan."
+          else
+            echo "::error::Forecast gagal dengan exit code $RC."
+            exit "$RC"
+          fi
+
+      - name: Regenerate public verification pages
+        timeout-minutes: 4
+        run: |
+          python weather_ensemble_multi_location.py \
+            --mode verify-public \
+            --locations "${{ steps.vars.outputs.locations }}" \
+            --timezone Asia/Jakarta \
+            --public-base-url "$PUBLIC_BASE_URL" \
+            ${{ steps.vars.outputs.debug_flag }} \
+            --no-save-raw-payloads
+
+      - name: Generate LANGIT v60 public portal index
+        timeout-minutes: 4
         run: |
           python weather_ensemble_multi_location.py \
             --mode public-index \
-            --locations all \
+            --locations "${{ steps.vars.outputs.locations }}" \
             --timezone Asia/Jakarta \
-            --public-base-url https://marcooo20-d.github.io/weather-forecast \
-            --no-debug \
+            --public-base-url "$PUBLIC_BASE_URL" \
+            ${{ steps.vars.outputs.debug_flag }} \
             --no-save-raw-payloads
 
-      - name: Clean internal files before deploy
+      - name: Harden public output before deploy
+        shell: bash
         run: |
+          touch outputs/.nojekyll
           find outputs -name "*.sqlite" -delete || true
           find outputs -name "*.db" -delete || true
+          find outputs -name "*.db-wal" -delete || true
+          find outputs -name "*.db-shm" -delete || true
           find outputs -type d -name "logs" -prune -exec rm -rf {} + || true
           find outputs -type d -name "raw_payloads" -prune -exec rm -rf {} + || true
+          find outputs -type d -name "__pycache__" -prune -exec rm -rf {} + || true
 
-      - name: Debug public files
+      - name: Validate public files
+        shell: bash
         run: |
-          echo "=== TOP OUTPUT FILES ==="
-          find outputs -maxdepth 2 -type f | sort | head -120
+          test -f outputs/index.html
+          test -f outputs/langit_portal_manifest.json
+          test -f outputs/langit_portal_map.html || true
 
-      - name: Deploy to GitHub Pages
+          for slug in dago jatinangor arjawinangun; do
+            if [ -d "outputs/$slug" ]; then
+              test -f "outputs/$slug/anemos_app.html"
+              test -f "outputs/$slug/anemos_3day.html"
+              test -f "outputs/$slug/anemos_activity.html"
+              test -f "outputs/$slug/langit_map_room.html"
+              test -f "outputs/$slug/sentinel_x_accuracy_public.html"
+            fi
+          done
+
+          echo "=== TOP OUTPUT FILES ==="
+          find outputs -maxdepth 2 -type f | sort | head -160
+
+      - name: Upload generated site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: langit-v60-public-site
+          path: outputs
+          retention-days: 7
+
+      - name: Deploy to GitHub Pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
           publish_dir: outputs
+          keep_files: false
+          enable_jekyll: false
+          commit_message: "deploy: LANGIT v60 public forecast"
