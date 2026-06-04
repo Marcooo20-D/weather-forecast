@@ -15007,7 +15007,7 @@ def sentinel_write_root_public_index(locations, run_rows, args):
 # =============================================================================
 
 LANGIT_BRAND_NAME = "LANGIT"
-LANGIT_PUBLIC_VERSION = "LANGIT v60.3"
+LANGIT_PUBLIC_VERSION = "LANGIT v60.4"
 LANGIT_PRODUCT_NAME = "Hyperlocal Weather Decision OS"
 LANGIT_TAGLINE = "Cuaca lokal yang langsung bisa dipakai untuk mengambil keputusan."
 LANGIT_DISCLAIMER = "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat."
@@ -15778,6 +15778,146 @@ def sentinel_write_root_public_index(locations, run_rows, args):
     write_json(root_output_path("langit_portal_manifest.json"), manifest)
     write_json(root_output_path("anemos_portal_manifest.json"), manifest)
     return root_output_path("index.html")
+
+
+# ---------- LANGIT v60.4 EMERGENCY FIX: activity_matrix schema lock ----------
+# The previous v60.3 file still had one late _lg_activity_matrix override returning tuples.
+# That broke _lg_write_outputs() at row.update(a) with:
+# ValueError: dictionary update sequence element #0 has length 18; 2 is required.
+# From here onward activity_matrix is forcibly normalized into dict rows.
+
+def _lg_activity_row(item, fallback_priority=""):
+    """Normalize one activity item into the public CSV/UI dict schema."""
+    if isinstance(item, dict):
+        return {
+            "activity": _lg_text(item.get("activity"), "Aktivitas"),
+            "status": _lg_text(item.get("status"), "Dipantau"),
+            "advice": _lg_text(item.get("advice"), "Pantau kondisi lokal sebelum beraktivitas."),
+            "priority_hour": _lg_text(item.get("priority_hour"), fallback_priority or "—"),
+            "risk_class": _lg_text(item.get("risk_class"), "watch"),
+        }
+    if isinstance(item, (list, tuple)):
+        values = list(item)
+        return {
+            "activity": _lg_text(values[0] if len(values) > 0 else None, "Aktivitas"),
+            "status": _lg_text(values[1] if len(values) > 1 else None, "Dipantau"),
+            "advice": _lg_text(values[2] if len(values) > 2 else None, "Pantau kondisi lokal sebelum beraktivitas."),
+            "priority_hour": _lg_text(values[3] if len(values) > 3 else fallback_priority, fallback_priority or "—"),
+            "risk_class": _lg_text(values[4] if len(values) > 4 else None, "watch"),
+        }
+    return {
+        "activity": _lg_text(item, "Aktivitas"),
+        "status": "Dipantau",
+        "advice": "Pantau kondisi lokal sebelum beraktivitas.",
+        "priority_hour": fallback_priority or "—",
+        "risk_class": "watch",
+    }
+
+
+def _lg_activity_rows(items, fallback_priority=""):
+    rows = [_lg_activity_row(item, fallback_priority=fallback_priority) for item in (items or [])]
+    return rows
+
+
+def _lg_activity_matrix(day):
+    """Return LANGIT activity matrix as list[dict], never tuple rows."""
+    day = dict(day or {})
+    p = _lg_prob(day.get("peak_rain_probability"), 0)
+    score = _lg_float(day.get("risk_score"), p) or p
+    peak = _lg_hour(day.get("peak_rain_hour"), "jam rawan")
+    best = _lg_best_window_text(day.get("best_activity_window"))
+    if not best or best == "—":
+        best = "pagi / siang awal"
+
+    if score >= 70 or p >= 70:
+        raw = [
+            ("Perjalanan / motor", "Hindari jam rawan", f"Jangan paksa berangkat dekat {peak}; jalan licin dan visibilitas bisa turun.", peak, "danger"),
+            ("Jalan kaki", "Cari tempat berteduh", f"Tentukan titik berteduh sebelum {peak}; jangan menunggu hujan deras.", peak, "danger"),
+            ("Jemur pakaian", "Tidak disarankan", "Pilih pagi dan jangan ditinggal lama.", "pagi", "rain"),
+            ("Olahraga outdoor", "Ganti jam", f"Pilih window lebih aman: {best}.", best, "rain"),
+            ("Acara outdoor", "Wajib plan B", f"Siapkan indoor/tenda terutama sekitar {peak}.", peak, "danger"),
+            ("Foto / city walk", "Pantau langit", "Bawa pelindung elektronik; cahaya dan hujan lokal bisa berubah cepat.", peak, "rain"),
+        ]
+    elif score >= 45 or p >= 45:
+        raw = [
+            ("Perjalanan / motor", "Bawa jas hujan", f"Lebih hati-hati mendekati {peak}; jalan dapat lebih licin.", peak, "rain"),
+            ("Jalan kaki", "Pilih rute teduh", f"Cari rute yang mudah berteduh sekitar {peak}.", peak, "rain"),
+            ("Jemur pakaian", "Lebih aman pagi", "Utamakan pagi sampai siang awal dan cek langit berkala.", "pagi–siang awal", "watch"),
+            ("Olahraga outdoor", "Pilih jam aman", f"Gunakan window lebih aman: {best}.", best, "watch"),
+            ("Acara outdoor", "Siapkan plan B", f"Sediakan opsi tempat teduh terutama sekitar {peak}.", peak, "rain"),
+            ("Foto / city walk", "Pantau awan", "Cek awan, angin, dan radar/BMKG sebelum berangkat.", peak, "watch"),
+        ]
+    else:
+        raw = [
+            ("Perjalanan / motor", "Aman dipantau", "Kondisi relatif aman; tetap perhatikan perubahan lokal.", best, "safe"),
+            ("Jalan kaki", "Cocok", f"Jam nyaman: {best}.", best, "safe"),
+            ("Jemur pakaian", "Cukup aman", "Angkat sebelum sore jika awan mulai gelap.", "pagi–siang", "safe"),
+            ("Olahraga outdoor", "Aman dipantau", "Pagi atau sore biasanya lebih nyaman.", best, "safe"),
+            ("Acara outdoor", "Bisa dilanjutkan", "Tetap siapkan opsi teduh ringan untuk antisipasi.", best, "safe"),
+            ("Foto / city walk", "Cocok", "Pantau cahaya dan awan lokal sebelum berangkat.", best, "safe"),
+        ]
+    return _lg_activity_rows(raw, fallback_priority=peak)
+
+
+def _lg_activity_section(day):
+    rows = _lg_activity_rows((day or {}).get("activity_matrix") or _lg_activity_matrix(day), fallback_priority=_lg_hour((day or {}).get("peak_rain_hour"), "—"))
+    cards = []
+    for a in rows:
+        cls = _lg_text(a.get("risk_class"), "safe")
+        cards.append(
+            f"<article class='activity {cls}'><h3>{_lg_esc(a.get('activity'))}</h3><b>{_lg_esc(a.get('status'))}</b>"
+            f"<p>{_lg_esc(a.get('advice'))}</p><span class='focus'>Fokus: {_lg_esc(a.get('priority_hour'))}</span></article>"
+        )
+    return f"<section class='panel'><div class='head'><h2>Saran aktivitas</h2><p>Bahasa dibuat praktis dan langsung bisa dipakai.</p></div><div class='grid g3'>{''.join(cards)}</div></section>"
+
+
+# Keep _lg_write_outputs extra defensive in case a stale JSON already contains tuple/list activity rows.
+_lg_write_outputs_original_v604 = _lg_write_outputs
+
+def _lg_write_outputs(args, forecast_dates=None):
+    api = _lg_build_api(args, forecast_dates)
+    for d in api.get("days", []) or []:
+        if isinstance(d, dict):
+            d["activity_matrix"] = _lg_activity_rows(d.get("activity_matrix") or _lg_activity_matrix(d), fallback_priority=_lg_hour(d.get("peak_rain_hour"), "—"))
+    _lg_write_maps(api, args)
+    write_json(path_output("langit_api_v1.json"), api)
+    write_json(path_output("anemos_api_v1.json"), api)
+    write_json(path_output("langit_intelligence.json"), {"brand": LANGIT_BRAND_NAME, "version": LANGIT_PUBLIC_VERSION, "nowcast": _lg_today(api).get("nowcast"), "microclimate": api.get("microclimate"), "source_court": api.get("source_court"), "map_layers": api.get("map_layers")})
+
+    daily_rows, hourly_rows, activity_rows = [], [], []
+    for d in api.get("days", []) or []:
+        daily_rows.append({"date": d.get("date"), "day_tag": d.get("day_tag"), "risk_score": d.get("risk_score"), "risk_label": d.get("risk_label"), "peak_rain_probability": d.get("peak_rain_probability"), "peak_rain_hour": d.get("peak_rain_hour"), "best_activity_window": _lg_best_window_text(d.get("best_activity_window")), "summary": d.get("decision_sentence")})
+        for h in d.get("key_hours", []) or []:
+            hourly_rows.append({"date": d.get("date"), "day_tag": d.get("day_tag"), "hour": h.get("hour"), "condition": h.get("condition"), "temp_c": h.get("temp_c"), "humidity_pct": h.get("humidity_pct"), "heat_index_c": h.get("heat_index_c"), "rain_probability": h.get("rain_probability"), "wind_kmh": h.get("wind_kmh"), "risk_score": h.get("risk_score"), "risk_label": h.get("risk_label"), "risk_class": h.get("risk_class")})
+        for a in _lg_activity_rows(d.get("activity_matrix"), fallback_priority=_lg_hour(d.get("peak_rain_hour"), "—")):
+            row = {"date": d.get("date"), "day_tag": d.get("day_tag")}
+            row.update(a)
+            activity_rows.append(row)
+
+    _lg_write_dict_csv(path_output("langit_daily_outlook.csv"), ["date","day_tag","risk_score","risk_label","peak_rain_probability","peak_rain_hour","best_activity_window","summary"], daily_rows)
+    _lg_write_dict_csv(path_output("langit_hourly_intelligence.csv"), ["date","day_tag","hour","condition","temp_c","humidity_pct","heat_index_c","rain_probability","wind_kmh","risk_score","risk_label","risk_class"], hourly_rows)
+    _lg_write_dict_csv(path_output("langit_activity_matrix.csv"), ["date","day_tag","activity","status","advice","priority_hour","risk_class"], activity_rows)
+
+    pages = {
+        "anemos_app.html": _lg_page(api, args, "today"),
+        "langit_app.html": _lg_page(api, args, "today"),
+        AETHER_DASHBOARD_FILENAME: _lg_page(api, args, "today"),
+        "anemos_today.html": _lg_page(api, args, "today"),
+        "anemos_3day.html": _lg_page(api, args, "3day"),
+        "langit_3day.html": _lg_page(api, args, "3day"),
+        "anemos_activity.html": _lg_page(api, args, "activity"),
+        "langit_activity.html": _lg_page(api, args, "activity"),
+        "langit_model_court.html": _lg_page(api, args, "court"),
+        "langit_map.html": _lg_page(api, args, "map"),
+        "langit_planner.html": _lg_planner(api, args),
+        "anemos_commute_advice.html": _lg_page(api, args, "activity"),
+        "anemos_laundry_advice.html": _lg_page(api, args, "activity"),
+    }
+    for name, doc in pages.items():
+        atomic_write_text(path_output(name), lambda f, doc=doc: f.write(doc))
+    atomic_write_text(path_output("langit_whatsapp_brief.txt"), lambda f: f.write(_lg_share_text(api)))
+    atomic_write_text(path_output("anemos_whatsapp_brief.txt"), lambda f: f.write(_lg_share_text(api)))
+    return path_output("anemos_app.html")
 
 
 if __name__ == "__main__":
