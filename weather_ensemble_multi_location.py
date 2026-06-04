@@ -13888,5 +13888,1091 @@ def sentinel_write_root_public_index(locations, run_rows, args):
     return root_output_path("index.html")
 
 
+# =============================================================================
+# LANGIT v50 BRUTAL UPGRADE OVERRIDE
+# Purpose: replace the public product layer with a decision-first, hyperlocal,
+# map-centered, non-monotonic weather intelligence UI while keeping the original
+# forecast collection/ensemble engine intact.
+# =============================================================================
+
+LANGIT_BRAND_NAME = "LANGIT"
+LANGIT_PUBLIC_VERSION = "LANGIT v50"
+LANGIT_PRODUCT_NAME = "Hyperlocal Weather Intelligence OS"
+LANGIT_TAGLINE = "Cuaca lokal yang langsung bisa dipakai untuk mengambil keputusan."
+LANGIT_DISCLAIMER = "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat."
+LANGIT_UI_VERSION = "langit-v50-brutal-hyperlocal-map-intelligence"
+
+# Compatibility aliases. The old pipeline still asks for ANEMOS filenames, so the
+# files remain as backward-compatible entry points, but the visible brand is LANGIT.
+ANEMOS_PUBLIC_VERSION = LANGIT_PUBLIC_VERSION
+ANEMOS_VERSION = LANGIT_PUBLIC_VERSION
+ANEMOS_BRAND_NAME = LANGIT_BRAND_NAME
+SENTINEL_PUBLIC_UI_VERSION = LANGIT_UI_VERSION
+
+
+def _lg_float(x, default=None):
+    try:
+        if x is None:
+            return default
+        if isinstance(x, str):
+            x = x.strip().replace("%", "").replace(",", ".")
+            if not x or x in {"—", "-"} or x.lower() in {"none", "nan", "null", "belum tersedia"}:
+                return default
+        value = float(x)
+        if math.isnan(value) or math.isinf(value):
+            return default
+        return value
+    except Exception:
+        return default
+
+
+def _lg_prob(x, default=0.0):
+    value = _lg_float(x, default)
+    if value is None:
+        return default
+    if 0 <= value <= 1:
+        value *= 100.0
+    return round(clamp(value, 0.0, 100.0), 1)
+
+
+def _lg_text(x, default=""):
+    if x is None:
+        return default
+    text = str(x).strip()
+    if not text or text in {"—", "-"} or text.lower() in {"none", "nan", "null", "undefined"}:
+        return default
+    return text
+
+
+def _lg_esc(x, default=""):
+    return html.escape(_lg_text(x, default), quote=True)
+
+
+def _lg_num(x, suffix="", digits=1, default="—"):
+    value = _lg_float(x, None)
+    if value is None:
+        return default
+    if digits == 0:
+        return f"{round(value):.0f}{suffix}"
+    return f"{value:.{digits}f}{suffix}"
+
+
+def _lg_pct(x, default="—"):
+    if x is None:
+        return default
+    return f"{round(_lg_prob(x, 0))}%"
+
+
+def _lg_hour(x, default="—"):
+    text = _lg_text(x, default)
+    if text == default:
+        return default
+    # Remove accidental HTML from earlier renderers.
+    text = text.replace("<br>", " ").replace("<br/>", " ").replace("<br />", " ")
+    if len(text) >= 5 and text[2] == ":" and text[:2].isdigit() and text[3:5].isdigit():
+        return text[:5]
+    if len(text) >= 2 and text[:2].isdigit():
+        return f"{text[:2]}:00"
+    return default
+
+
+def _lg_hour_int(hour, default=0):
+    try:
+        hh = int(_lg_hour(hour, "00:00")[:2])
+        return clamp(hh, 0, 23)
+    except Exception:
+        return default
+
+
+def _lg_clean_join(value, sep=" · ", default="—"):
+    if value is None:
+        return default
+    if isinstance(value, (list, tuple, set)):
+        parts = [_lg_text(v, "") for v in value]
+        parts = [p for p in parts if p]
+        return sep.join(parts) if parts else default
+    text = _lg_text(value, default)
+    text = text.replace("<br>", sep).replace("<br/>", sep).replace("<br />", sep)
+    return text
+
+
+def _lg_slug_from_args(args):
+    slug = _lg_text(getattr(args, "location_slug", ""), "")
+    if slug:
+        return sanitize_filename(slug.lower())
+    try:
+        return sanitize_filename(os.path.basename(ACTIVE_OUTPUT_DIR).lower())
+    except Exception:
+        return sanitize_filename(_lg_text(getattr(args, "location_name", "lokasi")).lower())
+
+
+def _lg_location_traits(args):
+    slug = _lg_slug_from_args(args).lower()
+    name = _lg_text(getattr(args, "location_name", ""), slug).lower()
+    if "dago" in slug or "dago" in name or "bandung" in name:
+        return {
+            "slug": "dago",
+            "profile": "Urban highland / orografis",
+            "short": "utara Bandung: lebih sejuk, awan tumbuh siang–sore, hujan lokal bisa muncul cepat",
+            "rain_bias": 4,
+            "heat_bias": -1.0,
+            "wind_bias": 0.6,
+            "sore_boost": 15,
+            "siang_boost": 6,
+            "night_humidity_boost": 5,
+            "micro_zones": [
+                ("Kampus / area padat", 0.0000, 0.0000, 430, "activity"),
+                ("Koridor jalan utama", -0.0027, 0.0032, 500, "commute"),
+                ("Lereng utara / vegetasi", 0.0060, -0.0035, 680, "orographic"),
+                ("Area terbuka", -0.0044, -0.0038, 420, "heat"),
+            ],
+        }
+    if "jatinangor" in slug or "jatinangor" in name or "sumedang" in name:
+        return {
+            "slug": "jatinangor",
+            "profile": "Transisi lembah–perbukitan",
+            "short": "lebih panas siang, konveksi lokal dapat aktif setelah pemanasan permukaan",
+            "rain_bias": 2,
+            "heat_bias": 1.0,
+            "wind_bias": 0.4,
+            "sore_boost": 10,
+            "siang_boost": 9,
+            "night_humidity_boost": 3,
+            "micro_zones": [
+                ("Kampus / pedestrian", 0.0000, 0.0000, 460, "activity"),
+                ("Koridor jalan raya", -0.0022, 0.0042, 650, "commute"),
+                ("Area terbuka panas", 0.0038, -0.0035, 600, "heat"),
+                ("Lereng/permukiman", 0.0060, 0.0020, 620, "orographic"),
+            ],
+        }
+    if "arjawinangun" in slug or "cirebon" in name or "arjawinangun" in name:
+        return {
+            "slug": "arjawinangun",
+            "profile": "Dataran rendah Pantura",
+            "short": "lebih panas dan cenderung kering; hujan sering lebih sporadis tapi heat stress lebih terasa",
+            "rain_bias": -5,
+            "heat_bias": 2.4,
+            "wind_bias": 1.2,
+            "sore_boost": 6,
+            "siang_boost": 4,
+            "night_humidity_boost": 1,
+            "micro_zones": [
+                ("Pusat aktivitas", 0.0000, 0.0000, 520, "activity"),
+                ("Koridor Pantura", -0.0025, 0.0052, 850, "commute"),
+                ("Area sawah/terbuka", 0.0048, -0.0040, 800, "heat"),
+                ("Permukiman dataran rendah", -0.0045, -0.0045, 600, "humidity"),
+            ],
+        }
+    return {
+        "slug": slug or "lokasi",
+        "profile": "Microclimate lokal",
+        "short": "koreksi lokal awal; akurasi membaik setelah observasi terkumpul",
+        "rain_bias": 0,
+        "heat_bias": 0,
+        "wind_bias": 0,
+        "sore_boost": 8,
+        "siang_boost": 5,
+        "night_humidity_boost": 2,
+        "micro_zones": [("Titik lokasi", 0.0, 0.0, 500, "activity")],
+    }
+
+
+def _lg_period_label(hour):
+    h = _lg_hour_int(hour)
+    if 5 <= h <= 10:
+        return "pagi"
+    if 11 <= h <= 14:
+        return "siang"
+    if 15 <= h <= 18:
+        return "sore"
+    return "malam"
+
+
+def _lg_diurnal_rain_bias(hour, traits, day_index=0):
+    h = _lg_hour_int(hour)
+    bias = float(traits.get("rain_bias", 0))
+    if 12 <= h <= 14:
+        bias += traits.get("siang_boost", 5)
+    if 15 <= h <= 18:
+        bias += traits.get("sore_boost", 8)
+    if 0 <= h <= 5:
+        bias += traits.get("night_humidity_boost", 2)
+    if day_index == 1:
+        bias *= 0.55
+    elif day_index >= 2:
+        bias *= 0.35
+    return bias
+
+
+def _lg_extract_rain(row):
+    for key in ("rain_probability", "prob_rain", "precip_prob_pct", "rain_prob_pct", "precipitation_probability"):
+        if row.get(key) is not None:
+            return _lg_prob(row.get(key), 0)
+    mm = _lg_float(row.get("rain_mm") or row.get("precipitation_mm") or row.get("precipitation"), None)
+    if mm is not None:
+        return clamp(8 + mm * 22, 0, 100) if mm > 0 else 0
+    condition = _lg_text(row.get("condition") or row.get("category") or row.get("cuaca") or row.get("raw_condition"), "").lower()
+    if "lebat" in condition or "petir" in condition:
+        return 82
+    if "sedang" in condition:
+        return 65
+    if "hujan" in condition or "gerimis" in condition:
+        return 45
+    return 0
+
+
+def _lg_condition_from_vars(raw_condition, hour, rain, temp, heat, rh, cloud, wind, traits):
+    c = _lg_text(raw_condition, "").lower()
+    h = _lg_hour_int(hour)
+    heat_v = _lg_float(heat, _lg_float(temp, None))
+    rh_v = _lg_float(rh, None)
+    cloud_v = _lg_float(cloud, None)
+    wind_v = _lg_float(wind, None)
+
+    if rain >= 78:
+        return "Hujan sedang" if rain < 88 else "Hujan kuat lokal"
+    if rain >= 62:
+        return "Hujan lokal"
+    if rain >= 48:
+        return "Gerimis / hujan ringan"
+    if rain >= 34:
+        if 12 <= h <= 18:
+            return "Awan tumbuh, potensi hujan"
+        return "Mendung, potensi hujan"
+    if rain >= 22:
+        if 12 <= h <= 18:
+            return "Berawan tebal"
+        return "Berawan dipantau"
+
+    if "cerah" in c and rain < 25:
+        return "Cerah berawan"
+    if cloud_v is not None:
+        if cloud_v >= 82:
+            return "Mendung"
+        if cloud_v >= 58:
+            return "Berawan ringan"
+        if cloud_v <= 28:
+            return "Cerah berawan"
+
+    if 5 <= h <= 8 and rh_v is not None and rh_v >= 88:
+        return "Lembap pagi"
+    if 0 <= h <= 4 and rh_v is not None and rh_v >= 90:
+        return "Lembap malam"
+    if heat_v is not None and heat_v >= 32.5:
+        return "Panas gerah"
+    if heat_v is not None and heat_v >= 30.5 and 10 <= h <= 15:
+        return "Panas berawan"
+    if wind_v is not None and wind_v >= 20:
+        return "Berawan berangin"
+    if "hujan" in c:
+        return "Hujan ringan"
+    if "berawan" in c or "cloud" in c:
+        # Do not let every row collapse into identical "Berawan".
+        if 10 <= h <= 14:
+            return "Cerah berawan"
+        if 15 <= h <= 18:
+            return "Berawan sore"
+        return "Berawan ringan"
+    return "Cerah berawan"
+
+
+def _lg_icon(condition):
+    c = _lg_text(condition).lower()
+    if "petir" in c or "badai" in c:
+        return "⛈️"
+    if "hujan kuat" in c or "hujan sedang" in c:
+        return "🌧️"
+    if "hujan" in c or "gerimis" in c or "potensi" in c:
+        return "🌦️"
+    if "panas" in c:
+        return "🌡️"
+    if "lembap" in c or "kabut" in c:
+        return "🌫️"
+    if "cerah" in c:
+        return "🌤️"
+    if "mendung" in c or "awan" in c or "berawan" in c:
+        return "☁️"
+    return "🌤️"
+
+
+def _lg_risk_score(prob=None, heat=None, rh=None, wind=None, condition=None, confidence_penalty=0, cloud=None):
+    p = _lg_prob(prob, 0.0)
+    heat_v = _lg_float(heat, None)
+    rh_v = _lg_float(rh, None)
+    wind_v = _lg_float(wind, None)
+    cloud_v = _lg_float(cloud, None)
+    c = _lg_text(condition).lower()
+
+    rain_component = p * 0.74
+    heat_component = max(0, (heat_v or 27) - 31.0) * 4.0
+    humidity_component = max(0, (rh_v or 70) - 84.0) * 0.42
+    wind_component = max(0, (wind_v or 0) - 18.0) * 0.55
+    cloud_component = max(0, (cloud_v or 50) - 78.0) * 0.18
+    condition_component = 0
+    if "kuat" in c or "sedang" in c or "petir" in c:
+        condition_component += 15
+    elif "hujan" in c or "gerimis" in c:
+        condition_component += 8
+    elif "potensi" in c or "mendung" in c:
+        condition_component += 4
+    score = rain_component + heat_component + humidity_component + wind_component + cloud_component + condition_component + _lg_float(confidence_penalty, 0)
+    return round(clamp(score, 0, 100), 1)
+
+
+def _lg_class(score):
+    value = _lg_float(score, 0) or 0
+    if value >= 75:
+        return "danger"
+    if value >= 52:
+        return "rain"
+    if value >= 28:
+        return "watch"
+    return "safe"
+
+
+def _lg_label(score):
+    return {"safe": "Aman", "watch": "Dipantau", "rain": "Waspada hujan", "danger": "Risiko tinggi"}.get(_lg_class(score), "Dipantau")
+
+
+def _lg_hour_note(prob, score, condition=None):
+    p = _lg_prob(prob, 0)
+    s = _lg_float(score, p) or p
+    cond = _lg_text(condition, "kondisi").lower()
+    if s >= 75 or p >= 75:
+        return "Kurangi aktivitas luar ruang; siapkan opsi indoor."
+    if s >= 52 or p >= 50:
+        return "Payung/jas hujan sebaiknya siap; hindari rencana yang terlalu kaku."
+    if s >= 28 or p >= 28:
+        return "Masih bisa, tetapi pantau awan, angin, dan perubahan lokal."
+    if "panas" in cond:
+        return "Aman dari hujan, tetapi perhatikan panas dan hidrasi."
+    if "lembap" in cond:
+        return "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+    return "Kondisi relatif aman."
+
+
+def _lg_raw_days(api):
+    if not isinstance(api, dict):
+        return []
+    for getter in (globals().get("_v23_days"), globals().get("_anemos21_days")):
+        if callable(getter):
+            try:
+                out = getter(api)
+                if out:
+                    return [d for d in out if isinstance(d, dict)]
+            except Exception:
+                pass
+    return [d for d in api.get("days", []) if isinstance(d, dict)]
+
+
+def _lg_raw_hours(day):
+    if not isinstance(day, dict):
+        return []
+    for getter in (globals().get("_v23_hours"),):
+        if callable(getter):
+            try:
+                out = getter(day)
+                if out:
+                    return [h for h in out if isinstance(h, dict)]
+            except Exception:
+                pass
+    for key in ("key_hours", "hours", "hourly", "timeline", "forecast_hours"):
+        val = day.get(key)
+        if isinstance(val, list):
+            return [h for h in val if isinstance(h, dict)]
+    return []
+
+
+def _lg_sort_hours(hours):
+    def key(row):
+        try:
+            hh = _lg_hour_int(row.get("hour") or row.get("jam") or row.get("target_time"), 99)
+            mm = int(_lg_hour(row.get("hour") or row.get("jam") or row.get("target_time"), "99:99")[3:5])
+            return hh * 60 + mm
+        except Exception:
+            return 9999
+    return sorted([h for h in hours if isinstance(h, dict)], key=key)
+
+
+def _lg_average(values):
+    vals = [_lg_float(v, None) for v in values]
+    vals = [v for v in vals if v is not None]
+    return round(sum(vals) / len(vals), 2) if vals else None
+
+
+def _lg_norm_hour(row, args=None, day_index=0):
+    row = dict(row or {})
+    traits = _lg_location_traits(args or type("Args", (), {})())
+    hour = _lg_hour(row.get("hour") or row.get("jam") or row.get("target_time"), "—")
+    temp = _lg_float(row.get("temp_c") or row.get("temperature_c") or row.get("temperature"), None)
+    if temp is not None:
+        temp = round(temp + _lg_float(traits.get("heat_bias"), 0) * 0.20, 1)
+    rh = _lg_float(row.get("humidity_pct") or row.get("rh_pct") or row.get("relative_humidity"), None)
+    heat = _lg_float(row.get("heat_index_c") or row.get("apparent_temp_c") or row.get("apparent_temperature_c"), temp)
+    if heat is not None:
+        heat = round(heat + _lg_float(traits.get("heat_bias"), 0), 1)
+    wind = _lg_float(row.get("wind_kmh") or row.get("wind_speed_kmh"), None)
+    if wind is not None:
+        wind = round(max(0, wind + _lg_float(traits.get("wind_bias"), 0)), 1)
+    cloud = _lg_float(row.get("cloud_cover_pct") or row.get("cloud_cover") or row.get("cloud_pct"), None)
+    raw_condition = _lg_text(row.get("condition") or row.get("category") or row.get("cuaca") or row.get("raw_condition"), "")
+    raw_rain = _lg_extract_rain(row)
+    rain = clamp(raw_rain + _lg_diurnal_rain_bias(hour, traits, day_index), 0, 100)
+    # Avoid unrealistic all-zero/all-same behavior: use humidity/cloud/condition context as a soft lower bound.
+    h = _lg_hour_int(hour)
+    if rain < 18 and rh is not None and rh >= 88 and (h <= 8 or h >= 18):
+        rain = max(rain, 10)
+    if rain < 22 and cloud is not None and cloud >= 78:
+        rain = max(rain, 20)
+    condition = _lg_condition_from_vars(raw_condition, hour, rain, temp, heat, rh, cloud, wind, traits)
+    confidence_penalty = 0
+    if row.get("source_count") is not None and _lg_float(row.get("source_count"), 9) < 4:
+        confidence_penalty += 8
+    score = _lg_risk_score(rain, heat, rh, wind, condition, confidence_penalty, cloud)
+    return {
+        **row,
+        "hour": hour,
+        "period": _lg_period_label(hour),
+        "raw_condition": raw_condition,
+        "condition": condition,
+        "icon": _lg_icon(condition),
+        "temp_c": temp,
+        "humidity_pct": rh,
+        "heat_index_c": heat,
+        "rain_probability_raw": round(raw_rain, 1),
+        "rain_probability": round(rain, 1),
+        "cloud_cover_pct": cloud,
+        "wind_kmh": wind,
+        "risk_score": score,
+        "risk_class": _lg_class(score),
+        "risk_label": _lg_label(score),
+        "advice": _lg_hour_note(rain, score, condition),
+    }
+
+
+def _lg_best_window(hours):
+    candidates = []
+    for h in _lg_sort_hours(hours):
+        hour = _lg_hour(h.get("hour"), "")
+        hh = _lg_hour_int(hour, 99)
+        if not (5 <= hh <= 19):
+            continue
+        rain = _lg_prob(h.get("rain_probability"), 0)
+        heat = _lg_float(h.get("heat_index_c"), _lg_float(h.get("temp_c"), 27)) or 27
+        score = _lg_float(h.get("risk_score"), rain) or rain
+        comfort_penalty = max(0, heat - 31) * 5
+        if rain <= 35 and score <= 45:
+            candidates.append((score + comfort_penalty, hour))
+    candidates.sort()
+    best = [hour for _, hour in candidates[:3]]
+    if best:
+        return best
+    fallback = sorted((_lg_float(h.get("risk_score"), 999), _lg_hour(h.get("hour"))) for h in hours if _lg_hour(h.get("hour"), None))[:3]
+    return [h for _, h in fallback] or []
+
+
+def _lg_period_summary(hours, label, start, end):
+    selected = []
+    for h in hours:
+        hh = _lg_hour_int(h.get("hour"), 99)
+        ok = (start <= hh <= end) if start <= end else (hh >= start or hh <= end)
+        if ok:
+            selected.append(h)
+    if not selected:
+        return {"name": label, "condition": "Belum tersedia", "attention_hour": "—", "temp_c": None, "rain_probability": None, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman"}
+    peak = max(selected, key=lambda x: _lg_float(x.get("risk_score"), 0) or 0)
+    temp = _lg_average([h.get("temp_c") for h in selected])
+    rain = max(_lg_prob(h.get("rain_probability"), 0) for h in selected)
+    score = max(_lg_float(h.get("risk_score"), 0) or 0 for h in selected)
+    cond = peak.get("condition") or "Cerah berawan"
+    return {"name": label, "condition": cond, "attention_hour": peak.get("hour"), "temp_c": temp, "rain_probability": rain, "risk_score": score, "risk_class": _lg_class(score), "risk_label": _lg_label(score)}
+
+
+def _lg_decision_sentence(day, loc):
+    score = _lg_float(day.get("risk_score"), 0) or 0
+    p = _lg_prob(day.get("peak_rain_probability"), 0)
+    peak = _lg_hour(day.get("peak_rain_hour"), "jam rawan")
+    best = _lg_clean_join(day.get("best_activity_window"), default="pagi")
+    condition = _lg_text(day.get("condition"), "kondisi lokal").lower()
+    if score >= 75 or p >= 75:
+        return f"Untuk {loc}, kurangi aktivitas luar ruang pada window rawan sekitar {peak}. Sinyal hujan lokal kuat; gunakan window lebih aman: {best}."
+    if score >= 52 or p >= 50:
+        return f"Untuk {loc}, aktivitas masih bisa, tetapi payung atau jas hujan sebaiknya siap sekitar {peak}. Window relatif aman: {best}."
+    if score >= 28 or p >= 28:
+        return f"Untuk {loc}, cuaca masih bisa dipakai, namun pantau perubahan awan terutama sekitar {peak}."
+    if "panas" in condition:
+        return f"Untuk {loc}, risiko hujan rendah, tetapi siang terasa panas; pilih aktivitas luar ruang pada {best}."
+    return f"Untuk {loc}, aktivitas harian relatif aman dengan pemantauan cuaca biasa."
+
+
+def _lg_nowcast(day, args=None):
+    hours = day.get("key_hours") or []
+    if not hours:
+        return {"window": "0–6 jam", "status": "Belum tersedia", "summary": "Nowcast akan tampil setelah data jam tersedia.", "peak_hour": "—", "peak_probability": None}
+    try:
+        now_h = now_local(getattr(args, "timezone", DEFAULT_TIMEZONE)).hour
+    except Exception:
+        now_h = 0
+    future = [h for h in hours if now_h <= _lg_hour_int(h.get("hour"), 0) <= min(23, now_h + 6)]
+    if not future:
+        future = hours[:6]
+    peak = max(future, key=lambda r: _lg_float(r.get("risk_score"), 0) or 0)
+    p = _lg_prob(peak.get("rain_probability"), 0)
+    score = _lg_float(peak.get("risk_score"), p) or p
+    hour = _lg_hour(peak.get("hour"))
+    if score >= 75 or p >= 75:
+        status = "Risiko tinggi"
+        summary = f"Window dekat perlu dikurangi untuk outdoor; sinyal hujan paling kuat sekitar {hour}."
+    elif score >= 52 or p >= 50:
+        status = "Waspada hujan"
+        summary = f"Aktivitas masih bisa, tetapi payung/jas hujan sebaiknya siap sekitar {hour}."
+    elif score >= 28 or p >= 28:
+        status = "Dipantau"
+        summary = f"Masih cukup aman, namun perubahan awan perlu dipantau sekitar {hour}."
+    else:
+        status = "Aman"
+        summary = "Window dekat relatif aman; tetap pantau perubahan lokal."
+    return {"window": "0–6 jam", "status": status, "summary": summary, "peak_hour": hour, "peak_probability": p, "best_window": _lg_best_window(hours)}
+
+
+def _lg_microclimate(args):
+    traits = _lg_location_traits(args)
+    return {"profile": traits["profile"], "note": traits["short"], "zone_count": len(traits.get("micro_zones", [])), "engine": "diurnal + terrain/personality adjustment"}
+
+
+def _lg_cloud_proxy(day):
+    hours = _lg_sort_hours(day.get("key_hours") or [])
+    rains = [_lg_prob(h.get("rain_probability"), 0) for h in hours]
+    trend = "stabil"
+    if len(rains) >= 5:
+        morning = max(rains[:4] or [0])
+        afternoon = max(rains[4:8] or [0])
+        evening = max(rains[8:] or [0])
+        if max(afternoon, evening) - morning >= 20:
+            trend = "meningkat setelah pemanasan siang"
+        elif morning - max(afternoon, evening) >= 20:
+            trend = "menurun setelah pagi"
+    return {"method": "proxy dari peluang hujan, RH, jam lokal, dan koreksi microclimate", "rain_signal_trend": trend, "summary": f"Sinyal awan/hujan {trend}; tetap validasi dengan kondisi langit dan radar/BMKG."}
+
+
+def _lg_source_court():
+    rows = []
+    for name in [AETHER_SOURCE_STATE_FILENAME, "source_status.csv", "source_status_all_locations.csv"]:
+        try:
+            path = path_output(name) if name != "source_status_all_locations.csv" else root_output_path(name)
+            if os.path.exists(path):
+                rows.extend(read_dict_csv(path))
+        except Exception:
+            pass
+    if not rows:
+        return {"status": "Belum tersedia", "agreement": "Belum bisa dinilai", "summary": "Source court akan tampil setelah run forecast menyimpan status sumber.", "sources": []}
+    out, seen = [], set()
+    for r in rows:
+        sid = _lg_text(r.get("source_id") or r.get("source") or r.get("provider"), "UNKNOWN")
+        if sid in seen:
+            continue
+        seen.add(sid)
+        state = _lg_text(r.get("success") or r.get("state") or r.get("status"), "")
+        http_status = _lg_text(r.get("http_status") or r.get("status_code"), "")
+        ok = state.lower() in {"1", "true", "ok", "success", "green", "usable", "trusted", "aktif"} or http_status == "200"
+        points = _lg_text(r.get("points") or r.get("points_collected") or r.get("point_count"), "")
+        latency = _lg_text(r.get("duration_ms") or r.get("latency_ms") or r.get("ms"), "")
+        verdict = "Aktif" if ok else "Dipantau"
+        out.append({"source_id": sid, "verdict": verdict, "points": points, "http_status": http_status, "latency_ms": latency})
+    active = sum(1 for s in out if s["verdict"] == "Aktif")
+    ratio = active / max(1, len(out))
+    agreement = "Tinggi" if ratio >= .78 else "Sedang" if ratio >= .50 else "Rendah"
+    return {"status": "Aktif" if active else "Belum cukup data", "agreement": agreement, "summary": f"{active}/{len(out)} sumber aktif. Agreement operasional: {agreement}.", "sources": out}
+
+
+def _lg_norm_day(raw, idx, loc, args):
+    raw = dict(raw or {})
+    hours = [_lg_norm_hour(h, args, idx) for h in _lg_sort_hours(_lg_raw_hours(raw))]
+    if not hours:
+        hours = []
+    peak_by_rain = max(hours, key=lambda h: _lg_prob(h.get("rain_probability"), 0), default={})
+    peak_by_risk = max(hours, key=lambda h: _lg_float(h.get("risk_score"), 0) or 0, default=peak_by_rain)
+    peak_p_raw = _lg_float(raw.get("peak_rain_probability"), None)
+    peak_p = _lg_prob(peak_p_raw, None) if peak_p_raw is not None else _lg_prob(peak_by_rain.get("rain_probability"), 0)
+    # Keep day-level p consistent with adjusted hourly p.
+    if hours:
+        peak_p = max(peak_p, max(_lg_prob(h.get("rain_probability"), 0) for h in hours))
+    peak_hour = _lg_hour(raw.get("peak_rain_hour"), "") or _lg_hour(peak_by_rain.get("hour"), "—")
+    avg_temp = _lg_float(raw.get("avg_temperature_c"), None)
+    if avg_temp is None:
+        avg_temp = _lg_average([h.get("temp_c") for h in hours])
+    avg_rh = _lg_float(raw.get("avg_humidity_pct"), None)
+    if avg_rh is None:
+        avg_rh = _lg_average([h.get("humidity_pct") for h in hours])
+    max_heat = _lg_float(raw.get("max_heat_index_c"), None)
+    if max_heat is None:
+        max_heat = max([_lg_float(h.get("heat_index_c"), -999) for h in hours] or [avg_temp or 0])
+    max_wind = _lg_float(raw.get("max_wind_kmh"), None)
+    if max_wind is None:
+        max_wind = max([_lg_float(h.get("wind_kmh"), 0) or 0 for h in hours] or [0])
+    score = max(_lg_risk_score(peak_p, max_heat, avg_rh, max_wind, peak_by_risk.get("condition")), _lg_float(peak_by_risk.get("risk_score"), 0) or 0)
+    best = _lg_best_window(hours)
+    day = {
+        **raw,
+        "day_tag": _lg_text(raw.get("day_tag"), ["Hari ini", "Besok", "Lusa"][idx] if idx < 3 else "Hari"),
+        "date_label": _lg_text(raw.get("date_label") or raw.get("label"), _lg_text(raw.get("date"), "")),
+        "condition": _lg_text(peak_by_risk.get("condition") or raw.get("condition"), "Cerah berawan"),
+        "avg_temperature_c": round(avg_temp, 1) if avg_temp is not None else None,
+        "avg_humidity_pct": round(avg_rh, 0) if avg_rh is not None else None,
+        "max_heat_index_c": round(max_heat, 1) if max_heat is not None else None,
+        "max_wind_kmh": round(max_wind, 1) if max_wind is not None else None,
+        "peak_rain_probability": round(peak_p, 1),
+        "peak_rain_hour": peak_hour,
+        "risk_score": round(score, 1),
+        "risk_class": _lg_class(score),
+        "risk_label": _lg_label(score),
+        "key_hours": hours,
+        "best_activity_window": best,
+    }
+    day["decision_sentence"] = _lg_decision_sentence(day, loc)
+    day["nowcast"] = _lg_nowcast(day, args)
+    day["cloud_motion_proxy"] = _lg_cloud_proxy(day)
+    day["periods"] = [
+        _lg_period_summary(hours, "Pagi", 5, 10),
+        _lg_period_summary(hours, "Siang", 11, 14),
+        _lg_period_summary(hours, "Sore", 15, 18),
+        _lg_period_summary(hours, "Malam", 19, 4),
+    ]
+    day["activity_matrix"] = _lg_activity_matrix(day)
+    return day
+
+
+def _lg_activity_matrix(day):
+    hours = day.get("key_hours") or []
+    peak = _lg_hour(day.get("peak_rain_hour"), "jam rawan")
+    best = _lg_clean_join(day.get("best_activity_window"), default="pagi/siang awal")
+    p = _lg_prob(day.get("peak_rain_probability"), 0)
+    score = _lg_float(day.get("risk_score"), p) or p
+
+    def activity_status(name, rain_sens, heat_sens=0.0, outdoor=1.0):
+        worst = score * rain_sens / 100 + p * rain_sens / 100
+        heat = max(0, (_lg_float(day.get("max_heat_index_c"), 29) or 29) - 31) * heat_sens
+        value = clamp((worst * 38 + heat * 9) * outdoor, 0, 100)
+        if value >= 65:
+            cls, status = "danger", "Tunda / wajib plan B"
+        elif value >= 42:
+            cls, status = "rain", "Perlu rencana cadangan"
+        elif value >= 24:
+            cls, status = "watch", "Aman bersyarat"
+        else:
+            cls, status = "safe", "Aman dipantau"
+        return cls, status
+
+    specs = [
+        ("Perjalanan / motor", 1.05, 0.10, 1.0, f"Hindari mendekati {peak} bila awan mulai gelap; siapkan jas hujan dan pilih rute utama."),
+        ("Jalan kaki", 0.95, 0.18, 1.0, f"Pilih rute yang mudah berteduh. Window terbaik: {best}."),
+        ("Jemur pakaian", 1.25, 0.05, 1.0, "Utamakan pagi; jangan tinggalkan jemuran melewati window rawan."),
+        ("Olahraga outdoor", 0.90, 0.35, 1.1, f"Pilih {best}; kurangi durasi saat panas/lembap atau awan menebal."),
+        ("Acara outdoor", 1.15, 0.12, 1.15, f"Siapkan lokasi indoor/tenda terutama sekitar {peak}."),
+        ("Foto / city walk", 0.80, 0.10, 1.0, "Pantau awan dan cahaya; setelah hujan bisa bagus, tetapi barang elektronik perlu dilindungi."),
+    ]
+    rows = []
+    for name, rain_sens, heat_sens, outdoor, advice in specs:
+        cls, status = activity_status(name, rain_sens, heat_sens, outdoor)
+        priority = peak if cls in {"rain", "danger"} else best
+        rows.append({"activity": name, "status": status, "advice": advice, "priority_hour": priority, "risk_class": cls})
+    return rows
+
+
+def _lg_build_api(args, forecast_dates=None):
+    try:
+        raw = _anemos21_build_multiday_api(args, forecast_dates)
+    except Exception:
+        raw = read_json(path_output("anemos_api_v1.json"), default={}) or read_json(path_output("langit_api_v1.json"), default={}) or {}
+    try:
+        raw = _v23_enhance_api(dict(raw or {}), args)
+    except Exception:
+        raw = dict(raw or {})
+    loc = _lg_text(raw.get("location_name"), getattr(args, "location_name", "Lokasi"))
+    days = [_lg_norm_day(d, i, loc, args) for i, d in enumerate(_lg_raw_days(raw))]
+    try:
+        now = now_local(getattr(args, "timezone", DEFAULT_TIMEZONE))
+        updated = f"{_v6_format_date_id(now.date())}, {now.strftime('%H:%M')} {_v6_timezone_label(getattr(args,'timezone',DEFAULT_TIMEZONE))}"
+        generated_at = now.isoformat()
+    except Exception:
+        generated_at = datetime.now().isoformat()
+        updated = generated_at
+    api = dict(raw)
+    api.update({
+        "brand": LANGIT_BRAND_NAME,
+        "product": LANGIT_PRODUCT_NAME,
+        "version": LANGIT_PUBLIC_VERSION,
+        "ui_version": LANGIT_UI_VERSION,
+        "location_name": loc,
+        "location_slug": _lg_slug_from_args(args),
+        "generated_at": raw.get("generated_at") or generated_at,
+        "updated_label": updated,
+        "days": days,
+        "microclimate": _lg_microclimate(args),
+        "source_court": _lg_source_court(),
+        "map_layers": ["Rain Risk", "Activity Safety", "Heat Stress", "Source Confidence", "Microclimate", "Time Slider"],
+    })
+    return api
+
+
+def _lg_today(api):
+    days = api.get("days") or []
+    return days[0] if days else {}
+
+
+def _lg_css():
+    return r"""
+:root{--bg:#eef6ff;--panel:#fff;--ink:#061326;--muted:#5e6e87;--line:#d7e8f7;--blue:#176bff;--blue2:#43a0ff;--navy:#061a35;--safe:#10b981;--watch:#f59e0b;--rain:#f97316;--danger:#e11d48;--purple:#7c3aed;--shadow:0 18px 45px rgba(7,34,68,.10)}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 12% -10%,#d9ecff,transparent 420px),radial-gradient(circle at 88% 10%,#e8f5ff,transparent 460px),linear-gradient(180deg,#fbfdff 0,#eef6ff 62%,#eaf4ff 100%);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);line-height:1.45}a{text-decoration:none;color:inherit}.wrap{width:min(1180px,calc(100% - 48px));margin:auto}.topbar{position:sticky;top:0;z-index:40;background:rgba(250,253,255,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}.top{min-height:72px;display:flex;justify-content:space-between;align-items:center;gap:18px}.brand{display:flex;align-items:center;gap:12px}.mark{width:40px;height:40px;border-radius:15px;background:conic-gradient(from 220deg,#071326,#176bff,#90e8ff,#176bff,#071326);box-shadow:0 12px 30px rgba(23,107,255,.25)}.brand b{font-size:18px;letter-spacing:-.02em}.brand small{display:block;color:var(--muted);font-size:12px;margin-top:1px}.nav{display:flex;gap:9px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:8px 14px;border:1px solid #b9d8ff;background:#fff;border-radius:999px;color:#075bd8;font-size:13px;font-weight:850}.btn.active,.btn.primary{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 10px 24px rgba(23,107,255,.22)}.hero{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;margin:28px 0 0}.hero-main{position:relative;overflow:hidden;min-height:230px;border-radius:34px;padding:34px 38px;background:linear-gradient(135deg,#061a35 0,#0b3f9a 58%,#3895ff 100%);color:#fff;box-shadow:var(--shadow)}.hero-main:after{content:"";position:absolute;right:-80px;bottom:-135px;width:340px;height:340px;border-radius:50%;background:rgba(255,255,255,.14)}.chips{display:flex;flex-wrap:wrap;gap:8px;position:relative;z-index:2}.chip{padding:6px 11px;border:1px solid rgba(255,255,255,.36);background:rgba(255,255,255,.14);border-radius:999px;font-size:11px;font-weight:900}.hero h1{position:relative;z-index:2;max-width:850px;margin:22px 0 11px;font-size:clamp(38px,4.4vw,62px);line-height:.96;letter-spacing:-.055em}.hero p{position:relative;z-index:2;max-width:760px;margin:0;color:#edf6ff;font-size:16px}.weather-tile{background:#fff;border:1px solid var(--line);border-radius:28px;padding:24px;box-shadow:var(--shadow);display:grid;align-content:center;min-height:142px}.weather-tile .wx{font-size:42px}.weather-tile .temp{font-size:46px;font-weight:950;letter-spacing:-.06em}.weather-tile small{color:var(--muted)}.side-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.notice{margin:16px 0 18px;padding:12px 16px;border:1px solid #f1b36e;background:#fff7ec;border-radius:15px;color:#82340d;font-size:12px;font-weight:900}.panel,.kpi,.day,.activity,.hour,.period,.card{background:var(--panel);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow)}.panel{padding:24px;margin:18px 0}.head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:16px}.head h2{margin:0;font-size:26px;letter-spacing:-.04em}.head p{margin:0;color:var(--muted);font-size:13px}.grid{display:grid;gap:15px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.decision{display:grid;grid-template-columns:minmax(0,1.14fr) 390px;gap:16px}.decision-card{border-radius:30px;background:#061a35;color:#fff;padding:30px;box-shadow:var(--shadow)}.decision-card h2{margin:14px 0 10px;font-size:clamp(30px,3.4vw,48px);line-height:1;letter-spacing:-.05em}.decision-card p{color:#dbeafe}.badge{display:inline-flex;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:900}.badge.safe{background:#dcfce7;color:#166534}.badge.watch{background:#fef3c7;color:#92400e}.badge.rain{background:#ffedd5;color:#9a3412}.badge.danger{background:#ffe4e6;color:#9f1239}.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.kpi{padding:18px}.kpi span{display:block;color:#63738a;text-transform:uppercase;letter-spacing:.11em;font-size:10px;font-weight:950}.kpi b{display:block;font-size:27px;margin:7px 0 2px;letter-spacing:-.04em}.kpi small{color:var(--muted)}.day{padding:18px;border-top:5px solid var(--safe)}.day.watch{border-top-color:var(--watch)}.day.rain{border-top-color:var(--rain)}.day.danger{border-top-color:var(--danger)}.day h3{margin:8px 0 7px;font-size:22px;letter-spacing:-.035em}.day p{min-height:48px;margin:0;color:#31445f;font-size:13px}.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px}.mini span,.hbox{border:1px solid var(--line);background:#f8fbff;border-radius:14px;padding:9px;color:var(--muted);font-size:11px}.mini b,.hbox b{display:block;color:var(--ink);font-size:16px;line-height:1.15}.activity{padding:18px;border-left:5px solid var(--safe)}.activity.watch{border-left-color:var(--watch)}.activity.rain{border-left-color:var(--rain)}.activity.danger{border-left-color:var(--danger)}.activity h3{margin:0 0 8px}.activity p{font-size:13px;color:#33465f}.hour{display:grid;grid-template-columns:72px minmax(190px,1fr) repeat(4,100px) 128px;gap:9px;align-items:center;padding:13px 14px;margin:10px 0;border-left:5px solid var(--safe)}.hour.watch{border-left-color:var(--watch)}.hour.rain{border-left-color:var(--rain)}.hour.danger{border-left-color:var(--danger)}.wxline b{display:block}.wxline small{display:block;color:var(--muted);font-size:11px}.mapbox{height:470px;border-radius:24px;overflow:hidden;border:1px solid var(--line);background:#e8f2ff}.mapbox iframe{border:0;width:100%;height:100%}textarea{width:100%;min-height:110px;border:0;border-radius:16px;padding:14px;font:13px/1.5 ui-monospace,Consolas,monospace}.share{background:#061a35;color:white}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--line);padding:12px;text-align:left;font-size:13px}th{font-size:11px;color:var(--muted);text-transform:uppercase}.barwrap{height:150px;display:flex;align-items:end;gap:12px;padding:12px 2px}.bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px}.bar i{display:block;width:100%;min-height:4px;border-radius:9px;background:linear-gradient(180deg,#ffb14a,#f97316)}.bar.safe i{background:linear-gradient(180deg,#63e6be,#10b981)}.bar.watch i{background:linear-gradient(180deg,#ffe08a,#f59e0b)}.bar.rain i{background:linear-gradient(180deg,#ffb14a,#f97316)}.bar.danger i{background:linear-gradient(180deg,#fb7185,#e11d48)}.bar small{color:var(--muted);font-size:11px}.footer{text-align:center;color:var(--muted);font-size:12px;margin:32px 0}.empty{border:1px dashed #b9d8ff;background:#f8fbff;border-radius:22px;padding:18px;color:#52657d}.progress{height:12px;background:#e8f2ff;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;background:linear-gradient(90deg,#176bff,#43a0ff);border-radius:99px}@media(max-width:980px){.hero,.decision,.g3,.g4,.g2{grid-template-columns:1fr}.hour{grid-template-columns:64px 1fr 96px}.hour .hbox:nth-of-type(n+2){display:none}.top{align-items:flex-start;flex-direction:column;padding:13px 0}.wrap{width:min(100% - 26px,680px)}.hero-main{min-height:200px}.metrics{grid-template-columns:1fr}}
+"""
+
+
+def _lg_kpi(label, value, note=""):
+    return f"<article class='kpi'><span>{_lg_esc(label)}</span><b>{_lg_esc(_lg_clean_join(value))}</b><small>{_lg_esc(note)}</small></article>"
+
+
+def _lg_topbar(api, args, active="today"):
+    loc = _lg_text(api.get("location_name"), getattr(args, "location_name", "Lokasi"))
+    nav_items = [("anemos_app.html", "today", "Hari ini"), ("anemos_3day.html", "3day", "3 hari"), ("anemos_activity.html", "activity", "Aktivitas"), ("langit_map_room.html", "map", "Peta"), ("langit_model_court.html", "court", "Model"), ("sentinel_x_accuracy_public.html", "accuracy", "Akurasi"), ("../index.html", "portal", "Lokasi")]
+    links = "".join(f"<a class='btn {'active' if active == key else ''}' href='{href}'>{label}</a>" for href, key, label in nav_items)
+    return f"<header class='topbar'><div class='top wrap'><a class='brand' href='anemos_app.html'><span class='mark'></span><span><b>{LANGIT_BRAND_NAME}</b><small>{_lg_esc(loc)} · {LANGIT_PUBLIC_VERSION}</small></span></a><nav class='nav'>{links}</nav></div></header>"
+
+
+def _lg_hero(api, args, page="today"):
+    d = _lg_today(api)
+    loc = _lg_text(api.get("location_name"), getattr(args, "location_name", "Lokasi"))
+    title_map = {"today": f"Prakiraan {loc}", "3day": "Prakiraan 3 hari", "activity": "Saran aktivitas", "map": "Map Room", "court": "Model Court", "accuracy": "Status akurasi", "portal": "Cuaca lokal yang langsung bisa dipakai"}
+    subtitle_map = {"today": d.get("decision_sentence"), "3day": "Bandingkan risiko hari ini, besok, dan lusa tanpa membaca tabel panjang.", "activity": "Rekomendasi praktis untuk motor, jalan kaki, jemur, olahraga, outdoor, dan foto/city walk.", "map": "Peta risiko per jam, microclimate, activity safety, dan confidence layer.", "court": "Ringkasan sumber data, agreement, microclimate, dan alasan keputusan.", "accuracy": "Evaluasi baru aktif setelah pasangan prakiraan-observasi cukup.", "portal": "Pilih lokasi, lihat ringkasan, peta risiko, dan data publik."}
+    title = title_map.get(page, f"Prakiraan {loc}")
+    subtitle = _lg_text(subtitle_map.get(page), d.get("decision_sentence", LANGIT_TAGLINE))
+    cond = _lg_text(d.get("condition"), "Kondisi")
+    temp = _lg_num(d.get("avg_temperature_c"), "°C", 1)
+    p = _lg_pct(d.get("peak_rain_probability"))
+    risk = _lg_text(d.get("risk_label"), "Dipantau")
+    updated = _lg_text(api.get("updated_label"), "baru diperbarui")
+    side = "" if page == "portal" else f"<aside><div class='weather-tile'><div class='wx'>{_lg_icon(cond)}</div><div class='temp'>{temp}</div><small>{_lg_esc(cond)}</small></div><div class='side-grid'>{_lg_kpi('Hujan', p, 'puncak')}{_lg_kpi('Status', risk, 'ringkasan')}</div></aside>"
+    return f"<section class='hero'><article class='hero-main'><div class='chips'><span class='chip'>{LANGIT_BRAND_NAME}</span><span class='chip'>{LANGIT_PUBLIC_VERSION}</span><span class='chip'>Diperbarui {_lg_esc(updated)}</span></div><h1>{_lg_esc(title)}</h1><p>{_lg_esc(subtitle)}</p></article>{side}</section><div class='notice'>{_lg_esc(LANGIT_DISCLAIMER)}</div>"
+
+
+def _lg_day_cards(days):
+    out = []
+    for d in days[:3]:
+        cls = _lg_text(d.get("risk_class"), _lg_class(d.get("risk_score")))
+        out.append(f"<article class='day {cls}'><span class='label'>{_lg_esc(d.get('day_tag'))} · {_lg_esc(d.get('date_label') or d.get('date'))}</span><h3>{_lg_esc(d.get('risk_label'))}</h3><p>{_lg_esc(d.get('decision_sentence'))}</p><div class='mini'><span>Hujan<b>{_lg_pct(d.get('peak_rain_probability'))}</b></span><span>Jam<b>{_lg_hour(d.get('peak_rain_hour'))}</b></span><span>Score<b>{_lg_num(d.get('risk_score'),'',0)}</b></span></div></article>")
+    return "".join(out) or "<div class='empty'>Belum ada data harian.</div>"
+
+
+def _lg_decision(api):
+    d = _lg_today(api)
+    cls = _lg_text(d.get("risk_class"), _lg_class(d.get("risk_score")))
+    return f"<section class='decision'><article class='decision-card'><span class='badge {cls}'>{_lg_esc(d.get('risk_label'))}</span><h2>{_lg_esc(d.get('decision_sentence'))}</h2><p>Nowcast: {_lg_esc((d.get('nowcast') or {}).get('summary'), 'Pantau kondisi sekitar.')}</p></article><div class='metrics'>{_lg_kpi('Risk score', _lg_num(d.get('risk_score'),'/100',0), d.get('risk_label'))}{_lg_kpi('Puncak hujan', _lg_pct(d.get('peak_rain_probability')), 'sekitar '+_lg_hour(d.get('peak_rain_hour')))}{_lg_kpi('Best window', d.get('best_activity_window'), 'aktivitas')}{_lg_kpi('Microclimate', (api.get('microclimate') or {}).get('profile'), 'lokal')}</div></section>"
+
+
+def _lg_metric_strip(day):
+    return f"<section class='panel'><div class='head'><h2>Kondisi utama</h2><p>Variabel yang paling berguna untuk keputusan harian.</p></div><div class='grid g4'>{_lg_kpi('Suhu', _lg_num(day.get('avg_temperature_c'),'°C',1), 'rata-rata')}{_lg_kpi('Terasa', _lg_num(day.get('max_heat_index_c'),'°C',1), 'heat index')}{_lg_kpi('RH', _lg_pct(day.get('avg_humidity_pct')), 'kelembapan')}{_lg_kpi('Angin', _lg_num(day.get('max_wind_kmh'),' km/jam',1), 'maksimum')}</div></section>"
+
+
+def _lg_periods(day):
+    cards = []
+    for p in day.get("periods", []):
+        cls = _lg_text(p.get("risk_class"), "safe")
+        cards.append(f"<article class='day {cls}'><h3>{_lg_icon(p.get('condition'))} {_lg_esc(p.get('name'))}</h3><b>{_lg_esc(p.get('condition'))}</b><p>Jam perhatian: {_lg_hour(p.get('attention_hour'))}</p><div class='mini'><span>Suhu<b>{_lg_num(p.get('temp_c'),'°C',1)}</b></span><span>Hujan<b>{_lg_pct(p.get('rain_probability'))}</b></span><span>Risiko<b>{_lg_esc(p.get('risk_label'))}</b></span></div></article>")
+    return f"<section class='panel'><div class='head'><h2>Pagi, siang, sore, malam</h2><p>Ringkasan cepat tanpa membaca seluruh tabel jam.</p></div><div class='grid g4'>{''.join(cards)}</div></section>"
+
+
+def _lg_activity_section(day):
+    cards = []
+    for a in day.get("activity_matrix", []):
+        cls = _lg_text(a.get("risk_class"), "safe")
+        cards.append(f"<article class='activity {cls}'><h3>{_lg_esc(a.get('activity'))}</h3><b>{_lg_esc(a.get('status'))}</b><p>{_lg_esc(a.get('advice'))}</p><small>Fokus: {_lg_esc(_lg_clean_join(a.get('priority_hour')))}</small></article>")
+    return f"<section class='panel'><div class='head'><h2>Saran aktivitas</h2><p>Bahasa dibuat praktis dan langsung bisa dipakai.</p></div><div class='grid g3'>{''.join(cards)}</div></section>"
+
+
+def _lg_hours_section(day, title="Jam penting", risky_only=False):
+    hours = day.get("key_hours") or []
+    if risky_only:
+        selected = [h for h in hours if _lg_float(h.get("risk_score"), 0) >= 28 or _lg_prob(h.get("rain_probability"), 0) >= 28]
+        if not selected:
+            selected = sorted(hours, key=lambda x: _lg_float(x.get("risk_score"), 0), reverse=True)[:3]
+    else:
+        selected = hours
+    rows = []
+    for h in selected:
+        cls = _lg_text(h.get("risk_class"), "safe")
+        rows.append(f"<article class='hour {cls}'><b>{_lg_hour(h.get('hour'))}</b><div class='wxline'><b>{_lg_icon(h.get('condition'))} {_lg_esc(h.get('condition'))}</b><small>{_lg_esc(h.get('advice'))}</small></div><div class='hbox'><b>{_lg_num(h.get('temp_c'),'°C',1)}</b><small>Suhu</small></div><div class='hbox'><b>{_lg_pct(h.get('humidity_pct'))}</b><small>RH</small></div><div class='hbox'><b>{_lg_num(h.get('heat_index_c'),'°C',1)}</b><small>Terasa</small></div><div class='hbox'><b>{_lg_pct(h.get('rain_probability'))}</b><small>Hujan</small></div><div class='hbox'><b>{_lg_esc(h.get('risk_label'))}</b><small>Risiko</small></div></article>")
+    if not rows:
+        rows = ["<div class='empty'>Belum ada detail jam yang bisa ditampilkan.</div>"]
+    return f"<section class='panel'><div class='head'><h2>{_lg_esc(title)}</h2><p>Semua teks dipisah rapi: kondisi, angka, dan risiko tidak menumpuk.</p></div>{''.join(rows)}</section>"
+
+
+def _lg_rain_chart(day):
+    bars = []
+    for h in day.get("key_hours", []):
+        p = _lg_prob(h.get("rain_probability"), 0)
+        cls = _lg_text(h.get("risk_class"), _lg_class(h.get("risk_score")))
+        height = max(4, p * 1.25)
+        bars.append(f"<div class='bar {cls}'><b>{round(p)}%</b><i style='height:{height}px'></i><small>{_lg_hour(h.get('hour'))}</small></div>")
+    return f"<section class='panel'><div class='head'><h2>Peluang hujan</h2><p>Warna menunjukkan jam yang perlu diperhatikan.</p></div><div class='barwrap'>{''.join(bars)}</div></section>"
+
+
+def _lg_share_text(api):
+    d = _lg_today(api)
+    return f"{LANGIT_BRAND_NAME} · {_lg_text(api.get('location_name'),'Lokasi')}\n{_lg_text(d.get('date_label'), _lg_text(d.get('date')))}\n{_lg_text(d.get('decision_sentence'))}\nPeluang hujan tertinggi: {_lg_pct(d.get('peak_rain_probability'))} sekitar {_lg_hour(d.get('peak_rain_hour'))}.\nWindow lebih aman: {_lg_clean_join(d.get('best_activity_window'))}.\nBukan peringatan resmi; untuk cuaca ekstrem ikuti BMKG."
+
+
+def _lg_share(api):
+    return f"<section class='grid g2'><article class='panel share'><div class='head'><h2>Share singkat</h2><p>Teks siap disalin.</p></div><textarea readonly>{_lg_esc(_lg_share_text(api))}</textarea></article><article class='panel'><h2>Catatan penggunaan</h2><ul><li>Prakiraan ini panduan aktivitas, bukan peringatan resmi.</li><li>Hujan lokal bisa bergeser beberapa kilometer atau berubah beberapa jam.</li><li>Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.</li></ul></article></section>"
+
+
+def _lg_intel_sections(api):
+    micro = api.get("microclimate") or {}
+    court = api.get("source_court") or {}
+    sources = court.get("sources") or []
+    rows = "".join(f"<tr><td>{_lg_esc(s.get('source_id'))}</td><td>{_lg_esc(s.get('verdict'))}</td><td>{_lg_esc(s.get('points'))}</td><td>{_lg_esc(s.get('http_status'))}</td><td>{_lg_esc(s.get('latency_ms'))}</td></tr>" for s in sources)
+    if not rows:
+        rows = "<tr><td colspan='5'>Belum ada status sumber yang tersimpan.</td></tr>"
+    d = _lg_today(api)
+    proxy = d.get("cloud_motion_proxy") or {}
+    return f"<section class='panel'><div class='head'><h2>Weather Brain</h2><p>Nowcast, microclimate, cloud proxy, dan source court.</p></div><div class='grid g2'><article class='card'><span class='label'>Microclimate</span><h3>{_lg_esc(micro.get('profile'))}</h3><p>{_lg_esc(micro.get('note'))}</p></article><article class='card'><span class='label'>Cloud proxy</span><h3>{_lg_esc(proxy.get('rain_signal_trend'))}</h3><p>{_lg_esc(proxy.get('summary'))}</p></article></div><h3>Model Court</h3><p class='muted'>{_lg_esc(court.get('summary'))}</p><div class='table-wrap'><table><thead><tr><th>Model</th><th>Putusan</th><th>Point</th><th>HTTP</th><th>ms</th></tr></thead><tbody>{rows}</tbody></table></div></section>"
+
+
+def _lg_geojson_center_feature(api, args):
+    d = _lg_today(api)
+    lat = _lg_float(getattr(args, "latitude", None), DEFAULT_LATITUDE)
+    lon = _lg_float(getattr(args, "longitude", None), DEFAULT_LONGITUDE)
+    return {"type": "Feature", "geometry": {"type": "Point", "coordinates": [lon, lat]}, "properties": {"layer_type": "location", "brand": LANGIT_BRAND_NAME, "version": LANGIT_PUBLIC_VERSION, "location_name": _lg_text(api.get("location_name"), getattr(args, "location_name", "Lokasi")), "risk_score": _lg_float(d.get("risk_score"), 0), "risk_class": _lg_text(d.get("risk_class"), "safe"), "status": _lg_text(d.get("risk_label"), "Aman"), "rain_probability": _lg_prob(d.get("peak_rain_probability"), 0), "peak_hour": _lg_hour(d.get("peak_rain_hour")), "temperature_c": _lg_float(d.get("avg_temperature_c"), None), "decision": _lg_text(d.get("decision_sentence"), "")}}
+
+
+def _lg_geojson_feature(api, args):
+    return _lg_geojson_center_feature(api, args)
+
+
+def _lg_geojson_layers(api, args):
+    features = [_lg_geojson_center_feature(api, args)]
+    lat = _lg_float(getattr(args, "latitude", None), DEFAULT_LATITUDE)
+    lon = _lg_float(getattr(args, "longitude", None), DEFAULT_LONGITUDE)
+    traits = _lg_location_traits(args)
+    today = _lg_today(api)
+    hours = today.get("key_hours") or []
+    if not hours:
+        hours = [{"hour": "00:00", "risk_score": today.get("risk_score", 0), "risk_class": today.get("risk_class", "safe"), "rain_probability": today.get("peak_rain_probability", 0), "condition": today.get("condition", "Kondisi lokal")}]
+    for h in hours:
+        hh = _lg_hour(h.get("hour"))
+        base_score = _lg_float(h.get("risk_score"), 0) or 0
+        for idx, (label, dy, dx, radius, kind) in enumerate(traits.get("micro_zones", [])):
+            zone_bias = {"orographic": 8, "heat": 5, "commute": 3, "humidity": 4, "activity": 0}.get(kind, 0)
+            score = clamp(base_score + zone_bias, 0, 100)
+            features.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [lon + dx, lat + dy]}, "properties": {"layer_type": "zone", "zone": label, "zone_kind": kind, "hour": hh, "radius_m": radius, "risk_score": round(score, 1), "risk_class": _lg_class(score), "rain_probability": _lg_prob(h.get("rain_probability"), 0), "condition": _lg_text(h.get("condition"), ""), "activity_hint": _lg_hour_note(h.get("rain_probability"), score, h.get("condition"))}})
+    return {"type": "FeatureCollection", "features": features}
+
+
+def _lg_leaflet_html(title, features_or_geojson, back="anemos_app.html"):
+    if isinstance(features_or_geojson, dict) and features_or_geojson.get("type") == "FeatureCollection":
+        geo = features_or_geojson
+    else:
+        geo = {"type": "FeatureCollection", "features": features_or_geojson or []}
+    data = json.dumps(geo, ensure_ascii=False)
+    return f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>{_lg_esc(title)}</title><link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'><style>html,body,#map{{height:100%;margin:0}}body{{font-family:Inter,system-ui,Arial,sans-serif}}.panel{{position:absolute;z-index:999;left:18px;top:18px;max-width:360px;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border:1px solid #d7e8f7;border-radius:22px;padding:16px;box-shadow:0 18px 40px rgba(7,34,68,.16)}}.panel h1{{font-size:20px;line-height:1.05;margin:0 0 8px}}.panel p{{margin:0 0 12px;color:#53657e;font-size:13px}}.btn{{display:inline-flex;background:#176bff;color:#fff;text-decoration:none;border-radius:999px;padding:8px 13px;font-weight:850;font-size:12px;margin:2px}}.legend{{position:absolute;z-index:999;right:18px;bottom:18px;background:rgba(255,255,255,.94);border-radius:16px;padding:10px 12px;font-size:12px;box-shadow:0 12px 30px rgba(7,34,68,.14)}}.timebar{{position:absolute;z-index:999;left:50%;transform:translateX(-50%);bottom:18px;background:rgba(255,255,255,.94);border-radius:999px;padding:8px;display:flex;gap:6px;box-shadow:0 12px 30px rgba(7,34,68,.14);flex-wrap:wrap;justify-content:center;max-width:calc(100% - 240px)}}.timebar button{{border:1px solid #b9d8ff;background:white;color:#075bd8;border-radius:999px;padding:7px 10px;font-weight:850;cursor:pointer}}.timebar button.active{{background:#176bff;color:white}}.dot{{display:inline-block;width:9px;height:9px;border-radius:99px;margin-right:6px}}@media(max-width:760px){{.panel{{left:10px;right:10px;max-width:none}}.timebar{{left:10px;right:10px;transform:none;max-width:none;border-radius:18px}}.legend{{display:none}}}}</style></head><body><div id='map'></div><div class='panel'><h1>{_lg_esc(title)}</h1><p>Layer aktif: rain risk, activity safety, heat stress, confidence, microclimate, dan time slider.</p><a class='btn' href='{back}'>Kembali</a></div><div class='legend'><div><span class='dot' style='background:#10b981'></span>Aman</div><div><span class='dot' style='background:#f59e0b'></span>Dipantau</div><div><span class='dot' style='background:#f97316'></span>Waspada</div><div><span class='dot' style='background:#e11d48'></span>Risiko tinggi</div></div><div class='timebar' id='timebar'></div><script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script><script>const data={data};const color=c=>({{safe:'#10b981',watch:'#f59e0b',rain:'#f97316',danger:'#e11d48'}}[c]||'#176bff');const map=L.map('map',{{scrollWheelZoom:true}});L.tileLayer('https://tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png',{{maxZoom:19,attribution:'© OpenStreetMap contributors'}}).addTo(map);let layer=null;const feats=data.features||[];const hours=[...new Set(feats.filter(f=>(f.properties||{{}}).hour).map(f=>f.properties.hour))];const bar=document.getElementById('timebar');let activeHour=hours[0]||null;function draw(hour){{if(layer)map.removeLayer(layer);const selected=feats.filter(f=>{{const p=f.properties||{{}};return !p.hour || p.hour===hour;}});layer=L.layerGroup().addTo(map);selected.forEach(f=>{{const p=f.properties||{{}};const latlng=[f.geometry.coordinates[1],f.geometry.coordinates[0]];if(p.layer_type==='zone'){{const c=L.circle(latlng,{{radius:p.radius_m||450,color:color(p.risk_class),fillColor:color(p.risk_class),fillOpacity:.16,weight:2}}).addTo(layer);c.bindPopup('<b>'+p.zone+'</b><br>Jam: '+(p.hour||'-')+'<br>Status: '+(p.risk_class||'-')+'<br>Hujan: '+(p.rain_probability||0)+'%<br><small>'+(p.activity_hint||'')+'</small>');}}else{{const m=L.circleMarker(latlng,{{radius:15,color:color(p.risk_class),fillColor:color(p.risk_class),fillOpacity:.78,weight:3}}).addTo(layer);m.bindPopup('<b>'+p.location_name+'</b><br>Status: '+p.status+'<br>Risk score: '+p.risk_score+'/100<br>Hujan: '+p.rain_probability+'% sekitar '+p.peak_hour+'<br><small>'+(p.decision||'')+'</small>');}}}});try{{const g=L.featureGroup(layer.getLayers());map.fitBounds(g.getBounds().pad(.25));}}catch(e){{map.setView([-6.9,107.6],11);}}}}hours.forEach(h=>{{const b=document.createElement('button');b.textContent=h;b.onclick=()=>{{activeHour=h;[...bar.children].forEach(x=>x.classList.remove('active'));b.classList.add('active');draw(h);}};bar.appendChild(b);}});if(bar.firstChild)bar.firstChild.classList.add('active');draw(activeHour);</script></body></html>"""
+
+
+def _lg_write_maps(api, args):
+    geo = _lg_geojson_layers(api, args)
+    write_json(path_output("langit_location.geojson"), geo)
+    write_json(path_output("langit_map_layers.json"), {"brand": LANGIT_BRAND_NAME, "version": LANGIT_PUBLIC_VERSION, "layers": api.get("map_layers"), "geojson": geo})
+    html_doc = _lg_leaflet_html(f"{LANGIT_BRAND_NAME} Map Room — {_lg_text(api.get('location_name'))}", geo)
+    atomic_write_text(path_output("langit_map_room.html"), lambda f: f.write(html_doc))
+    atomic_write_text(path_output("anemos_map.html"), lambda f: f.write(html_doc))
+
+
+def _lg_map_section():
+    return "<section class='panel'><div class='head'><h2>Map Room</h2><p>Peta sekarang punya zona risiko, layer microclimate, dan time slider.</p></div><div class='mapbox'><iframe src='langit_map_room.html' loading='lazy'></iframe></div><div class='nav' style='margin-top:14px'><a class='btn primary' href='langit_map_room.html'>Buka peta penuh</a><a class='btn' href='langit_location.geojson'>GeoJSON lokasi</a><a class='btn' href='langit_map_layers.json'>Map layers JSON</a></div></section>"
+
+
+def _lg_doc(api, args, active, page, body):
+    return f"<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>{LANGIT_BRAND_NAME} — {_lg_esc(api.get('location_name'))}</title><meta name='theme-color' content='#176bff'><style>{_lg_css()}</style></head><body>{_lg_topbar(api,args,active)}<main class='wrap'>{_lg_hero(api,args,page)}{body}<p class='footer'>{LANGIT_BRAND_NAME} · {LANGIT_PUBLIC_VERSION}</p></main></body></html>"
+
+
+def _lg_page(api, args, page="today"):
+    d = _lg_today(api)
+    days = api.get("days") or []
+    if page == "3day":
+        body = f"<section class='panel'><div class='head'><h2>Ringkasan 3 hari</h2><p>Bandingkan risiko utama.</p></div><div class='grid g3'>{_lg_day_cards(days)}</div></section>"
+        for item in days[:3]:
+            body += _lg_periods(item) + _lg_hours_section(item, f"Detail jam · {_lg_text(item.get('day_tag'))}")
+        return _lg_doc(api, args, "3day", "3day", body)
+    if page == "activity":
+        body = _lg_decision(api) + _lg_activity_section(d) + _lg_hours_section(d, "Jam rawan untuk aktivitas", True) + _lg_share(api)
+        return _lg_doc(api, args, "activity", "activity", body)
+    if page == "map":
+        body = _lg_map_section() + _lg_metric_strip(d) + _lg_activity_section(d)
+        return _lg_doc(api, args, "map", "map", body)
+    if page == "court":
+        body = _lg_intel_sections(api) + _lg_map_section() + _lg_share(api) + _lg_hours_section(d, "Jam penting")
+        return _lg_doc(api, args, "court", "court", body)
+    body = _lg_decision(api) + f"<section class='panel'><div class='head'><h2>Ringkasan 3 hari</h2><p>Fokus ke keputusan utama.</p></div><div class='grid g3'>{_lg_day_cards(days)}</div></section>" + _lg_map_section() + _lg_rain_chart(d) + _lg_metric_strip(d) + _lg_periods(d) + _lg_activity_section(d) + _lg_intel_sections(api) + _lg_share(api) + _lg_hours_section(d, "Jam penting")
+    return _lg_doc(api, args, "today", "today", body)
+
+
+def _lg_planner(api, args):
+    data = json.dumps(api, ensure_ascii=False)
+    body = f"<section class='panel'><div class='head'><h2>Event Planner</h2><p>Pilih aktivitas dan jam, lalu lihat keputusan cepat.</p></div><div class='grid g3'><select id='act' class='hbox'><option>Perjalanan / motor</option><option>Jalan kaki</option><option>Jemur pakaian</option><option>Olahraga outdoor</option><option>Acara outdoor</option><option>Foto / city walk</option></select><select id='hour' class='hbox'></select><button class='btn primary' onclick='decide()'>Cek</button></div><article class='decision-card' style='margin-top:16px'><span class='badge watch'>Planner</span><h2 id='out'>Pilih aktivitas dan jam.</h2><p id='why'>Keputusan dihitung dari risk score, peluang hujan, heat index, dan activity sensitivity.</p></article></section><script>const api={data};const day=(api.days||[])[0]||{{}};const hours=day.key_hours||[];const sel=document.getElementById('hour');hours.forEach(h=>{{const o=document.createElement('option');o.value=h.hour;o.textContent=h.hour+' · '+h.condition+' · hujan '+Math.round(h.rain_probability||0)+'%';sel.appendChild(o);}});function decide(){{const act=document.getElementById('act').value;const h=hours.find(x=>x.hour===sel.value)||{{}};const a=(day.activity_matrix||[]).find(x=>x.activity===act)||{{}};const p=Math.round(h.rain_probability||0);let msg=a.status||'Pantau';if((h.risk_score||0)>=75)msg='Tunda / wajib plan B';else if((h.risk_score||0)>=52)msg='Siapkan rencana cadangan';document.getElementById('out').textContent=act+': '+msg;document.getElementById('why').textContent=(a.advice||'Pantau kondisi sekitar.')+' Jam '+(h.hour||'-')+' diperkirakan '+(h.condition||'kondisi lokal')+', peluang hujan '+p+'%, risk score '+Math.round(h.risk_score||0)+'/100.';}}</script>"
+    return _lg_doc(api, args, "activity", "activity", body)
+
+
+def _lg_write_dict_csv(path, fieldnames, rows):
+    try:
+        _v23_write_dict_csv_safe(path, fieldnames, rows)
+    except Exception:
+        write_dict_csv(path, fieldnames, rows)
+
+
+def _lg_quality_gate(api):
+    checks = []
+    pages = ["anemos_app.html", "anemos_3day.html", "anemos_activity.html", "langit_model_court.html", "langit_map_room.html", "sentinel_x_accuracy_public.html"]
+    for p in pages:
+        path = path_output(p)
+        ok = os.path.exists(path)
+        detail = path
+        if ok:
+            try:
+                text = open(path, "r", encoding="utf-8").read()
+                if "<br>" in text or "&lt;br" in text:
+                    ok = False; detail = "raw_br_detected"
+                # Backward-compatible filename may include anemos, but visible page should not show old brand text.
+                if "ANEMOS" in text:
+                    ok = False; detail = "old_visible_brand_detected"
+            except Exception as exc:
+                ok = False; detail = str(exc)
+        checks.append({"check": f"page_{p}", "ok": bool(ok), "detail": detail})
+    for d in api.get("days", []):
+        conds = [h.get("condition") for h in d.get("key_hours", [])]
+        unique = len(set(conds))
+        checks.append({"check": f"non_monotonic_conditions_{d.get('day_tag')}", "ok": unique >= min(3, max(1, len(conds))), "detail": f"unique_conditions={unique}"})
+    payload = {"brand": LANGIT_BRAND_NAME, "version": LANGIT_PUBLIC_VERSION, "generated_at": now_local(DEFAULT_TIMEZONE).isoformat(), "checks": checks, "passed": sum(1 for c in checks if c["ok"]), "total": len(checks)}
+    write_json(path_output("langit_quality_gate.json"), payload)
+    return payload
+
+
+def _lg_write_outputs(args, forecast_dates=None):
+    api = _lg_build_api(args, forecast_dates)
+    _lg_write_maps(api, args)
+    write_json(path_output("langit_api_v1.json"), api)
+    write_json(path_output("anemos_api_v1.json"), api)  # compatibility only
+    write_json(path_output("langit_intelligence.json"), {"brand": LANGIT_BRAND_NAME, "version": LANGIT_PUBLIC_VERSION, "nowcast": _lg_today(api).get("nowcast"), "microclimate": api.get("microclimate"), "source_court": api.get("source_court"), "map_layers": api.get("map_layers")})
+    daily_rows, hourly_rows, activity_rows = [], [], []
+    for d in api.get("days", []):
+        daily_rows.append({"date": d.get("date"), "day_tag": d.get("day_tag"), "risk_score": d.get("risk_score"), "risk_label": d.get("risk_label"), "peak_rain_probability": d.get("peak_rain_probability"), "peak_rain_hour": d.get("peak_rain_hour"), "best_activity_window": _lg_clean_join(d.get("best_activity_window")), "summary": d.get("decision_sentence")})
+        for h in d.get("key_hours", []):
+            hourly_rows.append({"date": d.get("date"), "day_tag": d.get("day_tag"), "hour": h.get("hour"), "period": h.get("period"), "condition": h.get("condition"), "raw_condition": h.get("raw_condition"), "temp_c": h.get("temp_c"), "humidity_pct": h.get("humidity_pct"), "heat_index_c": h.get("heat_index_c"), "rain_probability_raw": h.get("rain_probability_raw"), "rain_probability": h.get("rain_probability"), "wind_kmh": h.get("wind_kmh"), "risk_score": h.get("risk_score"), "risk_label": h.get("risk_label"), "risk_class": h.get("risk_class")})
+        for a in d.get("activity_matrix", []):
+            row = {"date": d.get("date"), "day_tag": d.get("day_tag")}; row.update(a); activity_rows.append(row)
+    _lg_write_dict_csv(path_output("langit_daily_outlook.csv"), ["date","day_tag","risk_score","risk_label","peak_rain_probability","peak_rain_hour","best_activity_window","summary"], daily_rows)
+    _lg_write_dict_csv(path_output("langit_hourly_intelligence.csv"), ["date","day_tag","hour","period","condition","raw_condition","temp_c","humidity_pct","heat_index_c","rain_probability_raw","rain_probability","wind_kmh","risk_score","risk_label","risk_class"], hourly_rows)
+    _lg_write_dict_csv(path_output("langit_activity_matrix.csv"), ["date","day_tag","activity","status","advice","priority_hour","risk_class"], activity_rows)
+    pages = {
+        "anemos_app.html": _lg_page(api, args, "today"),
+        "langit_today.html": _lg_page(api, args, "today"),
+        "anemos_today.html": _lg_page(api, args, "today"),
+        "anemos_3day.html": _lg_page(api, args, "3day"),
+        "langit_3day.html": _lg_page(api, args, "3day"),
+        "anemos_activity.html": _lg_page(api, args, "activity"),
+        "langit_activity.html": _lg_page(api, args, "activity"),
+        "langit_model_court.html": _lg_page(api, args, "court"),
+        "langit_map.html": _lg_page(api, args, "map"),
+        "langit_planner.html": _lg_planner(api, args),
+        "anemos_commute_advice.html": _lg_page(api, args, "activity"),
+        "anemos_laundry_advice.html": _lg_page(api, args, "activity"),
+    }
+    for name, doc in pages.items():
+        atomic_write_text(path_output(name), lambda f, doc=doc: f.write(doc))
+    atomic_write_text(path_output("langit_whatsapp_brief.txt"), lambda f: f.write(_lg_share_text(api)))
+    atomic_write_text(path_output("anemos_whatsapp_brief.txt"), lambda f: f.write(_lg_share_text(api)))
+    manifest = {"brand": LANGIT_BRAND_NAME, "version": LANGIT_PUBLIC_VERSION, "generated_at": api.get("generated_at"), "location": api.get("location_name"), "files": list(pages.keys()) + ["langit_api_v1.json", "langit_location.geojson", "langit_map_layers.json", "langit_quality_gate.json"]}
+    write_json(path_output("langit_manifest.json"), manifest)
+    write_json(path_output("anemos_public_manifest.json"), manifest)
+    gate = _lg_quality_gate(api)
+    return {"brand": LANGIT_BRAND_NAME, "version": LANGIT_PUBLIC_VERSION, "dashboard": path_output("anemos_app.html"), "map": path_output("langit_map_room.html"), "quality_gate": gate, "days": len(api.get("days", []))}
+
+
+def anemos_write_multiday_public_pages(args, forecast_dates=None, source_state_rows=None):
+    return _lg_write_outputs(args, forecast_dates)
+
+
+def _lg_accuracy_html(rows, args):
+    try:
+        result = sentinel_compute_verification(rows or [], args)
+        summary = result[0] if isinstance(result, tuple) else (result or {})
+        reliability = result[2] if isinstance(result, tuple) and len(result) > 2 else summary.get("reliability_bins", [])
+    except Exception:
+        summary, reliability = {}, []
+    matched = int(_lg_float(summary.get("matched_cases"), 0) or 0)
+    target = max(1, int(getattr(args, "verification_min_cases", 30) or 30))
+    pct = min(100, round(matched / target * 100))
+    dummy = {"location_name": getattr(args, "location_name", "Lokasi"), "days": [], "updated_label": "baru diperbarui"}
+    if matched < target:
+        rel_body = "<div class='empty'><b>Reliability table disembunyikan sementara.</b><br>Belum cukup pasangan data. Setelah minimal 30 pasangan, LANGIT akan menampilkan error suhu, Brier score, hit rate, false alarm, dan reliability table.</div>"
+    else:
+        rel_rows = "".join(f"<tr><td>{_lg_esc(r.get('probability_bin') or r.get('bin'))}</td><td>{_lg_esc(r.get('n') or r.get('cases') or 0)}</td><td>{_lg_esc(r.get('mean_forecast_probability') or r.get('mean_forecast_pct') or '—')}</td><td>{_lg_esc(r.get('observed_rain_frequency') or r.get('observed_frequency_pct') or '—')}</td></tr>" for r in reliability if isinstance(r, dict))
+        rel_body = f"<div class='table-wrap'><table><thead><tr><th>Kelompok peluang</th><th>Kasus</th><th>Rata-rata prakiraan</th><th>Hujan terjadi</th></tr></thead><tbody>{rel_rows}</tbody></table></div>"
+    body = f"<section class='decision'><article class='decision-card'><span class='badge {'safe' if matched>=target else 'watch'}'>Evaluasi</span><h2>{'Akurasi mulai bisa dibaca.' if matched >= target else 'Akurasi belum aktif.'}</h2><p>{'Jumlah pasangan data sudah melewati batas awal.' if matched >= target else 'LANGIT masih mengumpulkan pasangan prakiraan dan observasi. Sebelum cukup, halaman ini tidak mengklaim akurasi.'}</p><div class='progress'><i style='width:{pct}%'></i></div></article><div class='metrics'>{_lg_kpi('Pasangan data', f'{matched}/{target}', 'prakiraan-observasi')}{_lg_kpi('Progress', f'{pct}%', 'menuju minimum')}{_lg_kpi('Error suhu', _lg_num(summary.get('temperature_mae_c'),'°C',1), 'aktif setelah cukup')}{_lg_kpi('Skor hujan', _lg_num(summary.get('brier_rain', summary.get('rain_brier_score')),'',3), 'aktif setelah cukup')}</div></section><section class='panel'><div class='head'><h2>Bukti peluang hujan</h2><p>Ditampilkan penuh setelah data cukup.</p></div>{rel_body}</section>"
+    return _lg_doc(dummy, args, "accuracy", "accuracy", body)
+
+
+def aether_write_public_accuracy_page(args):
+    rows = []
+    try:
+        if os.path.exists(path_output(AETHER_CSV_FILENAME)):
+            rows = read_dict_csv(path_output(AETHER_CSV_FILENAME))
+    except Exception:
+        rows = []
+    atomic_write_text(path_output("sentinel_x_accuracy_public.html"), lambda f: f.write(_lg_accuracy_html(rows, args)))
+    return path_output("sentinel_x_accuracy_public.html")
+
+
+def _lg_portal_card(loc, base_url=""):
+    slug = sanitize_filename(getattr(loc, "slug", "location")); name = getattr(loc, "location_name", slug)
+    api = read_json(os.path.join(root_output_dir(), slug, "langit_api_v1.json"), default=None) or read_json(os.path.join(root_output_dir(), slug, "anemos_api_v1.json"), default={}) or {}
+    fake = type("Args", (), {"location_name": name, "timezone": DEFAULT_TIMEZONE, "location_slug": slug, "latitude": getattr(loc, "latitude", None), "longitude": getattr(loc, "longitude", None)})()
+    api = _lg_build_api(fake, None) if not api else {**api, "days": [_lg_norm_day(d, i, name, fake) for i, d in enumerate(_lg_raw_days(api))]}
+    d = _lg_today(api); prefix = f"{base_url}/{slug}/" if base_url else f"{slug}/"
+    cls = _lg_text(d.get("risk_class"), _lg_class(d.get("risk_score")))
+    return f"<article class='day {cls}'><h3>{_lg_icon(d.get('condition'))} {_lg_esc(name)}</h3><p>{_lg_esc(_lg_text(d.get('decision_sentence'),'Prakiraan akan tampil setelah pembaruan data selesai.'))}</p><div class='mini'><span>Hujan<b>{_lg_pct(d.get('peak_rain_probability'))}</b></span><span>Jam<b>{_lg_hour(d.get('peak_rain_hour'))}</b></span><span>Score<b>{_lg_num(d.get('risk_score'),'',0)}</b></span></div><div class='nav' style='margin-top:14px'><a class='btn primary' href='{prefix}anemos_app.html'>Buka</a><a class='btn' href='{prefix}anemos_3day.html'>3 hari</a><a class='btn' href='{prefix}anemos_activity.html'>Aktivitas</a><a class='btn' href='{prefix}langit_map_room.html'>Peta</a></div></article>"
+
+
+def sentinel_write_root_public_index(locations, run_rows, args):
+    base_url = (getattr(args, "public_base_url", "") or "").rstrip("/")
+    try:
+        now = now_local(getattr(args, "timezone", DEFAULT_TIMEZONE))
+        updated = f"{_v6_format_date_id(now.date())}, {now.strftime('%H:%M')} {_v6_timezone_label(getattr(args,'timezone',DEFAULT_TIMEZONE))}"
+    except Exception:
+        updated = datetime.now().isoformat(timespec="minutes")
+    cards = "".join(_lg_portal_card(loc, base_url) for loc in locations)
+    all_features, location_cards = [], []
+    for loc in locations:
+        slug = sanitize_filename(getattr(loc, "slug", "location")); name = getattr(loc, "location_name", slug)
+        api = read_json(os.path.join(root_output_dir(), slug, "langit_api_v1.json"), default=None) or read_json(os.path.join(root_output_dir(), slug, "anemos_api_v1.json"), default={}) or {}
+        fake = type("Args", (), {"location_name": name, "timezone": DEFAULT_TIMEZONE, "location_slug": slug, "latitude": getattr(loc, "latitude", None), "longitude": getattr(loc, "longitude", None)})()
+        if isinstance(api, dict) and api:
+            api = {**api, "days": [_lg_norm_day(d, i, name, fake) for i, d in enumerate(_lg_raw_days(api))]}
+        else:
+            api = {"location_name": name, "days": []}
+        try:
+            all_features.extend(_lg_geojson_layers(api, fake).get("features", []))
+        except Exception:
+            pass
+        d = _lg_today(api)
+        location_cards.append({"slug": slug, "name": name, "summary": d.get("decision_sentence", ""), "risk_score": d.get("risk_score"), "peak_rain_probability": d.get("peak_rain_probability"), "peak_rain_hour": d.get("peak_rain_hour"), "url": f"{slug}/anemos_app.html", "map": f"{slug}/langit_map_room.html"})
+    portal_geo = {"type": "FeatureCollection", "features": all_features}
+    atomic_write_text(root_output_path("langit_portal_map.html"), lambda f: f.write(_lg_leaflet_html(f"{LANGIT_BRAND_NAME} Portal Map", portal_geo, "index.html")))
+    write_json(root_output_path("langit_all_locations.geojson"), portal_geo)
+    dummy = {"location_name": "Portal lokasi", "days": [], "updated_label": updated}
+    doc = f"<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>{LANGIT_BRAND_NAME} — Portal</title><meta name='theme-color' content='#176bff'><style>{_lg_css()}</style></head><body><main class='wrap'>{_lg_hero(dummy,args,'portal')}<section class='panel'><div class='head'><h2>Pilih lokasi</h2><p>Ringkasan cepat untuk tiap wilayah.</p></div><div class='grid g3'>{cards}</div></section><section class='panel'><div class='head'><h2>Peta lokasi</h2><p>Layer risiko semua lokasi dengan time slider.</p></div><div class='mapbox'><iframe src='langit_portal_map.html'></iframe></div><div class='nav' style='margin-top:14px'><a class='btn primary' href='langit_portal_map.html'>Buka peta penuh</a><a class='btn' href='langit_all_locations.geojson'>GeoJSON semua lokasi</a></div></section><section class='panel'><div class='head'><h2>Data publik</h2><p>Untuk analisis, arsip, embed, atau integrasi.</p></div><nav class='nav'><a class='btn' href='ensemble_all_locations.csv'>Ensemble CSV</a><a class='btn' href='forecast_all_locations.csv'>Forecast CSV</a><a class='btn' href='source_status_all_locations.csv'>Status sumber</a><a class='btn' href='forecast_batch_summary.json'>Batch summary</a><a class='btn' href='langit_portal_manifest.json'>Manifest</a></nav></section><p class='footer'>{LANGIT_BRAND_NAME} · {LANGIT_PUBLIC_VERSION} · {updated}</p></main></body></html>"
+    atomic_write_text(root_output_path("index.html"), lambda f: f.write(doc))
+    manifest = {"brand": LANGIT_BRAND_NAME, "version": LANGIT_PUBLIC_VERSION, "generated_at": updated, "locations": [getattr(loc, "slug", "location") for loc in locations], "index": root_output_path("index.html"), "map": root_output_path("langit_portal_map.html"), "geojson": root_output_path("langit_all_locations.geojson"), "disclaimer": LANGIT_DISCLAIMER}
+    write_json(root_output_path("langit_portal_manifest.json"), manifest)
+    write_json(root_output_path("anemos_portal_manifest.json"), manifest)
+    write_json(root_output_path("langit_location_cards.json"), {"brand": LANGIT_BRAND_NAME, "version": LANGIT_PUBLIC_VERSION, "generated_at": updated, "locations": location_cards})
+    write_json(root_output_path("anemos_location_cards.json"), {"brand": LANGIT_BRAND_NAME, "version": LANGIT_PUBLIC_VERSION, "generated_at": updated, "locations": location_cards})
+    return root_output_path("index.html")
+
 if __name__ == "__main__":
     main()
