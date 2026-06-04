@@ -3,8 +3,8 @@ name: LANGIT v60 Forecast OS
 on:
   workflow_dispatch:
   schedule:
-    # WIB: 07:00, 11:00, 15:00, 18:00
-    # UTC: 00:00, 04:00, 08:00, 11:00
+    # 07:00, 11:00, 15:00, 18:00 WIB
+    # 00:00, 04:00, 08:00, 11:00 UTC
     - cron: "0 0,4,8,11 * * *"
 
 permissions:
@@ -17,7 +17,7 @@ concurrency:
 jobs:
   forecast:
     runs-on: ubuntu-22.04
-    timeout-minutes: 18
+    timeout-minutes: 20
 
     steps:
       - name: Checkout main generator
@@ -33,23 +33,24 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install certifi
 
-      - name: Resolve workflow inputs
+      - name: Inspect repository
         run: |
-          echo "=== Repository files ==="
+          echo "=== Repository root ==="
+          pwd
           ls -la
-          echo "=== Python version ==="
+          echo "=== Python ==="
           python --version
-          echo "=== Current branch ==="
+          echo "=== Workflow branch ==="
           git branch --show-current
 
       - name: Syntax check main script
         run: |
           python -m py_compile weather_ensemble_multi_location.py
 
-      - name: Dry-run source URLs
+      - name: LANGIT generator doctor
         run: |
           python weather_ensemble_multi_location.py \
-            --mode dry-run \
+            --mode doctor \
             --locations all \
             --timezone Asia/Jakarta \
             --public-base-url https://marcooo20-d.github.io/weather-forecast \
@@ -57,7 +58,7 @@ jobs:
             --no-save-raw-payloads
 
       - name: Run LANGIT v60 forecast
-        timeout-minutes: 10
+        timeout-minutes: 12
         run: |
           python weather_ensemble_multi_location.py \
             --mode forecast \
@@ -67,10 +68,20 @@ jobs:
             --no-debug \
             --no-save-raw-payloads
 
-      - name: Regenerate public verification pages
+      - name: Generate LANGIT public portal
         run: |
           python weather_ensemble_multi_location.py \
             --mode public-index \
+            --locations all \
+            --timezone Asia/Jakarta \
+            --public-base-url https://marcooo20-d.github.io/weather-forecast \
+            --no-debug \
+            --no-save-raw-payloads
+
+      - name: Verify public output
+        run: |
+          python weather_ensemble_multi_location.py \
+            --mode verify-public \
             --locations all \
             --timezone Asia/Jakarta \
             --public-base-url https://marcooo20-d.github.io/weather-forecast \
@@ -81,21 +92,18 @@ jobs:
         run: |
           find outputs -name "*.sqlite" -delete || true
           find outputs -name "*.db" -delete || true
+          find outputs -name "*.log" -delete || true
           find outputs -type d -name "logs" -prune -exec rm -rf {} + || true
           find outputs -type d -name "raw_payloads" -prune -exec rm -rf {} + || true
           find outputs -type d -name "__pycache__" -prune -exec rm -rf {} + || true
 
-      - name: Validate public files
+      - name: Validate essential public files
         run: |
+          test -d outputs
           test -f outputs/index.html
-          test -f outputs/langit_portal_map.html
-          test -f outputs/dago/anemos_app.html
-          test -f outputs/dago/anemos_3day.html
-          test -f outputs/dago/anemos_activity.html
-          test -f outputs/dago/langit_map_room.html
 
-          echo "=== Public output files ==="
-          find outputs -maxdepth 3 -type f | sort | head -160
+          echo "=== Generated public files ==="
+          find outputs -maxdepth 3 -type f | sort | head -200
 
       - name: Upload generated site artifact
         uses: actions/upload-artifact@v4
