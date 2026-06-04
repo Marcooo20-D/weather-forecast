@@ -11646,5 +11646,551 @@ def sentinel_write_root_public_index(locations, run_rows, args):
 
 
 
+# =============================================================================
+# ANEMOS v23 — MAIN FILE UI/OUTPUT REPAIR LAYER
+# =============================================================================
+# This layer intentionally overrides the public presentation functions from the
+# previous ANEMOS layers. It does not change the data collection/ensemble engine.
+# =============================================================================
+
+ANEMOS_PUBLIC_VERSION = "ANEMOS v23"
+ANEMOS_VERSION = "ANEMOS v23"
+
+
+def _v23_dict(value):
+    return value if isinstance(value, dict) else {}
+
+
+def _v23_list(value):
+    if not isinstance(value, list):
+        return []
+    return [x for x in value if isinstance(x, dict)]
+
+
+def _v23_float(value, default=None):
+    try:
+        if value is None:
+            return default
+        if isinstance(value, str):
+            s = value.strip().replace('%','').replace(',','.')
+            if not s or s.lower() in {'none','nan','null'} or s in {'—','-'}:
+                return default
+            value = s
+        x = float(value)
+        if math.isnan(x) or math.isinf(x):
+            return default
+        return x
+    except Exception:
+        return default
+
+
+def _v23_prob(value, default=None):
+    x = _v23_float(value, default)
+    if x is None:
+        return default
+    if 0 <= x <= 1:
+        x *= 100
+    return max(0.0, min(100.0, x))
+
+
+def _v23_text(value, fallback=''):
+    if value is None:
+        return fallback
+    s = str(value).strip()
+    if not s or s.lower() in {'none','nan','null'} or s in {'—','-'}:
+        return fallback
+    return s
+
+
+def _v23_esc(value, fallback=''):
+    return _anemos20_esc(_v23_text(value, fallback))
+
+
+def _v23_pct(value, fallback='—'):
+    x = _v23_prob(value, None)
+    return fallback if x is None else f"{round(x):.0f}%"
+
+
+def _v23_num(value, suffix='', digits=1, fallback='—'):
+    x = _v23_float(value, None)
+    return fallback if x is None else f"{x:.{digits}f}{suffix}"
+
+
+def _v23_hour(value, fallback='—'):
+    s = _v23_text(value, fallback)
+    return s[:5] if s and s != fallback else fallback
+
+
+def _v23_days(api):
+    return _v23_list(_v23_dict(api).get('days'))
+
+
+def _v23_today(api):
+    days = _v23_days(api)
+    return days[0] if days else {}
+
+
+def _v23_hours(day):
+    d = _v23_dict(day)
+    return _v23_list(d.get('key_hours')) or _v23_list(d.get('important_hours')) or []
+
+
+def _v23_periods(day):
+    return _v23_list(_v23_dict(day).get('periods'))
+
+
+def _v23_risk_class(prob=None, risk=None):
+    raw = _v23_text(risk, '').lower().replace('_','-')
+    p = _v23_prob(prob, 0) or 0
+    if raw in {'danger','red','high','tinggi','bahaya','ekstrem','extreme'} or p >= 70:
+        return 'danger'
+    if raw in {'rain','orange','medium','waspada','hujan'} or p >= 45:
+        return 'rain'
+    if raw in {'watch','yellow','sedang','perlu-dipantau','rendah-sedang'} or p >= 25:
+        return 'watch'
+    return 'safe'
+
+
+def _v23_risk_label(prob=None, risk=None):
+    return {'safe':'Aman dipantau','watch':'Perlu dipantau','rain':'Waspada hujan','danger':'Risiko tinggi'}[_v23_risk_class(prob, risk)]
+
+
+def _v23_condition_icon(condition):
+    c = _v23_text(condition, '').lower()
+    if any(k in c for k in ['petir','badai','thunder']): return '⛈️'
+    if any(k in c for k in ['hujan','rain','gerimis']): return '🌧️'
+    if any(k in c for k in ['cerah','clear','sun']): return '🌤️'
+    if any(k in c for k in ['awan','berawan','cloud']): return '☁️'
+    if any(k in c for k in ['kabut','fog','mist']): return '🌫️'
+    return '⛅'
+
+
+def _v23_day_tag(idx, day=None):
+    d = _v23_dict(day)
+    if d.get('day_tag'):
+        return d.get('day_tag')
+    return ['Hari ini','Besok','Lusa'][idx] if idx < 3 else 'Hari'
+
+
+def _v23_date_label(day):
+    d = _v23_dict(day)
+    return d.get('date_label') or d.get('date') or 'Tanggal belum tersedia'
+
+
+def _v23_location(api, args=None):
+    return _v23_text(_v23_dict(api).get('location_name'), getattr(args, 'location_name', 'Lokasi') if args else 'Lokasi')
+
+
+def _v23_period_label(api):
+    return _v23_text(_v23_dict(api).get('period_label'), 'Hari ini dan beberapa hari ke depan')
+
+
+def _v23_updated_label(api, args=None):
+    val = _v23_dict(api).get('updated_label')
+    if val:
+        return val
+    try:
+        now = now_local(getattr(args, 'timezone', DEFAULT_TIMEZONE))
+        return f"{_v6_format_date_id(now.date())}, {now.strftime('%H:%M')} {_v6_timezone_label(getattr(args,'timezone',DEFAULT_TIMEZONE))}"
+    except Exception:
+        return 'baru diperbarui'
+
+
+def _v23_enhance_api(api, args):
+    base = dict(api or {})
+    try:
+        base = _anemos20_enhance_api(base, args)
+    except Exception:
+        pass
+    days = []
+    loc = _v23_location(base, args)
+    for idx, raw in enumerate(_v23_days(base)):
+        d = dict(raw)
+        d['day_tag'] = _v23_day_tag(idx, d)
+        d['risk_class'] = _v23_risk_class(d.get('peak_rain_probability'), d.get('risk_class') or d.get('risk'))
+        d['risk_label'] = _v23_risk_label(d.get('peak_rain_probability'), d.get('risk_class') or d.get('risk'))
+        if not d.get('condition'):
+            periods = _v23_periods(d)
+            d['condition'] = periods[0].get('condition') if periods else 'Berawan'
+        if not d.get('summary_sentence'):
+            d['summary_sentence'] = _v23_summary_sentence(d, loc)
+        if not _v23_hours(d):
+            try:
+                d['key_hours'] = _anemos20_key_hours(d, 9)
+            except Exception:
+                d['key_hours'] = []
+        if not _v23_periods(d):
+            d['periods'] = _v23_make_periods_from_hours(d)
+        if not _v23_list(d.get('activity_matrix')):
+            d['activity_matrix'] = _v23_activity_matrix(d)
+        days.append(d)
+    base['days'] = days
+    base['location_name'] = loc
+    base['period_label'] = _v23_period_label(base)
+    base['updated_label'] = _v23_updated_label(base, args)
+    base['version'] = ANEMOS_PUBLIC_VERSION
+    return base
+
+
+def _v23_summary_sentence(day, loc='Lokasi'):
+    d = _v23_dict(day)
+    p = _v23_prob(d.get('peak_rain_probability'), 0) or 0
+    h = _v23_hour(d.get('peak_rain_hour'), 'jam rawan')
+    loc = _v23_text(loc, 'lokasi ini')
+    if p >= 70:
+        return f"Untuk {loc}, kurangi aktivitas luar ruang pada jam rawan. Peluang hujan tertinggi sekitar {h}."
+    if p >= 45:
+        return f"Untuk {loc}, aktivitas masih bisa, tetapi payung atau jas hujan sebaiknya siap sekitar {h}."
+    if p >= 25:
+        return f"Untuk {loc}, cuaca masih cukup aman, namun tetap pantau perubahan awan sekitar {h}."
+    return f"Untuk {loc}, aktivitas harian relatif aman dengan pemantauan cuaca biasa."
+
+
+def _v23_best_hours(day):
+    safe = []
+    for h in _v23_hours(day):
+        p = _v23_prob(h.get('rain_probability'), 0) or 0
+        if p <= 20:
+            safe.append(_v23_hour(h.get('hour')))
+    return ', '.join([x for x in safe if x != '—'][:3]) or 'pagi/siang awal'
+
+
+def _v23_activity_matrix(day):
+    d = _v23_dict(day)
+    p = _v23_prob(d.get('peak_rain_probability'), 0) or 0
+    h = _v23_hour(d.get('peak_rain_hour'), 'jam rawan')
+    safe_hours = _v23_best_hours(d)
+    if p >= 45:
+        return [
+            {'activity':'Perjalanan / motor','status':'Bawa jas hujan','advice':f'Lebih hati-hati mendekati {h}; jalan bisa lebih licin setelah hujan.','priority_hour':h,'risk_class':'rain'},
+            {'activity':'Jalan kaki','status':'Pilih rute berteduh','advice':f'Tetap bisa, tapi siapkan tempat berteduh jika keluar sekitar {h}.','priority_hour':h,'risk_class':'rain'},
+            {'activity':'Jemur pakaian','status':'Lebih aman pagi','advice':'Utamakan pagi sampai siang awal; jangan dibiarkan sampai sore.','priority_hour':'pagi','risk_class':'watch'},
+            {'activity':'Olahraga outdoor','status':'Pilih waktu teduh','advice':f'Lebih aman di {safe_hours}; kurangi durasi jika langit gelap.','priority_hour':safe_hours,'risk_class':'watch'},
+            {'activity':'Acara outdoor','status':'Siapkan plan B','advice':f'Sediakan opsi indoor/teduh terutama sekitar {h}.','priority_hour':h,'risk_class':'rain'},
+            {'activity':'Foto / city walk','status':'Pantau awan','advice':'Cek awan dan angin sebelum berangkat; simpan barang elektronik dengan aman.','priority_hour':h,'risk_class':'watch'},
+        ]
+    if p >= 25:
+        return [
+            {'activity':'Perjalanan / motor','status':'Relatif aman','advice':f'Tetap siapkan payung atau jas ringan jika keluar sekitar {h}.','priority_hour':h,'risk_class':'watch'},
+            {'activity':'Jalan kaki','status':'Masih oke','advice':f'Pilih jam yang lebih nyaman: {safe_hours}.','priority_hour':safe_hours,'risk_class':'safe'},
+            {'activity':'Jemur pakaian','status':'Lebih aman pagi','advice':'Utamakan pagi sampai menjelang siang; cek awan sebelum ditinggal.','priority_hour':'pagi','risk_class':'watch'},
+            {'activity':'Olahraga outdoor','status':'Bisa dilakukan','advice':'Pilih pagi atau sore teduh dan tetap pantau langit.','priority_hour':safe_hours,'risk_class':'safe'},
+            {'activity':'Acara outdoor','status':'Bisa lanjut','advice':f'Tetap siapkan opsi tempat teduh sekitar {h}.','priority_hour':h,'risk_class':'watch'},
+            {'activity':'Foto / city walk','status':'Cukup aman','advice':'Bawa perlindungan ringan untuk kamera/barang jika awan berubah cepat.','priority_hour':h,'risk_class':'watch'},
+        ]
+    return [
+        {'activity':'Perjalanan / motor','status':'Aman dipantau','advice':'Kondisi relatif aman; tetap perhatikan perubahan lokal.','priority_hour':safe_hours,'risk_class':'safe'},
+        {'activity':'Jalan kaki','status':'Cocok','advice':f'Jam nyaman: {safe_hours}.','priority_hour':safe_hours,'risk_class':'safe'},
+        {'activity':'Jemur pakaian','status':'Cukup aman','advice':'Tetap angkat sebelum sore jika awan mulai gelap.','priority_hour':'pagi–siang','risk_class':'safe'},
+        {'activity':'Olahraga outdoor','status':'Cocok','advice':'Pilih pagi atau sore agar tidak terlalu panas.','priority_hour':'pagi/sore','risk_class':'safe'},
+        {'activity':'Acara outdoor','status':'Bisa dijalankan','advice':'Tetap siapkan monitoring cuaca lokal untuk perubahan mendadak.','priority_hour':safe_hours,'risk_class':'safe'},
+        {'activity':'Foto / city walk','status':'Cukup aman','advice':'Perhatikan awan, cahaya, dan angin sebelum berangkat.','priority_hour':safe_hours,'risk_class':'safe'},
+    ]
+
+
+def _v23_make_periods_from_hours(day):
+    groups = [('Pagi', range(5,11)),('Siang', range(11,15)),('Sore', range(15,19)),('Malam', list(range(19,24))+list(range(0,5)))]
+    rows = _v23_hours(day)
+    out = []
+    for name, hours in groups:
+        cand = []
+        for h in rows:
+            hh = int(_v23_hour(h.get('hour'),'00:00')[:2] or 0)
+            if hh in hours:
+                cand.append(h)
+        if not cand:
+            cand = rows[:1]
+        peak = max(cand, key=lambda r: _v23_prob(r.get('rain_probability'), 0) or 0) if cand else {}
+        avg_temp = sum((_v23_float(x.get('temp_c'),0) or 0) for x in cand)/len(cand) if cand else None
+        out.append({'period':name,'condition':peak.get('condition') or day.get('condition') or 'Berawan','attention_hour':peak.get('hour'),'avg_temp_c':avg_temp,'peak_rain_probability':peak.get('rain_probability'),'risk_class':_v23_risk_class(peak.get('rain_probability'), peak.get('risk'))})
+    return out
+
+
+def _anemos21_css():
+    return r'''
+    :root{--bg:#eff7ff;--paper:#fff;--ink:#071225;--muted:#61728a;--line:#d7e7f5;--blue:#146bff;--blue2:#50a7ff;--navy:#061831;--safe:#10b981;--watch:#f59e0b;--rain:#f97316;--danger:#e11d48;--shadow:0 26px 80px rgba(8,42,84,.13);--soft:0 12px 34px rgba(8,42,84,.07);--r:28px;--r2:18px}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.45;letter-spacing:-.018em;background:radial-gradient(circle at 6% -5%,rgba(20,107,255,.12),transparent 360px),radial-gradient(circle at 96% 0,rgba(80,167,255,.22),transparent 500px),linear-gradient(180deg,#fbfdff 0%,var(--bg) 84%)}a{text-decoration:none;color:inherit}.wrap{width:min(1320px,calc(100% - 56px));margin:0 auto}.topbar{position:sticky;top:0;z-index:20;background:rgba(250,253,255,.86);backdrop-filter:blur(20px);border-bottom:1px solid rgba(215,231,245,.75)}.top{min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:22px}.brand{display:flex;align-items:center;gap:12px;min-width:240px}.mark{width:40px;height:40px;border-radius:15px;background:conic-gradient(from 215deg,#061831,#146bff,#80d6ff,#146bff,#061831);box-shadow:0 14px 32px rgba(20,107,255,.30)}.brand b{display:block;font-size:18px;letter-spacing:-.04em}.brand span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nav{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 15px;border-radius:999px;border:1px solid #b7d7ff;background:rgba(255,255,255,.86);color:#075bd8;font-size:13px;font-weight:900}.btn.active,.btn.primary{background:linear-gradient(135deg,#146bff,#2c9bff);border-color:#146bff;color:#fff;box-shadow:0 12px 24px rgba(20,107,255,.22)}main.wrap{padding:28px 0 84px}.hero{display:grid;grid-template-columns:minmax(0,1.25fr) 350px;gap:20px}.hero.only{grid-template-columns:1fr}.hero-main{position:relative;overflow:hidden;border-radius:38px;min-height:260px;padding:38px 40px;color:#fff;background:radial-gradient(circle at 88% 45%,rgba(255,255,255,.18),transparent 20%),linear-gradient(135deg,#061831 0%,#0a3e98 58%,#318dff 100%);box-shadow:var(--shadow)}.hero-main:after{content:"";position:absolute;right:-115px;bottom:-150px;width:370px;height:370px;border-radius:50%;background:rgba(255,255,255,.13)}.chips{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:1}.chip{display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,.38);background:rgba(255,255,255,.13);border-radius:999px;color:#fff;padding:6px 11px;font-size:12px;font-weight:900}.hero-main h1{position:relative;z-index:1;margin:24px 0 12px;max-width:820px;font-size:clamp(42px,5vw,72px);line-height:.93;letter-spacing:-.065em}.hero-main p{position:relative;z-index:1;max-width:760px;margin:0;color:#e8f4ff;font-size:18px}.side{display:grid;gap:14px}.tile,.panel,.day,.activity,.hour,.kpi{background:rgba(255,255,255,.95);border:1px solid var(--line);box-shadow:var(--soft)}.tile{border-radius:34px;padding:24px;min-height:170px;display:flex;flex-direction:column;justify-content:center}.tile .icon{font-size:52px;line-height:1}.big{font-size:48px;font-weight:950;line-height:1;letter-spacing:-.06em;margin-top:8px}.muted{color:var(--muted)}.small{font-size:12px}.sidegrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.kpi{border-radius:22px;padding:18px}.label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.095em;font-weight:950}.kpi b{display:block;margin-top:8px;font-size:28px;line-height:1.05;letter-spacing:-.04em}.kpi small{display:block;margin-top:6px;color:var(--muted);font-size:12px}.notice{margin:16px 0 20px;border:1px solid #f5b46c;background:#fff7ec;color:#82340d;border-radius:15px;padding:12px 16px;font-size:13px;font-weight:850}.panel{border-radius:var(--r);padding:24px;margin:18px 0}.head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:17px}.head h2{margin:0;font-size:28px;line-height:1.05;letter-spacing:-.05em}.head p{margin:0;color:var(--muted);font-size:14px;text-align:right}.grid{display:grid;gap:16px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g6{grid-template-columns:repeat(6,1fr)}.decision{display:grid;grid-template-columns:minmax(0,1.32fr) .9fr;gap:16px}.decision-card{border-radius:32px;background:linear-gradient(135deg,#061831,#0a2f70);color:#fff;padding:30px;box-shadow:var(--shadow)}.badge{display:inline-flex;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:950}.safe .badge,.badge.safe{background:#dcfce7;color:#166534}.watch .badge,.badge.watch{background:#fef3c7;color:#92400e}.rain .badge,.badge.rain{background:#ffedd5;color:#9a3412}.danger .badge,.badge.danger{background:#ffe4e6;color:#9f1239}.decision-card h2{margin:14px 0 12px;font-size:clamp(32px,3.8vw,56px);line-height:.95;letter-spacing:-.06em}.decision-card p{margin:0;color:#dcecff;font-size:15px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px}.day{border-radius:24px;padding:18px;border-top:6px solid var(--safe)}.day.watch{border-top-color:var(--watch)}.day.rain{border-top-color:var(--rain)}.day.danger{border-top-color:var(--danger)}.day h3{font-size:24px;line-height:1.05;letter-spacing:-.04em;margin:8px 0}.day p{min-height:46px;color:#33465f;margin:0;font-size:14px}.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.mini span{border:1px solid var(--line);background:#f8fbff;border-radius:14px;padding:9px;color:var(--muted);font-size:11px}.mini b{display:block;color:var(--ink);font-size:17px;margin-top:2px}.chartwrap{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}.bars{height:190px;display:flex;align-items:flex-end;gap:9px;padding:20px 4px 0}.bar{flex:1;min-width:20px;display:flex;align-items:center;justify-content:flex-end;flex-direction:column;gap:6px}.bar i{display:block;width:100%;border-radius:10px 10px 5px 5px;background:linear-gradient(180deg,#62b6ff,#146bff);min-height:5px}.bar.warn i{background:linear-gradient(180deg,#ffbd55,#f97316)}.bar b{font-size:12px}.bar small{font-size:11px;color:var(--muted)}.linechart{height:190px}.linechart svg{width:100%;height:100%;overflow:visible}.period{border-radius:22px;padding:17px;border-top:5px solid var(--safe);background:#fff;border-left:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}.period.watch{border-top-color:var(--watch)}.period.rain{border-top-color:var(--rain)}.period.danger{border-top-color:var(--danger)}.period h3{margin:0 0 8px;font-size:20px}.period .mini{grid-template-columns:repeat(3,1fr)}.activity{border-radius:22px;padding:18px;border-left:5px solid var(--safe)}.activity.watch{border-left-color:var(--watch)}.activity.rain{border-left-color:var(--rain)}.activity.danger{border-left-color:var(--danger)}.activity h3{margin:0 0 8px;font-size:20px}.activity b{display:block;margin-bottom:6px}.activity p{margin:0;color:#33465f;font-size:14px}.activity small{display:block;margin-top:12px;color:#075bd8;text-transform:uppercase;letter-spacing:.08em;font-weight:950}.hour{display:grid;grid-template-columns:90px minmax(220px,1fr) repeat(4,112px) 132px;gap:10px;align-items:center;border-radius:20px;padding:13px 14px;margin:10px 0;border-left:5px solid var(--safe)}.hour.watch{border-left-color:var(--watch)}.hour.rain{border-left-color:var(--rain)}.hour.danger{border-left-color:var(--danger)}.h-main b{display:block}.h-main small{display:block;color:var(--muted);font-size:12px}.hbox{border:1px solid var(--line);background:#f8fbff;border-radius:13px;padding:9px 10px}.hbox b{display:block}.hbox small{color:var(--muted);font-size:11px}.share{background:#061831;color:#fff;border-color:#061831}.share textarea{width:100%;min-height:118px;border:0;border-radius:16px;padding:14px;font:14px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}.progress{height:12px;background:#e7f1fb;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;width:var(--p,0%);background:linear-gradient(90deg,#146bff,#50a7ff);border-radius:inherit}table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--line);padding:12px;text-align:left;font-size:14px}th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#61728a}.footer{text-align:center;color:#61728a;font-size:12px;margin:32px 0}.portal-hero{display:grid;grid-template-columns:minmax(0,1.1fr) 280px;gap:18px}.status-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--safe);margin-right:8px}.status-dot.watch{background:var(--watch)}.status-dot.rain{background:var(--rain)}.status-dot.danger{background:var(--danger)}@media(max-width:1100px){.hero,.portal-hero,.decision,.chartwrap{grid-template-columns:1fr}.g3,.g4{grid-template-columns:1fr 1fr}.hour{grid-template-columns:70px 1fr repeat(2,92px);}.hour .hbox:nth-of-type(n+3){display:none}}@media(max-width:720px){.wrap{width:min(100% - 28px,640px)}.top{align-items:flex-start;flex-direction:column;padding:14px 0}.brand{min-width:0}.hero-main{padding:28px 24px;min-height:220px}.hero-main h1{font-size:42px}.sidegrid,.g2,.g3,.g4,.g6,.metrics{grid-template-columns:1fr}.head{display:block}.head p{text-align:left;margin-top:6px}.hour{grid-template-columns:58px 1fr 86px}.hour .hbox{display:none}.hour .hbox:last-child{display:block}.nav{justify-content:flex-start}.chartwrap{grid-template-columns:1fr}.mini{grid-template-columns:1fr 1fr 1fr}}
+    '''
+
+
+def _anemos21_topbar(api, args, active='today'):
+    loc = _v23_location(api, args)
+    nav = [('anemos_today.html','Hari ini','today'),('anemos_3day.html','3 hari','3day'),('anemos_activity.html','Aktivitas','activity'),('sentinel_x_accuracy_public.html','Akurasi','accuracy'),('../index.html','Lokasi','portal')]
+    links = ''.join(f"<a class='btn {'active' if active==key else ''}' href='{href}'>{label}</a>" for href,label,key in nav)
+    return f"""<header class='topbar'><div class='top wrap'><a class='brand' href='anemos_app.html'><span class='mark'></span><span><b>ANEMOS</b><span>{_v23_esc(loc)} · {ANEMOS_PUBLIC_VERSION}</span></span></a><nav class='nav'>{links}</nav></div></header>"""
+
+
+def _v23_kpi(label, value, note=''):
+    return f"<div class='kpi'><span class='label'>{_v23_esc(label)}</span><b>{_v23_esc(value, '—')}</b><small>{_v23_esc(note)}</small></div>"
+
+
+def _v23_notice(args=None):
+    try:
+        txt = sentinel_public_disclaimer(args)
+    except Exception:
+        txt = 'Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.'
+    return f"<div class='notice'>{_v23_esc(txt)}</div>"
+
+
+def _v23_hero(api, args, page='today'):
+    today = _v23_today(api)
+    loc = _v23_location(api, args)
+    updated = _v23_updated_label(api, args)
+    title_map = {'today':f'Prakiraan {loc}','full':f'Prakiraan {loc}','3day':'Prakiraan 3 hari','activity':'Saran aktivitas','accuracy':'Status akurasi'}
+    if page == 'portal':
+        title = 'Cuaca lokal yang langsung bisa dipakai.'
+        subtitle = 'Pilih lokasi, lalu lihat ringkasan hari ini, prakiraan 3 hari, saran aktivitas, dan data publik.'
+        return f"""<section class='portal-hero'><article class='hero-main'><div class='chips'><span class='chip'>ANEMOS</span><span class='chip'>{ANEMOS_PUBLIC_VERSION}</span><span class='chip'>Diperbarui {updated}</span></div><h1>{title}</h1><p>{subtitle}</p></article><aside class='side'><div class='tile'><div class='icon'>⛅</div><div class='big'>Pilih lokasi</div><p class='muted'>Data cuaca tampil setelah lokasi dibuka.</p></div></aside></section>{_v23_notice(args)}"""
+    if page == 'accuracy':
+        return f"""<section class='hero only'><article class='hero-main'><div class='chips'><span class='chip'>ANEMOS</span><span class='chip'>Status akurasi</span><span class='chip'>Diperbarui {updated}</span></div><h1>Status akurasi</h1><p>Skor baru ditampilkan setelah pasangan prakiraan dan observasi terkumpul cukup, supaya tidak menyesatkan.</p></article></section>{_v23_notice(args)}"""
+    p = _v23_pct(today.get('peak_rain_probability')) if today else '—'
+    temp = _v23_num(today.get('avg_temperature_c'),'°C',1) if today else '—'
+    cond = _v23_text(today.get('condition'), 'Data tersedia') if today else 'Data belum lengkap'
+    risk = _v23_risk_label(today.get('peak_rain_probability'), today.get('risk_class') or today.get('risk')) if today else 'Aman dipantau'
+    subtitle = _v23_summary_sentence(today, loc) if today else 'Prakiraan akan tampil setelah data tersedia.'
+    if page == '3day': subtitle = f'Bandingkan kondisi {loc} untuk hari ini, besok, dan lusa tanpa membaca tabel panjang.'
+    if page == 'activity': subtitle = f'Rekomendasi praktis untuk perjalanan, jalan kaki, jemur, olahraga, outdoor, dan foto/city walk di {loc}.'
+    title = title_map.get(page, f'Prakiraan {loc}')
+    return f"""<section class='hero'><article class='hero-main'><div class='chips'><span class='chip'>ANEMOS</span><span class='chip'>{_v23_esc(_v23_period_label(api))}</span><span class='chip'>Diperbarui {updated}</span></div><h1>{_v23_esc(title)}</h1><p>{_v23_esc(subtitle)}</p></article><aside class='side'><div class='tile'><div class='icon'>{_v23_condition_icon(cond)}</div><div class='big'>{temp}</div><p class='muted'>{_v23_esc(cond)}</p></div><div class='sidegrid'>{_v23_kpi('Hujan', p, 'tertinggi')}{_v23_kpi('Status', risk, 'ringkasan')}</div></aside></section>{_v23_notice(args)}"""
+
+
+def _v23_decision(api):
+    today = _v23_today(api)
+    loc = _v23_location(api)
+    cls = _v23_risk_class(today.get('peak_rain_probability'), today.get('risk_class') or today.get('risk'))
+    sentence = _v23_summary_sentence(today, loc) if today else 'Prakiraan belum tersedia.'
+    h = _v23_hour(today.get('peak_rain_hour'), '—')
+    return f"""<section class='decision {cls}'><article class='decision-card'><span class='badge {cls}'>{_v23_risk_label(today.get('peak_rain_probability'), today.get('risk_class') or today.get('risk'))}</span><h2>{_v23_esc(sentence)}</h2><p>Jam perhatian utama: <b>{h}</b>. Gunakan sebagai panduan aktivitas harian dan tetap lihat kondisi sekitar.</p></article><div class='metrics'>{_v23_kpi('Peluang hujan', _v23_pct(today.get('peak_rain_probability')), 'tertinggi')}{_v23_kpi('Suhu rata-rata', _v23_num(today.get('avg_temperature_c'),'°C',1), 'perkiraan harian')}{_v23_kpi('Kelembapan', _v23_pct(today.get('avg_humidity_pct')), 'rata-rata')}{_v23_kpi('Data akurasi', '0', 'pasangan observasi')}</div></section>"""
+
+
+def _v23_day_cards(days, limit=3):
+    cards=[]
+    for i,d in enumerate(_v23_list(days)[:limit]):
+        cls=_v23_risk_class(d.get('peak_rain_probability'),d.get('risk_class') or d.get('risk'))
+        cards.append(f"""<article class='day {cls}'><span class='label'>{_v23_esc(_v23_day_tag(i,d))} · {_v23_esc(_v23_date_label(d))}</span><h3>{_v23_risk_label(d.get('peak_rain_probability'),d.get('risk_class') or d.get('risk'))}</h3><p>{_v23_esc(_v23_summary_sentence(d,'' ).replace('Untuk , ',''))}</p><div class='mini'><span>Hujan<b>{_v23_pct(d.get('peak_rain_probability'))}</b></span><span>Jam<b>{_v23_hour(d.get('peak_rain_hour'))}</b></span><span>Suhu<b>{_v23_num(d.get('avg_temperature_c'),'°C',1)}</b></span></div></article>""")
+    return ''.join(cards) if cards else "<p class='muted'>Data hari belum tersedia.</p>"
+
+
+def _v23_rain_chart(day):
+    bars=[]
+    for h in _v23_hours(day):
+        p=_v23_prob(h.get('rain_probability'),0) or 0
+        hh=_v23_hour(h.get('hour'))
+        warn='warn' if p>=25 else ''
+        bars.append(f"<div class='bar {warn}'><b>{round(p):.0f}%</b><i style='height:{max(6,min(100,p))}px'></i><small>{hh[:2]}</small></div>")
+    return f"<div class='bars'>{''.join(bars)}</div>" if bars else "<p class='muted'>Data peluang hujan belum tersedia.</p>"
+
+
+def _v23_temp_chart(day):
+    rows=_v23_hours(day)
+    pts=[]; labels=[]
+    temps=[_v23_float(h.get('temp_c'),None) for h in rows]
+    temps=[x for x in temps if x is not None]
+    if not rows or not temps:
+        return "<p class='muted'>Data suhu belum tersedia.</p>"
+    mn=min(temps); mx=max(temps); span=max(1,mx-mn)
+    w=520; hgt=180; left=24; right=20; top=22; bottom=32
+    usable_w=w-left-right; usable_h=hgt-top-bottom
+    valid=[]
+    for i,h in enumerate(rows):
+        t=_v23_float(h.get('temp_c'),None)
+        if t is None: continue
+        x=left+(usable_w*(i/(max(1,len(rows)-1))))
+        y=top+usable_h*(1-(t-mn)/span)
+        valid.append((x,y,t,_v23_hour(h.get('hour'))))
+    if not valid:
+        return "<p class='muted'>Data suhu belum tersedia.</p>"
+    poly=' '.join(f"{x:.1f},{y:.1f}" for x,y,_,__ in valid)
+    dots=''.join(f"<circle cx='{x:.1f}' cy='{y:.1f}' r='4'/><text x='{x:.1f}' y='{y-12:.1f}' text-anchor='middle'>{t:.0f}°</text><text x='{x:.1f}' y='{hgt-8}' text-anchor='middle' class='axis'>{hh[:2]}</text>" for x,y,t,hh in valid)
+    return f"<div class='linechart'><svg viewBox='0 0 {w} {hgt}'><style>polyline{{fill:none;stroke:#146bff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}}circle{{fill:#fff;stroke:#146bff;stroke-width:4}}text{{font:700 12px system-ui;fill:#071225}}.axis{{fill:#61728a;font-size:11px}}</style><polyline points='{poly}'/>{dots}</svg></div>"
+
+
+def _v23_charts(day):
+    return f"""<section class='chartwrap'><article class='panel'><div class='head'><h2>Peluang hujan</h2><p>Warna oranye berarti jam perlu diperhatikan.</p></div>{_v23_rain_chart(day)}</article><article class='panel'><div class='head'><h2>Suhu</h2><p>Perubahan suhu pada jam utama.</p></div>{_v23_temp_chart(day)}</article></section>"""
+
+
+def _v23_metric_strip(day):
+    return f"""<section class='panel'><div class='head'><h2>Kondisi utama</h2><p>Variabel yang paling berguna untuk aktivitas harian.</p></div><div class='grid g6'>{_v23_kpi('Suhu', _v23_num(day.get('avg_temperature_c'),'°C',1), 'rata-rata')}{_v23_kpi('Terasa', _v23_num(day.get('max_heat_index_c'),'°C',1), 'heat index')}{_v23_kpi('RH', _v23_pct(day.get('avg_humidity_pct')), 'kelembapan')}{_v23_kpi('Hujan', _v23_pct(day.get('peak_rain_probability')), 'tertinggi')}{_v23_kpi('Angin', _v23_num(day.get('max_wind_kmh'),' km/jam',1), 'maksimum')}{_v23_kpi('Kondisi', _v23_text(day.get('condition'),'—'), 'dominan')}</div></section>"""
+
+
+def _v23_period_cards(day):
+    cards=[]
+    for p in _v23_periods(day):
+        cls=_v23_risk_class(p.get('peak_rain_probability'),p.get('risk_class') or p.get('risk'))
+        cards.append(f"""<article class='period {cls}'><h3>{_v23_condition_icon(p.get('condition'))} {_v23_esc(p.get('period'),'Periode')}</h3><p><b>{_v23_esc(p.get('condition'),'Berawan')}</b><br><span class='muted'>Jam perhatian: {_v23_hour(p.get('attention_hour'))}</span></p><div class='mini'><span>Suhu<b>{_v23_num(p.get('avg_temp_c'),'°C',1)}</b></span><span>Hujan<b>{_v23_pct(p.get('peak_rain_probability'))}</b></span><span>Risiko<b>{_v23_risk_label(p.get('peak_rain_probability'),p.get('risk_class') or p.get('risk'))}</b></span></div></article>""")
+    return f"<section class='panel'><div class='head'><h2>Pagi, siang, sore, malam</h2><p>Ringkasan cepat tanpa membaca seluruh tabel jam.</p></div><div class='grid g4'>{''.join(cards)}</div></section>" if cards else ''
+
+
+def _v23_activity_cards(day):
+    items=_v23_list(day.get('activity_matrix')) or _v23_activity_matrix(day)
+    cards=[]
+    for a in items[:6]:
+        cls=_v23_risk_class(None,a.get('risk_class') or a.get('class'))
+        cards.append(f"""<article class='activity {cls}'><h3>{_v23_esc(a.get('activity') or a.get('label'),'Aktivitas')}</h3><b>{_v23_esc(a.get('status') or a.get('value'),'Aman dipantau')}</b><p>{_v23_esc(a.get('advice'),'Pantau kondisi sekitar.')}</p><small>Fokus: {_v23_esc(a.get('priority_hour'),'—')}</small></article>""")
+    return f"<section class='panel'><div class='head'><h2>Saran aktivitas</h2><p>Bahasa dibuat praktis dan langsung bisa dipakai.</p></div><div class='grid g3'>{''.join(cards)}</div></section>"
+
+
+def _v23_hour_rows(day, limit=None):
+    rows=_v23_hours(day)
+    if limit:
+        rows=rows[:limit]
+    out=[]
+    for h in rows:
+        cls=_v23_risk_class(h.get('rain_probability'),h.get('risk_class') or h.get('risk'))
+        cond=_v23_text(h.get('condition'), 'Data cuaca')
+        out.append(f"""<div class='hour {cls}'><b>{_v23_hour(h.get('hour'))}</b><div class='h-main'><b>{_v23_condition_icon(cond)} {_v23_esc(cond)}</b><small>{_v23_risk_label(h.get('rain_probability'),h.get('risk_class') or h.get('risk'))}</small></div><div class='hbox'><b>{_v23_num(h.get('temp_c'),'°C',1)}</b><small>Suhu</small></div><div class='hbox'><b>{_v23_pct(h.get('humidity_pct'))}</b><small>RH</small></div><div class='hbox'><b>{_v23_num(h.get('heat_index_c'),'°C',1)}</b><small>Terasa</small></div><div class='hbox'><b>{_v23_pct(h.get('rain_probability'))}</b><small>Hujan</small></div><div class='hbox'><b>{_v23_risk_label(h.get('rain_probability'),h.get('risk_class') or h.get('risk'))}</b><small>Risiko</small></div></div>""")
+    return ''.join(out) if out else "<p class='muted'>Data jam belum tersedia.</p>"
+
+
+def _v23_hours_section(day, title='Jam penting', limit=None):
+    return f"<section class='panel'><div class='head'><h2>{_v23_esc(title)}</h2><p>Jam utama dan jam rawan.</p></div>{_v23_hour_rows(day, limit)}</section>"
+
+
+def _v23_share_text(api):
+    d=_v23_today(api); loc=_v23_location(api); date=_v23_date_label(d)
+    return f"ANEMOS · {loc}\n{date}\n{_v23_summary_sentence(d, loc)}\nPeluang hujan tertinggi: {_v23_pct(d.get('peak_rain_probability'))} sekitar {_v23_hour(d.get('peak_rain_hour'))}.\nBukan peringatan resmi; untuk cuaca ekstrem ikuti BMKG."
+
+
+def _v23_share_notes(api):
+    return f"""<section class='grid g2'><article class='panel share'><div class='head'><h2>Share singkat</h2><p>Teks siap disalin ke WhatsApp/grup.</p></div><textarea readonly>{_v23_esc(_v23_share_text(api))}</textarea></article><article class='panel'><div class='head'><h2>Catatan penggunaan</h2></div><ul><li>Prakiraan ini panduan aktivitas harian, bukan peringatan resmi.</li><li>Hujan lokal bisa bergeser beberapa kilometer atau berubah beberapa jam.</li><li>Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.</li></ul></article></section>"""
+
+
+def _anemos21_detail_html(api, args, page='full'):
+    api=_v23_enhance_api(api, args)
+    days=_v23_days(api)
+    today=_v23_today(api)
+    active = 'today' if page in {'full','today'} else page
+    body=[_v23_hero(api,args,active)]
+    if page in {'full','today'}:
+        body += [_v23_decision(api), f"<section class='panel'><div class='head'><h2>3 hari ke depan</h2><p>Ringkas, rapi, dan fokus ke keputusan utama.</p></div><div class='grid g3'>{_v23_day_cards(days,3)}</div></section>", _v23_charts(today), _v23_metric_strip(today), _v23_period_cards(today), _v23_activity_cards(today), _v23_share_notes(api), _v23_hours_section(today,'Jam penting',9)]
+    elif page == '3day':
+        body += [_v23_decision(api), f"<section class='panel'><div class='head'><h2>Ringkasan 3 hari</h2><p>Bandingkan hari ini, besok, dan lusa.</p></div><div class='grid g3'>{_v23_day_cards(days,3)}</div></section>"]
+        for i,d in enumerate(days[:3]):
+            body += [f"<section class='panel'><div class='head'><h2>{_v23_esc(_v23_day_tag(i,d))}</h2><p>{_v23_esc(_v23_summary_sentence(d, _v23_location(api)))}</p></div><div class='grid g4'>{''.join(_v23_period_cards(d).split('<div class=\'grid g4\'>')[-1].split('</div></section>')[:1]) if _v23_period_cards(d) else ''}</div>{_v23_hour_rows(d,8)}</section>"]
+    elif page == 'activity':
+        body += [_v23_decision(api), _v23_activity_cards(today), _v23_share_notes(api), _v23_hours_section(today,'Jam penting untuk aktivitas',9)]
+    else:
+        body += [_v23_decision(api), _v23_charts(today), _v23_hours_section(today,'Jam penting',9)]
+    html = f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>ANEMOS — {_v23_esc(_v23_location(api,args))}</title><meta name='theme-color' content='#146bff'><style>{_anemos21_css()}</style></head><body>{_anemos21_topbar(api,args,active)}<main class='wrap'>{''.join(body)}<p class='footer'>ANEMOS · {ANEMOS_PUBLIC_VERSION} · Diperbarui {_v23_esc(_v23_updated_label(api,args))}</p></main></body></html>"""
+    return html
+
+
+def _anemos21_accuracy_html(rows, args):
+    try:
+        result = sentinel_compute_verification(rows or [], args)
+        if isinstance(result, tuple):
+            summary = result[0] or {}; reliability = result[2] if len(result) > 2 else []
+        else:
+            summary = result or {}; reliability = summary.get('reliability_bins') or []
+    except Exception:
+        summary = {}; reliability = []
+    matched = int(_v23_float(summary.get('matched_cases'), 0) or 0)
+    target = max(1, int(getattr(args, 'verification_min_cases', 30) or 30))
+    pct = min(100, round(matched/target*100))
+    dummy={'location_name':getattr(args,'location_name','Lokasi'),'updated_label':_v23_updated_label({},args),'days':[],'period_label':'Status akurasi'}
+    rel=[]
+    for r in reliability or []:
+        if isinstance(r, dict):
+            rel.append(f"<tr><td>{_v23_esc(r.get('probability_bin') or r.get('bin'))}</td><td>{_v23_esc(r.get('n') or r.get('cases') or 0)}</td><td>{_v23_esc(r.get('mean_forecast_probability') or r.get('mean_forecast_pct') or '—')}</td><td>{_v23_esc(r.get('observed_rain_frequency') or r.get('observed_frequency_pct') or '—')}</td></tr>")
+    if not rel:
+        rel=[f"<tr><td>{b}</td><td>0</td><td>Belum tersedia</td><td>Belum tersedia</td></tr>" for b in ['00–10','10–20','20–30','30–40','40–50','50–60','60–70','70–80','80–90','90–100']]
+    state = 'Mulai terbaca' if matched >= target else 'Belum cukup'
+    body = f"""{_v23_hero(dummy,args,'accuracy')}<section class='decision safe'><article class='decision-card'><span class='badge safe'>Mode evaluasi</span><h2>{'Skor akurasi mulai bisa dibaca.' if matched >= target else 'Data akurasi belum cukup untuk dinilai.'}</h2><p>Target awal <b>{target}</b> pasangan prakiraan-observasi. Saat ini terkumpul <b>{matched}</b> pasangan.</p></article><div class='metrics'>{_v23_kpi('Data',f'{matched}/{target}','pasangan')}{_v23_kpi('Progress',f'{pct}%','menuju minimum')}{_v23_kpi('Error suhu',_v23_num(summary.get('temperature_mae_c'),'°C',1),'lebih kecil lebih baik')}{_v23_kpi('Skor hujan',_v23_num(summary.get('brier_rain',summary.get('rain_brier_score')),'',3),'lebih kecil lebih baik')}</div></section><section class='panel'><div class='head'><h2>Progress verifikasi</h2><p>Tidak ada klaim akurasi sebelum data cukup.</p></div><div class='progress' style='--p:{pct}%'><span></span></div></section><section class='grid g4'>{_v23_kpi('Hujan terdeteksi',_v23_pct(summary.get('pod_rain',summary.get('rain_pod'))),'kemampuan menangkap hujan')}{_v23_kpi('Alarm keliru',_v23_pct(summary.get('far_rain',summary.get('rain_far'))),'lebih kecil lebih baik')}{_v23_kpi('Status',state,'evaluasi')}{_v23_kpi('Target awal',str(target),'pasangan')}</section><section class='panel'><div class='head'><h2>Bukti peluang hujan</h2><p>Tabel reliabilitas.</p></div><table><thead><tr><th>Kelompok peluang</th><th>Kasus</th><th>Rata-rata prakiraan</th><th>Hujan terjadi</th></tr></thead><tbody>{''.join(rel)}</tbody></table></section>"""
+    return f"<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>ANEMOS — Status Akurasi</title><meta name='theme-color' content='#146bff'><style>{_anemos21_css()}</style></head><body>{_anemos21_topbar(dummy,args,'accuracy')}<main class='wrap'>{body}<p class='footer'>ANEMOS · {ANEMOS_PUBLIC_VERSION} · Diperbarui {_v23_esc(_v23_updated_label(dummy,args))}</p></main></body></html>"
+
+
+def _v23_write_dict_csv_safe(path, fieldnames, rows):
+    clean=[]
+    for r in rows or []:
+        if isinstance(r, dict):
+            clean.append({k:r.get(k,'') for k in fieldnames})
+    try:
+        write_dict_csv(path, fieldnames, clean)
+    except TypeError:
+        atomic_write_text(path, lambda f: csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore').writerows(clean))
+    except Exception:
+        def writer(f):
+            w=csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
+            w.writeheader(); w.writerows(clean)
+        atomic_write_text(path, writer)
+
+
+def _anemos21_write_location_outputs(args, forecast_dates=None):
+    api = _anemos21_build_multiday_api(args, forecast_dates)
+    api = _v23_enhance_api(api, args)
+    days = _v23_days(api)
+    daily_rows=[]; hourly_rows=[]; risk_rows=[]; activity_rows=[]
+    for d in days:
+        daily_rows.append({'date':d.get('date'),'day_tag':d.get('day_tag'),'condition':d.get('condition'),'risk_label':_v23_risk_label(d.get('peak_rain_probability'),d.get('risk_class') or d.get('risk')),'peak_rain_probability':d.get('peak_rain_probability'),'peak_rain_hour':d.get('peak_rain_hour'),'avg_temperature_c':d.get('avg_temperature_c'),'avg_humidity_pct':d.get('avg_humidity_pct'),'max_heat_index_c':d.get('max_heat_index_c'),'max_wind_kmh':d.get('max_wind_kmh'),'summary':_v23_summary_sentence(d,api.get('location_name')),'advice':d.get('advice') or ''})
+        for h in _v23_hours(d):
+            row={'date':d.get('date'),'day_tag':d.get('day_tag'),'hour':h.get('hour'),'condition':h.get('condition'),'temp_c':h.get('temp_c'),'humidity_pct':h.get('humidity_pct'),'heat_index_c':h.get('heat_index_c'),'rain_probability':h.get('rain_probability'),'wind_kmh':h.get('wind_kmh'),'risk_label':_v23_risk_label(h.get('rain_probability'),h.get('risk_class') or h.get('risk')),'risk_class':_v23_risk_class(h.get('rain_probability'),h.get('risk_class') or h.get('risk'))}
+            hourly_rows.append(row)
+            if row['risk_class']!='safe': risk_rows.append(row)
+        for a in _v23_list(d.get('activity_matrix')) or _v23_activity_matrix(d):
+            activity_rows.append({'date':d.get('date'),'day_tag':d.get('day_tag'),'activity':a.get('activity') or a.get('label'),'status':a.get('status') or a.get('value'),'advice':a.get('advice'),'priority_hour':a.get('priority_hour'),'risk_class':_v23_risk_class(None,a.get('risk_class') or a.get('class'))})
+    write_json(path_output('anemos_api_v1.json'), api)
+    write_json(path_output('anemos_public_manifest.json'), {'brand':'ANEMOS','version':ANEMOS_PUBLIC_VERSION,'generated_at':api.get('generated_at'),'period':api.get('period_label'),'location':api.get('location_name'),'files':['anemos_app.html','anemos_today.html','anemos_3day.html','anemos_activity.html','anemos_api_v1.json','anemos_daily_outlook.csv','anemos_hourly_compact.csv','anemos_whatsapp_brief.txt']})
+    _v23_write_dict_csv_safe(path_output('anemos_daily_outlook.csv'), ['date','day_tag','condition','risk_label','peak_rain_probability','peak_rain_hour','avg_temperature_c','avg_humidity_pct','max_heat_index_c','max_wind_kmh','summary','advice'], daily_rows)
+    _v23_write_dict_csv_safe(path_output('anemos_hourly_compact.csv'), ['date','day_tag','hour','condition','temp_c','humidity_pct','heat_index_c','rain_probability','wind_kmh','risk_label','risk_class'], hourly_rows)
+    _v23_write_dict_csv_safe(path_output('anemos_risk_timeline.csv'), ['date','day_tag','hour','condition','temp_c','humidity_pct','heat_index_c','rain_probability','wind_kmh','risk_label','risk_class'], risk_rows)
+    _v23_write_dict_csv_safe(path_output('anemos_activity_matrix.csv'), ['date','day_tag','activity','status','advice','priority_hour','risk_class'], activity_rows)
+    full=_anemos21_detail_html(api,args,'full')
+    atomic_write_text(path_output('anemos_app.html'), lambda f: f.write(full))
+    atomic_write_text(path_output(AETHER_DASHBOARD_FILENAME), lambda f: f.write(full))
+    atomic_write_text(path_output('anemos_today.html'), lambda f: f.write(_anemos21_detail_html(api,args,'today')))
+    atomic_write_text(path_output(AETHER_REPORT_HTML_FILENAME), lambda f: f.write(_anemos21_detail_html(api,args,'today')))
+    atomic_write_text(path_output('anemos_3day.html'), lambda f: f.write(_anemos21_detail_html(api,args,'3day')))
+    atomic_write_text(path_output('anemos_activity.html'), lambda f: f.write(_anemos21_detail_html(api,args,'activity')))
+    atomic_write_text(path_output('anemos_commute_advice.html'), lambda f: f.write(_anemos21_detail_html(api,args,'activity')))
+    atomic_write_text(path_output('anemos_laundry_advice.html'), lambda f: f.write(_anemos21_detail_html(api,args,'activity')))
+    try:
+        atomic_write_text(path_output('anemos_embed_widget.html'), lambda f: f.write(_anemos20_widget_html(api, args)))
+    except Exception:
+        pass
+    atomic_write_text(path_output('anemos_whatsapp_brief.txt'), lambda f: f.write(_v23_share_text(api)))
+    # Important: do NOT overwrite sentinel_x_accuracy_public.html here. The verification layer writes it with real rows.
+    try:
+        _anemos20_write_pwa_files(api,args)
+    except Exception as exc:
+        log_warning('ANEMOS PWA files gagal ditulis:', exc)
+    return {'days':len(days),'dashboard':path_output(AETHER_DASHBOARD_FILENAME),'report_html':path_output(AETHER_REPORT_HTML_FILENAME)}
+
+
+def anemos_write_multiday_public_pages(args, forecast_dates=None, source_state_rows=None):
+    return _anemos21_write_location_outputs(args, forecast_dates)
+
+
+def _anemos21_portal_card(loc, base_url=''):
+    slug=sanitize_filename(getattr(loc,'slug','location'))
+    name=getattr(loc,'location_name',slug)
+    api=read_json(os.path.join(root_output_dir(), slug, 'anemos_api_v1.json'), default={}) or {}
+    fake=type('Args',(),{'location_name':name,'timezone':DEFAULT_TIMEZONE})()
+    api=_v23_enhance_api(api,fake) if isinstance(api,dict) and api else {'location_name':name,'days':[]}
+    d=_v23_today(api)
+    cls=_v23_risk_class(d.get('peak_rain_probability'), d.get('risk_class') or d.get('risk')) if d else 'safe'
+    prefix=f"{base_url}/{slug}/" if base_url else f"{slug}/"
+    summary=_v23_summary_sentence(d,name) if d else 'Prakiraan akan tampil setelah pembaruan data selesai.'
+    return f"""<article class='day {cls}'><h3><span class='status-dot {cls}'></span>{_v23_esc(name)}</h3><p>{_v23_esc(summary)}</p><div class='mini'><span>Hujan<b>{_v23_pct(d.get('peak_rain_probability') if d else None)}</b></span><span>Jam<b>{_v23_hour(d.get('peak_rain_hour') if d else None)}</b></span><span>Suhu<b>{_v23_num(d.get('avg_temperature_c') if d else None,'°C',1)}</b></span></div><div class='nav' style='margin-top:14px'><a class='btn primary' href='{prefix}anemos_app.html'>Buka prakiraan</a><a class='btn' href='{prefix}anemos_today.html'>Hari ini</a><a class='btn' href='{prefix}anemos_3day.html'>3 hari</a><a class='btn' href='{prefix}anemos_activity.html'>Aktivitas</a></div></article>"""
+
+
+def sentinel_write_root_public_index(locations, run_rows, args):
+    base_url=(getattr(args,'public_base_url','') or '').rstrip('/')
+    now=now_local(getattr(args,'timezone',DEFAULT_TIMEZONE))
+    updated=f"{_v6_format_date_id(now.date())}, {now.strftime('%H:%M')} {_v6_timezone_label(getattr(args,'timezone',DEFAULT_TIMEZONE))}"
+    dummy={'location_name':'Portal ANEMOS','period_label':'Pilih lokasi','updated_label':updated,'days':[]}
+    cards=''.join(_anemos21_portal_card(loc, base_url) for loc in locations)
+    doc=f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>ANEMOS — Portal Cuaca Lokal</title><meta name='theme-color' content='#146bff'><style>{_anemos21_css()}</style></head><body><main class='wrap'>{_v23_hero(dummy,args,'portal')}<section class='panel'><div class='head'><h2>Pilih lokasi</h2><p>Ringkasan cepat untuk tiap wilayah.</p></div><div class='grid g3'>{cards}</div></section><section class='panel'><div class='head'><h2>Data publik</h2><p>Untuk analisis, arsip, embed, atau integrasi.</p></div><nav class='nav'><a class='btn' href='ensemble_all_locations.csv'>Ensemble CSV</a><a class='btn' href='forecast_all_locations.csv'>Forecast CSV</a><a class='btn' href='source_status_all_locations.csv'>Status sumber</a><a class='btn' href='forecast_batch_summary.json'>Batch summary</a><a class='btn' href='anemos_portal_manifest.json'>Manifest</a></nav></section><p class='footer'>ANEMOS · {ANEMOS_PUBLIC_VERSION} · {updated}</p></main></body></html>"""
+    atomic_write_text(root_output_path('index.html'), lambda f: f.write(doc))
+    location_cards=[]
+    for loc in locations:
+        slug=sanitize_filename(getattr(loc,'slug','location'))
+        name=getattr(loc,'location_name',slug)
+        api=read_json(os.path.join(root_output_dir(), slug, 'anemos_api_v1.json'), default={}) or {}
+        d=_v23_today(api) if isinstance(api,dict) else {}
+        location_cards.append({'slug':slug,'name':name,'summary':_v23_summary_sentence(d,name) if d else '', 'peak_rain_probability':d.get('peak_rain_probability') if d else None, 'peak_rain_hour':d.get('peak_rain_hour') if d else None, 'risk_label':_v23_risk_label(d.get('peak_rain_probability'), d.get('risk')) if d else '', 'url':f'{slug}/anemos_app.html'})
+    write_json(root_output_path('anemos_portal_manifest.json'), {'brand':'ANEMOS','version':ANEMOS_PUBLIC_VERSION,'generated_at':now.isoformat(),'locations':[getattr(loc,'slug','location') for loc in locations],'index':root_output_path('index.html'),'disclaimer':sentinel_public_disclaimer(args)})
+    write_json(root_output_path('anemos_location_cards.json'), {'brand':'ANEMOS','version':ANEMOS_PUBLIC_VERSION,'generated_at':now.isoformat(),'locations':location_cards})
+    return root_output_path('index.html')
+
+
 if __name__ == "__main__":
     main()
