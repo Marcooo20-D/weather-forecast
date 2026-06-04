@@ -5919,7 +5919,7 @@ def build_arg_parser():
     )
     parser.add_argument(
         "--mode",
-        choices=["forecast", "sync-observations", "evaluate", "import-observations", "self-test", "doctor", "dashboard", "report", "feedback", "red-team", "autopsy", "skill-league", "constitution", "verify-public", "public-index", "serve"],
+        choices=["forecast", "sync-observations", "evaluate", "import-observations", "self-test", "doctor", "dashboard", "report", "feedback", "red-team", "autopsy", "skill-league", "constitution", "verify-public", "public-index", "serve", "dry-run"],
         default="forecast",
         help="forecast = ambil prakiraan baru, sync-observations = sinkron data observasi historis, evaluate = hitung performa dan bobot sumber, import-observations = impor CSV observasi eksternal, self-test = assertion internal script",
     )
@@ -6034,6 +6034,12 @@ def build_arg_parser():
         default=False,
         help="Jangan tulis CSV gabungan (all_locations) dan BI artifacts (dim/fact).",
     )
+    parser.add_argument(
+        "--strict-exit-code",
+        action="store_true",
+        default=False,
+        help="Jika aktif, warning coverage/source akan membuat exit code 2. Default nonaktif agar GitHub Pages tetap deploy saat output publik masih berhasil dibuat.",
+    )
     parser.add_argument("--enable-circuit-breaker", action="store_true", default=True)
     parser.add_argument("--disable-circuit-breaker", action="store_false", dest="enable_circuit_breaker")
     parser.add_argument("--circuit-base-seconds", type=int, default=20)
@@ -6083,6 +6089,12 @@ def main():
     if args.list_locations:
         print_available_locations()
         return
+
+    # Backward-compatible alias for workflows that use "--mode dry-run"
+    # instead of the newer "--dry-run" flag.
+    if getattr(args, "mode", "") == "dry-run":
+        args.dry_run = True
+        args.mode = "forecast"
 
     # Apply runtime overrides while keeping single-file global constants.
     global TARGET_TIMES, ACTIVE_SOURCE_CONFIGS
@@ -6200,8 +6212,13 @@ def main():
             any_warning = any(r.get("run_status") == "warning" for r in forecast_rows)
             if any_error:
                 sys.exit(3)
-            if any_warning:
+            if any_warning and getattr(args, "strict_exit_code", False):
                 sys.exit(2)
+            if any_warning:
+                batch_warning(
+                    "Forecast selesai dengan warning coverage/source, tetapi exit code tetap 0 "
+                    "agar GitHub Pages tetap ter-deploy. Gunakan --strict-exit-code jika ingin gagal pada warning."
+                )
     elif args.mode == "sync-observations":
         sync_observations_for_locations(args, locations)
     elif args.mode == "evaluate":
@@ -13308,7 +13325,7 @@ def _lg_average(values):
     return round(sum(vals) / len(vals), 2) if vals else None
 
 
-def _lg_norm_hour(row):
+def _lg_norm_hour(row, args=None, day_index=0):
     hour = _lg_hour(row.get("hour") or row.get("jam") or row.get("target_time"), "—")
     cond = _lg_text(row.get("condition") or row.get("category") or row.get("cuaca") or row.get("raw_condition"), "Berawan")
     temp = _lg_float(row.get("temp_c") or row.get("temperature_c") or row.get("temperature"), None)
@@ -14990,7 +15007,7 @@ def sentinel_write_root_public_index(locations, run_rows, args):
 # =============================================================================
 
 LANGIT_BRAND_NAME = "LANGIT"
-LANGIT_PUBLIC_VERSION = "LANGIT v60"
+LANGIT_PUBLIC_VERSION = "LANGIT v60.3"
 LANGIT_PRODUCT_NAME = "Hyperlocal Weather Decision OS"
 LANGIT_TAGLINE = "Cuaca lokal yang langsung bisa dipakai untuk mengambil keputusan."
 LANGIT_DISCLAIMER = "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat."
@@ -15117,7 +15134,7 @@ def _lg_icon(condition):
     return "☁"
 
 
-def _lg_norm_hour(row):
+def _lg_norm_hour(row, args=None, day_index=0):
     row = row if isinstance(row, dict) else {}
     hour = _lg_hour(row.get("hour") or row.get("jam") or row.get("target_time"), "—")
 
