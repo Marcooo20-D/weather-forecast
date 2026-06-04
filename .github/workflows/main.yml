@@ -1,47 +1,45 @@
-name: LANGIT v60 Forecast OS
+name: LANGIT v61 Forecast OS
 
 on:
   workflow_dispatch:
   schedule:
-    # 07:00, 11:00, 15:00, 18:00 WIB
-    # 00:00, 04:00, 08:00, 11:00 UTC
-    - cron: "0 0,4,8,11 * * *"
+    # 18:00 WIB = 11:00 UTC
+    - cron: "0 11 * * *"
 
 permissions:
   contents: write
 
 concurrency:
-  group: langit-v60-forecast
+  group: langit-v61-forecast
   cancel-in-progress: true
 
 jobs:
   forecast:
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    timeout-minutes: 25
 
     steps:
       - name: Checkout main generator
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
 
       - name: Setup Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          # Sengaja tidak pakai cache agar tidak error saat requirements.txt tidak ada.
 
       - name: Install runtime helpers
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install certifi
+          python -m pip install --upgrade pip certifi
 
       - name: Inspect repository
         run: |
-          echo "=== Repository root ==="
           pwd
           ls -la
-          echo "=== Python ==="
-          python --version
-          echo "=== Workflow branch ==="
-          git branch --show-current
+          test -f weather_ensemble_multi_location.py
 
       - name: Syntax check main script
         run: |
@@ -53,14 +51,11 @@ jobs:
             --mode doctor \
             --locations all \
             --timezone Asia/Jakarta \
-            --public-base-url https://marcooo20-d.github.io/weather-forecast \
             --no-debug \
             --no-save-raw-payloads
 
-      - name: Run LANGIT v60 forecast
-        timeout-minutes: 25
-        env:
-          PYTHONUNBUFFERED: "1"
+      - name: Run LANGIT v61 forecast
+        timeout-minutes: 18
         run: |
           python weather_ensemble_multi_location.py \
             --mode forecast \
@@ -69,16 +64,13 @@ jobs:
             --public-base-url https://marcooo20-d.github.io/weather-forecast \
             --http-timeout 8 \
             --max-retry-http 1 \
-            --max-workers 8 \
-            --max-inflight-per-host 3 \
+            --max-workers 4 \
+            --max-inflight-per-host 1 \
             --target-step-minutes 180 \
             --no-debug \
             --no-save-raw-payloads
 
       - name: Generate LANGIT public portal
-        timeout-minutes: 8
-        env:
-          PYTHONUNBUFFERED: "1"
         run: |
           python weather_ensemble_multi_location.py \
             --mode public-index \
@@ -89,39 +81,34 @@ jobs:
             --no-save-raw-payloads
 
       - name: Verify public output
-        timeout-minutes: 5
-        env:
-          PYTHONUNBUFFERED: "1"
         run: |
-          python weather_ensemble_multi_location.py \
-            --mode verify-public \
-            --locations all \
-            --timezone Asia/Jakarta \
-            --public-base-url https://marcooo20-d.github.io/weather-forecast \
-            --no-debug \
-            --no-save-raw-payloads
+          test -f outputs/index.html
+          test -f outputs/dago/anemos_app.html
+          test -f outputs/dago/anemos_3day.html
+          test -f outputs/dago/anemos_activity.html
+          test -f outputs/dago/langit_map_room.html
+          test -f outputs/dago/langit_model_court.html
+          test -f outputs/dago/sentinel_x_accuracy_public.html
+          grep -R "LANGIT" outputs/index.html outputs/dago/anemos_app.html
+          if grep -R "ANEMOS sedang\\|AETHER Sentinel" outputs/*.html outputs/*/*.html 2>/dev/null; then
+            echo "Old visible branding detected."
+            exit 1
+          fi
 
       - name: Harden public output before deploy
         run: |
           find outputs -name "*.sqlite" -delete || true
           find outputs -name "*.db" -delete || true
-          find outputs -name "*.log" -delete || true
           find outputs -type d -name "logs" -prune -exec rm -rf {} + || true
           find outputs -type d -name "raw_payloads" -prune -exec rm -rf {} + || true
-          find outputs -type d -name "__pycache__" -prune -exec rm -rf {} + || true
-
-      - name: Validate essential public files
-        run: |
-          test -d outputs
-          test -f outputs/index.html
-
-          echo "=== Generated public files ==="
-          find outputs -maxdepth 3 -type f | sort | head -200
+          find outputs -type f -name "*.py" -delete || true
+          find outputs -type f -name "*.pyc" -delete || true
+          find outputs -maxdepth 3 -type f | sort | sed -n '1,160p'
 
       - name: Upload generated site artifact
         uses: actions/upload-artifact@v4
         with:
-          name: langit-v60-public-site
+          name: langit-v61-public-site
           path: outputs
           retention-days: 7
 
@@ -131,5 +118,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: outputs
           publish_branch: gh-pages
-          force_orphan: false
-          keep_files: false
+          force_orphan: true
+          commit_message: "deploy: LANGIT v61 public forecast"
