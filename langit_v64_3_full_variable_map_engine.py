@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-LANGIT v64.4 — Real Atmospheric Field Map Engine
+LANGIT v64.4.2 — Real Atmospheric Field Map Engine
 
 Drop-in replacement untuk: langit_v64_3_full_variable_map_engine.py
 
@@ -10,7 +10,7 @@ Fungsi utama:
 3. Membuat peta field atmosfer yang lebih benar: multi-layer, timeline, marker,
    local-radius field untuk peta per lokasi, IDW field untuk portal multi-lokasi.
 4. Membuat manifest validasi coverage variabel.
-5. Verify-only yang ketat agar data kosong tidak terlihat seolah valid.
+5. Verify-only yang ketat untuk core data, tetapi tidak memblokir field angin saat arah angin memang tidak tersedia di payload publik.
 
 Tidak mengubah weather_ensemble_multi_location.py dan tidak merusak layer v63.1.
 """
@@ -30,8 +30,8 @@ from pathlib import Path
 from typing import Any, Iterable
 from zoneinfo import ZoneInfo
 
-VERSION = "v64.4"
-ENGINE_NAME = "LANGIT v64.4 Real Atmospheric Field Map Engine"
+VERSION = "v64.4.2"
+ENGINE_NAME = "LANGIT v64.4.2 Real Atmospheric Field Map Engine"
 JAKARTA = ZoneInfo("Asia/Jakarta")
 
 MONTH_ID = [
@@ -186,10 +186,21 @@ ALIASES: dict[str, list[str]] = {
     "wind_direction_deg": [
         "wind_direction_10m",
         "winddirection_10m",
+        "wind_direction_10m_dominant",
+        "winddirection_10m_dominant",
         "wind_direction",
+        "winddirection",
         "wind_dir",
+        "wind_dir_10m",
         "wind_direction_deg",
+        "wind_dir_deg",
+        "wind_deg",
+        "wind_bearing",
+        "bearing",
         "arah_angin",
+        "arah_angin_derajat",
+        "wd",
+        "wd10m",
         "direction",
     ],
     "wind_gust_ms": [
@@ -483,6 +494,30 @@ def normalize_wind_speed(value: Any) -> float | None:
     return round(max(0, num), 1)
 
 
+def direction_from_compass(value: Any) -> float | None:
+    if value is None:
+        return None
+    raw = str(value).strip().lower()
+    if not raw:
+        return None
+    raw = raw.replace("°", "").replace("derajat", "").strip()
+    n = as_float(raw)
+    if n is not None:
+        return float(n) % 360
+    aliases = {
+        "n": 0, "utara": 0, "north": 0,
+        "nne": 22.5, "ne": 45, "timur laut": 45, "northeast": 45,
+        "ene": 67.5, "e": 90, "timur": 90, "east": 90,
+        "ese": 112.5, "se": 135, "tenggara": 135, "southeast": 135,
+        "sse": 157.5, "s": 180, "selatan": 180, "south": 180,
+        "ssw": 202.5, "sw": 225, "barat daya": 225, "southwest": 225,
+        "wsw": 247.5, "w": 270, "barat": 270, "west": 270,
+        "wnw": 292.5, "nw": 315, "barat laut": 315, "northwest": 315,
+        "nnw": 337.5,
+    }
+    return aliases.get(raw)
+
+
 def normalize_pressure(value: Any) -> float | None:
     num = as_float(value)
     if num is None:
@@ -586,7 +621,7 @@ def normalize_variables(row: dict[str, Any]) -> dict[str, float | int | str | No
     cloud = as_percent(pick(row, "cloud_cover_pct"))
     pressure = normalize_pressure(pick(row, "pressure_hpa"))
     wind = normalize_wind_speed(pick(row, "wind_speed_ms"))
-    wind_dir = as_round(pick(row, "wind_direction_deg"), 0)
+    wind_dir = direction_from_compass(pick(row, "wind_direction_deg"))
     gust = normalize_wind_speed(pick(row, "wind_gust_ms"))
     uv = as_round(pick(row, "uv_index"), 1)
     visibility = normalize_visibility(pick(row, "visibility_km"))
@@ -1000,6 +1035,17 @@ def manifest_for(pack: LocationPack | None, packs: list[LocationPack], portal: b
         global_coverage[layer["key"]] = sum(p.coverage.get(layer["key"], 0) for p in all_packs)
     available = [layer["key"] for layer in LAYER_DEFS if global_coverage.get(layer["key"], 0) > 0]
     disabled = [layer["key"] for layer in LAYER_DEFS if layer["key"] not in available]
+    wind_direction_coverage = sum(
+        1
+        for p in all_packs
+        for h in p.hours
+        if as_float(h.variables.get("wind_direction_deg")) is not None
+    )
+    warnings = []
+    if global_coverage.get("wind", 0) > 0 and wind_direction_coverage <= 0:
+        warnings.append(
+            "wind_speed tersedia, tetapi wind_direction tidak tersedia di payload publik; layer warna angin tetap aktif, animasi partikel angin dinonaktifkan agar tidak membuat arah palsu."
+        )
     return {
         "version": VERSION,
         "engine": ENGINE_NAME,
@@ -1012,6 +1058,8 @@ def manifest_for(pack: LocationPack | None, packs: list[LocationPack], portal: b
         "disabled_layers": disabled,
         "missing_variables": [LAYER_BY_KEY[key]["field"] for key in disabled],
         "wind_field_valid": any(p.wind_field_valid for p in all_packs),
+        "wind_direction_coverage": wind_direction_coverage,
+        "warnings": warnings,
         "locations": [hour_summary(p) for p in all_packs],
         "notes": [
             "Peta adalah estimasi field dari titik prakiraan publik, bukan radar observasi.",
@@ -1380,8 +1428,10 @@ def verify_manifest(manifest: dict[str, Any], source: Path) -> list[str]:
         errors.append(f"{source}: temperature tidak terbaca")
     if int(coverage.get("rain") or 0) <= 0:
         errors.append(f"{source}: rain_probability tidak terbaca")
+    # Wind speed can still be rendered as a scalar field even when direction is absent.
+    # Do not fail the build here; v64.4.2 treats missing wind direction as non-fatal and disables wind particles automatically instead of faking directions.
     if int(coverage.get("wind") or 0) > 0 and not manifest.get("wind_field_valid"):
-        errors.append(f"{source}: wind_speed ada tetapi wind_direction tidak cukup untuk field angin valid")
+        print(f"::warning::{source}: wind_speed tersedia, tetapi wind_direction belum tersedia; layer angin tetap valid sebagai scalar field dan partikel dinonaktifkan.")
     return errors
 
 
