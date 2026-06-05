@@ -1,4 +1,4 @@
-name: LANGIT v64.3 Forecast OS
+name: LANGIT v64.4 Forecast OS
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: langit-v64-3-forecast
+  group: langit-v64-4-forecast
   cancel-in-progress: true
 
 jobs:
@@ -128,11 +128,12 @@ jobs:
             --root outputs \
             --public-base-url "$PUBLIC_BASE_URL"
 
-      - name: Rebuild LANGIT v64.3 full variable map layer
+      - name: Rebuild LANGIT v64.4 real atmospheric map layer
         run: |
           python langit_v64_3_full_variable_map_engine.py \
             --root outputs \
-            --public-base-url "$PUBLIC_BASE_URL"
+            --public-base-url "$PUBLIC_BASE_URL" \
+            --debug
 
       - name: Verify public output
         run: |
@@ -140,7 +141,7 @@ jobs:
           python langit_v64_3_full_variable_map_engine.py --root outputs --verify-only
           test -f outputs/index.html
           test -f outputs/langit_portal_map.html
-          test -f outputs/langit_v64_3_manifest.json
+          test -f outputs/langit_v64_4_manifest.json
           for d in outputs/*; do
             if [ -d "$d" ]; then
               test -f "$d/anemos_app.html"
@@ -153,7 +154,7 @@ jobs:
               test -f "$d/sentinel_x_accuracy_public.html"
               test -f "$d/langit_api_v1.json"
               test -f "$d/langit_location.geojson"
-              test -f "$d/langit_v64_3_map_manifest.json"
+              test -f "$d/langit_v64_4_map_manifest.json"
             fi
           done
           if grep -R "visual-first\|Data confidence\|ANEMOS sedang\|AETHER Sentinel\|\[\.new Set\|const hours=\[\.new" outputs/*.html outputs/*/*.html 2>/dev/null; then
@@ -169,12 +170,12 @@ jobs:
           find outputs -type d -name "raw_payloads" -prune -exec rm -rf {} + || true
           find outputs -type f -name "*.py" -delete || true
           find outputs -type f -name "*.pyc" -delete || true
-          find outputs -maxdepth 3 -type f | sort | sed -n '1,280p'
+          find outputs -maxdepth 3 -type f | sort | sed -n '1,320p'
 
       - name: Upload generated site artifact
         uses: actions/upload-artifact@v4
         with:
-          name: langit-v64-3-public-site
+          name: langit-v64-4-public-site
           path: outputs
           retention-days: 7
 
@@ -185,4 +186,4 @@ jobs:
           publish_dir: outputs
           publish_branch: gh-pages
           force_orphan: true
-          commit_message: "deploy: LANGIT v64.3 full variable map layer"
+          commit_message: "deploy: LANGIT v64.4 real atmospheric field map"
