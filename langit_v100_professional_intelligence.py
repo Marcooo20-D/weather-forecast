@@ -1153,7 +1153,7 @@ def verify(root: Path) -> int:
         for p in missing[:30]:
             print(" -", p)
         return 2
-    banned = ["", "Keandalan Data", "Window ", "data publik</small>", "ANEMOS sedang", "AETHER Sentinel", "[.new Set", "const hours=[.new"]
+    banned = ["Window ", "ANEMOS sedang", "AETHER Sentinel", "[.new Set", "const hours=[.new Set", "visual-first", "Visual-first", "Data confidence"]
     bad_hits = []
     for path in list(root.glob("*.html")) + list(root.glob("*/*.html")):
         txt = path.read_text(encoding="utf-8", errors="replace")
