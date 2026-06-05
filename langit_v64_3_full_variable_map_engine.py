@@ -1,20 +1,18 @@
 #!/usr/bin/env python3
 """
-LANGIT v64.3 — Full Variable Wind Field Map Engine
+LANGIT v64.4 — Real Atmospheric Field Map Engine
 
-Perbaikan dari v64.2:
-1. Data bridge diperbaiki total: bisa membaca JSON row-based, JSON columnar-array, CSV, dan nested forecast.
-2. Semua variabel penting disalurkan ke payload peta, bukan hanya risk/rain/temp/rh/wind.
-3. Layer peta menjadi dinamis: Risiko, Hujan, Suhu, Terasa, Lembap, Awan, Tekanan, Angin,
-   Gust, UV, Visibilitas, Confidence.
-4. Popup dan panel membaca variabel aktual dari data jam aktif.
-5. Peta portal regional dan peta per lokasi memakai struktur payload yang sama.
+Drop-in replacement untuk: langit_v64_3_full_variable_map_engine.py
 
-Pakai di root repo:
-  python langit_v64_3_full_variable_map_engine.py --root outputs --public-base-url https://marcooo20-d.github.io/weather-forecast
+Fungsi utama:
+1. Membaca payload publik hasil generator v63/v63.1 dari folder outputs.
+2. Menormalisasi semua variabel cuaca penting ke schema tunggal.
+3. Membuat peta field atmosfer yang lebih benar: multi-layer, timeline, marker,
+   local-radius field untuk peta per lokasi, IDW field untuk portal multi-lokasi.
+4. Membuat manifest validasi coverage variabel.
+5. Verify-only yang ketat agar data kosong tidak terlihat seolah valid.
 
-Verify:
-  python langit_v64_3_full_variable_map_engine.py --root outputs --verify-only
+Tidak mengubah weather_ensemble_multi_location.py dan tidak merusak layer v63.1.
 """
 
 from __future__ import annotations
@@ -25,19 +23,31 @@ import html
 import json
 import math
 import re
-from dataclasses import dataclass, asdict, field
-from datetime import datetime, date
+import sys
+from dataclasses import asdict, dataclass, field
+from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterable
 from zoneinfo import ZoneInfo
 
-VERSION = "v64.3"
-ENGINE_NAME = "LANGIT v64.3 Full Variable Wind Field Map Engine"
+VERSION = "v64.4"
+ENGINE_NAME = "LANGIT v64.4 Real Atmospheric Field Map Engine"
 JAKARTA = ZoneInfo("Asia/Jakarta")
 
 MONTH_ID = [
-    "", "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    "",
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
 ]
 DAY_ID = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
 
@@ -52,25 +62,190 @@ BAD_PUBLIC_TOKENS = [
 
 JSON_SKIP_PATTERNS = [
     "manifest",
-    "location",
     "geojson",
-    "source",
-    "model_court",
+    "location",
     "accuracy",
     "diagnostic",
     "debug",
     "raw",
+    "model_court",
 ]
+
+CSV_SKIP_PATTERNS = ["source", "model", "accuracy", "diagnostic", "debug", "raw"]
+
+KNOWN_LOCATIONS: dict[str, tuple[str, str, str, float, float]] = {
+    "dago": ("Dago, Bandung", "Dago", "Bandung", -6.8830, 107.6130),
+    "jatinangor": ("Jatinangor, Sumedang", "Jatinangor", "Sumedang", -6.9330, 107.7710),
+    "arjawinangun": ("Arjawinangun, Cirebon", "Arjawinangun", "Cirebon", -6.6460, 108.4080),
+}
+
+ALIASES: dict[str, list[str]] = {
+    "time": [
+        "time",
+        "datetime",
+        "valid_time",
+        "date_time",
+        "timestamp",
+        "target_time",
+        "forecast_time",
+        "local_time",
+        "jam",
+        "hour",
+        "valid",
+    ],
+    "date": ["date", "tanggal", "local_date", "target_date", "forecast_date", "day"],
+    "temperature_c": [
+        "temperature_2m",
+        "temperature",
+        "temp",
+        "temp_c",
+        "temperature_c",
+        "suhu",
+        "t2m",
+        "air_temperature",
+        "air_temp",
+        "temperature_mean",
+    ],
+    "apparent_temperature_c": [
+        "apparent_temperature",
+        "apparent_temperature_c",
+        "feels_like",
+        "feelslike",
+        "heat_index",
+        "terasa",
+        "suhu_terasa",
+        "apparent_temp",
+        "felt_temperature",
+    ],
+    "humidity_pct": [
+        "relative_humidity_2m",
+        "relative_humidity",
+        "relative_humidity_pct",
+        "humidity",
+        "humidity_pct",
+        "rh",
+        "kelembapan",
+        "kelembaban",
+        "rel_humidity",
+    ],
+    "rain_probability_pct": [
+        "precipitation_probability",
+        "precipitation_probability_max",
+        "rain_probability",
+        "rain_probability_pct",
+        "rain_prob",
+        "pop",
+        "probability_of_precipitation",
+        "hujan",
+        "peluang_hujan",
+        "rain_chance",
+        "precip_prob",
+    ],
+    "precipitation_mm": [
+        "precipitation",
+        "precipitation_sum",
+        "precipitation_mm",
+        "rain",
+        "rain_mm",
+        "rainfall",
+        "curah_hujan",
+        "hujan_mm",
+        "showers",
+    ],
+    "cloud_cover_pct": [
+        "cloud_cover",
+        "cloudcover",
+        "clouds",
+        "total_cloud_cover",
+        "cloud_cover_total",
+        "cloudiness",
+        "awan",
+    ],
+    "pressure_hpa": [
+        "pressure_msl",
+        "msl_pressure",
+        "surface_pressure",
+        "surface_pressure_hpa",
+        "pressure",
+        "pressure_hpa",
+        "tekanan",
+        "sea_level_pressure",
+        "slp",
+    ],
+    "wind_speed_ms": [
+        "wind_speed_10m",
+        "wind_speed",
+        "windspeed",
+        "wind_speed_ms",
+        "wind_speed_mps",
+        "kecepatan_angin",
+        "angin",
+        "wind_10m",
+        "wind",
+    ],
+    "wind_direction_deg": [
+        "wind_direction_10m",
+        "winddirection_10m",
+        "wind_direction",
+        "wind_dir",
+        "wind_direction_deg",
+        "arah_angin",
+        "direction",
+    ],
+    "wind_gust_ms": [
+        "wind_gusts_10m",
+        "wind_gust",
+        "wind_gust_ms",
+        "gust",
+        "gusts",
+        "hembusan",
+        "windgusts",
+    ],
+    "uv_index": ["uv_index", "uv", "uvi", "indeks_uv"],
+    "visibility_km": ["visibility", "visibility_km", "visibility_m", "vis", "jarak_pandang"],
+    "dew_point_c": ["dew_point_2m", "dewpoint_2m", "dew_point", "dewpoint", "titik_embun"],
+    "shortwave_radiation": [
+        "shortwave_radiation",
+        "solar_radiation",
+        "ghi",
+        "radiasi",
+        "irradiance",
+        "global_horizontal_irradiance",
+    ],
+    "weather_code": ["weather_code", "weathercode", "kode_cuaca", "code"],
+    "condition": ["condition", "weather", "summary", "cuaca", "description", "weather_desc"],
+    "confidence_pct": ["confidence", "confidence_pct", "kepercayaan", "model_confidence", "data_confidence"],
+    "active_sources": ["active_sources", "sources_active", "source_count", "model_count"],
+    "total_sources": ["total_sources", "sources_total", "model_total"],
+}
+
+LAYER_DEFS: list[dict[str, Any]] = [
+    {"key": "risk", "label": "Risiko", "field": "risk_score", "unit": "/100", "min": 0, "max": 100, "palette": "risk"},
+    {"key": "rain", "label": "Hujan", "field": "rain_probability_pct", "unit": "%", "min": 0, "max": 100, "palette": "rain"},
+    {"key": "temp", "label": "Suhu", "field": "temperature_c", "unit": "°C", "min": 18, "max": 38, "palette": "temp"},
+    {"key": "feels", "label": "Terasa", "field": "apparent_temperature_c", "unit": "°C", "min": 20, "max": 44, "palette": "temp"},
+    {"key": "humidity", "label": "Lembap", "field": "humidity_pct", "unit": "%", "min": 35, "max": 100, "palette": "humidity"},
+    {"key": "cloud", "label": "Awan", "field": "cloud_cover_pct", "unit": "%", "min": 0, "max": 100, "palette": "cloud"},
+    {"key": "pressure", "label": "Tekanan", "field": "pressure_hpa", "unit": "hPa", "min": 990, "max": 1025, "palette": "pressure"},
+    {"key": "wind", "label": "Angin", "field": "wind_speed_ms", "unit": "m/s", "min": 0, "max": 12, "palette": "wind"},
+    {"key": "gust", "label": "Gust", "field": "wind_gust_ms", "unit": "m/s", "min": 0, "max": 20, "palette": "wind"},
+    {"key": "uv", "label": "UV", "field": "uv_index", "unit": "", "min": 0, "max": 12, "palette": "uv"},
+    {"key": "visibility", "label": "Visibilitas", "field": "visibility_km", "unit": "km", "min": 0, "max": 25, "palette": "visibility"},
+    {"key": "confidence", "label": "Confidence", "field": "confidence_pct", "unit": "%", "min": 0, "max": 100, "palette": "confidence"},
+]
+
+LAYER_BY_KEY = {layer["key"]: layer for layer in LAYER_DEFS}
 
 
 @dataclass
 class HourPoint:
     iso: str
+    date: str
     date_label: str
     hour: str
     condition: str
     status: str
-    risk: int
+    risk_score: int
     note: str
     variables: dict[str, float | int | str | None] = field(default_factory=dict)
 
@@ -81,93 +256,24 @@ class LocationPack:
     name: str
     short_name: str
     admin: str
-    lat: float
-    lon: float
+    latitude: float
+    longitude: float
     updated_label: str
+    coordinate_source: str
     hours: list[HourPoint]
+    coverage: dict[str, int]
+    available_layers: list[str]
+    disabled_layers: list[str]
+    missing_variables: list[str]
+    wind_field_valid: bool
 
 
-LAYER_DEFS: dict[str, dict[str, Any]] = {
-    "risk": {"label": "Risiko", "unit": "/100", "min": 0, "max": 100, "palette": "risk"},
-    "rain_prob": {"label": "Hujan", "unit": "%", "min": 0, "max": 100, "palette": "risk"},
-    "temp": {"label": "Suhu", "unit": "°C", "min": 18, "max": 38, "palette": "heat"},
-    "feels": {"label": "Terasa", "unit": "°C", "min": 20, "max": 44, "palette": "heat"},
-    "humidity": {"label": "Lembap", "unit": "%", "min": 35, "max": 100, "palette": "humidity"},
-    "cloud": {"label": "Awan", "unit": "%", "min": 0, "max": 100, "palette": "cloud"},
-    "pressure": {"label": "Tekanan", "unit": "hPa", "min": 990, "max": 1025, "palette": "pressure"},
-    "wind": {"label": "Angin", "unit": "m/s", "min": 0, "max": 12, "palette": "wind"},
-    "gust": {"label": "Gust", "unit": "m/s", "min": 0, "max": 20, "palette": "wind"},
-    "uv": {"label": "UV", "unit": "", "min": 0, "max": 12, "palette": "uv"},
-    "visibility": {"label": "Visibilitas", "unit": "km", "min": 0, "max": 25, "palette": "visibility"},
-    "confidence": {"label": "Confidence", "unit": "%", "min": 0, "max": 100, "palette": "confidence"},
-}
+class BuildError(RuntimeError):
+    pass
 
 
-ALIASES: dict[str, list[str]] = {
-    "time": [
-        "time", "datetime", "valid_time", "date_time", "timestamp", "target_time",
-        "forecast_time", "local_time", "jam", "hour"
-    ],
-    "date": ["date", "tanggal", "local_date", "target_date", "forecast_date"],
-    "temp": [
-        "temperature_2m", "temperature", "temp", "suhu", "t2m", "air_temperature",
-        "air_temp", "temp_c", "temperature_c"
-    ],
-    "feels": [
-        "apparent_temperature", "feels_like", "heat_index", "terasa", "suhu_terasa",
-        "apparent_temp", "felt_temperature"
-    ],
-    "dew_point": [
-        "dew_point_2m", "dewpoint_2m", "dew_point", "dewpoint", "titik_embun"
-    ],
-    "humidity": [
-        "relative_humidity_2m", "relative_humidity", "humidity", "rh", "kelembapan",
-        "kelembaban", "rel_humidity"
-    ],
-    "rain_prob": [
-        "precipitation_probability", "rain_probability", "rain_prob", "pop",
-        "probability_of_precipitation", "hujan", "peluang_hujan", "rain_chance",
-        "precip_prob", "precipitation_probability_max"
-    ],
-    "precip": [
-        "precipitation", "precipitation_sum", "precipitation_mm", "rain", "rain_mm",
-        "rainfall", "curah_hujan", "hujan_mm", "showers"
-    ],
-    "cloud": [
-        "cloud_cover", "cloudcover", "clouds", "total_cloud_cover", "awan",
-        "cloud_cover_total", "cloudiness"
-    ],
-    "pressure": [
-        "pressure_msl", "msl_pressure", "surface_pressure", "pressure", "tekanan",
-        "sea_level_pressure", "slp"
-    ],
-    "wind": [
-        "wind_speed_10m", "wind_speed", "windspeed", "kecepatan_angin", "angin",
-        "wind_10m", "wind"
-    ],
-    "wind_dir": [
-        "wind_direction_10m", "winddirection_10m", "wind_direction", "wind_dir",
-        "arah_angin", "direction"
-    ],
-    "gust": [
-        "wind_gusts_10m", "wind_gust", "gust", "gusts", "hembusan", "windgusts"
-    ],
-    "uv": ["uv_index", "uv", "uvi", "indeks_uv"],
-    "visibility": ["visibility", "vis", "jarak_pandang", "visibility_m", "visibility_km"],
-    "shortwave": [
-        "shortwave_radiation", "solar_radiation", "ghi", "radiasi", "irradiance",
-        "global_horizontal_irradiance"
-    ],
-    "weather_code": ["weather_code", "weathercode", "kode_cuaca", "code"],
-    "condition": ["condition", "weather", "summary", "cuaca", "description", "weather_desc"],
-    "confidence": ["confidence", "confidence_pct", "kepercayaan", "data_confidence", "model_confidence"],
-    "active_sources": ["active_sources", "sources_active", "source_count", "model_count"],
-    "total_sources": ["total_sources", "sources_total", "model_total"],
-}
-
-
-def clamp(x: float, lo: float, hi: float) -> float:
-    return max(lo, min(hi, x))
+def clamp(value: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, value))
 
 
 def esc(value: Any) -> str:
@@ -178,20 +284,39 @@ def compact_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 
-def read_json(path: Path) -> Any:
+def pretty_json(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, indent=2)
+
+
+def read_json(path: Path) -> Any | None:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return None
 
 
+def write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def is_scalar(value: Any) -> bool:
+    return value is None or isinstance(value, (str, int, float, bool))
+
+
+def normalize_key(key: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(key).lower())
+
+
 def as_float(value: Any) -> float | None:
     if value is None or isinstance(value, bool):
         return None
-    if isinstance(value, (int, float)) and math.isfinite(float(value)):
-        return float(value)
+    if isinstance(value, (int, float)):
+        if math.isfinite(float(value)):
+            return float(value)
+        return None
     text = str(value).strip()
-    if not text or text in {"-", "—", "None", "null", "nan", "NaN"}:
+    if not text or text.lower() in {"-", "none", "null", "nan", "n/a"} or text == "—":
         return None
     text = text.replace(",", ".")
     match = re.search(r"-?\d+(?:\.\d+)?", text)
@@ -212,37 +337,34 @@ def as_percent(value: Any) -> int | None:
     return int(round(clamp(num, 0, 100)))
 
 
-def round_or_none(value: Any, ndigits: int = 1) -> float | None:
+def as_round(value: Any, ndigits: int = 1) -> float | None:
     num = as_float(value)
     if num is None:
         return None
     return round(num, ndigits)
 
 
-def key_variants(key: str) -> set[str]:
-    k = str(key).lower()
-    compact = re.sub(r"[^a-z0-9]+", "", k)
-    return {k, compact}
-
-
-def pick(row: dict[str, Any], alias_name: str | list[str]) -> Any:
-    if isinstance(alias_name, list):
-        keys = alias_name
-    else:
-        keys = ALIASES.get(alias_name, [alias_name])
+def pick(row: dict[str, Any], alias_name: str | Iterable[str]) -> Any:
+    aliases = list(alias_name) if not isinstance(alias_name, str) else ALIASES.get(alias_name, [alias_name])
     lower = {str(k).lower(): v for k, v in row.items()}
-    compact = {re.sub(r"[^a-z0-9]+", "", str(k).lower()): v for k, v in row.items()}
-    for key in keys:
-        lk = str(key).lower()
-        ck = re.sub(r"[^a-z0-9]+", "", lk)
-        if lk in lower:
-            return lower[lk]
-        if ck in compact:
-            return compact[ck]
-    for lk, v in lower.items():
-        for key in keys:
-            if str(key).lower() in lk:
-                return v
+    compact = {normalize_key(str(k)): v for k, v in row.items()}
+
+    for alias in aliases:
+        alias_l = str(alias).lower()
+        alias_c = normalize_key(alias_l)
+        if alias_l in lower:
+            return lower[alias_l]
+        if alias_c in compact:
+            return compact[alias_c]
+
+    # Soft contains fallback, but avoid one-letter aliases causing false positives.
+    for key_l, value in lower.items():
+        key_c = normalize_key(key_l)
+        for alias in aliases:
+            alias_l = str(alias).lower()
+            alias_c = normalize_key(alias_l)
+            if len(alias_c) >= 4 and (alias_l in key_l or alias_c in key_c):
+                return value
     return None
 
 
@@ -258,11 +380,10 @@ def normalize_hour(value: Any) -> str | None:
         return None
     match = re.search(r"(\d{1,2}):(\d{2})", text)
     if match:
-        h = int(match.group(1))
-        m = int(match.group(2))
+        h, m = int(match.group(1)), int(match.group(2))
         if 0 <= h <= 23 and 0 <= m <= 59:
             return f"{h:02d}:{m:02d}"
-    match = re.fullmatch(r"(\d{1,2})(?:\.00)?", text)
+    match = re.fullmatch(r"(\d{1,2})(?:\.0+)?", text)
     if match:
         h = int(match.group(1))
         if 0 <= h <= 23:
@@ -282,108 +403,146 @@ def parse_date_value(value: Any, fallback: date) -> date:
         except Exception:
             pass
     try:
-        return datetime.fromisoformat(text.replace("Z", "+00:00")).astimezone(JAKARTA).date()
+        dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(JAKARTA)
+        return dt.date()
     except Exception:
         return fallback
 
 
-def parse_dt(time_value: Any, date_value: Any, fallback_day: date, fallback_hour: str) -> datetime:
+def parse_datetime(time_value: Any, date_value: Any, fallback_date: date, fallback_hour: str) -> datetime:
     text = "" if time_value is None else str(time_value).strip().replace("Z", "+00:00")
-    dt: datetime | None = None
     if text:
         for candidate in [text, text.replace(" ", "T"), re.sub(r"([+-]\d{2})(\d{2})$", r"\1:\2", text)]:
             try:
                 dt = datetime.fromisoformat(candidate)
-                break
-            except ValueError:
+                if dt.tzinfo is not None:
+                    dt = dt.astimezone(JAKARTA).replace(tzinfo=None)
+                return dt
+            except Exception:
                 pass
-    if dt is None:
-        d = parse_date_value(date_value, fallback_day)
-        h, m = [int(x) for x in fallback_hour.split(":")]
-        dt = datetime(d.year, d.month, d.day, h, m)
-    if dt.tzinfo is not None:
-        dt = dt.astimezone(JAKARTA).replace(tzinfo=None)
-    return dt
+    d = parse_date_value(date_value, fallback_date)
+    h, m = [int(x) for x in fallback_hour.split(":")]
+    return datetime(d.year, d.month, d.day, h, m)
 
 
-def date_id(d: date) -> str:
+def date_label_id(d: date) -> str:
     return f"{DAY_ID[d.weekday()]}, {d.day} {MONTH_ID[d.month]} {d.year}"
-
-
-def title_from_slug(slug: str) -> tuple[str, str, str]:
-    known = {
-        "dago": ("Dago, Bandung", "Dago", "Bandung"),
-        "jatinangor": ("Jatinangor, Sumedang", "Jatinangor", "Sumedang"),
-        "arjawinangun": ("Arjawinangun, Cirebon", "Arjawinangun", "Cirebon"),
-    }
-    if slug in known:
-        return known[slug]
-    clean = slug.replace("_", " ").replace("-", " ").title()
-    return clean, clean, ""
 
 
 def sentence(value: Any, fallback: str = "Berawan") -> str:
     text = str(value or "").strip()
-    if not text or text in {"-", "—", "None", "null"}:
+    if not text or text.lower() in {"-", "none", "null", "n/a"} or text == "—":
         text = fallback
     text = re.sub(r"[_\-]+", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return text[:1].upper() + text[1:]
 
 
-def heat_index(temp: float | None, rh: float | None) -> float | None:
-    if temp is None:
+def heat_index_c(temp_c: float | None, rh_pct: float | None) -> float | None:
+    if temp_c is None:
         return None
-    if rh is None or temp < 27:
-        return round(temp, 1)
-    t_f = temp * 9 / 5 + 32
-    r = clamp(rh, 1, 100)
+    if rh_pct is None or temp_c < 27:
+        return round(temp_c, 1)
+    t_f = temp_c * 9 / 5 + 32
+    rh = clamp(float(rh_pct), 1, 100)
     hi_f = (
-        -42.379 + 2.04901523 * t_f + 10.14333127 * r
-        - 0.22475541 * t_f * r - 0.00683783 * t_f * t_f
-        - 0.05481717 * r * r + 0.00122874 * t_f * t_f * r
-        + 0.00085282 * t_f * r * r - 0.00000199 * t_f * t_f * r * r
+        -42.379
+        + 2.04901523 * t_f
+        + 10.14333127 * rh
+        - 0.22475541 * t_f * rh
+        - 0.00683783 * t_f * t_f
+        - 0.05481717 * rh * rh
+        + 0.00122874 * t_f * t_f * rh
+        + 0.00085282 * t_f * rh * rh
+        - 0.00000199 * t_f * t_f * rh * rh
     )
     hi_c = (hi_f - 32) * 5 / 9
-    return round(max(temp, hi_c), 1)
+    return round(max(temp_c, hi_c), 1)
 
 
-def risk_score(v: dict[str, float | int | str | None]) -> int:
-    rain = float(v.get("rain_prob") or 0)
-    feels = as_float(v.get("feels"))
-    rh = as_float(v.get("humidity"))
-    gust = as_float(v.get("gust"))
-    uv = as_float(v.get("uv"))
-    confidence = as_float(v.get("confidence")) or 74
+def normalize_visibility(value: Any) -> float | None:
+    num = as_float(value)
+    if num is None:
+        return None
+    # If source is meters, convert to km.
+    if num > 100:
+        num = num / 1000
+    return round(clamp(num, 0, 80), 1)
+
+
+def normalize_wind_speed(value: Any) -> float | None:
+    num = as_float(value)
+    if num is None:
+        return None
+    # Very common API unit mismatch: km/h accidentally labelled as speed.
+    # If it is unrealistically high for the local low-level field, interpret as km/h.
+    if num > 45:
+        num = num / 3.6
+    return round(max(0, num), 1)
+
+
+def normalize_pressure(value: Any) -> float | None:
+    num = as_float(value)
+    if num is None:
+        return None
+    # Pa to hPa.
+    if num > 2000:
+        num = num / 100
+    return round(num, 1)
+
+
+def confidence_from(row: dict[str, Any]) -> int | None:
+    explicit = as_percent(pick(row, "confidence_pct"))
+    if explicit is not None:
+        return explicit
+    active = as_float(pick(row, "active_sources"))
+    total = as_float(pick(row, "total_sources"))
+    if active is not None and total is not None and total > 0:
+        return int(round(clamp(active / total * 100, 0, 100)))
+    return None
+
+
+def compute_risk(variables: dict[str, Any]) -> int:
+    rain = float(variables.get("rain_probability_pct") or 0)
+    feels = as_float(variables.get("apparent_temperature_c"))
+    rh = as_float(variables.get("humidity_pct"))
+    gust = as_float(variables.get("wind_gust_ms"))
+    uv = as_float(variables.get("uv_index"))
+    confidence = as_float(variables.get("confidence_pct"))
 
     heat = 0
     if feels is not None:
-        if feels >= 40:
-            heat = 36
-        elif feels >= 37:
-            heat = 27
-        elif feels >= 34:
-            heat = 18
+        if feels >= 41:
+            heat = 42
+        elif feels >= 38:
+            heat = 32
+        elif feels >= 35:
+            heat = 22
         elif feels >= 32:
-            heat = 10
+            heat = 12
+
     wind = 0
     if gust is not None:
-        if gust >= 17:
-            wind = 36
-        elif gust >= 12:
-            wind = 22
-        elif gust >= 8:
-            wind = 10
+        if gust >= 18:
+            wind = 42
+        elif gust >= 13:
+            wind = 28
+        elif gust >= 9:
+            wind = 14
+
     uv_risk = 0
     if uv is not None:
         if uv >= 11:
-            uv_risk = 24
+            uv_risk = 30
         elif uv >= 8:
-            uv_risk = 16
+            uv_risk = 20
         elif uv >= 6:
-            uv_risk = 8
-    moist = 6 if rh is not None and rh >= 88 else 0
-    conf_penalty = max(0, 65 - confidence) * 0.20
+            uv_risk = 10
+
+    moist = 8 if rh is not None and rh >= 90 else 0
+    conf_penalty = 0 if confidence is None else max(0, 65 - confidence) * 0.20
     return int(round(clamp(max(rain, heat, wind, uv_risk) + moist + conf_penalty, 0, 100)))
 
 
@@ -397,13 +556,13 @@ def status_from_risk(risk: int) -> str:
     return "Aman"
 
 
-def note_for(status: str, v: dict[str, Any], condition: str) -> str:
-    rain = as_float(v.get("rain_prob")) or 0
-    feels = as_float(v.get("feels"))
-    gust = as_float(v.get("gust"))
-    uv = as_float(v.get("uv"))
+def note_for(status: str, variables: dict[str, Any], condition: str) -> str:
+    rain = as_float(variables.get("rain_probability_pct")) or 0
+    feels = as_float(variables.get("apparent_temperature_c"))
+    gust = as_float(variables.get("wind_gust_ms"))
+    uv = as_float(variables.get("uv_index"))
     if status == "Tinggi":
-        return "Risiko tinggi pada jam ini. Hindari aktivitas luar ruang jika tidak mendesak."
+        return "Risiko tinggi pada jam ini. Kurangi aktivitas luar ruang jika tidak mendesak."
     if status == "Waspada":
         return "Perlu persiapan dan pantau perubahan lokal."
     if rain >= 30:
@@ -419,91 +578,61 @@ def note_for(status: str, v: dict[str, Any], condition: str) -> str:
     return "Kondisi relatif aman, tetap pantau lokal."
 
 
-def confidence_from(row: dict[str, Any]) -> int:
-    explicit = as_percent(pick(row, "confidence"))
-    if explicit is not None:
-        return explicit
-    active = as_float(pick(row, "active_sources"))
-    total = as_float(pick(row, "total_sources"))
-    if active is not None and total is not None and total > 0:
-        return int(round(clamp(active / total * 100, 0, 100)))
-    return 74
+def normalize_variables(row: dict[str, Any]) -> dict[str, float | int | str | None]:
+    temp = as_round(pick(row, "temperature_c"), 1)
+    humidity = as_percent(pick(row, "humidity_pct"))
+    rain_prob = as_percent(pick(row, "rain_probability_pct"))
+    precip = as_round(pick(row, "precipitation_mm"), 2)
+    cloud = as_percent(pick(row, "cloud_cover_pct"))
+    pressure = normalize_pressure(pick(row, "pressure_hpa"))
+    wind = normalize_wind_speed(pick(row, "wind_speed_ms"))
+    wind_dir = as_round(pick(row, "wind_direction_deg"), 0)
+    gust = normalize_wind_speed(pick(row, "wind_gust_ms"))
+    uv = as_round(pick(row, "uv_index"), 1)
+    visibility = normalize_visibility(pick(row, "visibility_km"))
+    dew_point = as_round(pick(row, "dew_point_c"), 1)
+    shortwave = as_round(pick(row, "shortwave_radiation"), 1)
+    feels = as_round(pick(row, "apparent_temperature_c"), 1)
+    if feels is None:
+        feels = heat_index_c(temp, humidity)
+    confidence = confidence_from(row)
 
+    if wind_dir is not None:
+        wind_dir = float(wind_dir) % 360
+    if gust is None and wind is not None:
+        gust = round(wind * 1.45, 1)
 
-def is_scalar(v: Any) -> bool:
-    return not isinstance(v, (dict, list, tuple))
-
-
-def explode_columnar_dict(obj: dict[str, Any], path: str = "") -> list[dict[str, Any]]:
-    """
-    Membaca schema ala Open-Meteo:
-      {"hourly": {"time": [...], "temperature_2m": [...], ...}}
-    menjadi list row:
-      [{"time": t0, "temperature_2m": x0, ...}, ...]
-    Ini sumber bug terbesar di v64.2: array variabel tidak dipasangkan per jam.
-    """
-    list_keys = [k for k, v in obj.items() if isinstance(v, list) and v and not all(isinstance(x, dict) for x in v)]
-    if not list_keys:
-        return []
-    time_key = None
-    for k in list_keys:
-        if any(alias in str(k).lower() for alias in ["time", "jam", "hour", "valid"]):
-            time_key = k
-            break
-    if time_key is None:
-        return []
-    n = len(obj[time_key])
-    if n <= 0:
-        return []
-    usable = [k for k in list_keys if len(obj[k]) == n]
-    if len(usable) < 2:
-        return []
-    scalars = {k: v for k, v in obj.items() if is_scalar(v)}
-    rows = []
-    for i in range(n):
-        row = dict(scalars)
-        row["_path"] = path
-        for k in usable:
-            row[k] = obj[k][i]
-        rows.append(row)
-    return rows
-
-
-def extract_records(obj: Any, path: str = "") -> list[dict[str, Any]]:
-    records: list[dict[str, Any]] = []
-    if isinstance(obj, dict):
-        records.extend(explode_columnar_dict(obj, path))
-        # Row-like dict.
-        if row_score(obj) >= 5:
-            row = {k: v for k, v in obj.items() if is_scalar(v)}
-            row["_path"] = path
-            records.append(row)
-        for k, v in obj.items():
-            records.extend(extract_records(v, f"{path}.{k}" if path else str(k)))
-    elif isinstance(obj, list):
-        if obj and all(isinstance(x, dict) for x in obj):
-            for i, item in enumerate(obj):
-                if isinstance(item, dict):
-                    row = {k: v for k, v in item.items() if is_scalar(v)}
-                    row["_path"] = f"{path}[{i}]"
-                    if row_score(row) >= 5:
-                        records.append(row)
-                    records.extend(extract_records(item, f"{path}[{i}]"))
-        else:
-            for i, item in enumerate(obj):
-                records.extend(extract_records(item, f"{path}[{i}]"))
-    return records
+    variables: dict[str, float | int | str | None] = {
+        "temperature_c": temp,
+        "apparent_temperature_c": feels,
+        "dew_point_c": dew_point,
+        "humidity_pct": humidity,
+        "rain_probability_pct": rain_prob,
+        "precipitation_mm": precip,
+        "cloud_cover_pct": cloud,
+        "pressure_hpa": pressure,
+        "wind_speed_ms": wind,
+        "wind_direction_deg": wind_dir,
+        "wind_gust_ms": gust,
+        "uv_index": uv,
+        "visibility_km": visibility,
+        "shortwave_radiation": shortwave,
+        "confidence_pct": confidence,
+        "weather_code": pick(row, "weather_code"),
+    }
+    variables["risk_score"] = compute_risk(variables)
+    return variables
 
 
 def row_score(row: dict[str, Any]) -> int:
     keys = " ".join(str(k).lower() for k in row)
     score = 0
     if any(x in keys for x in ["time", "hour", "jam", "datetime", "valid", "timestamp"]):
-        score += 3
+        score += 4
     if any(x in keys for x in ["temp", "suhu", "temperature", "apparent", "terasa"]):
-        score += 3
+        score += 4
     if any(x in keys for x in ["rain", "precip", "hujan", "pop", "probability"]):
-        score += 3
+        score += 4
     if any(x in keys for x in ["humidity", "rh", "kelembapan", "kelembaban"]):
         score += 2
     if any(x in keys for x in ["wind", "angin", "gust"]):
@@ -513,19 +642,88 @@ def row_score(row: dict[str, Any]) -> int:
     return score
 
 
+def explode_columnar_dict(obj: dict[str, Any], path: str = "") -> list[dict[str, Any]]:
+    list_keys = [
+        k
+        for k, v in obj.items()
+        if isinstance(v, list) and v and not all(isinstance(x, dict) for x in v)
+    ]
+    if not list_keys:
+        return []
+
+    time_key = None
+    for key in list_keys:
+        key_l = str(key).lower()
+        if any(alias in key_l for alias in ["time", "jam", "hour", "valid"]):
+            time_key = key
+            break
+    if time_key is None:
+        return []
+
+    n = len(obj[time_key])
+    usable = [key for key in list_keys if len(obj.get(key, [])) == n]
+    if n <= 0 or len(usable) < 2:
+        return []
+
+    scalars = {k: v for k, v in obj.items() if is_scalar(v)}
+    rows: list[dict[str, Any]] = []
+    for i in range(n):
+        row = dict(scalars)
+        row["_path"] = path
+        for key in usable:
+            row[key] = obj[key][i]
+        rows.append(row)
+    return rows
+
+
+def extract_records(obj: Any, path: str = "") -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    if isinstance(obj, dict):
+        records.extend(explode_columnar_dict(obj, path))
+        if row_score(obj) >= 7:
+            row = {k: v for k, v in obj.items() if is_scalar(v)}
+            if row:
+                row["_path"] = path
+                records.append(row)
+        for key, value in obj.items():
+            records.extend(extract_records(value, f"{path}.{key}" if path else str(key)))
+    elif isinstance(obj, list):
+        for i, item in enumerate(obj):
+            item_path = f"{path}[{i}]"
+            if isinstance(item, dict):
+                row = {k: v for k, v in item.items() if is_scalar(v)}
+                if row_score(row) >= 7:
+                    row["_path"] = item_path
+                    records.append(row)
+            records.extend(extract_records(item, item_path))
+    return records
+
+
 def csv_rows(path: Path) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     try:
-        with path.open("r", encoding="utf-8-sig", newline="") as f:
-            for row in csv.DictReader(f):
-                row["_path"] = path.name
-                out.append(dict(row))
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            for row in csv.DictReader(handle):
+                if row_score(row) >= 7:
+                    clean = dict(row)
+                    clean["_path"] = path.name
+                    out.append(clean)
     except Exception:
-        pass
+        return []
     return out
 
 
-def candidate_rows(loc_dir: Path, api: Any) -> list[dict[str, Any]]:
+def load_api(loc_dir: Path) -> Any | None:
+    for name in ["langit_api_v1.json", "anemos_api_v1.json", "forecast.json", "public_api.json"]:
+        path = loc_dir / name
+        if path.exists():
+            data = read_json(path)
+            if data is not None:
+                return data
+    return None
+
+
+def candidate_rows(loc_dir: Path, api: Any | None) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     if api is not None:
         rows.extend(extract_records(api, "api"))
@@ -540,143 +738,64 @@ def candidate_rows(loc_dir: Path, api: Any) -> list[dict[str, Any]]:
 
     for path in sorted(loc_dir.glob("*.csv")):
         low = path.name.lower()
-        if any(skip in low for skip in ["source", "model", "accuracy", "diagnostic"]):
+        if any(skip in low for skip in CSV_SKIP_PATTERNS):
             continue
-        rows.extend([r for r in csv_rows(path) if row_score(r) >= 5])
+        rows.extend(csv_rows(path))
 
     unique: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for r in rows:
-        sig = "|".join(str(pick(r, k)) for k in ["time", "date", "temp", "rain_prob", "humidity", "wind"])
-        if sig in seen:
+    for row in rows:
+        signature = "|".join(
+            str(pick(row, key))
+            for key in ["time", "date", "temperature_c", "rain_probability_pct", "humidity_pct", "wind_speed_ms"]
+        )
+        if signature in seen:
             continue
-        seen.add(sig)
-        unique.append(r)
+        seen.add(signature)
+        unique.append(row)
     return unique
-
-
-def normalize_visibility(value: Any) -> float | None:
-    num = as_float(value)
-    if num is None:
-        return None
-    # If value looks like meters, convert to km.
-    if num > 100:
-        num = num / 1000
-    return round(clamp(num, 0, 80), 1)
-
-
-def normalize_variables(row: dict[str, Any]) -> dict[str, float | int | str | None]:
-    temp = round_or_none(pick(row, "temp"))
-    humidity = as_percent(pick(row, "humidity"))
-    rain_prob = as_percent(pick(row, "rain_prob"))
-    precip = round_or_none(pick(row, "precip"))
-    cloud = as_percent(pick(row, "cloud"))
-    pressure = round_or_none(pick(row, "pressure"))
-    wind = round_or_none(pick(row, "wind"))
-    wind_dir = round_or_none(pick(row, "wind_dir"), 0)
-    gust = round_or_none(pick(row, "gust"))
-    uv = round_or_none(pick(row, "uv"))
-    visibility = normalize_visibility(pick(row, "visibility"))
-    dew_point = round_or_none(pick(row, "dew_point"))
-    shortwave = round_or_none(pick(row, "shortwave"))
-
-    feels = round_or_none(pick(row, "feels"))
-    if feels is None:
-        feels = heat_index(temp, humidity)
-
-    confidence = confidence_from(row)
-
-    variables: dict[str, float | int | str | None] = {
-        "temp": temp,
-        "feels": feels,
-        "dew_point": dew_point,
-        "humidity": humidity,
-        "rain_prob": rain_prob if rain_prob is not None else 0,
-        "precip": precip,
-        "cloud": cloud,
-        "pressure": pressure,
-        "wind": wind if wind is not None else 2.2,
-        "wind_dir": wind_dir if wind_dir is not None else 115,
-        "gust": gust if gust is not None else wind,
-        "uv": uv,
-        "visibility": visibility,
-        "shortwave": shortwave,
-        "confidence": confidence,
-        "weather_code": pick(row, "weather_code"),
-    }
-    variables["risk"] = risk_score(variables)
-    return variables
 
 
 def build_hours(rows: list[dict[str, Any]]) -> list[HourPoint]:
     today = datetime.now(JAKARTA).date()
     points: list[HourPoint] = []
+
     for row in rows:
         time_value = pick(row, "time")
         hour = normalize_hour(time_value) or normalize_hour(pick(row, ["jam", "hour"]))
         if hour is None:
             continue
-        dt = parse_dt(time_value, pick(row, "date"), today, hour)
+        dt = parse_datetime(time_value, pick(row, "date"), today, hour)
         variables = normalize_variables(row)
+        # Reject records that do not really contain core weather values.
+        if variables.get("temperature_c") is None and variables.get("rain_probability_pct") is None:
+            continue
         condition = sentence(pick(row, "condition"), "Berawan")
-        risk = int(variables.get("risk") or 0)
+        risk = int(variables.get("risk_score") or 0)
         status = status_from_risk(risk)
-        points.append(HourPoint(
-            iso=dt.isoformat(timespec="minutes"),
-            date_label=date_id(dt.date()),
-            hour=f"{dt.hour:02d}:{dt.minute:02d}",
-            condition=condition,
-            status=status,
-            risk=risk,
-            note=note_for(status, variables, condition),
-            variables=variables,
-        ))
-
-    if not points:
-        for i, hour in enumerate(["00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00"]):
-            dt = parse_dt(None, None, today, hour)
-            temp = round(24 + max(0, math.sin(i / 7 * math.pi) * 6), 1)
-            rh = int(round(82 - max(0, math.sin(i / 7 * math.pi) * 22)))
-            variables = {
-                "temp": temp,
-                "feels": heat_index(temp, rh),
-                "dew_point": None,
-                "humidity": rh,
-                "rain_prob": 0,
-                "precip": None,
-                "cloud": 55,
-                "pressure": 1010,
-                "wind": 2.0,
-                "wind_dir": 115,
-                "gust": 3.2,
-                "uv": None,
-                "visibility": None,
-                "shortwave": None,
-                "confidence": 45,
-                "weather_code": None,
-            }
-            variables["risk"] = risk_score(variables)
-            risk = int(variables["risk"])
-            points.append(HourPoint(
+        points.append(
+            HourPoint(
                 iso=dt.isoformat(timespec="minutes"),
-                date_label=date_id(dt.date()),
-                hour=hour,
-                condition="Data terbatas",
-                status=status_from_risk(risk),
-                risk=risk,
-                note="Data terbatas. Gunakan hanya sebagai visualisasi sementara.",
+                date=dt.date().isoformat(),
+                date_label=date_label_id(dt.date()),
+                hour=f"{dt.hour:02d}:{dt.minute:02d}",
+                condition=condition,
+                status=status,
+                risk_score=risk,
+                note=note_for(status, variables, condition),
                 variables=variables,
-            ))
+            )
+        )
 
     points.sort(key=lambda p: p.iso)
     out: list[HourPoint] = []
     seen: set[tuple[str, str]] = set()
-    for p in points:
-        key = (p.date_label, p.hour)
+    for point in points:
+        key = (point.date, point.hour)
         if key in seen:
             continue
         seen.add(key)
-        out.append(p)
+        out.append(point)
         if len(out) >= 96:
             break
     return out
@@ -692,12 +811,14 @@ def geo_from_dir(loc_dir: Path) -> tuple[float | None, float | None, str | None]
             continue
         features = data.get("features")
         if isinstance(features, list) and features:
-            feat = features[0]
-            geom = feat.get("geometry", {}) if isinstance(feat, dict) else {}
-            props = feat.get("properties", {}) if isinstance(feat, dict) else {}
-            coords = geom.get("coordinates") if isinstance(geom, dict) else None
-            if isinstance(coords, list) and len(coords) >= 2:
-                return as_float(coords[1]), as_float(coords[0]), str(props.get("name") or props.get("title") or "") or None
+            feature = features[0]
+            if isinstance(feature, dict):
+                geometry = feature.get("geometry") or {}
+                props = feature.get("properties") or {}
+                coords = geometry.get("coordinates") if isinstance(geometry, dict) else None
+                if isinstance(coords, list) and len(coords) >= 2:
+                    name_value = props.get("name") or props.get("title") or props.get("location")
+                    return as_float(coords[1]), as_float(coords[0]), str(name_value) if name_value else None
         coords = data.get("coordinates")
         if isinstance(coords, list) and len(coords) >= 2:
             return as_float(coords[1]), as_float(coords[0]), None
@@ -706,684 +827,624 @@ def geo_from_dir(loc_dir: Path) -> tuple[float | None, float | None, str | None]
 
 def find_lat_lon(obj: Any) -> tuple[float | None, float | None]:
     if isinstance(obj, dict):
-        la = as_float(pick(obj, ["latitude", "lat"]))
-        lo = as_float(pick(obj, ["longitude", "lon", "lng"]))
-        if la is not None and lo is not None and -90 <= la <= 90 and -180 <= lo <= 180:
-            return la, lo
-        for v in obj.values():
-            a, b = find_lat_lon(v)
-            if a is not None and b is not None:
-                return a, b
+        lat = as_float(pick(obj, ["latitude", "lat"]))
+        lon = as_float(pick(obj, ["longitude", "lon", "lng"]))
+        if lat is not None and lon is not None and -90 <= lat <= 90 and -180 <= lon <= 180:
+            return lat, lon
+        for value in obj.values():
+            lat2, lon2 = find_lat_lon(value)
+            if lat2 is not None and lon2 is not None:
+                return lat2, lon2
     elif isinstance(obj, list):
-        for v in obj:
-            a, b = find_lat_lon(v)
-            if a is not None and b is not None:
-                return a, b
+        for value in obj:
+            lat2, lon2 = find_lat_lon(value)
+            if lat2 is not None and lon2 is not None:
+                return lat2, lon2
     return None, None
 
 
-def location_name(api: Any, slug: str, geo_name: str | None) -> tuple[str, str, str]:
-    full, short, admin = title_from_slug(slug)
+def location_name(api: Any | None, slug: str, geo_name: str | None) -> tuple[str, str, str]:
+    known = KNOWN_LOCATIONS.get(slug)
+    if known:
+        full, short, admin, _, _ = known
+    else:
+        clean = slug.replace("_", " ").replace("-", " ").title()
+        full, short, admin = clean, clean, ""
+
     candidates: list[str] = []
     if geo_name:
         candidates.append(geo_name)
     if isinstance(api, dict):
-        for k in ["location_name", "display_name", "name", "title"]:
-            v = api.get(k)
-            if isinstance(v, str) and v.strip():
-                candidates.append(v.strip())
+        for key in ["location_name", "display_name", "name", "title"]:
+            value = api.get(key)
+            if isinstance(value, str) and value.strip():
+                candidates.append(value.strip())
         loc = api.get("location")
         if isinstance(loc, dict):
             parts = []
-            for k in ["name", "adm4", "city", "regency", "admin", "province"]:
-                v = loc.get(k)
-                if isinstance(v, str) and v.strip():
-                    parts.append(v.strip())
+            for key in ["name", "adm4", "city", "regency", "admin", "province"]:
+                value = loc.get(key)
+                if isinstance(value, str) and value.strip():
+                    parts.append(value.strip())
             if parts:
                 candidates.append(", ".join(dict.fromkeys(parts)))
+
     if candidates:
         full = candidates[0]
-        bits = [x.strip() for x in full.split(",")]
+        bits = [part.strip() for part in full.split(",") if part.strip()]
         short = bits[0] if bits else full
         admin = bits[1] if len(bits) > 1 else admin
     return full, short, admin
 
 
-def load_api(loc_dir: Path) -> Any:
-    for name in ["langit_api_v1.json", "anemos_api_v1.json", "forecast.json", "public_api.json"]:
-        path = loc_dir / name
-        if path.exists():
-            data = read_json(path)
-            if data is not None:
-                return data
-    return None
+def coverage_from_hours(hours: list[HourPoint]) -> tuple[dict[str, int], list[str], list[str], list[str], bool]:
+    coverage: dict[str, int] = {}
+    for layer in LAYER_DEFS:
+        field_name = layer["field"]
+        count = 0
+        for hour in hours:
+            value = hour.variables.get(field_name)
+            if as_float(value) is not None:
+                count += 1
+        coverage[layer["key"]] = count
+
+    # risk is always computed if any hour is valid.
+    if hours:
+        coverage["risk"] = len(hours)
+
+    available_layers = [layer["key"] for layer in LAYER_DEFS if coverage.get(layer["key"], 0) > 0]
+    disabled_layers = [layer["key"] for layer in LAYER_DEFS if layer["key"] not in available_layers]
+    missing_variables = [LAYER_BY_KEY[key]["field"] for key in disabled_layers]
+    wind_valid = (
+        coverage.get("wind", 0) > 0
+        and sum(1 for hour in hours if as_float(hour.variables.get("wind_direction_deg")) is not None) > 0
+    )
+    return coverage, available_layers, disabled_layers, missing_variables, wind_valid
 
 
 def read_location(loc_dir: Path) -> LocationPack | None:
     if not loc_dir.is_dir():
         return None
     api = load_api(loc_dir)
-    glat, glon, gname = geo_from_dir(loc_dir)
-    alat, alon = find_lat_lon(api)
-    lat = glat if glat is not None else alat
-    lon = glon if glon is not None else alon
-    if lat is None or lon is None:
-        fallback = {
-            "dago": (-6.883, 107.613),
-            "jatinangor": (-6.933, 107.771),
-            "arjawinangun": (-6.646, 108.408),
-        }.get(loc_dir.name, (-6.9, 107.6))
-        lat, lon = fallback
-    full, short, admin = location_name(api, loc_dir.name, gname)
+    geo_lat, geo_lon, geo_name = geo_from_dir(loc_dir)
+    api_lat, api_lon = find_lat_lon(api)
+    coordinate_source = "payload"
+    lat = geo_lat if geo_lat is not None else api_lat
+    lon = geo_lon if geo_lon is not None else api_lon
+    if geo_lat is not None and geo_lon is not None:
+        coordinate_source = "geojson"
+    elif api_lat is not None and api_lon is not None:
+        coordinate_source = "api"
+    elif loc_dir.name in KNOWN_LOCATIONS:
+        _, _, _, lat_f, lon_f = KNOWN_LOCATIONS[loc_dir.name]
+        lat, lon = lat_f, lon_f
+        coordinate_source = "known-location-fallback"
+    else:
+        return None
+
+    assert lat is not None and lon is not None
+    name, short, admin = location_name(api, loc_dir.name, geo_name)
     rows = candidate_rows(loc_dir, api)
     hours = build_hours(rows)
+    if not hours:
+        return None
+
+    coverage, available, disabled, missing, wind_valid = coverage_from_hours(hours)
     now = datetime.now(JAKARTA)
     return LocationPack(
         slug=loc_dir.name,
-        name=full,
+        name=name,
         short_name=short,
         admin=admin,
-        lat=float(lat),
-        lon=float(lon),
-        updated_label=f"{date_id(now.date())}, {now:%H:%M} WIB",
+        latitude=float(lat),
+        longitude=float(lon),
+        updated_label=f"{date_label_id(now.date())}, {now:%H:%M} WIB",
+        coordinate_source=coordinate_source,
         hours=hours,
+        coverage=coverage,
+        available_layers=available,
+        disabled_layers=disabled,
+        missing_variables=missing,
+        wind_field_valid=wind_valid,
     )
 
 
-def peak_hour(pack: LocationPack) -> HourPoint:
-    return max(pack.hours, key=lambda h: (
-        h.risk,
-        as_float(h.variables.get("rain_prob")) or 0,
-        as_float(h.variables.get("feels")) or 0,
-    ))
+def load_locations(root: Path) -> list[LocationPack]:
+    packs: list[LocationPack] = []
+    for loc_dir in sorted(root.iterdir() if root.exists() else []):
+        if not loc_dir.is_dir():
+            continue
+        pack = read_location(loc_dir)
+        if pack is not None:
+            packs.append(pack)
+    return packs
 
 
-def write_text(path: Path, content: str) -> None:
-    path.write_text(content, encoding="utf-8")
+def best_hour(pack: LocationPack) -> HourPoint:
+    return max(
+        pack.hours,
+        key=lambda hour: (
+            hour.risk_score,
+            as_float(hour.variables.get("rain_probability_pct")) or 0,
+            as_float(hour.variables.get("apparent_temperature_c")) or 0,
+        ),
+    )
 
 
-HTML_TEMPLATE = r"""<!doctype html>
+def first_safe_hour(pack: LocationPack) -> HourPoint:
+    return min(pack.hours, key=lambda hour: (hour.risk_score, hour.iso))
+
+
+def hour_summary(pack: LocationPack) -> dict[str, Any]:
+    peak = best_hour(pack)
+    safe = first_safe_hour(pack)
+    return {
+        "slug": pack.slug,
+        "name": pack.name,
+        "status": peak.status,
+        "risk_score": peak.risk_score,
+        "peak_hour": peak.hour,
+        "safe_hour": safe.hour,
+        "rain_probability_pct": peak.variables.get("rain_probability_pct"),
+        "temperature_c": peak.variables.get("temperature_c"),
+        "wind_speed_ms": peak.variables.get("wind_speed_ms"),
+        "wind_direction_deg": peak.variables.get("wind_direction_deg"),
+    }
+
+
+def manifest_for(pack: LocationPack | None, packs: list[LocationPack], portal: bool) -> dict[str, Any]:
+    all_packs = packs if portal else ([pack] if pack else [])
+    total_hours = sum(len(p.hours) for p in all_packs)
+    global_coverage: dict[str, int] = {}
+    for layer in LAYER_DEFS:
+        global_coverage[layer["key"]] = sum(p.coverage.get(layer["key"], 0) for p in all_packs)
+    available = [layer["key"] for layer in LAYER_DEFS if global_coverage.get(layer["key"], 0) > 0]
+    disabled = [layer["key"] for layer in LAYER_DEFS if layer["key"] not in available]
+    return {
+        "version": VERSION,
+        "engine": ENGINE_NAME,
+        "generated_at": datetime.now(JAKARTA).isoformat(timespec="seconds"),
+        "portal": portal,
+        "location_count": len(all_packs),
+        "hour_count": total_hours,
+        "coverage": global_coverage,
+        "available_layers": available,
+        "disabled_layers": disabled,
+        "missing_variables": [LAYER_BY_KEY[key]["field"] for key in disabled],
+        "wind_field_valid": any(p.wind_field_valid for p in all_packs),
+        "locations": [hour_summary(p) for p in all_packs],
+        "notes": [
+            "Peta adalah estimasi field dari titik prakiraan publik, bukan radar observasi.",
+            "Portal memakai IDW interpolation antar lokasi aktif.",
+            "Peta per lokasi memakai local-radius field agar tidak mewarnai area terlalu luas.",
+        ],
+    }
+
+
+HTML_TEMPLATE = r'''<!doctype html>
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="generator" content="LANGIT v64.3 Full Variable Wind Field Map Engine">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://basemaps.cartocdn.com">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <style>
 :root{
-  --bg:#020814;--panel:rgba(3,13,25,.78);--line:rgba(148,163,184,.24);
-  --text:#f8fbff;--muted:#b8c7d9;--blue:#22a7ff;--cyan:#2dd4bf;
+  --bg:#050b13;--panel:#06172a;--panel2:rgba(8,24,43,.82);--line:rgba(132,190,255,.28);
+  --text:#f5fbff;--muted:#a8bfd5;--blue:#28a8ff;--cyan:#38f4df;--yellow:#f8ca4f;--orange:#f68d3b;--red:#ff4d6d;
+  --shadow:0 20px 70px rgba(0,0,0,.42);--radius:20px;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
 }
-*{box-sizing:border-box}
-html,body,#map{height:100%;margin:0}
-body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
-#map{z-index:1;background:#08111d}.leaflet-container{font-family:inherit;background:#08111d}.leaflet-control-attribution{font-size:10px;opacity:.55}
-.leaflet-control-zoom a{background:rgba(4,15,27,.88)!important;color:#eaf6ff!important;border-color:rgba(148,163,184,.20)!important}
-.atmos-canvas,.wind-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.atmos-canvas{z-index:405;mix-blend-mode:screen;opacity:.95}.wind-canvas{z-index:430;opacity:.74}
-.map-vignette{position:absolute;inset:0;z-index:440;pointer-events:none;background:radial-gradient(circle at 50% 50%,transparent 0,transparent 42%,rgba(0,0,0,.22) 78%,rgba(0,0,0,.48) 100%),linear-gradient(90deg,rgba(2,8,20,.28),transparent 18%,transparent 78%,rgba(2,8,20,.24))}
-.topbar{position:absolute;left:0;right:0;top:0;z-index:720;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 18px;background:linear-gradient(180deg,rgba(2,8,20,.86),rgba(2,8,20,.10));pointer-events:none}
-.brand{pointer-events:auto;display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:rgba(3,13,25,.66);padding:8px 12px;border-radius:999px;box-shadow:0 18px 44px rgba(0,0,0,.28);backdrop-filter:blur(16px)}
-.logo{width:24px;height:24px;border-radius:9px;background:linear-gradient(135deg,#31e6c3,#20a4ff 54%,#1d4ed8);box-shadow:0 0 22px rgba(37,169,255,.58)}
-.brand b{font-size:13px;letter-spacing:-.03em}.brand small{display:block;color:var(--muted);font-size:10px;line-height:1}
-.actions{pointer-events:auto;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:min(920px,calc(100vw - 180px))}
-.chip{border:1px solid var(--line);background:rgba(3,13,25,.72);color:var(--text);border-radius:999px;padding:8px 10px;font-weight:850;font-size:12px;cursor:pointer;backdrop-filter:blur(14px);box-shadow:0 14px 32px rgba(0,0,0,.22)}
-.chip.active{border-color:rgba(125,211,252,.82);background:linear-gradient(135deg,#1d4ed8,#22a7ff)}
-.side-panel{position:absolute;left:18px;top:78px;z-index:710;width:min(365px,calc(100vw - 36px));border:1px solid rgba(96,165,250,.40);background:linear-gradient(180deg,rgba(3,13,25,.90),rgba(6,21,38,.78));border-radius:22px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.42);backdrop-filter:blur(20px)}
-.panel-head{padding:18px 18px 14px;border-bottom:1px solid rgba(148,163,184,.15)}.panel-kicker{display:flex;align-items:center;gap:8px;color:#aee9ff;font-size:11px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
-.pulse{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 7px rgba(45,212,191,.12),0 0 22px rgba(45,212,191,.70)}
-.panel-head h1{margin:0 0 8px;font-size:25px;line-height:1.02;letter-spacing:-.05em}.panel-head p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.45}
-.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}.metric{min-height:76px;border:1px solid rgba(148,163,184,.18);background:rgba(15,42,70,.64);border-radius:15px;padding:11px}.metric span{display:block;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}.metric b{display:block;margin-top:5px;font-size:22px;line-height:1}
-.panel-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-top:1px solid rgba(148,163,184,.14);color:var(--muted);font-size:11px}
-.legend{position:absolute;right:18px;bottom:118px;z-index:710;width:220px;border:1px solid var(--line);background:rgba(3,13,25,.76);border-radius:18px;padding:13px;backdrop-filter:blur(18px);box-shadow:0 22px 48px rgba(0,0,0,.32)}
-.legend-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;font-weight:900}.scale{height:9px;border-radius:999px;background:linear-gradient(90deg,#2dd4bf 0%,#38bdf8 30%,#facc15 58%,#fb923c 78%,#ef4444 100%);box-shadow:0 0 20px rgba(250,204,21,.20)}
-.scale-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:5px}.legend-note{margin-top:10px;color:var(--muted);font-size:11px;line-height:1.35}
-.timeline{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:730;width:min(830px,calc(100vw - 40px));border:1px solid rgba(125,211,252,.25);background:rgba(3,13,25,.82);border-radius:22px;padding:12px;box-shadow:0 24px 70px rgba(0,0,0,.45);backdrop-filter:blur(22px)}
-.timeline-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 4px 10px}.timeline-title{font-size:12px;color:var(--muted);font-weight:800}.play{border:1px solid rgba(125,211,252,.35);background:rgba(15,42,70,.70);color:var(--text);border-radius:999px;padding:8px 12px;font-weight:900;cursor:pointer}
-.time-track{position:relative;display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;scrollbar-color:#8aa4bd transparent}.time{flex:0 0 auto;min-width:68px;border:1px solid rgba(148,163,184,.22);background:rgba(15,42,70,.64);color:var(--text);border-radius:13px;padding:9px 8px;cursor:pointer;text-align:center}.time b{display:block;font-size:13px}.time span{display:block;margin-top:2px;color:var(--muted);font-size:10px;font-weight:800}.time.active{border-color:rgba(125,211,252,.9);background:linear-gradient(135deg,#1d4ed8,#22a7ff);box-shadow:0 0 0 4px rgba(34,167,255,.12)}
-.inspect{position:absolute;left:18px;bottom:118px;z-index:710;width:min(340px,calc(100vw - 36px));border:1px solid var(--line);background:rgba(3,13,25,.76);border-radius:18px;padding:14px;backdrop-filter:blur(18px);box-shadow:0 22px 48px rgba(0,0,0,.32)}.inspect h2{margin:0 0 6px;font-size:16px;letter-spacing:-.03em}.inspect p{margin:0;color:var(--muted);font-size:12px;line-height:1.42}
-.location-label{border:1px solid rgba(125,211,252,.45);background:rgba(3,13,25,.82);color:#f8fbff;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:900;box-shadow:0 10px 24px rgba(0,0,0,.28)}.leaflet-marker-icon{filter:drop-shadow(0 10px 18px rgba(0,0,0,.42))}
-.leaflet-popup-content-wrapper{border-radius:18px;background:#f8fbff;box-shadow:0 24px 60px rgba(0,0,0,.35)}.leaflet-popup-content{margin:14px;min-width:260px}.popup-title{font-weight:950;font-size:16px;letter-spacing:-.03em;color:#07111f}.popup-sub{color:#475569;font-size:12px;margin-top:3px}.popup-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.popup-cell{border:1px solid #dbe7f3;background:#eef6ff;border-radius:10px;padding:8px;color:#06111f}.popup-cell b{display:block;font-size:15px}.popup-cell span{font-size:10px;color:#64748b;text-transform:uppercase;font-weight:800}
-@media(max-width:820px){.side-panel{top:68px;left:12px;width:calc(100vw - 24px);max-height:42vh;overflow:auto}.actions{max-width:calc(100vw - 128px);overflow-x:auto;flex-wrap:nowrap}.chip{white-space:nowrap}.legend{display:none}.inspect{display:none}.timeline{bottom:12px;width:calc(100vw - 24px)}}
+*{box-sizing:border-box}html,body,#map{height:100%;margin:0;background:var(--bg);color:var(--text)}
+body{overflow:hidden}.leaflet-container{background:#07111c}.leaflet-control-attribution{font-size:10px;background:rgba(3,8,14,.62)!important;color:#8aa1b8!important}.leaflet-control-zoom a{background:#071829!important;color:#fff!important;border-color:rgba(122,182,255,.25)!important}
+.canvas-layer{position:absolute;inset:0;pointer-events:none;z-index:430}.wind-layer{position:absolute;inset:0;pointer-events:none;z-index:440}.grain{position:absolute;inset:0;z-index:450;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px);background-size:8px 8px;mix-blend-mode:screen;opacity:.45}.vignette{position:absolute;inset:0;z-index:451;pointer-events:none;background:radial-gradient(circle at 50% 45%,transparent 0,rgba(0,0,0,.10) 45%,rgba(0,0,0,.38) 100%)}
+.brand{position:absolute;left:18px;top:18px;z-index:700;display:flex;align-items:center;gap:9px;background:rgba(4,14,25,.76);border:1px solid rgba(96,167,255,.25);border-radius:999px;padding:8px 12px;box-shadow:var(--shadow);backdrop-filter:blur(14px)}.logo{width:28px;height:28px;border-radius:10px;background:linear-gradient(135deg,#1b7dff,#4cf5df);box-shadow:0 0 22px rgba(48,202,255,.42)}.brand b{font-size:13px;letter-spacing:.02em}.brand small{display:block;color:var(--muted);font-size:10px;margin-top:1px}
+.panel{position:absolute;left:18px;top:74px;z-index:700;width:270px;background:var(--panel2);border:1px solid rgba(108,180,255,.35);box-shadow:var(--shadow);border-radius:var(--radius);backdrop-filter:blur(18px);padding:16px}.eyebrow{font-size:10px;color:#79fff0;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.panel h1{font-size:22px;line-height:1.05;margin:7px 0 8px}.panel p{font-size:12px;line-height:1.45;color:#c4d7e8;margin:0 0 14px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metric{border:1px solid rgba(119,184,255,.30);background:rgba(13,42,73,.72);border-radius:12px;padding:10px}.metric small{display:block;color:#91aac2;font-size:10px}.metric b{display:block;font-size:18px;margin-top:4px}.footline{display:flex;justify-content:space-between;color:#92a9c1;font-size:10px;border-top:1px solid rgba(150,200,255,.15);margin-top:14px;padding-top:10px}.pill-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);margin-right:6px}
+.layerbar{position:absolute;top:18px;right:18px;z-index:710;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:min(760px,calc(100vw - 340px))}.layerbtn,.modebtn,.timebtn,.playbtn,.backbtn{border:1px solid rgba(130,190,255,.35);background:rgba(5,15,29,.82);color:#eaf7ff;border-radius:999px;font-weight:800;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.22);backdrop-filter:blur(12px);transition:.18s ease}.layerbtn{font-size:12px;padding:8px 12px}.layerbtn.active,.modebtn.active,.timebtn.active,.playbtn.active{background:#208dff;border-color:#6cc8ff;color:#fff}.layerbtn.disabled{opacity:.34;cursor:not-allowed;text-decoration:line-through}.modebtn{position:absolute;right:18px;top:62px;z-index:710;font-size:12px;padding:9px 13px}.backbtn{display:inline-block;text-decoration:none;margin-top:10px;padding:8px 12px;font-size:12px;background:#1fa6ff;color:white}
+.note{position:absolute;left:18px;bottom:84px;z-index:700;width:270px;background:rgba(5,16,28,.78);border:1px solid rgba(112,180,255,.25);border-radius:16px;padding:14px;box-shadow:var(--shadow);backdrop-filter:blur(14px)}.note b{font-size:13px}.note p{margin:6px 0 0;color:#c2d8eb;font-size:12px;line-height:1.4}
+.timeline{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:720;width:min(620px,calc(100vw - 360px));background:rgba(4,15,28,.88);border:1px solid rgba(113,184,255,.35);border-radius:18px;padding:12px 14px;box-shadow:var(--shadow);backdrop-filter:blur(18px)}.timeline-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.timeline-title{font-size:11px;color:#c7dcef;font-weight:800}.timewrap{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-color:#6bbdff rgba(255,255,255,.12)}.timebtn{min-width:62px;padding:8px 8px;border-radius:12px}.timebtn span{display:block;font-size:12px}.timebtn small{display:block;color:#a7bed4;font-size:10px;margin-top:3px}.playbtn{font-size:12px;padding:8px 12px}.rangebar{height:7px;border-radius:99px;background:rgba(255,255,255,.16);overflow:hidden;margin-top:5px}.rangebar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#34e9d2,#28a8ff);border-radius:inherit}
+.legend{position:absolute;right:18px;bottom:84px;z-index:700;width:168px;background:rgba(4,14,25,.82);border:1px solid rgba(115,183,255,.28);border-radius:16px;padding:13px;box-shadow:var(--shadow);backdrop-filter:blur(16px)}.legend-title{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:12px;font-weight:900}.legend-title small{color:#bad2e8;font-size:10px}.scale{height:8px;border-radius:99px;margin:12px 0 7px;background:linear-gradient(90deg,#32e7cf,#f7cd4f,#ff4f70)}.legend-labels{display:flex;justify-content:space-between;color:#a8bfd5;font-size:10px}.legend p{font-size:10px;color:#b5cada;line-height:1.35;margin:10px 0 0}
+.location-label{background:rgba(5,17,31,.86);color:#fff;border:1px solid rgba(80,220,212,.75);padding:6px 10px;border-radius:999px;font-size:11px;font-weight:900;box-shadow:0 0 20px rgba(56,244,223,.35)}.leaflet-tooltip{background:transparent;border:0;box-shadow:none}.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:#06172a;color:#eef8ff;border:1px solid rgba(122,192,255,.32)}.leaflet-popup-content{font-size:12px;line-height:1.45}.popup-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.popup-grid div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);border-radius:8px;padding:6px}.popup-grid small{display:block;color:#9fb7ce}.popup-grid b{font-size:13px}
+@media(max-width:860px){.panel{width:calc(100vw - 36px);top:70px}.layerbar{left:18px;right:18px;top:auto;bottom:176px;max-width:none;justify-content:flex-start}.timeline{width:calc(100vw - 36px);bottom:18px}.legend{display:none}.note{display:none}.modebtn{display:none}.brand small{display:none}}
 </style>
 </head>
 <body>
 <div id="map"></div>
-<canvas id="atmos" class="atmos-canvas"></canvas>
-<canvas id="wind" class="wind-canvas"></canvas>
-<div class="map-vignette"></div>
-
-<header class="topbar">
-  <div class="brand"><span class="logo"></span><div><b>LANGIT</b><small>Full Variable Field</small></div></div>
-  <div class="actions" id="layerButtons"></div>
-</header>
-
-<section class="side-panel">
-  <div class="panel-head">
-    <div class="panel-kicker"><span class="pulse"></span><span id="panelMode">Forecast variable field</span></div>
-    <h1 id="panelTitle">__PANEL_TITLE__</h1>
-    <p id="panelDesc">Peta memakai seluruh variabel jam aktif yang tersedia di payload publik.</p>
+<canvas id="fieldCanvas" class="canvas-layer"></canvas>
+<canvas id="windCanvas" class="wind-layer"></canvas>
+<div class="grain"></div><div class="vignette"></div>
+<div class="brand"><div class="logo"></div><div><b>LANGIT</b><small>Real Atmospheric Field</small></div></div>
+<section class="panel">
+  <div class="eyebrow"><span class="pill-dot"></span>Forecast variable field</div>
+  <h1 id="panelTitle">LANGIT Map</h1>
+  <p id="panelDesc">Peta memakai variabel jam aktif dari payload publik.</p>
+  <div class="metrics">
+    <div class="metric"><small>Layer aktif</small><b id="mLayer">Risiko</b></div>
+    <div class="metric"><small>Nilai</small><b id="mValue">Data belum tersedia</b></div>
+    <div class="metric"><small>Status</small><b id="mStatus">Aman</b></div>
+    <div class="metric"><small>Jam aktif</small><b id="mHour">00:00</b></div>
   </div>
-  <div class="metric-grid">
-    <div class="metric"><span>Layer aktif</span><b id="mLayer">—</b></div>
-    <div class="metric"><span>Nilai</span><b id="mValue">—</b></div>
-    <div class="metric"><span>Status</span><b id="mStatus">—</b></div>
-    <div class="metric"><span>Jam aktif</span><b id="mHour">—</b></div>
-  </div>
-  <div class="panel-foot"><span id="mDate">—</span><span>LANGIT __VERSION__</span></div>
+  <div class="footline"><span id="mDate"></span><span>LANGIT v64.4</span></div>
+  <a id="backLink" class="backbtn" href="__BACK_URL__">Kembali</a>
 </section>
-
-<aside class="inspect"><h2 id="inspectTitle">Field atmosfer</h2><p id="inspectText">Klik titik mana pun di peta untuk membaca estimasi layer aktif.</p></aside>
-
-<aside class="legend">
-  <div class="legend-title"><span id="legendTitle">Skala</span><span id="legendUnit">—</span></div>
-  <div class="scale" id="legendScale"></div>
-  <div class="scale-labels"><span>rendah</span><span>sedang</span><span>tinggi</span></div>
-  <div class="legend-note" id="legendNote">Warna adalah interpolasi visual dari data lokasi, bukan radar observasi.</div>
-</aside>
-
-<section class="timeline">
-  <div class="timeline-top"><button class="play" id="playBtn">Play</button><div class="timeline-title" id="timeTitle">—</div></div>
-  <div class="time-track" id="timeTrack"></div>
-</section>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<div class="layerbar" id="layerBar"></div>
+<button class="modebtn" id="modeBtn" type="button">Mode peta</button>
+<section class="note"><b id="noteTitle">Field atmosfer</b><p id="noteText">Pilih layer dan jam untuk melihat perubahan.</p></section>
+<section class="legend"><div class="legend-title"><span id="legendTitle">Risiko</span><small id="legendUnit">0-100/100</small></div><div class="scale" id="legendScale"></div><div class="legend-labels"><span>rendah</span><span>sedang</span><span>tinggi</span></div><p id="legendNote">Warna adalah estimasi field dari titik prakiraan, bukan radar observasi.</p></section>
+<section class="timeline"><div class="timeline-top"><button class="playbtn" id="playBtn" type="button">Play</button><div class="timeline-title" id="timelineTitle">Jam aktif</div></div><div class="timewrap" id="timeWrap"></div><div class="rangebar"><i id="rangeFill"></i></div></section>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
-const LANGIT = __PAYLOAD__;
-const LAYERS = LANGIT.layers;
-let currentLayer = 'risk';
-let currentIndex = 0;
-let baseIndex = 0;
+const PAYLOAD = __PAYLOAD__;
+const layers = PAYLOAD.layers;
+const layerByKey = Object.fromEntries(layers.map(l => [l.key, l]));
+const packs = PAYLOAD.locations || [];
+const portal = !!PAYLOAD.portal;
+const primary = PAYLOAD.location || packs[0];
+let activeLayer = PAYLOAD.defaultLayer || (primary.available_layers && primary.available_layers.includes('risk') ? 'risk' : (primary.available_layers || ['risk'])[0]);
+let activeTimeIndex = 0;
 let playing = false;
 let playTimer = null;
-let markers = [];
-let labels = [];
+let mapMode = 'dark';
 
-const map = L.map('map', { zoomControl:true, attributionControl:true, preferCanvas:true });
-const baseLayers = [
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap & CARTO'}),
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap'}),
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'Tiles &copy; Esri'})
-];
-baseLayers[baseIndex].addTo(map);
+const centerLat = packs.length ? packs.reduce((a,p)=>a+p.latitude,0)/packs.length : primary.latitude;
+const centerLon = packs.length ? packs.reduce((a,p)=>a+p.longitude,0)/packs.length : primary.longitude;
+const map = L.map('map', {zoomControl:true, preferCanvas:true, attributionControl:true}).setView([centerLat, centerLon], portal ? 8 : 9);
+const tilesDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19, attribution:'&copy; OpenStreetMap &copy; CARTO'}).addTo(map);
+const tilesLight = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19, attribution:'&copy; OpenStreetMap'});
 
-const locs = LANGIT.locations || [LANGIT.location];
-if(locs.length > 1){
-  map.fitBounds(L.latLngBounds(locs.map(l => [l.lat,l.lon])), {padding:[160,160], maxZoom:9});
-}else{
-  map.setView([LANGIT.location.lat, LANGIT.location.lon], 10);
-}
-
-const atmos = document.getElementById('atmos');
-const actx = atmos.getContext('2d', {alpha:true});
-const wind = document.getElementById('wind');
-const wctx = wind.getContext('2d', {alpha:true});
-let particles = [];
-
-function layerDef(layer=currentLayer){ return LAYERS[layer] || LAYERS.risk; }
-function fmt(v, layer=currentLayer){
-  const d = layerDef(layer);
-  if(v === null || v === undefined || Number.isNaN(Number(v))) return '—';
-  const n = Number(v);
-  const rounded = Math.abs(n) >= 100 ? Math.round(n) : Math.round(n*10)/10;
-  return `${rounded}${d.unit || ''}`;
-}
-function pointFor(loc, index=currentIndex){ return loc.hours[Math.min(index, loc.hours.length-1)] || loc.hours[0]; }
-function val(p, layer=currentLayer){
-  if(layer === 'risk') return Number(p.risk ?? p.variables?.risk ?? 0);
-  return Number(p.variables?.[layer] ?? 0);
-}
-function normalizeValue(v, layer=currentLayer){
-  const d = layerDef(layer);
-  return Math.max(0, Math.min(1, (Number(v) - Number(d.min)) / Math.max(1e-6, Number(d.max) - Number(d.min))));
-}
-function statusColor(status){
-  if(status === 'Tinggi') return '#ef4444';
-  if(status === 'Waspada') return '#fb923c';
-  if(status === 'Pantau') return '#facc15';
-  return '#2dd4bf';
-}
-function colorRamp(n, palette='risk', alpha=0.55){
-  n = Math.max(0, Math.min(1, n));
-  let stops;
-  if(palette === 'confidence') stops = [[0,'139,92,246'],[.45,'245,158,11'],[.72,'56,189,248'],[1,'45,212,191']];
-  else if(palette === 'humidity') stops = [[0,'45,212,191'],[.42,'56,189,248'],[.78,'139,92,246'],[1,'236,72,153']];
-  else if(palette === 'heat' || palette === 'uv') stops = [[0,'45,212,191'],[.35,'250,204,21'],[.68,'249,115,22'],[1,'239,68,68']];
-  else if(palette === 'wind') stops = [[0,'56,189,248'],[.5,'45,212,191'],[.78,'250,204,21'],[1,'249,115,22']];
-  else if(palette === 'pressure') stops = [[0,'139,92,246'],[.45,'56,189,248'],[.75,'45,212,191'],[1,'250,204,21']];
-  else if(palette === 'visibility') stops = [[0,'239,68,68'],[.3,'249,115,22'],[.65,'56,189,248'],[1,'45,212,191']];
-  else if(palette === 'cloud') stops = [[0,'45,212,191'],[.4,'56,189,248'],[.72,'148,163,184'],[1,'226,232,240']];
-  else stops = [[0,'45,212,191'],[.36,'250,204,21'],[.62,'249,115,22'],[1,'239,68,68']];
-  for(let i=1;i<stops.length;i++){
-    if(n <= stops[i][0]){
-      const [p0,c0] = stops[i-1], [p1,c1] = stops[i];
-      const t = (n-p0)/(p1-p0 || 1);
-      const a = c0.split(',').map(Number), b = c1.split(',').map(Number);
-      const r = Math.round(a[0]+(b[0]-a[0])*t);
-      const g = Math.round(a[1]+(b[1]-a[1])*t);
-      const bb = Math.round(a[2]+(b[2]-a[2])*t);
-      return `rgba(${r},${g},${bb},${alpha})`;
-    }
-  }
-  return `rgba(239,68,68,${alpha})`;
-}
-function noise(lat, lon, t=0){
-  const x = Math.sin(lat*18.9898 + lon*78.233 + t*0.013) * 43758.5453;
-  return x - Math.floor(x);
-}
-function fieldAt(latlng){
-  let num = 0, den = 0;
-  const scaleKm = LANGIT.portal ? 70 : 30;
-  for(const loc of locs){
-    const p = pointFor(loc);
-    const dKm = Math.max(0.3, map.distance(latlng, L.latLng(loc.lat,loc.lon)) / 1000);
-    const w = Math.exp(-dKm/scaleKm) + 1 / Math.pow(dKm + 2, 1.35);
-    num += val(p) * w;
-    den += w;
-  }
-  let v = den ? num / den : 0;
-  const n = noise(latlng.lat, latlng.lng, currentIndex);
-  const d = layerDef();
-  v += (n - .5) * Math.max(.6, (d.max - d.min) * .05);
-  return Math.max(Number(d.min), Math.min(Number(d.max), v));
-}
-function drawAtmosphere(){
-  const w = window.innerWidth, h = window.innerHeight;
-  actx.clearRect(0,0,w,h);
-  const step = LANGIT.portal ? 8 : 7;
-  const d = layerDef();
-  for(let y=0; y<h; y+=step){
-    for(let x=0; x<w; x+=step){
-      const ll = map.containerPointToLatLng([x+step/2,y+step/2]);
-      const v = fieldAt(ll);
-      const n = normalizeValue(v);
-      const alpha = 0.05 + n * 0.48;
-      actx.fillStyle = colorRamp(n, d.palette, alpha);
-      actx.fillRect(x,y,step+1,step+1);
-    }
-  }
-}
-function popupHtml(loc){
-  const p = pointFor(loc);
-  const v = p.variables || {};
-  const cells = [
-    ['Status', p.status],
-    ['Risiko', `${p.risk}/100`],
-    ['Hujan', fmt(v.rain_prob, 'rain_prob')],
-    ['Suhu', fmt(v.temp, 'temp')],
-    ['Terasa', fmt(v.feels, 'feels')],
-    ['RH', fmt(v.humidity, 'humidity')],
-    ['Awan', fmt(v.cloud, 'cloud')],
-    ['Angin', fmt(v.wind, 'wind')],
-    ['Gust', fmt(v.gust, 'gust')],
-    ['Tekanan', fmt(v.pressure, 'pressure')],
-    ['UV', fmt(v.uv, 'uv')],
-    ['Conf.', fmt(v.confidence, 'confidence')],
-  ].map(([k,val]) => `<div class="popup-cell"><b>${val}</b><span>${k}</span></div>`).join('');
-  return `<div class="popup-title">${loc.name}</div>
-  <div class="popup-sub">${p.date_label} · ${p.hour} WIB · ${p.condition}</div>
-  <div class="popup-grid">${cells}</div>
-  <p style="color:#475569;font-size:12px;line-height:1.45;margin:10px 0 0">${p.note}</p>`;
-}
-function drawMarkers(){
-  markers.forEach(m => map.removeLayer(m)); labels.forEach(l => map.removeLayer(l));
-  markers = []; labels = [];
-  for(const loc of locs){
-    const p = pointFor(loc);
-    const c = statusColor(p.status);
-    const marker = L.circleMarker([loc.lat, loc.lon], {radius: LANGIT.portal ? 7 : 9, color:'#eaffff', weight:2, fillColor:c, fillOpacity:.96})
-      .bindPopup(popupHtml(loc)).addTo(map);
-    markers.push(marker);
-    labels.push(L.marker([loc.lat, loc.lon], {
-      icon:L.divIcon({className:'', html:`<div class="location-label">${loc.short_name}</div>`, iconSize:[120,24], iconAnchor:[-14,8]}),
-      interactive:false
-    }).addTo(map));
-  }
-}
-function activeMain(){
-  if(LANGIT.portal){
-    let best = locs[0];
-    for(const loc of locs){ if(pointFor(loc).risk > pointFor(best).risk) best = loc; }
-    return {loc:best, p:pointFor(best)};
-  }
-  return {loc:LANGIT.location, p:pointFor(LANGIT.location)};
-}
-function refreshPanel(){
-  const {loc,p} = activeMain();
-  const d = layerDef();
-  const v = currentLayer === 'risk' ? p.risk : p.variables?.[currentLayer];
-  document.getElementById('panelTitle').textContent = LANGIT.portal ? 'Regional field' : loc.name;
-  document.getElementById('mLayer').textContent = d.label;
-  document.getElementById('mValue').textContent = fmt(v);
-  document.getElementById('mStatus').textContent = p.status;
-  document.getElementById('mHour').textContent = p.hour;
-  document.getElementById('mDate').textContent = p.date_label;
-  document.getElementById('timeTitle').textContent = `${p.date_label} · ${d.label}`;
-  document.getElementById('inspectTitle').textContent = d.label + ' field';
-  document.getElementById('inspectText').textContent = `${loc.name}, ${p.hour} WIB. ${p.note}`;
-  document.getElementById('legendTitle').textContent = d.label;
-  document.getElementById('legendUnit').textContent = `${d.min}–${d.max}${d.unit || ''}`;
-  document.getElementById('legendNote').textContent = 'Layer ini memakai variabel aktual dari payload jam aktif.';
-}
-function buildLayerButtons(){
-  const box = document.getElementById('layerButtons');
-  box.innerHTML = '';
-  Object.entries(LAYERS).forEach(([key, d]) => {
-    const b = document.createElement('button');
-    b.className = 'chip' + (key === currentLayer ? ' active' : '');
-    b.textContent = d.label;
-    b.dataset.layer = key;
-    b.onclick = () => {
-      currentLayer = key;
-      buildLayerButtons();
-      refreshAll();
-    };
-    box.appendChild(b);
-  });
-  const base = document.createElement('button');
-  base.className = 'chip';
-  base.textContent = 'Mode peta';
-  base.onclick = () => {
-    map.removeLayer(baseLayers[baseIndex]);
-    baseIndex = (baseIndex + 1) % baseLayers.length;
-    baseLayers[baseIndex].addTo(map);
-  };
-  box.appendChild(base);
-}
-function buildTimeline(){
-  const track = document.getElementById('timeTrack');
-  track.innerHTML = '';
-  const hours = LANGIT.location.hours;
-  hours.forEach((p,i) => {
-    const b = document.createElement('button');
-    b.className = 'time' + (i === currentIndex ? ' active' : '');
-    const activeVal = currentLayer === 'risk' ? p.risk : p.variables?.[currentLayer];
-    b.innerHTML = `<b>${p.hour}</b><span>${fmt(activeVal)}</span>`;
-    b.onclick = () => { currentIndex = i; buildTimeline(); refreshAll(); };
-    track.appendChild(b);
-  });
-}
-function refreshAll(){ refreshPanel(); drawAtmosphere(); drawMarkers(); buildTimeline(); }
+const fieldCanvas = document.getElementById('fieldCanvas');
+const windCanvas = document.getElementById('windCanvas');
+const fctx = fieldCanvas.getContext('2d');
+const wctx = windCanvas.getContext('2d');
+const layerBar = document.getElementById('layerBar');
+const timeWrap = document.getElementById('timeWrap');
+const rangeFill = document.getElementById('rangeFill');
 
 function resizeCanvas(){
-  const dpr = window.devicePixelRatio || 1;
-  for(const c of [atmos, wind]){
-    c.width = Math.max(1, Math.floor(window.innerWidth * dpr));
-    c.height = Math.max(1, Math.floor(window.innerHeight * dpr));
-    c.style.width = window.innerWidth + 'px';
-    c.style.height = window.innerHeight + 'px';
+  const s = map.getSize();
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  for (const c of [fieldCanvas, windCanvas]) {
+    c.style.width = s.x + 'px'; c.style.height = s.y + 'px';
+    c.width = Math.round(s.x*dpr); c.height = Math.round(s.y*dpr);
+    const ctx = c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
   }
-  actx.setTransform(dpr,0,0,dpr,0,0);
-  wctx.setTransform(dpr,0,0,dpr,0,0);
-  seedParticles();
-  drawAtmosphere();
 }
-window.addEventListener('resize', resizeCanvas);
-map.on('moveend zoomend resize', () => { drawAtmosphere(); drawMarkers(); });
-
-map.on('click', e => {
-  const estimate = fieldAt(e.latlng);
-  L.popup().setLatLng(e.latlng).setContent(`<div class="popup-title">Estimasi titik</div>
-    <div class="popup-sub">Layer ${layerDef().label}</div>
-    <div class="popup-grid"><div class="popup-cell"><b>${fmt(estimate)}</b><span>Nilai</span></div><div class="popup-cell"><b>${Math.round(normalizeValue(estimate)*100)}%</b><span>Intensitas</span></div></div>
-    <p style="color:#475569;font-size:12px;line-height:1.45;margin:10px 0 0">Estimasi visual dari interpolasi lokasi, bukan observasi titik.</p>`).openOn(map);
-});
-
-function windVectorAt(x,y){
+function num(v){ const n = Number(v); return Number.isFinite(n) ? n : null; }
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function norm(v, min, max){ const n=num(v); if(n===null) return null; return clamp((n-min)/(max-min),0,1); }
+function hexToRgb(hex){ const h=hex.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+function mix(a,b,t){return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)];}
+const palettes={
+  risk:['#2ee6c9','#f4cd4c','#f06b3a','#ff486b'], rain:['#35d9ff','#2f8dff','#8554ff','#ff4f8b'], temp:['#1a7cff','#27e2d1','#f6cf48','#ff6c3e'], humidity:['#26dfc7','#377cff','#7b5cff'], cloud:['#0fa7ff','#9aa7b7','#f0f5ff'], pressure:['#5c54ff','#22d4c4','#f0c746'], wind:['#21d8d0','#f0ca45','#ff5b45'], uv:['#19d3cf','#f5d64e','#ff7a38','#c84dff'], visibility:['#ff526b','#f4c64c','#38e2ce'], confidence:['#ff526b','#f4c64c','#38e2ce']
+};
+function colorFor(layerKey, value){
+  const layer=layerByKey[layerKey]; const t=norm(value, layer.min, layer.max); if(t===null) return null;
+  const pal=(palettes[layer.palette]||palettes.risk).map(hexToRgb);
+  const x=t*(pal.length-1); const i=Math.min(pal.length-2, Math.floor(x)); const f=x-i;
+  const c=mix(pal[i],pal[i+1],f); return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+function valueLabel(layerKey,value){
+  const layer=layerByKey[layerKey]; const n=num(value);
+  if(n===null) return 'Data belum tersedia';
+  const rounded = Math.abs(n)>=100 ? Math.round(n) : (Math.round(n*10)/10);
+  return `${rounded}${layer.unit||''}`;
+}
+function allHours(){
+  const set=new Set(); packs.forEach(p=>(p.hours||[]).forEach(h=>set.add(h.iso)));
+  return Array.from(set).sort();
+}
+const hourList = allHours();
+function hourFor(pack, idx=activeTimeIndex){
+  if(!pack || !pack.hours || !pack.hours.length) return null;
+  if(!hourList.length) return pack.hours[0];
+  const target = hourList[Math.min(idx, hourList.length-1)];
+  let exact = pack.hours.find(h=>h.iso===target); if(exact) return exact;
+  const targetMs = Date.parse(target); let best=pack.hours[0], bd=Infinity;
+  for(const h of pack.hours){ const d=Math.abs(Date.parse(h.iso)-targetMs); if(d<bd){bd=d;best=h;} }
+  return best;
+}
+function fieldValueAtPoint(layerKey, x, y){
+  const layer=layerByKey[layerKey]; if(!layer) return {value:null, alpha:0, windDir:null, windSpeed:null};
+  let total=0, wsum=0, nearestKm=Infinity, windX=0, windY=0, windW=0;
   const ll = map.containerPointToLatLng([x,y]);
-  let sx = 0, sy = 0, den = 0;
-  for(const loc of locs){
-    const p = pointFor(loc);
-    const dKm = Math.max(0.3, map.distance(ll, L.latLng(loc.lat,loc.lon)) / 1000);
-    const w = Math.exp(-dKm/(LANGIT.portal ? 75 : 34)) + 1 / Math.pow(dKm + 2, 1.22);
-    const dir = Number(p.variables?.wind_dir || 115) * Math.PI / 180;
-    const sp = Math.max(.7, Number(p.variables?.wind || 2.2));
-    sx += Math.sin(dir) * sp * w;
-    sy += -Math.cos(dir) * sp * w;
-    den += w;
-  }
-  if(!den) return {x:1,y:0,s:1};
-  const nx = sx / den, ny = sy / den;
-  return {x:nx,y:ny,s:Math.sqrt(nx*nx+ny*ny)};
-}
-function seedParticles(){
-  const count = Math.min(1300, Math.max(330, Math.floor(window.innerWidth * window.innerHeight / 1450)));
-  particles = Array.from({length:count}, () => ({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,age:Math.random()*120,life:80+Math.random()*100}));
-}
-function animateWind(){
-  wctx.clearRect(0,0,window.innerWidth,window.innerHeight);
-  wctx.lineWidth = 1;
-  for(const pt of particles){
-    const v = windVectorAt(pt.x, pt.y);
-    const speed = Math.max(.45, Math.min(3.8, v.s * .72));
-    const wobble = Math.sin((pt.x + pt.y + pt.age) * .008) * .45;
-    const vx = v.x * speed + Math.cos(wobble) * .05;
-    const vy = v.y * speed + Math.sin(wobble) * .05;
-    const alpha = Math.max(.08, Math.min(.42, .12 + v.s * .05));
-    wctx.strokeStyle = `rgba(190,235,255,${alpha})`;
-    wctx.beginPath(); wctx.moveTo(pt.x, pt.y);
-    pt.x += vx; pt.y += vy; pt.age += 1;
-    wctx.lineTo(pt.x, pt.y); wctx.stroke();
-    if(pt.x < -40 || pt.x > window.innerWidth+40 || pt.y < -40 || pt.y > window.innerHeight+40 || pt.age > pt.life){
-      pt.x = Math.random()*window.innerWidth; pt.y = Math.random()*window.innerHeight; pt.age = 0; pt.life = 80 + Math.random()*100;
+  for(const p of packs){
+    const h=hourFor(p); if(!h) continue;
+    const value=num(h.variables[layer.field]); if(value===null) continue;
+    const d = map.distance(ll, [p.latitude,p.longitude]) / 1000;
+    nearestKm = Math.min(nearestKm, d);
+    let w;
+    if(portal && packs.length > 1){ w = 1 / Math.pow(d + 12, 2.15); }
+    else { const radius=72; if(d>radius) continue; w = Math.pow(1 - d/radius, 2.2); }
+    total += value*w; wsum += w;
+
+    const ws=num(h.variables.wind_speed_ms), wd=num(h.variables.wind_direction_deg);
+    if(ws!==null && wd!==null){
+      const rad=(wd+180)*Math.PI/180; // meteorological from-direction to movement-direction
+      windX += Math.sin(rad)*ws*w; windY += -Math.cos(rad)*ws*w; windW += w;
     }
   }
-  requestAnimationFrame(animateWind);
+  if(wsum<=0) return {value:null, alpha:0, windDir:null, windSpeed:null};
+  let alpha = portal ? 0.55 : clamp(1 - nearestKm/72, 0, .62);
+  if(activeLayer==='wind' || activeLayer==='gust') alpha += .08;
+  const wx = windW>0 ? windX/windW : null, wy = windW>0 ? windY/windW : null;
+  const speed = wx===null ? null : Math.sqrt(wx*wx + wy*wy);
+  const dir = wx===null ? null : (Math.atan2(wx, -wy)*180/Math.PI + 360) % 360;
+  return {value:total/wsum, alpha, windDir:dir, windSpeed:speed};
 }
-document.getElementById('playBtn').onclick = () => {
-  playing = !playing;
-  document.getElementById('playBtn').textContent = playing ? 'Pause' : 'Play';
-  if(playing){
-    playTimer = setInterval(() => {
-      currentIndex = (currentIndex + 1) % LANGIT.location.hours.length;
-      refreshAll();
-    }, 950);
-  }else clearInterval(playTimer);
+function drawField(){
+  resizeCanvas();
+  const s=map.getSize(); fctx.clearRect(0,0,s.x,s.y);
+  const layer=layerByKey[activeLayer]; if(!layer) return;
+  const step = map.getZoom() >= 10 ? 7 : 9;
+  for(let y=0;y<s.y;y+=step){
+    for(let x=0;x<s.x;x+=step){
+      const fv=fieldValueAtPoint(activeLayer,x+step/2,y+step/2);
+      if(fv.value===null || fv.alpha<=.02) continue;
+      fctx.fillStyle=colorFor(activeLayer,fv.value);
+      fctx.globalAlpha=fv.alpha;
+      fctx.fillRect(x,y,step+1,step+1);
+    }
+  }
+  fctx.globalAlpha=1;
+}
+let particles=[];
+function resetParticles(){
+  const s=map.getSize(); particles=[];
+  const count = Math.round(clamp((s.x*s.y)/14500, 55, 160));
+  for(let i=0;i<count;i++) particles.push({x:Math.random()*s.x,y:Math.random()*s.y,age:Math.random()*90});
+}
+function drawWind(){
+  const s=map.getSize();
+  wctx.clearRect(0,0,s.x,s.y);
+  const anyWind = packs.some(p => (p.wind_field_valid));
+  if(!anyWind){ requestAnimationFrame(drawWind); return; }
+  wctx.lineWidth = 1.1; wctx.strokeStyle='rgba(188,230,255,.26)';
+  for(const p of particles){
+    const fv=fieldValueAtPoint('wind',p.x,p.y); const sp=num(fv.windSpeed), dir=num(fv.windDir);
+    if(sp===null || dir===null || fv.alpha<=.02){ p.x=Math.random()*s.x; p.y=Math.random()*s.y; p.age=0; continue; }
+    const rad=dir*Math.PI/180; const scale=0.22+Math.min(1.5,sp)*0.05;
+    const vx=Math.sin(rad)*(1.8+sp)*scale, vy=-Math.cos(rad)*(1.8+sp)*scale;
+    const px=p.x-vx*5, py=p.y-vy*5;
+    wctx.globalAlpha=clamp(.08+fv.alpha*.35,0,.44);
+    wctx.beginPath(); wctx.moveTo(px,py); wctx.lineTo(p.x,p.y); wctx.stroke();
+    p.x+=vx; p.y+=vy; p.age++;
+    if(p.x<0||p.y<0||p.x>s.x||p.y>s.y||p.age>180){p.x=Math.random()*s.x;p.y=Math.random()*s.y;p.age=0;}
+  }
+  wctx.globalAlpha=1;
+  requestAnimationFrame(drawWind);
+}
+function statusColor(status){return status==='Tinggi'?'#ff4d6d':status==='Waspada'?'#f68d3b':status==='Pantau'?'#f8ca4f':'#38f4df';}
+function markerColor(pack){const h=hourFor(pack); return statusColor(h?h.status:'Aman');}
+const markers=[];
+function setupMarkers(){
+  packs.forEach(p=>{
+    const color=markerColor(p);
+    const marker=L.circleMarker([p.latitude,p.longitude],{radius:9,color,fillColor:color,weight:2,fillOpacity:.78,opacity:.95}).addTo(map);
+    marker.bindTooltip(p.short_name || p.name, {permanent:true, direction:'right', className:'location-label', offset:[10,0]});
+    marker.on('click',()=>{
+      const h=hourFor(p); if(!h) return;
+      const vars=h.variables;
+      const html=`<b>${p.name}</b><br>${h.date_label} ${h.hour}<br><b>${h.status}</b> - Risiko ${h.risk_score}/100
+      <div class="popup-grid">
+        <div><small>Hujan</small><b>${valueLabel('rain',vars.rain_probability_pct)}</b></div>
+        <div><small>Suhu</small><b>${valueLabel('temp',vars.temperature_c)}</b></div>
+        <div><small>Terasa</small><b>${valueLabel('feels',vars.apparent_temperature_c)}</b></div>
+        <div><small>Angin</small><b>${valueLabel('wind',vars.wind_speed_ms)}</b></div>
+        <div><small>Lembap</small><b>${valueLabel('humidity',vars.humidity_pct)}</b></div>
+        <div><small>Awan</small><b>${valueLabel('cloud',vars.cloud_cover_pct)}</b></div>
+      </div><br>${h.note}`;
+      marker.bindPopup(html).openPopup();
+    });
+    markers.push({pack:p, marker});
+  });
+}
+function refreshMarkers(){
+  for(const item of markers){ const c=markerColor(item.pack); item.marker.setStyle({color:c,fillColor:c}); }
+}
+function coverageFor(layerKey){
+  return packs.reduce((a,p)=>a+(p.coverage&&p.coverage[layerKey]||0),0);
+}
+function setupLayers(){
+  layerBar.innerHTML='';
+  for(const layer of layers){
+    const btn=document.createElement('button'); btn.className='layerbtn'; btn.textContent=layer.label; btn.type='button';
+    if(coverageFor(layer.key)<=0){btn.classList.add('disabled'); btn.title='Data belum tersedia di payload publik';}
+    if(layer.key===activeLayer) btn.classList.add('active');
+    btn.onclick=()=>{ if(btn.classList.contains('disabled')) return; activeLayer=layer.key; updateAll(); };
+    layerBar.appendChild(btn);
+  }
+}
+function setupTimeline(){
+  timeWrap.innerHTML='';
+  hourList.forEach((iso,idx)=>{
+    const d=new Date(iso); const h=hourFor(primary,idx); const layer=layerByKey[activeLayer];
+    const value=h ? h.variables[layer.field] : null;
+    const btn=document.createElement('button'); btn.type='button'; btn.className='timebtn';
+    if(idx===activeTimeIndex) btn.classList.add('active');
+    btn.innerHTML=`<span>${String(d.getHours()).padStart(2,'0')}:00</span><small>${valueLabel(activeLayer,value)}</small>`;
+    btn.onclick=()=>{activeTimeIndex=idx; updateAll();};
+    timeWrap.appendChild(btn);
+  });
+  const pct=hourList.length>1 ? activeTimeIndex/(hourList.length-1)*100 : 0;
+  rangeFill.style.width=pct+'%';
+}
+function updatePanel(){
+  const h=hourFor(primary); const layer=layerByKey[activeLayer]; if(!h||!layer) return;
+  const value=h.variables[layer.field];
+  document.getElementById('panelTitle').textContent = portal ? 'LANGIT Portal Map' : (primary.name || 'LANGIT Map');
+  document.getElementById('panelDesc').textContent = portal ? 'Regional field dari seluruh lokasi aktif. Pilih layer dan jam.' : 'Peta memakai seluruh variabel jam aktif dari payload publik.';
+  document.getElementById('mLayer').textContent=layer.label;
+  document.getElementById('mValue').textContent=valueLabel(activeLayer,value);
+  document.getElementById('mStatus').textContent=h.status;
+  document.getElementById('mHour').textContent=h.hour;
+  document.getElementById('mDate').textContent=h.date_label;
+  document.getElementById('noteTitle').textContent=`${layer.label} field`;
+  document.getElementById('noteText').textContent=`${primary.name}, ${h.hour}. ${h.note}`;
+  document.getElementById('legendTitle').textContent=layer.label;
+  document.getElementById('legendUnit').textContent=`${layer.min}-${layer.max}${layer.unit||''}`;
+  document.getElementById('timelineTitle').textContent=`${h.date_label} - ${layer.label}`;
+  document.getElementById('legendScale').style.background = `linear-gradient(90deg, ${(palettes[layer.palette]||palettes.risk).join(',')})`;
+}
+function updateLayerButtons(){
+  [...document.querySelectorAll('.layerbtn')].forEach(btn=>btn.classList.toggle('active',btn.textContent===layerByKey[activeLayer].label));
+}
+function updateAll(){
+  setupTimeline(); updatePanel(); updateLayerButtons(); refreshMarkers(); drawField();
+}
+document.getElementById('playBtn').onclick=()=>{
+  playing=!playing; document.getElementById('playBtn').textContent=playing?'Pause':'Play'; document.getElementById('playBtn').classList.toggle('active',playing);
+  if(playTimer) clearInterval(playTimer);
+  if(playing){ playTimer=setInterval(()=>{activeTimeIndex=(activeTimeIndex+1)%Math.max(1,hourList.length); updateAll();},900); }
 };
-document.addEventListener('keydown', e => {
-  if(e.key === 'ArrowRight') currentIndex = Math.min(LANGIT.location.hours.length-1, currentIndex+1);
-  if(e.key === 'ArrowLeft') currentIndex = Math.max(0, currentIndex-1);
-  refreshAll();
-});
-buildLayerButtons();
-resizeCanvas();
-refreshAll();
-animateWind();
+document.getElementById('modeBtn').onclick=()=>{
+  if(mapMode==='dark'){ map.removeLayer(tilesDark); tilesLight.addTo(map); mapMode='light'; document.body.style.setProperty('--bg','#f4f8fc'); }
+  else{ map.removeLayer(tilesLight); tilesDark.addTo(map); mapMode='dark'; document.body.style.setProperty('--bg','#050b13'); }
+};
+map.on('move zoom resize',()=>{ drawField(); resetParticles(); });
+window.addEventListener('resize',()=>{ drawField(); resetParticles(); });
+setupLayers(); setupMarkers(); setupTimeline(); updatePanel(); resizeCanvas(); drawField(); resetParticles(); drawWind();
 </script>
 </body>
 </html>
-"""
+'''
 
 
-def build_html(pack: LocationPack, locations: list[LocationPack], portal: bool) -> str:
-    if portal:
-        selected = max(locations, key=lambda p: peak_hour(p).risk)
-        title = "LANGIT Portal Map"
-        panel = "Regional field"
-    else:
-        selected = pack
-        title = f"LANGIT Map — {pack.name}"
-        panel = pack.name
-
+def build_html(pack: LocationPack | None, packs: list[LocationPack], portal: bool, public_base_url: str) -> str:
+    selected = max(packs, key=lambda p: best_hour(p).risk_score) if portal else pack
+    if selected is None:
+        raise BuildError("Tidak ada lokasi valid untuk dibuat menjadi peta.")
     payload = {
         "version": VERSION,
         "engine": ENGINE_NAME,
         "portal": portal,
+        "defaultLayer": "risk",
         "layers": LAYER_DEFS,
         "location": asdict(selected),
-        "locations": [asdict(x) for x in locations] if portal else [asdict(selected)],
+        "locations": [asdict(p) for p in packs] if portal else [asdict(selected)],
+        "publicBaseUrl": public_base_url,
     }
+    title = "LANGIT Portal Map" if portal else f"LANGIT Map - {selected.name}"
+    back_url = "index.html" if portal else "../index.html"
     return (
-        HTML_TEMPLATE
-        .replace("__TITLE__", esc(title))
-        .replace("__PANEL_TITLE__", esc(panel))
-        .replace("__VERSION__", esc(VERSION))
+        HTML_TEMPLATE.replace("__TITLE__", esc(title))
         .replace("__PAYLOAD__", compact_json(payload))
+        .replace("__BACK_URL__", esc(back_url))
     )
 
 
-def redirect_html(target: str) -> str:
-    return f"""<!doctype html>
-<html lang="id">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="0; url={esc(target)}">
-<title>LANGIT Map</title>
-<style>
-body{{margin:0;height:100vh;display:grid;place-items:center;background:#020814;color:#f8fbff;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
-a{{color:#38bdf8}}
-</style>
-</head>
-<body><p>Membuka <a href="{esc(target)}">LANGIT Map</a>...</p></body>
-</html>"""
+def redirect_html(target: str, label: str = "LANGIT Map") -> str:
+    return f'''<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="refresh" content="0; url={esc(target)}"><title>{esc(label)}</title><style>body{{font-family:system-ui;margin:40px;background:#061321;color:#eef8ff}}a{{color:#43c7ff}}</style></head><body><p>Membuka <a href="{esc(target)}">{esc(label)}</a>.</p></body></html>'''
 
 
-def write_outputs(root: Path, public_base_url: str = "", debug: bool = False) -> list[LocationPack]:
-    if not root.exists():
-        raise FileNotFoundError(f"Folder output tidak ditemukan: {root}")
+def build_outputs(root: Path, public_base_url: str, debug: bool = False) -> None:
+    packs = load_locations(root)
+    if not packs:
+        raise BuildError("Tidak ada lokasi valid di folder outputs. Jalankan forecast engine terlebih dahulu.")
 
-    locations: list[LocationPack] = []
-    for d in sorted(root.iterdir()):
-        if not d.is_dir() or d.name.startswith(".") or d.name in {"assets", "logs", "raw_payloads"}:
-            continue
-        if not ((d / "langit_api_v1.json").exists() or (d / "langit_location.geojson").exists() or list(d.glob("*.csv")) or list(d.glob("*.json"))):
-            continue
-        pack = read_location(d)
-        if pack is not None:
-            locations.append(pack)
+    # Portal map.
+    write_text(root / "langit_portal_map.html", build_html(None, packs, True, public_base_url))
+    write_text(root / "langit_v64_4_manifest.json", pretty_json(manifest_for(None, packs, True)))
 
-    if not locations:
-        raise RuntimeError("Tidak ada lokasi valid di outputs/.")
+    # Per-location map.
+    for pack in packs:
+        loc_dir = root / pack.slug
+        html_map = build_html(pack, packs, False, public_base_url)
+        write_text(loc_dir / "langit_map_room.html", html_map)
+        write_text(loc_dir / "langit_map.html", redirect_html("langit_map_room.html", "LANGIT Map"))
+        write_text(loc_dir / "anemos_map.html", redirect_html("langit_map_room.html", "LANGIT Map"))
+        write_text(loc_dir / "langit_v64_4_map_manifest.json", pretty_json(manifest_for(pack, [pack], False)))
+        # Backward compatible manifest name expected by v64.3 workflows.
+        write_text(loc_dir / "langit_v64_3_map_manifest.json", pretty_json(manifest_for(pack, [pack], False)))
 
-    for pack in locations:
-        d = root / pack.slug
-        html_text = build_html(pack, locations, portal=False)
-        write_text(d / "langit_map_room.html", html_text)
-        write_text(d / "langit_map.html", html_text)
-        write_text(d / "anemos_map.html", html_text)
-        manifest = {
-            "version": VERSION,
-            "engine": ENGINE_NAME,
-            "slug": pack.slug,
-            "name": pack.name,
-            "url": f"{public_base_url.rstrip('/')}/{pack.slug}/langit_map_room.html" if public_base_url else f"{pack.slug}/langit_map_room.html",
-            "peak": asdict(peak_hour(pack)),
-            "hours": len(pack.hours),
-            "layers": sorted(LAYER_DEFS.keys()),
-            "first_hour_variables": pack.hours[0].variables if pack.hours else {},
-        }
-        write_text(d / "langit_v64_3_map_manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
-        if debug:
-            print(f"OK: {d / 'langit_map_room.html'}")
-
-    write_text(root / "langit_portal_map.html", build_html(locations[0], locations, portal=True))
-    write_text(root / "map.html", redirect_html("langit_portal_map.html"))
-
-    index_patch = root / "index.html"
-    if index_patch.exists():
-        text = index_patch.read_text(encoding="utf-8", errors="ignore")
-        if "langit_portal_map.html" not in text:
-            text = text.replace("</body>", '<a href="langit_portal_map.html" style="display:none">LANGIT Portal Map</a></body>')
-            index_patch.write_text(text, encoding="utf-8")
-
-    root_manifest = {
-        "version": VERSION,
-        "engine": ENGINE_NAME,
-        "generated": datetime.now(JAKARTA).isoformat(timespec="seconds"),
-        "layers": LAYER_DEFS,
-        "locations": [
-            {
-                "slug": p.slug,
-                "name": p.name,
-                "lat": p.lat,
-                "lon": p.lon,
-                "peak_rain": peak_hour(p).variables.get("rain_prob"),
-                "peak_hour": peak_hour(p).hour,
-                "risk": peak_hour(p).risk,
-                "status": peak_hour(p).status,
-                "sample_variables": p.hours[0].variables if p.hours else {},
-            }
-            for p in locations
-        ],
-    }
-    write_text(root / "langit_v64_3_manifest.json", json.dumps(root_manifest, ensure_ascii=False, indent=2))
-    return locations
+    if debug:
+        print(f"{ENGINE_NAME}: built {len(packs)} location(s)")
+        for pack in packs:
+            print(f"- {pack.slug}: {len(pack.hours)} hours, available={','.join(pack.available_layers)}")
 
 
-def verify(root: Path) -> None:
+def verify_manifest(manifest: dict[str, Any], source: Path) -> list[str]:
     errors: list[str] = []
-    if not root.exists():
-        errors.append(f"Root tidak ditemukan: {root}")
-    if not (root / "langit_portal_map.html").exists():
-        errors.append("outputs/langit_portal_map.html belum ada.")
-    if not (root / "langit_v64_3_manifest.json").exists():
-        errors.append("outputs/langit_v64_3_manifest.json belum ada.")
+    if int(manifest.get("location_count") or 0) <= 0:
+        errors.append(f"{source}: location_count kosong")
+    if int(manifest.get("hour_count") or 0) <= 0:
+        errors.append(f"{source}: hour_count kosong")
+    coverage = manifest.get("coverage") or {}
+    if not isinstance(coverage, dict):
+        errors.append(f"{source}: coverage tidak valid")
+        return errors
+    if sum(int(v or 0) for v in coverage.values()) <= 0:
+        errors.append(f"{source}: semua layer bernilai kosong")
+    if int(coverage.get("temp") or 0) <= 0:
+        errors.append(f"{source}: temperature tidak terbaca")
+    if int(coverage.get("rain") or 0) <= 0:
+        errors.append(f"{source}: rain_probability tidak terbaca")
+    if int(coverage.get("wind") or 0) > 0 and not manifest.get("wind_field_valid"):
+        errors.append(f"{source}: wind_speed ada tetapi wind_direction tidak cukup untuk field angin valid")
+    return errors
 
-    loc_dirs = []
-    if root.exists():
-        for d in root.iterdir():
-            if d.is_dir() and not d.name.startswith(".") and d.name not in {"assets", "logs", "raw_payloads"}:
-                if (d / "langit_api_v1.json").exists() or (d / "langit_location.geojson").exists() or list(d.glob("*.csv")) or list(d.glob("*.json")):
-                    loc_dirs.append(d)
 
-    for d in loc_dirs:
-        for name in ["langit_map_room.html", "langit_map.html", "anemos_map.html", "langit_v64_3_map_manifest.json"]:
-            if not (d / name).exists():
-                errors.append(f"{d / name} belum ada.")
+def verify_outputs(root: Path) -> None:
+    errors: list[str] = []
+    portal = root / "langit_portal_map.html"
+    portal_manifest = root / "langit_v64_4_manifest.json"
+    if not portal.exists():
+        errors.append("outputs/langit_portal_map.html tidak ditemukan")
+    if not portal_manifest.exists():
+        errors.append("outputs/langit_v64_4_manifest.json tidak ditemukan")
+    else:
+        data = read_json(portal_manifest)
+        if isinstance(data, dict):
+            errors.extend(verify_manifest(data, portal_manifest))
+        else:
+            errors.append("outputs/langit_v64_4_manifest.json tidak valid")
 
-    html_files = [root / "langit_portal_map.html"]
-    for d in loc_dirs:
-        html_files += [d / "langit_map_room.html", d / "langit_map.html", d / "anemos_map.html"]
-
-    required = [
-        "LANGIT v64.3", "Full Variable Wind Field Map Engine", "atmos-canvas", "wind-canvas",
-        "variables", "rain_prob", "humidity", "cloud", "pressure", "wind_dir", "uv",
-        "fieldAt", "LAYERS"
-    ]
-    for path in html_files:
-        if not path.exists():
+    for loc_dir in sorted(root.iterdir() if root.exists() else []):
+        if not loc_dir.is_dir():
             continue
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        for required in ["langit_map_room.html", "langit_map.html", "anemos_map.html", "langit_v64_4_map_manifest.json"]:
+            if not (loc_dir / required).exists():
+                errors.append(f"{loc_dir.name}/{required} tidak ditemukan")
+        manifest_path = loc_dir / "langit_v64_4_map_manifest.json"
+        data = read_json(manifest_path) if manifest_path.exists() else None
+        if isinstance(data, dict):
+            errors.extend(verify_manifest(data, manifest_path))
+
+    html_files = list(root.glob("*.html")) + list(root.glob("*/*.html"))
+    for path in html_files:
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
         for token in BAD_PUBLIC_TOKENS:
             if token in text:
-                errors.append(f"{path} masih mengandung token lama: {token}")
-        for token in required:
-            if token not in text:
-                errors.append(f"{path} tidak memuat elemen wajib: {token}")
-
-    # Verify manifests contain full variable bridge.
-    for d in loc_dirs:
-        man = read_json(d / "langit_v64_3_map_manifest.json")
-        if isinstance(man, dict):
-            vars0 = man.get("first_hour_variables") or {}
-            for key in ["temp", "humidity", "rain_prob", "wind", "wind_dir", "confidence", "risk"]:
-                if key not in vars0:
-                    errors.append(f"{d.name}: manifest tidak membawa variable {key}")
+                errors.append(f"{path}: mengandung token lama {token!r}")
+        if "__PAYLOAD__" in text or "__TITLE__" in text:
+            errors.append(f"{path}: placeholder template belum terganti")
 
     if errors:
-        for e in errors:
-            print(f"ERROR: {e}")
+        for error in errors:
+            print(f"ERROR: {error}", file=sys.stderr)
         raise SystemExit(3)
-    print(f"OK: {ENGINE_NAME} verified. lokasi={len(loc_dirs)}")
+    print(f"OK: {ENGINE_NAME} public output valid.")
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=ENGINE_NAME)
-    parser.add_argument("--root", default="outputs")
-    parser.add_argument("--public-base-url", default="")
-    parser.add_argument("--verify-only", action="store_true")
-    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--root", default="outputs", help="Folder output publik")
+    parser.add_argument("--public-base-url", default="", help="Base URL GitHub Pages")
+    parser.add_argument("--verify-only", action="store_true", help="Hanya validasi output")
+    parser.add_argument("--debug", action="store_true", help="Tampilkan log detail")
     args = parser.parse_args(argv)
 
     root = Path(args.root)
     if args.verify_only:
-        verify(root)
+        verify_outputs(root)
         return 0
-    locations = write_outputs(root, args.public_base_url, args.debug)
-    print(f"OK: {ENGINE_NAME} selesai. lokasi={len(locations)}")
-    verify(root)
+
+    build_outputs(root, args.public_base_url, args.debug)
+    verify_outputs(root)
     return 0
 
 
