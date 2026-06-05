@@ -1,4 +1,4 @@
-name: LANGIT v100 Forecast OS
+name: LANGIT CORE Forecast OS
 
 on:
   workflow_dispatch:
@@ -10,13 +10,13 @@ permissions:
   contents: write
 
 concurrency:
-  group: langit-v100-forecast
+  group: langit-core-forecast
   cancel-in-progress: true
 
 jobs:
   forecast:
     runs-on: ubuntu-22.04
-    timeout-minutes: 25
+    timeout-minutes: 28
 
     steps:
       - name: Checkout main
@@ -39,12 +39,12 @@ jobs:
           pwd
           ls -la
           test -f weather_ensemble_multi_location.py
-          test -f langit_v100_professional_intelligence.py
+          test -f langit_core.py
 
-      - name: Syntax check scripts
+      - name: Syntax check
         run: |
           python -m py_compile weather_ensemble_multi_location.py
-          python -m py_compile langit_v100_professional_intelligence.py
+          python -m py_compile langit_core.py
 
       - name: LANGIT generator doctor
         run: |
@@ -81,42 +81,42 @@ jobs:
             --no-debug \
             --no-save-raw-payloads
 
-      - name: Rebuild LANGIT v100 public layer
+      - name: Build LANGIT CORE infrastructure
         run: |
-          python langit_v100_professional_intelligence.py \
+          python langit_core.py \
             --root outputs \
             --public-base-url https://marcooo20-d.github.io/weather-forecast
 
-      - name: Verify public output
+      - name: Verify LANGIT CORE output
         run: |
+          python langit_core.py --root outputs --verify-only
           test -f outputs/index.html
+          test -f outputs/ops.html
           test -f outputs/langit_portal_map.html
+          test -f outputs/core/langit_core.sqlite
+          test -f outputs/langit_core_manifest.json
           test -f outputs/dago/anemos_app.html
-          test -f outputs/dago/anemos_3day.html
-          test -f outputs/dago/anemos_activity.html
           test -f outputs/dago/langit_map_room.html
-          test -f outputs/dago/langit_model_court.html
-          test -f outputs/dago/sentinel_x_accuracy_public.html
-          python langit_v100_professional_intelligence.py --root outputs --verify-only
-          if grep -R "\[\.new Set\|const hours=\[\.new Set\|ANEMOS sedang\|AETHER Sentinel\|visual-first\|Data confidence\|Window " outputs/*.html outputs/*/*.html 2>/dev/null; then
-            echo "Public output still contains old wording or broken JS."
+          test -f outputs/dago/langit_risk_surface.geojson
+          test -f outputs/dago/langit_core_intelligence.json
+          if grep -R "visualvisual\|\[\.new Set\|const hours=\[\.new\|ANEMOS sedang\|AETHER Sentinel" outputs/*.html outputs/*/*.html 2>/dev/null; then
+            echo "Old visible wording or broken JS still exists."
             exit 1
           fi
 
       - name: Harden public output
         run: |
-          find outputs -name "*.sqlite" -delete || true
           find outputs -name "*.db" -delete || true
           find outputs -type d -name "logs" -prune -exec rm -rf {} + || true
           find outputs -type d -name "raw_payloads" -prune -exec rm -rf {} + || true
           find outputs -type f -name "*.py" -delete || true
           find outputs -type f -name "*.pyc" -delete || true
-          find outputs -maxdepth 3 -type f | sort | sed -n '1,180p'
+          find outputs -maxdepth 3 -type f | sort | sed -n '1,220p'
 
       - name: Upload generated site artifact
         uses: actions/upload-artifact@v4
         with:
-          name: langit-v100-public-site
+          name: langit-core-public-site
           path: outputs
           retention-days: 7
 
@@ -127,4 +127,4 @@ jobs:
           publish_dir: outputs
           publish_branch: gh-pages
           force_orphan: true
-          commit_message: "deploy: LANGIT v100 public forecast"
+          commit_message: "deploy: LANGIT CORE local weather intelligence"
