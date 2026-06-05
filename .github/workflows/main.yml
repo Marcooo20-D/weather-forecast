@@ -1,16 +1,27 @@
-name: LANGIT v101 Recovery Forecast OS
+name: LANGIT v63 Forecast OS
 
 on:
   workflow_dispatch:
+    inputs:
+      locations:
+        description: "Lokasi yang dijalankan: all / dago / jatinangor / arjawinangun / comma-separated"
+        required: false
+        default: "all"
+      debug:
+        description: "Aktifkan debug log"
+        required: false
+        type: choice
+        options: ["false", "true"]
+        default: "false"
   schedule:
-    # 18:00 WIB = 11:00 UTC
-    - cron: "0 11 * * *"
+    # WIB: 07:00, 11:00, 15:00, 18:00
+    - cron: "0 0,4,8,11 * * *"
 
 permissions:
   contents: write
 
 concurrency:
-  group: langit-v101-recovery
+  group: langit-v63-forecast
   cancel-in-progress: true
 
 jobs:
@@ -18,8 +29,12 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 28
 
+    env:
+      TZ: Asia/Jakarta
+      PUBLIC_BASE_URL: https://marcooo20-d.github.io/weather-forecast
+
     steps:
-      - name: Checkout main
+      - name: Checkout main generator
         uses: actions/checkout@v4
         with:
           ref: main
@@ -34,94 +49,119 @@ jobs:
         run: |
           python -m pip install --upgrade pip certifi
 
+      - name: Resolve workflow inputs
+        id: vars
+        shell: bash
+        run: |
+          LOCATIONS="${{ github.event.inputs.locations }}"
+          DEBUG_INPUT="${{ github.event.inputs.debug }}"
+          if [ -z "$LOCATIONS" ]; then LOCATIONS="all"; fi
+          if [ "$DEBUG_INPUT" = "true" ]; then DEBUG_FLAG="--debug"; else DEBUG_FLAG="--no-debug"; fi
+          echo "locations=$LOCATIONS" >> "$GITHUB_OUTPUT"
+          echo "debug_flag=$DEBUG_FLAG" >> "$GITHUB_OUTPUT"
+
       - name: Inspect repository
         run: |
           pwd
           ls -la
           test -f weather_ensemble_multi_location.py
-          test -f langit_v101_recovery.py
+          test -f langit_v63_product_rebuild.py
 
-      - name: Syntax check
+      - name: Syntax check scripts
         run: |
           python -m py_compile weather_ensemble_multi_location.py
-          python -m py_compile langit_v101_recovery.py
+          python -m py_compile langit_v63_product_rebuild.py
 
       - name: LANGIT generator doctor
         run: |
           python weather_ensemble_multi_location.py \
             --mode doctor \
-            --locations all \
+            --locations "${{ steps.vars.outputs.locations }}" \
             --timezone Asia/Jakarta \
-            --no-debug \
+            ${{ steps.vars.outputs.debug_flag }} \
             --no-save-raw-payloads
 
       - name: Run forecast engine
-        timeout-minutes: 16
+        id: forecast
+        shell: bash
+        timeout-minutes: 18
         run: |
+          set +e
           python weather_ensemble_multi_location.py \
             --mode forecast \
-            --locations all \
+            --locations "${{ steps.vars.outputs.locations }}" \
             --timezone Asia/Jakarta \
-            --public-base-url https://marcooo20-d.github.io/weather-forecast \
-            --http-timeout 6 \
+            --public-base-url "$PUBLIC_BASE_URL" \
+            --http-timeout 8 \
             --max-retry-http 1 \
             --max-workers 3 \
             --max-inflight-per-host 1 \
             --target-step-minutes 180 \
-            --no-debug \
+            ${{ steps.vars.outputs.debug_flag }} \
             --no-save-raw-payloads
+          RC=$?
+          echo "forecast_exit_code=$RC" >> "$GITHUB_OUTPUT"
+          if [ "$RC" = "0" ]; then
+            echo "Forecast selesai normal."
+          elif [ "$RC" = "2" ]; then
+            echo "::warning::Forecast selesai dengan warning, tetapi public layer tetap dibangun."
+          else
+            echo "::error::Forecast gagal dengan exit code $RC."
+            exit "$RC"
+          fi
 
       - name: Generate original public index
         run: |
           python weather_ensemble_multi_location.py \
             --mode public-index \
-            --locations all \
+            --locations "${{ steps.vars.outputs.locations }}" \
             --timezone Asia/Jakarta \
-            --public-base-url https://marcooo20-d.github.io/weather-forecast \
-            --no-debug \
+            --public-base-url "$PUBLIC_BASE_URL" \
+            ${{ steps.vars.outputs.debug_flag }} \
             --no-save-raw-payloads
 
-      - name: Restore public website with LANGIT v101
+      - name: Rebuild LANGIT v63 public product layer
         run: |
-          python langit_v101_recovery.py \
+          python langit_v63_product_rebuild.py \
             --root outputs \
-            --public-base-url https://marcooo20-d.github.io/weather-forecast
+            --public-base-url "$PUBLIC_BASE_URL"
 
-      - name: Verify LANGIT v101 output
+      - name: Verify public output
         run: |
-          python langit_v101_recovery.py --root outputs --verify-only
+          python langit_v63_product_rebuild.py --root outputs --verify-only
           test -f outputs/index.html
-          test -f outputs/404.html
-          test -f outputs/ops.html
           test -f outputs/langit_portal_map.html
-          test -f outputs/anemos_app.html
-          test -f outputs/anemos_activity.html
-          test -f outputs/anemos_3day.html
-          test -f outputs/langit_map_room.html
-          test -f outputs/langit_model_court.html
-          test -f outputs/dago/anemos_app.html
-          test -f outputs/dago/anemos_activity.html
-          test -f outputs/dago/anemos_3day.html
-          test -f outputs/dago/langit_map_room.html
-          test -f outputs/dago/langit_model_court.html
-          if grep -R "visualvisual\|\[\.new Set\|const hours=\[\.new\|ANEMOS sedang\|AETHER Sentinel\|Regional situation board" outputs/*.html outputs/*/*.html 2>/dev/null; then
-            echo "Old visible wording or broken JS still exists."
+          for d in outputs/*; do
+            if [ -d "$d" ]; then
+              test -f "$d/anemos_app.html"
+              test -f "$d/anemos_3day.html"
+              test -f "$d/anemos_activity.html"
+              test -f "$d/langit_map_room.html"
+              test -f "$d/langit_model_court.html"
+              test -f "$d/sentinel_x_accuracy_public.html"
+              test -f "$d/langit_api_v1.json"
+              test -f "$d/langit_location.geojson"
+            fi
+          done
+          if grep -R "visual-first\|Data confidence\|ANEMOS sedang\|AETHER Sentinel\|\[\.new Set\|const hours=\[\.new" outputs/*.html outputs/*/*.html 2>/dev/null; then
+            echo "Public output masih mengandung teks/JS lama."
             exit 1
           fi
 
       - name: Harden public output
         run: |
+          find outputs -name "*.sqlite" -delete || true
           find outputs -name "*.db" -delete || true
           find outputs -type d -name "logs" -prune -exec rm -rf {} + || true
           find outputs -type d -name "raw_payloads" -prune -exec rm -rf {} + || true
           find outputs -type f -name "*.py" -delete || true
           find outputs -type f -name "*.pyc" -delete || true
-          find outputs -maxdepth 3 -type f | sort | sed -n '1,240p'
+          find outputs -maxdepth 3 -type f | sort | sed -n '1,220p'
 
       - name: Upload generated site artifact
         uses: actions/upload-artifact@v4
         with:
-          name: langit-v101-public-site
+          name: langit-v63-public-site
           path: outputs
           retention-days: 7
 
@@ -132,4 +172,4 @@ jobs:
           publish_dir: outputs
           publish_branch: gh-pages
           force_orphan: true
-          commit_message: "deploy: LANGIT v101 recovery public layer"
+          commit_message: "deploy: LANGIT v63 public product layer"
