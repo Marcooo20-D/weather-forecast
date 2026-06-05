@@ -1,4 +1,4 @@
-name: LANGIT v64 Forecast OS
+name: LANGIT v64.2 Forecast OS
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: langit-v64-forecast
+  group: langit-v64-2-forecast
   cancel-in-progress: true
 
 jobs:
@@ -66,13 +66,13 @@ jobs:
           ls -la
           test -f weather_ensemble_multi_location.py
           test -f langit_v63_product_rebuild.py
-          test -f langit_v64_atmospheric_map_engine.py
+          test -f langit_v64_2_wind_field_map_engine.py
 
       - name: Syntax check scripts
         run: |
           python -m py_compile weather_ensemble_multi_location.py
           python -m py_compile langit_v63_product_rebuild.py
-          python -m py_compile langit_v64_atmospheric_map_engine.py
+          python -m py_compile langit_v64_2_wind_field_map_engine.py
 
       - name: LANGIT generator doctor
         run: |
@@ -106,7 +106,7 @@ jobs:
           if [ "$RC" = "0" ]; then
             echo "Forecast selesai normal."
           elif [ "$RC" = "2" ]; then
-            echo "::warning::Forecast selesai dengan warning, tetapi public layer tetap dibangun."
+            echo "::warning::Forecast selesai dengan warning, public layer tetap dibangun."
           else
             echo "::error::Forecast gagal dengan exit code $RC."
             exit "$RC"
@@ -128,19 +128,19 @@ jobs:
             --root outputs \
             --public-base-url "$PUBLIC_BASE_URL"
 
-      - name: Rebuild LANGIT v64 Atmospheric Map Engine
+      - name: Rebuild LANGIT v64.2 wind field map layer
         run: |
-          python langit_v64_atmospheric_map_engine.py \
+          python langit_v64_2_wind_field_map_engine.py \
             --root outputs \
             --public-base-url "$PUBLIC_BASE_URL"
 
       - name: Verify public output
         run: |
           python langit_v63_product_rebuild.py --root outputs --verify-only
-          python langit_v64_atmospheric_map_engine.py --root outputs --verify-only
+          python langit_v64_2_wind_field_map_engine.py --root outputs --verify-only
           test -f outputs/index.html
           test -f outputs/langit_portal_map.html
-          test -f outputs/langit_v64_manifest.json
+          test -f outputs/langit_v64_2_manifest.json
           for d in outputs/*; do
             if [ -d "$d" ]; then
               test -f "$d/anemos_app.html"
@@ -153,7 +153,7 @@ jobs:
               test -f "$d/sentinel_x_accuracy_public.html"
               test -f "$d/langit_api_v1.json"
               test -f "$d/langit_location.geojson"
-              test -f "$d/langit_v64_map_manifest.json"
+              test -f "$d/langit_v64_2_map_manifest.json"
             fi
           done
           if grep -R "visual-first\|Data confidence\|ANEMOS sedang\|AETHER Sentinel\|\[\.new Set\|const hours=\[\.new" outputs/*.html outputs/*/*.html 2>/dev/null; then
@@ -169,12 +169,12 @@ jobs:
           find outputs -type d -name "raw_payloads" -prune -exec rm -rf {} + || true
           find outputs -type f -name "*.py" -delete || true
           find outputs -type f -name "*.pyc" -delete || true
-          find outputs -maxdepth 3 -type f | sort | sed -n '1,240p'
+          find outputs -maxdepth 3 -type f | sort | sed -n '1,260p'
 
       - name: Upload generated site artifact
         uses: actions/upload-artifact@v4
         with:
-          name: langit-v64-public-site
+          name: langit-v64-2-public-site
           path: outputs
           retention-days: 7
 
@@ -185,4 +185,4 @@ jobs:
           publish_dir: outputs
           publish_branch: gh-pages
           force_orphan: true
-          commit_message: "deploy: LANGIT v64 Atmospheric Map Engine"
+          commit_message: "deploy: LANGIT v64.2 wind field map layer"
