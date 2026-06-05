@@ -1,4 +1,4 @@
-name: LANGIT v64.4 Forecast OS
+name: LANGIT v64.4.1 Forecast OS
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: langit-v64-4-forecast
+  group: langit-v64-4-1-forecast
   cancel-in-progress: true
 
 jobs:
@@ -128,7 +128,7 @@ jobs:
             --root outputs \
             --public-base-url "$PUBLIC_BASE_URL"
 
-      - name: Rebuild LANGIT v64.4 real atmospheric map layer
+      - name: Rebuild LANGIT v64.4.1 real atmospheric map layer
         run: |
           python langit_v64_3_full_variable_map_engine.py \
             --root outputs \
@@ -175,7 +175,7 @@ jobs:
       - name: Upload generated site artifact
         uses: actions/upload-artifact@v4
         with:
-          name: langit-v64-4-public-site
+          name: langit-v64-4-1-public-site
           path: outputs
           retention-days: 7
 
@@ -186,4 +186,4 @@ jobs:
           publish_dir: outputs
           publish_branch: gh-pages
           force_orphan: true
-          commit_message: "deploy: LANGIT v64.4 real atmospheric field map"
+          commit_message: "deploy: LANGIT v64.4.1 real atmospheric field map"
