@@ -195,7 +195,6 @@ SANITIZE_REPLACEMENTS = [
     ("window ", "jam "),
     ("Keandalan Data", "Keyakinan data"),
     ("data confidence", "keyakinan data"),
-    ("", "visual"),
     ("ANEMOS sedang", "LANGIT sedang"),
     ("AETHER Sentinel", "LANGIT Sentinel"),
     ("data publik</small>", "data</small>"),
@@ -205,7 +204,14 @@ def sanitize_public_text(content: str) -> str:
     """Final guard for public-facing text and legacy HTML fragments."""
     out = content
     for old, new in SANITIZE_REPLACEMENTS:
+        # HARD GUARD: never run str.replace with an empty search string.
+        # In Python, "text".replace("", "x") inserts x between every character,
+        # which was the cause of the repeated "visualvisualvisual..." page corruption.
+        if not old:
+            continue
         out = out.replace(old, new)
+    # Remove accidental repeated token corruption from older failed deployments.
+    out = re.sub(r"(?:visual){8,}", "", out, flags=re.I)
     # Remove a few repetitive/generic product phrases if they survived from older layers.
     out = re.sub(r"\bAI[- ]generated\b", "otomatis", out, flags=re.I)
     out = re.sub(r"\bDecision[- ]first\b", "ringkas", out, flags=re.I)
