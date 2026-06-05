@@ -26,7 +26,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 BRAND = "LANGIT"
-VERSION = "LANGIT v63"
+VERSION = "LANGIT v63.1"
 TZ_NAME = "Asia/Jakarta"
 DISCLAIMER = "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti BMKG dan kondisi setempat."
 ID_BOUNDS = [[-11.25, 94.0], [6.45, 141.25]]
@@ -182,9 +182,73 @@ def read_csv(path: Path) -> List[Dict[str, Any]]:
         return []
 
 
+SANITIZE_REPLACEMENTS = [
+    ("Window aman", "Jam aman"),
+    ("window aman", "jam aman"),
+    ("Window nyaman", "Jam nyaman"),
+    ("window nyaman", "jam nyaman"),
+    ("Window aktivitas", "Jam aktivitas"),
+    ("window aktivitas", "jam aktivitas"),
+    ("Window hujan", "Jam hujan"),
+    ("window hujan", "jam hujan"),
+    ("Window ", "Jam "),
+    ("window ", "jam "),
+    ("Data confidence", "Keyakinan data"),
+    ("data confidence", "keyakinan data"),
+    ("visual-first", "visual"),
+    ("ANEMOS sedang", "LANGIT sedang"),
+    ("AETHER Sentinel", "LANGIT Sentinel"),
+    ("data publik</small>", "data</small>"),
+]
+
+def sanitize_public_text(content: str) -> str:
+    """Final guard for public-facing text and legacy HTML fragments."""
+    out = content
+    for old, new in SANITIZE_REPLACEMENTS:
+        out = out.replace(old, new)
+    # Remove a few repetitive/generic product phrases if they survived from older layers.
+    out = re.sub(r"\bAI[- ]generated\b", "otomatis", out, flags=re.I)
+    out = re.sub(r"\bDecision[- ]first\b", "ringkas", out, flags=re.I)
+    out = re.sub(r"\bHyperlocal Weather Intelligence OS\b", "Prakiraan lokal", out, flags=re.I)
+    return out
+
+
 def write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.suffix.lower() in {".html", ".htm", ".txt", ".json"}:
+        content = sanitize_public_text(content)
     path.write_text(content, encoding="utf-8")
+
+
+def sanitize_existing_public_files(root: Path) -> int:
+    """
+    Clean old public files produced by older generator layers.
+
+    This is intentionally run before verification, because GitHub Actions may keep
+    files such as command_center_sentinel_x.html, anemos_map.html, planner pages,
+    commute/laundry pages, or old public landing pages from previous versions.
+    Those files are not always overwritten by the new layer, but verify() scans
+    all HTML under outputs/.
+    """
+    changed = 0
+    if not root.exists():
+        return changed
+    for path in list(root.glob("*.html")) + list(root.glob("*/*.html")):
+        try:
+            old = path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        new = sanitize_public_text(old)
+        # Hard-clean leftover invalid JS strings from old failed builds.
+        new = new.replace("[.new Set", "[...new Set")
+        new = new.replace("const hours=[.new", "const hours=[...new")
+        if new != old:
+            path.write_text(new, encoding="utf-8")
+            changed += 1
+    if changed:
+        print(f"[SANITIZE] cleaned legacy public HTML files: {changed}")
+    return changed
+
 
 
 def pick(row: Dict[str, Any], *names: str, default: Any = None) -> Any:
@@ -927,6 +991,56 @@ def activity_page(api: Dict[str, Any]) -> str:
     return document(api, "activity", f"LANGIT Aktivitas — {api['location_name']}", body)
 
 
+def planner_page(api: Dict[str, Any]) -> str:
+    day = api["today"]
+    rows = day.get("hours") or []
+    options = "".join(f'<option value="{esc(x.get("hour"))}">{esc(x.get("hour"))} · {esc(x.get("condition"))} · hujan {pct(x.get("rain_probability"))}</option>' for x in rows)
+    data = json.dumps(day, ensure_ascii=False)
+    body = hero(api, "Pilih jam", f"{day['date_label']}. Cek cepat untuk motor, jalan kaki, jemur, olahraga, acara luar, dan foto.", day)
+    body += f"""
+<section class="panel">
+  <div class="head"><h2>Planner cepat</h2><p>Tanpa paragraf panjang.</p></div>
+  <div class="grid3">
+    <select id="act" class="hbox" style="color:#fff;width:100%;min-height:54px">
+      <option>Motor</option><option>Jalan kaki</option><option>Jemur</option><option>Outdoor</option><option>Olahraga</option><option>Foto</option>
+    </select>
+    <select id="hh" class="hbox" style="color:#fff;width:100%;min-height:54px">{options}</select>
+    <button class="btn primary" type="button" onclick="decidePlanner()">Cek jam</button>
+  </div>
+  <article class="decision-main" style="margin-top:16px;min-height:150px">
+    <div><span id="plannerBadge" class="badge watch">Pilih jam</span><h2 id="plannerOut" style="font-size:clamp(30px,4vw,48px)">Cek sebelum berangkat.</h2></div>
+    <p id="plannerWhy">Pilih aktivitas dan jam. Sistem akan pakai peluang hujan, risiko, dan panas terasa.</p>
+  </article>
+</section>
+<script>
+const plannerDay={data};
+function plannerRiskClass(x){{return x==='danger'?'Tinggi':x==='rain'?'Waspada':x==='watch'?'Pantau':x==='safe'?'Aman':'Terbatas';}}
+function decidePlanner(){{
+  const act=document.getElementById('act').value;
+  const val=document.getElementById('hh').value;
+  const h=(plannerDay.hours||[]).find(x=>x.hour===val)||{{}};
+  const p=Math.round(Number(h.rain_probability||0));
+  const r=Math.round(Number(h.risk_score||0));
+  const hi=Number(h.heat_index_c||h.temp_c||0);
+  let msg='Bisa';
+  let why='Tetap lihat kondisi sekitar.';
+  if(r>=78 || p>=70){{msg='Tunda'; why='Risiko tinggi pada jam ini.';}}
+  else if(r>=55 || p>=45){{msg='Siapkan plan B'; why='Awan/hujan cukup perlu diwaspadai.';}}
+  else if(r>=25 || p>=25){{msg='Masih bisa, pantau'; why='Masih aman bersyarat.';}}
+  if((act==='Jemur'||act==='Foto') && p>=25){{msg='Pilih jam lain'; why='Hujan/awan bisa mengganggu aktivitas ini.';}}
+  if((act==='Olahraga'||act==='Jalan kaki') && hi>=36){{msg='Cari jam lebih teduh'; why='Panas terasa tinggi.';}}
+  document.getElementById('plannerBadge').className='badge '+(h.risk_class||'watch');
+  document.getElementById('plannerBadge').textContent=plannerRiskClass(h.risk_class||'watch');
+  document.getElementById('plannerOut').textContent=act+' '+val+': '+msg;
+  document.getElementById('plannerWhy').textContent=why+' Hujan '+p+'%, risiko '+r+'/100, kondisi '+(h.condition||'-')+'.';
+}}
+</script>
+"""
+    body += timeline(day["hours"], "Jam hari ini", day["date_label"])
+    body += activity_cards(day)
+    return document(api, "activity", f"LANGIT Planner — {api['location_name']}", body)
+
+
 def data_page(api: Dict[str, Any]) -> str:
     day = api["today"]
     sources = api.get("sources") or []
@@ -1022,6 +1136,7 @@ def portal_geo(apis: List[Dict[str, Any]]) -> Dict[str, Any]:
 # -----------------------------------------------------------------------------
 
 def verify(root: Path) -> int:
+    sanitize_existing_public_files(root)
     required_root = [root / "index.html", root / "langit_portal_map.html", root / "langit_portal_manifest.json"]
     missing = [str(p) for p in required_root if not p.exists()]
     for d in location_dirs(root):
@@ -1072,7 +1187,17 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
         write_text(d / "langit_activity.html", activity_page(api))
         write_text(d / "langit_model_court.html", data_page(api))
         write_text(d / "sentinel_x_accuracy_public.html", accuracy_page(api, d))
-        write_text(d / "langit_map_room.html", map_page(f"LANGIT Map — {api['location_name']}", gj, "anemos_app.html"))
+        map_html = map_page(f"LANGIT Map — {api['location_name']}", gj, "anemos_app.html")
+        write_text(d / "langit_map_room.html", map_html)
+        write_text(d / "anemos_map.html", map_html)
+        # Overwrite legacy public pages so old/generic v50-v62 copy does not remain accessible.
+        write_text(d / "command_center_sentinel_x.html", today_page(api))
+        write_text(d / "langit_planer.html", planner_page(api))
+        write_text(d / "langit_planner.html", planner_page(api))
+        write_text(d / "anemos_commute_advice.html", activity_page(api))
+        write_text(d / "anemos_laundry_advice.html", activity_page(api))
+        write_text(d / "anemos_public_landing.html", today_page(api))
+        write_text(d / "langit_public_landing.html", today_page(api))
         write_text(d / "langit_whatsapp_brief.txt", f"LANGIT — {api['location_name']}\n{api['today']['date_label']}\n{decision_sentence(api['location_name'], api['today'], short=True)}\n")
 
     pgeo = portal_geo(apis)
