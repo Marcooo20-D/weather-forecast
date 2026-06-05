@@ -1,4 +1,4 @@
-name: LANGIT v61 Forecast OS
+name: LANGIT v62 Forecast OS
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: langit-v61-forecast
+  group: langit-v62-forecast
   cancel-in-progress: true
 
 jobs:
@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 25
 
     steps:
-      - name: Checkout main generator
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
           ref: main
@@ -29,7 +29,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          # Jangan pakai cache requirements/pyproject karena repo ini belum punya file dependency standar.
 
       - name: Install runtime helpers
         run: |
@@ -40,10 +39,12 @@ jobs:
           pwd
           ls -la
           test -f weather_ensemble_multi_location.py
+          test -f langit_v62_visual_rebuild.py
 
-      - name: Syntax check main script
+      - name: Syntax check scripts
         run: |
           python -m py_compile weather_ensemble_multi_location.py
+          python -m py_compile langit_v62_visual_rebuild.py
 
       - name: LANGIT generator doctor
         run: |
@@ -54,23 +55,23 @@ jobs:
             --no-debug \
             --no-save-raw-payloads
 
-      - name: Run LANGIT v61 forecast
-        timeout-minutes: 18
+      - name: Run forecast engine
+        timeout-minutes: 16
         run: |
           python weather_ensemble_multi_location.py \
             --mode forecast \
             --locations all \
             --timezone Asia/Jakarta \
             --public-base-url https://marcooo20-d.github.io/weather-forecast \
-            --http-timeout 8 \
+            --http-timeout 6 \
             --max-retry-http 1 \
-            --max-workers 4 \
+            --max-workers 3 \
             --max-inflight-per-host 1 \
             --target-step-minutes 180 \
             --no-debug \
             --no-save-raw-payloads
 
-      - name: Generate LANGIT public portal
+      - name: Generate original public index
         run: |
           python weather_ensemble_multi_location.py \
             --mode public-index \
@@ -80,117 +81,29 @@ jobs:
             --no-debug \
             --no-save-raw-payloads
 
-      - name: Sanitize LANGIT public output
+      - name: Rebuild LANGIT v62 visual public layer
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-
-          root = Path("outputs")
-          repl = {
-              "ANEMOS sedang mengumpulkan pasangan prakiraan dan observasi agar evaluasi akurasi dapat dibaca lebih kuat.": "LANGIT sedang mengumpulkan pasangan prakiraan dan observasi. Skor akurasi baru ditampilkan setelah data cukup.",
-              "ANEMOS masih mengumpulkan pasangan prakiraan dan observasi. Sebelum cukup, halaman ini tidak mengklaim akurasi.": "LANGIT masih mengumpulkan pasangan prakiraan dan observasi. Sebelum cukup, halaman ini tidak mengklaim akurasi.",
-              "ANEMOS v20": "LANGIT v61.1",
-              "ANEMOS v50": "LANGIT v61.1",
-              "ANEMOS": "LANGIT",
-              "AETHER Sentinel X": "LANGIT",
-              "AETHER Sentinel": "LANGIT",
-              "Sentinel X": "LANGIT",
-              "LANGIT v60.4": "LANGIT v61.1",
-              "LANGIT v60": "LANGIT v61.1",
-          }
-
-          bounds = "[[-11.25,94.0],[6.45,141.25]]"
-          guard = f"""
-          <script>
-          (function(){{
-            if (window.__LANGIT_V611_MAP_GUARD__) return;
-            window.__LANGIT_V611_MAP_GUARD__ = true;
-            var ID_BOUNDS = {bounds};
-            function clampMap(map) {{
-              if (!map || !map.setMaxBounds) return;
-              try {{
-                map.setMaxBounds(ID_BOUNDS);
-                map.options.maxBoundsViscosity = 1.0;
-                if (!map.options.minZoom || map.options.minZoom < 5) map.options.minZoom = 5;
-                var z = map.getZoom ? map.getZoom() : 0;
-                if (z < 5 && map.setZoom) map.setZoom(5);
-              }} catch (e) {{}}
-            }}
-            function installPatch() {{
-              if (!window.L || !L.map || L.map.__langit_v611_patched__) return false;
-              var oldMap = L.map;
-              L.map = function(id, opts) {{
-                opts = opts || {{}};
-                opts.maxBounds = opts.maxBounds || ID_BOUNDS;
-                opts.maxBoundsViscosity = 1.0;
-                if (!opts.minZoom || opts.minZoom < 5) opts.minZoom = 5;
-                var map = oldMap.call(this, id, opts);
-                setTimeout(function(){{ clampMap(map); }}, 0);
-                setTimeout(function(){{ clampMap(map); }}, 600);
-                setTimeout(function(){{ clampMap(map); }}, 1600);
-                return map;
-              }};
-              L.map.__langit_v611_patched__ = true;
-              return true;
-            }}
-            installPatch();
-            document.addEventListener("DOMContentLoaded", installPatch);
-            setTimeout(installPatch, 300);
-          }})();
-          </script>
-          """.strip()
-
-          changed = 0
-          for p in root.rglob("*.html"):
-              s = p.read_text(encoding="utf-8", errors="replace")
-              old = s
-              for a, b in repl.items():
-                  s = s.replace(a, b)
-              if "leaflet" in s.lower() and "__LANGIT_V611_MAP_GUARD__" not in s:
-                  pos = s.find("L.map(")
-                  if pos >= 0:
-                      s = s[:pos] + guard + "\n" + s[pos:]
-                  else:
-                      s = s.replace("</body>", "\n" + guard + "\n</body>")
-              if s != old:
-                  p.write_text(s, encoding="utf-8")
-                  changed += 1
-
-          for p in root.rglob("*.json"):
-              s = p.read_text(encoding="utf-8", errors="replace")
-              old = s
-              for a, b in repl.items():
-                  s = s.replace(a, b)
-              if s != old:
-                  p.write_text(s, encoding="utf-8")
-                  changed += 1
-
-          print(f"LANGIT v61.1 public sanitize complete. changed={changed}")
-          PY
+          python langit_v62_visual_rebuild.py \
+            --root outputs \
+            --public-base-url https://marcooo20-d.github.io/weather-forecast
 
       - name: Verify public output
         run: |
           test -f outputs/index.html
+          test -f outputs/langit_portal_map.html
           test -f outputs/dago/anemos_app.html
           test -f outputs/dago/anemos_3day.html
           test -f outputs/dago/anemos_activity.html
           test -f outputs/dago/langit_map_room.html
           test -f outputs/dago/langit_model_court.html
           test -f outputs/dago/sentinel_x_accuracy_public.html
-
-          grep -RIl "LANGIT" outputs/*.html outputs/*/*.html | head -40
-
-          BAD="$(grep -RIlE 'ANEMOS sedang|AETHER Sentinel|AETHER Sentinel X' outputs/*.html outputs/*/*.html 2>/dev/null || true)"
-          if [ -n "$BAD" ]; then
-            echo "Old visible branding still detected in:"
-            echo "$BAD"
+          python langit_v62_visual_rebuild.py --root outputs --verify-only
+          if grep -R "\[\.new Set\|const hours=\[\.new Set\|ANEMOS sedang\|AETHER Sentinel" outputs/*.html outputs/*/*.html 2>/dev/null; then
+            echo "Public output still contains broken JS or old visible branding."
             exit 1
           fi
 
-          echo "OK: public output verified."
-
-      - name: Harden public output before deploy
+      - name: Harden public output
         run: |
           find outputs -name "*.sqlite" -delete || true
           find outputs -name "*.db" -delete || true
@@ -198,12 +111,12 @@ jobs:
           find outputs -type d -name "raw_payloads" -prune -exec rm -rf {} + || true
           find outputs -type f -name "*.py" -delete || true
           find outputs -type f -name "*.pyc" -delete || true
-          find outputs -maxdepth 3 -type f | sort | sed -n '1,160p'
+          find outputs -maxdepth 3 -type f | sort | sed -n '1,180p'
 
       - name: Upload generated site artifact
         uses: actions/upload-artifact@v4
         with:
-          name: langit-v61-public-site
+          name: langit-v62-public-site
           path: outputs
           retention-days: 7
 
@@ -214,4 +127,4 @@ jobs:
           publish_dir: outputs
           publish_branch: gh-pages
           force_orphan: true
-          commit_message: "deploy: LANGIT v61.1 public forecast"
+          commit_message: "deploy: LANGIT v62 visual public layer"
