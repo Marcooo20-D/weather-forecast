@@ -1,0 +1,68 @@
+{
+  "version": "ANEMOS v20 Civic Weather OS",
+  "public_version": "sentinel-x-public-operational-v2",
+  "generated_at": "2026-06-12T15:26:57.391140+07:00",
+  "location": "Arjawinangun, Cirebon",
+  "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
+  "allowed_uses": [
+    "rencana aktivitas umum",
+    "estimasi risiko kehujanan",
+    "pendukung keputusan non-kritis",
+    "edukasi/riset pribadi"
+  ],
+  "not_allowed_uses": [
+    "peringatan bencana resmi",
+    "penerbangan",
+    "operasi keselamatan kritis",
+    "keputusan banjir resmi",
+    "pengganti informasi BMKG"
+  ],
+  "known_weaknesses": [
+    "timing hujan konvektif lokal",
+    "intensitas hujan ekstrem",
+    "posisi tepat sel hujan",
+    "wilayah dengan observasi historis minim"
+  ],
+  "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
+  "daily_summary": {
+    "generated_at": "2026-06-12T15:26:57.380955+07:00",
+    "aether_version": "ANEMOS v20 Civic Weather OS",
+    "location": "Arjawinangun, Cirebon",
+    "mission": "safety_first",
+    "daily_operational_status": "BLACK",
+    "dominant_atmospheric_mode": "MIXED_LOCAL_ATMOSPHERE",
+    "location_personality": {
+      "personality": "lowland_heat_humidity",
+      "convective_sensitivity": "medium",
+      "rain_displacement_risk": "medium",
+      "morning_humidity_memory": "medium",
+      "forecast_difficulty": "medium",
+      "notes": "Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
+    },
+    "risk_window": "Tidak ada risk window kuat",
+    "best_general_activity_window": "06:00",
+    "peak_rain_threat_hour": "04:00",
+    "peak_rain_threat_score": 51.5,
+    "peak_heavy_rain_threat_hour": "05:00",
+    "peak_heavy_rain_threat_score": 6.0,
+    "peak_failure_risk_hour": "05:00",
+    "peak_failure_risk_score": 40.2,
+    "peak_forecast_stress_hour": "05:00",
+    "peak_forecast_stress_score": 35.4,
+    "peak_self_doubt_hour": "05:00",
+    "peak_self_doubt_score": 38.5,
+    "summary_text": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Arjawinangun, Cirebon. Status operasional harian BLACK. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 40.2/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
+  },
+  "constitution": [
+    "Do not assign high trust when source coverage is weak.",
+    "Do not hide source disagreement; disagreement is a risk signal.",
+    "Do not treat rainfall mean as the only reality; always preserve P90/P95 worst-case signals.",
+    "Do not treat BMKG rain proxy as precise rain_mm observation.",
+    "For local convective rain, communicate timing and spatial displacement uncertainty.",
+    "If the forecast may fail, say how and why it may fail.",
+    "When decision cost is asymmetric, prefer safety-first interpretation.",
+    "If data quality is poor, use BLACK/RED status and avoid confident recommendations.",
+    "Every forecast must include reasoning, limitations, and a recommended action.",
+    "The system learns from observations and feedback, but never replaces official warnings."
+  ]
+}

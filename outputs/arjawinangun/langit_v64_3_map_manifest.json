@@ -1,0 +1,68 @@
+{
+  "version": "v64.4.2",
+  "engine": "LANGIT v64.4.2 Real Atmospheric Field Map Engine",
+  "generated_at": "2026-06-12T15:27:16+07:00",
+  "portal": false,
+  "location_count": 1,
+  "hour_count": 72,
+  "coverage": {
+    "risk": 72,
+    "rain": 34,
+    "temp": 72,
+    "feels": 72,
+    "humidity": 29,
+    "cloud": 0,
+    "pressure": 0,
+    "wind": 67,
+    "gust": 67,
+    "uv": 0,
+    "visibility": 0,
+    "confidence": 38
+  },
+  "available_layers": [
+    "risk",
+    "rain",
+    "temp",
+    "feels",
+    "humidity",
+    "wind",
+    "gust",
+    "confidence"
+  ],
+  "disabled_layers": [
+    "cloud",
+    "pressure",
+    "uv",
+    "visibility"
+  ],
+  "missing_variables": [
+    "cloud_cover_pct",
+    "pressure_hpa",
+    "uv_index",
+    "visibility_km"
+  ],
+  "wind_field_valid": false,
+  "wind_direction_coverage": 0,
+  "warnings": [
+    "wind_speed tersedia, tetapi wind_direction tidak tersedia di payload publik; layer warna angin tetap aktif, animasi partikel angin dinonaktifkan agar tidak membuat arah palsu."
+  ],
+  "locations": [
+    {
+      "slug": "arjawinangun",
+      "name": "Arjawinangun, Cirebon",
+      "status": "Waspada",
+      "risk_score": 57,
+      "peak_hour": "04:00",
+      "safe_hour": "00:00",
+      "rain_probability_pct": 57,
+      "temperature_c": 25.9,
+      "wind_speed_ms": 4.7,
+      "wind_direction_deg": null
+    }
+  ],
+  "notes": [
+    "Peta adalah estimasi field dari titik prakiraan publik, bukan radar observasi.",
+    "Portal memakai IDW interpolation antar lokasi aktif.",
+    "Peta per lokasi memakai local-radius field agar tidak mewarnai area terlalu luas."
+  ]
+}

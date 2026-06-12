@@ -1,0 +1,1562 @@
+{
+  "brand": "LANGIT",
+  "version": "LANGIT v60.4",
+  "generated_at": "2026-06-12T15:25:28.657905+07:00",
+  "updated_label": "Jumat, 12 Juni 2026, 15:25 WIB",
+  "location_slug": "dago",
+  "location_name": "Dago, Bandung",
+  "disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
+  "days": [
+    {
+      "date": "2026-06-12",
+      "date_label": "Jumat, 12 Juni 2026",
+      "day_tag": "Hari ini",
+      "condition": "Awan tumbuh, potensi hujan",
+      "icon": "☁️",
+      "risk": "sedang",
+      "risk_class": "watch",
+      "risk_hint": "Aktivitas masih memungkinkan, tetapi tetap pantau perubahan langit.",
+      "title": "Peluang hujan meningkat sekitar pukul 17:00.",
+      "advice": "Aktivitas masih bisa dilakukan. Tetap pantau langit dan siapkan payung bila keluar mendekati pukul 17:00.",
+      "peak_rain_probability": 36.0,
+      "peak_rain_hour": "17:00",
+      "avg_temperature_c": 22.9,
+      "max_temperature_c": 29.0,
+      "avg_humidity_pct": 78.0,
+      "max_heat_index_c": 29.5,
+      "max_wind_kmh": 8.9,
+      "attention_hours": "00:00, 03:00, 06:00, 09:00",
+      "periods": [
+        {
+          "name": "Pagi",
+          "condition": "Lembap pagi",
+          "attention_hour": "06:00",
+          "temp_c": 21.35,
+          "rain_probability": 0.0,
+          "risk_score": 3.8,
+          "risk_class": "safe",
+          "risk_label": "Aman"
+        },
+        {
+          "name": "Siang",
+          "condition": "Cerah berawan",
+          "attention_hour": "12:00",
+          "temp_c": 29.0,
+          "rain_probability": 0.0,
+          "risk_score": 0,
+          "risk_class": "safe",
+          "risk_label": "Aman"
+        },
+        {
+          "name": "Sore",
+          "condition": "Awan tumbuh, potensi hujan",
+          "attention_hour": "17:00",
+          "temp_c": 25.03,
+          "rain_probability": 36.0,
+          "risk_score": 34.6,
+          "risk_class": "watch",
+          "risk_label": "Dipantau"
+        },
+        {
+          "name": "Malam",
+          "condition": "Lembap pagi",
+          "attention_hour": "00:00",
+          "temp_c": 20.53,
+          "rain_probability": 0.0,
+          "risk_score": 4.2,
+          "risk_class": "safe",
+          "risk_label": "Aman"
+        }
+      ],
+      "important_hours": [
+        {
+          "hour": "00:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 20.2,
+          "humidity_pct": 94.0,
+          "heat_index_c": 20.2,
+          "rain_probability": 0.0,
+          "wind_kmh": 2.3,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "03:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 19.5,
+          "humidity_pct": 94.0,
+          "heat_index_c": 19.5,
+          "rain_probability": 0.0,
+          "wind_kmh": 1.6,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "06:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 18.8,
+          "humidity_pct": 93.0,
+          "heat_index_c": 18.8,
+          "rain_probability": 0.0,
+          "wind_kmh": 3.2,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "09:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 23.9,
+          "humidity_pct": 68.0,
+          "heat_index_c": 23.9,
+          "rain_probability": 0.0,
+          "wind_kmh": 4.1,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "12:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 29.0,
+          "humidity_pct": 48.0,
+          "heat_index_c": 29.5,
+          "rain_probability": 0.0,
+          "wind_kmh": 5.8,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "15:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 27.7,
+          "humidity_pct": 60.0,
+          "heat_index_c": 28.3,
+          "rain_probability": 11.0,
+          "wind_kmh": 8.9,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "17:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 24.5,
+          "humidity_pct": 71.0,
+          "heat_index_c": 24.5,
+          "rain_probability": 36.0,
+          "wind_kmh": 7.7,
+          "risk": "sedang",
+          "risk_class": "yellow"
+        },
+        {
+          "hour": "18:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 22.9,
+          "humidity_pct": 80.0,
+          "heat_index_c": 22.9,
+          "rain_probability": 36.0,
+          "wind_kmh": 4.7,
+          "risk": "sedang",
+          "risk_class": "yellow"
+        },
+        {
+          "hour": "21:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 21.9,
+          "humidity_pct": 89.0,
+          "heat_index_c": 21.9,
+          "rain_probability": 0.0,
+          "wind_kmh": 2.7,
+          "risk": "rendah",
+          "risk_class": "green"
+        }
+      ],
+      "raw_hour_count": 24,
+      "risk_label": "Dipantau",
+      "summary_sentence": "Untuk Dago, Bandung, cuaca masih cukup aman, namun tetap pantau perubahan awan terutama sekitar pukul 17:00.",
+      "activity_matrix": [
+        {
+          "activity": "Perjalanan / motor",
+          "status": "Aman dipantau",
+          "advice": "Kondisi relatif aman; tetap perhatikan perubahan lokal.",
+          "priority_hour": "06:00 · 09:00 · 12:00 · 15:00",
+          "risk_class": "safe"
+        },
+        {
+          "activity": "Jalan kaki",
+          "status": "Cocok",
+          "advice": "Jam nyaman: 06:00 · 09:00 · 12:00 · 15:00.",
+          "priority_hour": "06:00 · 09:00 · 12:00 · 15:00",
+          "risk_class": "safe"
+        },
+        {
+          "activity": "Jemur pakaian",
+          "status": "Cukup aman",
+          "advice": "Angkat sebelum sore jika awan mulai gelap.",
+          "priority_hour": "pagi–siang",
+          "risk_class": "safe"
+        },
+        {
+          "activity": "Olahraga outdoor",
+          "status": "Aman dipantau",
+          "advice": "Pagi atau sore biasanya lebih nyaman.",
+          "priority_hour": "06:00 · 09:00 · 12:00 · 15:00",
+          "risk_class": "safe"
+        },
+        {
+          "activity": "Acara outdoor",
+          "status": "Bisa dilanjutkan",
+          "advice": "Tetap siapkan opsi teduh ringan untuk antisipasi.",
+          "priority_hour": "06:00 · 09:00 · 12:00 · 15:00",
+          "risk_class": "safe"
+        },
+        {
+          "activity": "Foto / city walk",
+          "status": "Cocok",
+          "advice": "Pantau cahaya dan awan lokal sebelum berangkat.",
+          "priority_hour": "06:00 · 09:00 · 12:00 · 15:00",
+          "risk_class": "safe"
+        }
+      ],
+      "key_hours": [
+        {
+          "hour": "00:00",
+          "condition": "Lembap pagi",
+          "icon": "≋",
+          "temp_c": 20.2,
+          "humidity_pct": 94.0,
+          "heat_index_c": 20.2,
+          "rain_probability": 0.0,
+          "wind_kmh": 2.3,
+          "risk_score": 4.2,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+        },
+        {
+          "hour": "03:00",
+          "condition": "Lembap pagi",
+          "icon": "≋",
+          "temp_c": 19.5,
+          "humidity_pct": 94.0,
+          "heat_index_c": 19.5,
+          "rain_probability": 0.0,
+          "wind_kmh": 1.6,
+          "risk_score": 4.2,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+        },
+        {
+          "hour": "06:00",
+          "condition": "Lembap pagi",
+          "icon": "≋",
+          "temp_c": 18.8,
+          "humidity_pct": 93.0,
+          "heat_index_c": 18.8,
+          "rain_probability": 0.0,
+          "wind_kmh": 3.2,
+          "risk_score": 3.8,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+        },
+        {
+          "hour": "09:00",
+          "condition": "Berawan dipantau",
+          "icon": "☁",
+          "temp_c": 23.9,
+          "humidity_pct": 68.0,
+          "heat_index_c": 23.9,
+          "rain_probability": 0.0,
+          "wind_kmh": 4.1,
+          "risk_score": 0,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        },
+        {
+          "hour": "12:00",
+          "condition": "Cerah berawan",
+          "icon": "◉",
+          "temp_c": 29.0,
+          "humidity_pct": 48.0,
+          "heat_index_c": 29.5,
+          "rain_probability": 0.0,
+          "wind_kmh": 5.8,
+          "risk_score": 0,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        },
+        {
+          "hour": "15:00",
+          "condition": "Cerah berawan",
+          "icon": "◉",
+          "temp_c": 27.7,
+          "humidity_pct": 60.0,
+          "heat_index_c": 28.3,
+          "rain_probability": 11.0,
+          "wind_kmh": 8.9,
+          "risk_score": 8.1,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        },
+        {
+          "hour": "17:00",
+          "condition": "Awan tumbuh, potensi hujan",
+          "icon": "◒",
+          "temp_c": 24.5,
+          "humidity_pct": 71.0,
+          "heat_index_c": 24.5,
+          "rain_probability": 36.0,
+          "wind_kmh": 7.7,
+          "risk_score": 34.6,
+          "risk_class": "watch",
+          "risk_label": "Dipantau",
+          "advice": "Masih bisa, tetapi pantau awan, angin, dan perubahan lokal."
+        },
+        {
+          "hour": "18:00",
+          "condition": "Awan tumbuh, potensi hujan",
+          "icon": "◒",
+          "temp_c": 22.9,
+          "humidity_pct": 80.0,
+          "heat_index_c": 22.9,
+          "rain_probability": 36.0,
+          "wind_kmh": 4.7,
+          "risk_score": 34.6,
+          "risk_class": "watch",
+          "risk_label": "Dipantau",
+          "advice": "Masih bisa, tetapi pantau awan, angin, dan perubahan lokal."
+        },
+        {
+          "hour": "21:00",
+          "condition": "Lembap malam",
+          "icon": "≋",
+          "temp_c": 21.9,
+          "humidity_pct": 89.0,
+          "heat_index_c": 21.9,
+          "rain_probability": 0.0,
+          "wind_kmh": 2.7,
+          "risk_score": 2.1,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+        }
+      ],
+      "confidence_label": "Lebih rendah saat hujan lokal sulit dipastikan",
+      "risk_score": 34.6,
+      "best_activity_window": [
+        "06:00",
+        "09:00",
+        "12:00",
+        "15:00"
+      ],
+      "decision_sentence": "Dago, Bandung: relatif aman, namun perubahan awan tetap dipantau sekitar 17:00.",
+      "nowcast": {
+        "window": "0–6 jam",
+        "status": "Dipantau",
+        "summary": "Masih cukup aman, namun perubahan awan perlu dipantau sekitar 17:00.",
+        "peak_hour": "17:00",
+        "peak_probability": 36.0,
+        "best_window": [
+          "06:00",
+          "09:00",
+          "12:00",
+          "15:00"
+        ]
+      },
+      "cloud_motion_proxy": {
+        "method": "proxy dari peluang hujan, RH, jam lokal, dan koreksi microclimate",
+        "rain_signal_trend": "meningkat setelah pemanasan siang",
+        "summary": "Sinyal awan/hujan meningkat setelah pemanasan siang; tetap validasi dengan kondisi langit dan radar/BMKG."
+      }
+    },
+    {
+      "date": "2026-06-13",
+      "date_label": "Sabtu, 13 Juni 2026",
+      "day_tag": "Besok",
+      "condition": "Awan tumbuh, potensi hujan",
+      "icon": "☁️",
+      "risk": "sedang",
+      "risk_class": "watch",
+      "risk_hint": "Aktivitas masih memungkinkan, tetapi tetap pantau perubahan langit.",
+      "title": "Peluang hujan meningkat sekitar pukul 17:00.",
+      "advice": "Aktivitas masih bisa dilakukan. Tetap pantau langit dan siapkan payung bila keluar mendekati pukul 17:00.",
+      "peak_rain_probability": 48.0,
+      "peak_rain_hour": "17:00",
+      "avg_temperature_c": 22.7,
+      "max_temperature_c": 26.3,
+      "avg_humidity_pct": 81.0,
+      "max_heat_index_c": 26.3,
+      "max_wind_kmh": 6.7,
+      "attention_hours": "00:00, 03:00, 06:00, 09:00",
+      "periods": [
+        {
+          "name": "Pagi",
+          "condition": "Berawan dipantau",
+          "attention_hour": "09:00",
+          "temp_c": 22.05,
+          "rain_probability": 14.0,
+          "risk_score": 10.4,
+          "risk_class": "safe",
+          "risk_label": "Aman"
+        },
+        {
+          "name": "Siang",
+          "condition": "Cerah berawan",
+          "attention_hour": "12:00",
+          "temp_c": 26.3,
+          "rain_probability": 10.0,
+          "risk_score": 7.4,
+          "risk_class": "safe",
+          "risk_label": "Aman"
+        },
+        {
+          "name": "Sore",
+          "condition": "Awan tumbuh, potensi hujan",
+          "attention_hour": "17:00",
+          "temp_c": 23.93,
+          "rain_probability": 48.0,
+          "risk_score": 43.5,
+          "risk_class": "watch",
+          "risk_label": "Dipantau"
+        },
+        {
+          "name": "Malam",
+          "condition": "Lembap malam",
+          "attention_hour": "00:00",
+          "temp_c": 20.83,
+          "rain_probability": 0.0,
+          "risk_score": 2.1,
+          "risk_class": "safe",
+          "risk_label": "Aman"
+        }
+      ],
+      "important_hours": [
+        {
+          "hour": "00:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 20.2,
+          "humidity_pct": 89.0,
+          "heat_index_c": 20.2,
+          "rain_probability": 0.0,
+          "wind_kmh": 2.9,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "03:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 20.0,
+          "humidity_pct": 88.0,
+          "heat_index_c": 20.0,
+          "rain_probability": 0.0,
+          "wind_kmh": 4.3,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "06:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 20.6,
+          "humidity_pct": 87.0,
+          "heat_index_c": 20.6,
+          "rain_probability": 11.0,
+          "wind_kmh": 4.9,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "09:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 23.5,
+          "humidity_pct": 76.0,
+          "heat_index_c": 23.5,
+          "rain_probability": 14.0,
+          "wind_kmh": 3.4,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "12:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 26.3,
+          "humidity_pct": 64.0,
+          "heat_index_c": 26.3,
+          "rain_probability": 10.0,
+          "wind_kmh": 6.7,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "15:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 24.9,
+          "humidity_pct": 71.0,
+          "heat_index_c": 24.9,
+          "rain_probability": 36.0,
+          "wind_kmh": 5.8,
+          "risk": "sedang",
+          "risk_class": "yellow"
+        },
+        {
+          "hour": "17:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 24.2,
+          "humidity_pct": 76.0,
+          "heat_index_c": 24.2,
+          "rain_probability": 48.0,
+          "wind_kmh": 4.9,
+          "risk": "sedang",
+          "risk_class": "yellow"
+        },
+        {
+          "hour": "18:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 22.7,
+          "humidity_pct": 84.0,
+          "heat_index_c": 22.7,
+          "rain_probability": 26.0,
+          "wind_kmh": 2.8,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "21:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 22.3,
+          "humidity_pct": 87.0,
+          "heat_index_c": 22.3,
+          "rain_probability": 0.0,
+          "wind_kmh": 2.9,
+          "risk": "rendah",
+          "risk_class": "green"
+        }
+      ],
+      "raw_hour_count": 24,
+      "risk_label": "Dipantau",
+      "summary_sentence": "Untuk Dago, Bandung, aktivitas masih memungkinkan, tetapi payung atau jas hujan disarankan bila keluar sekitar pukul 17:00.",
+      "activity_matrix": [
+        {
+          "activity": "Perjalanan / motor",
+          "status": "Bawa jas hujan",
+          "advice": "Lebih hati-hati mendekati 17:00; jalan dapat lebih licin.",
+          "priority_hour": "17:00",
+          "risk_class": "rain"
+        },
+        {
+          "activity": "Jalan kaki",
+          "status": "Pilih rute teduh",
+          "advice": "Cari rute yang mudah berteduh sekitar 17:00.",
+          "priority_hour": "17:00",
+          "risk_class": "rain"
+        },
+        {
+          "activity": "Jemur pakaian",
+          "status": "Lebih aman pagi",
+          "advice": "Utamakan pagi sampai siang awal dan cek langit berkala.",
+          "priority_hour": "pagi–siang awal",
+          "risk_class": "watch"
+        },
+        {
+          "activity": "Olahraga outdoor",
+          "status": "Pilih jam aman",
+          "advice": "Gunakan window lebih aman: 12:00 · 06:00 · 09:00 · 18:00.",
+          "priority_hour": "12:00 · 06:00 · 09:00 · 18:00",
+          "risk_class": "watch"
+        },
+        {
+          "activity": "Acara outdoor",
+          "status": "Siapkan plan B",
+          "advice": "Sediakan opsi tempat teduh terutama sekitar 17:00.",
+          "priority_hour": "17:00",
+          "risk_class": "rain"
+        },
+        {
+          "activity": "Foto / city walk",
+          "status": "Pantau awan",
+          "advice": "Cek awan, angin, dan radar/BMKG sebelum berangkat.",
+          "priority_hour": "17:00",
+          "risk_class": "watch"
+        }
+      ],
+      "key_hours": [
+        {
+          "hour": "00:00",
+          "condition": "Lembap malam",
+          "icon": "≋",
+          "temp_c": 20.2,
+          "humidity_pct": 89.0,
+          "heat_index_c": 20.2,
+          "rain_probability": 0.0,
+          "wind_kmh": 2.9,
+          "risk_score": 2.1,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+        },
+        {
+          "hour": "03:00",
+          "condition": "Lembap malam",
+          "icon": "≋",
+          "temp_c": 20.0,
+          "humidity_pct": 88.0,
+          "heat_index_c": 20.0,
+          "rain_probability": 0.0,
+          "wind_kmh": 4.3,
+          "risk_score": 1.7,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+        },
+        {
+          "hour": "06:00",
+          "condition": "Berawan dipantau",
+          "icon": "☁",
+          "temp_c": 20.6,
+          "humidity_pct": 87.0,
+          "heat_index_c": 20.6,
+          "rain_probability": 11.0,
+          "wind_kmh": 4.9,
+          "risk_score": 9.4,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        },
+        {
+          "hour": "09:00",
+          "condition": "Berawan dipantau",
+          "icon": "☁",
+          "temp_c": 23.5,
+          "humidity_pct": 76.0,
+          "heat_index_c": 23.5,
+          "rain_probability": 14.0,
+          "wind_kmh": 3.4,
+          "risk_score": 10.4,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        },
+        {
+          "hour": "12:00",
+          "condition": "Cerah berawan",
+          "icon": "◉",
+          "temp_c": 26.3,
+          "humidity_pct": 64.0,
+          "heat_index_c": 26.3,
+          "rain_probability": 10.0,
+          "wind_kmh": 6.7,
+          "risk_score": 7.4,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        },
+        {
+          "hour": "15:00",
+          "condition": "Awan tumbuh, potensi hujan",
+          "icon": "◒",
+          "temp_c": 24.9,
+          "humidity_pct": 71.0,
+          "heat_index_c": 24.9,
+          "rain_probability": 36.0,
+          "wind_kmh": 5.8,
+          "risk_score": 34.6,
+          "risk_class": "watch",
+          "risk_label": "Dipantau",
+          "advice": "Masih bisa, tetapi pantau awan, angin, dan perubahan lokal."
+        },
+        {
+          "hour": "17:00",
+          "condition": "Awan tumbuh, potensi hujan",
+          "icon": "◒",
+          "temp_c": 24.2,
+          "humidity_pct": 76.0,
+          "heat_index_c": 24.2,
+          "rain_probability": 48.0,
+          "wind_kmh": 4.9,
+          "risk_score": 43.5,
+          "risk_class": "watch",
+          "risk_label": "Dipantau",
+          "advice": "Masih bisa, tetapi pantau awan, angin, dan perubahan lokal."
+        },
+        {
+          "hour": "18:00",
+          "condition": "Awan tumbuh",
+          "icon": "◌",
+          "temp_c": 22.7,
+          "humidity_pct": 84.0,
+          "heat_index_c": 22.7,
+          "rain_probability": 26.0,
+          "wind_kmh": 2.8,
+          "risk_score": 19.2,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        },
+        {
+          "hour": "21:00",
+          "condition": "Berawan dipantau",
+          "icon": "☁",
+          "temp_c": 22.3,
+          "humidity_pct": 87.0,
+          "heat_index_c": 22.3,
+          "rain_probability": 0.0,
+          "wind_kmh": 2.9,
+          "risk_score": 1.3,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        }
+      ],
+      "confidence_label": "Lebih rendah saat hujan lokal sulit dipastikan",
+      "risk_score": 43.5,
+      "best_activity_window": [
+        "12:00",
+        "06:00",
+        "09:00",
+        "18:00"
+      ],
+      "decision_sentence": "Dago, Bandung: aktivitas masih bisa, tapi payung/jas hujan sebaiknya siap sekitar 17:00. Window aman: 12:00 · 06:00 · 09:00 · 18:00.",
+      "nowcast": {
+        "window": "0–6 jam",
+        "status": "Dipantau",
+        "summary": "Masih cukup aman, namun perubahan awan perlu dipantau sekitar 17:00.",
+        "peak_hour": "17:00",
+        "peak_probability": 48.0,
+        "best_window": [
+          "12:00",
+          "06:00",
+          "09:00",
+          "18:00"
+        ]
+      },
+      "cloud_motion_proxy": {
+        "method": "proxy dari peluang hujan, RH, jam lokal, dan koreksi microclimate",
+        "rain_signal_trend": "meningkat setelah pemanasan siang",
+        "summary": "Sinyal awan/hujan meningkat setelah pemanasan siang; tetap validasi dengan kondisi langit dan radar/BMKG."
+      }
+    },
+    {
+      "date": "2026-06-14",
+      "date_label": "Minggu, 14 Juni 2026",
+      "day_tag": "Lusa",
+      "condition": "Awan tumbuh, potensi hujan",
+      "icon": "☁️",
+      "risk": "sedang",
+      "risk_class": "watch",
+      "risk_hint": "Aktivitas masih memungkinkan, tetapi tetap pantau perubahan langit.",
+      "title": "Peluang hujan meningkat sekitar pukul 14:00.",
+      "advice": "Aktivitas masih bisa dilakukan. Tetap pantau langit dan siapkan payung bila keluar mendekati pukul 14:00.",
+      "peak_rain_probability": 36.0,
+      "peak_rain_hour": "14:00",
+      "avg_temperature_c": 23.2,
+      "max_temperature_c": 27.1,
+      "avg_humidity_pct": 82.0,
+      "max_heat_index_c": 28.2,
+      "max_wind_kmh": 7.9,
+      "attention_hours": "00:00, 03:00, 06:00, 09:00",
+      "periods": [
+        {
+          "name": "Pagi",
+          "condition": "Lembap pagi",
+          "attention_hour": "06:00",
+          "temp_c": 22.75,
+          "rain_probability": 14.0,
+          "risk_score": 12.9,
+          "risk_class": "safe",
+          "risk_label": "Aman"
+        },
+        {
+          "name": "Siang",
+          "condition": "Awan tumbuh, potensi hujan",
+          "attention_hour": "14:00",
+          "temp_c": 27.05,
+          "rain_probability": 36.0,
+          "risk_score": 34.6,
+          "risk_class": "watch",
+          "risk_label": "Dipantau"
+        },
+        {
+          "name": "Sore",
+          "condition": "Awan tumbuh, potensi hujan",
+          "attention_hour": "15:00",
+          "temp_c": 24.4,
+          "rain_probability": 36.0,
+          "risk_score": 34.6,
+          "risk_class": "watch",
+          "risk_label": "Dipantau"
+        },
+        {
+          "name": "Malam",
+          "condition": "Lembap malam",
+          "attention_hour": "00:00",
+          "temp_c": 21.6,
+          "rain_probability": 25.0,
+          "risk_score": 20.2,
+          "risk_class": "safe",
+          "risk_label": "Aman"
+        }
+      ],
+      "important_hours": [
+        {
+          "hour": "00:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 21.8,
+          "humidity_pct": 88.0,
+          "heat_index_c": 21.8,
+          "rain_probability": 25.0,
+          "wind_kmh": 2.5,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "03:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 21.1,
+          "humidity_pct": 89.0,
+          "heat_index_c": 21.1,
+          "rain_probability": 14.0,
+          "wind_kmh": 3.2,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "06:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 20.9,
+          "humidity_pct": 90.0,
+          "heat_index_c": 20.9,
+          "rain_probability": 14.0,
+          "wind_kmh": 3.6,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "09:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 24.6,
+          "humidity_pct": 77.0,
+          "heat_index_c": 24.6,
+          "rain_probability": 0.0,
+          "wind_kmh": 4.3,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "12:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 27.0,
+          "humidity_pct": 65.0,
+          "heat_index_c": 27.8,
+          "rain_probability": 0.0,
+          "wind_kmh": 6.7,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "14:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 27.1,
+          "humidity_pct": 64.0,
+          "heat_index_c": 28.2,
+          "rain_probability": 36.0,
+          "wind_kmh": 7.9,
+          "risk": "sedang",
+          "risk_class": "yellow"
+        },
+        {
+          "hour": "15:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 26.4,
+          "humidity_pct": 69.0,
+          "heat_index_c": 26.4,
+          "rain_probability": 36.0,
+          "wind_kmh": 6.8,
+          "risk": "sedang",
+          "risk_class": "yellow"
+        },
+        {
+          "hour": "18:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 22.4,
+          "humidity_pct": 86.0,
+          "heat_index_c": 22.4,
+          "rain_probability": 23.0,
+          "wind_kmh": 3.0,
+          "risk": "rendah",
+          "risk_class": "green"
+        },
+        {
+          "hour": "21:00",
+          "condition": "—",
+          "icon": "🌡️",
+          "temp_c": 21.9,
+          "humidity_pct": 92.0,
+          "heat_index_c": 21.9,
+          "rain_probability": 0.0,
+          "wind_kmh": 2.7,
+          "risk": "rendah",
+          "risk_class": "green"
+        }
+      ],
+      "raw_hour_count": 24,
+      "risk_label": "Dipantau",
+      "summary_sentence": "Untuk Dago, Bandung, cuaca masih cukup aman, namun tetap pantau perubahan awan terutama sekitar pukul 14:00.",
+      "activity_matrix": [
+        {
+          "activity": "Perjalanan / motor",
+          "status": "Aman dipantau",
+          "advice": "Kondisi relatif aman; tetap perhatikan perubahan lokal.",
+          "priority_hour": "09:00 · 12:00 · 06:00 · 18:00",
+          "risk_class": "safe"
+        },
+        {
+          "activity": "Jalan kaki",
+          "status": "Cocok",
+          "advice": "Jam nyaman: 09:00 · 12:00 · 06:00 · 18:00.",
+          "priority_hour": "09:00 · 12:00 · 06:00 · 18:00",
+          "risk_class": "safe"
+        },
+        {
+          "activity": "Jemur pakaian",
+          "status": "Cukup aman",
+          "advice": "Angkat sebelum sore jika awan mulai gelap.",
+          "priority_hour": "pagi–siang",
+          "risk_class": "safe"
+        },
+        {
+          "activity": "Olahraga outdoor",
+          "status": "Aman dipantau",
+          "advice": "Pagi atau sore biasanya lebih nyaman.",
+          "priority_hour": "09:00 · 12:00 · 06:00 · 18:00",
+          "risk_class": "safe"
+        },
+        {
+          "activity": "Acara outdoor",
+          "status": "Bisa dilanjutkan",
+          "advice": "Tetap siapkan opsi teduh ringan untuk antisipasi.",
+          "priority_hour": "09:00 · 12:00 · 06:00 · 18:00",
+          "risk_class": "safe"
+        },
+        {
+          "activity": "Foto / city walk",
+          "status": "Cocok",
+          "advice": "Pantau cahaya dan awan lokal sebelum berangkat.",
+          "priority_hour": "09:00 · 12:00 · 06:00 · 18:00",
+          "risk_class": "safe"
+        }
+      ],
+      "key_hours": [
+        {
+          "hour": "00:00",
+          "condition": "Lembap malam",
+          "icon": "≋",
+          "temp_c": 21.8,
+          "humidity_pct": 88.0,
+          "heat_index_c": 21.8,
+          "rain_probability": 25.0,
+          "wind_kmh": 2.5,
+          "risk_score": 20.2,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+        },
+        {
+          "hour": "03:00",
+          "condition": "Lembap malam",
+          "icon": "≋",
+          "temp_c": 21.1,
+          "humidity_pct": 89.0,
+          "heat_index_c": 21.1,
+          "rain_probability": 14.0,
+          "wind_kmh": 3.2,
+          "risk_score": 12.5,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+        },
+        {
+          "hour": "06:00",
+          "condition": "Lembap pagi",
+          "icon": "≋",
+          "temp_c": 20.9,
+          "humidity_pct": 90.0,
+          "heat_index_c": 20.9,
+          "rain_probability": 14.0,
+          "wind_kmh": 3.6,
+          "risk_score": 12.9,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+        },
+        {
+          "hour": "09:00",
+          "condition": "Berawan dipantau",
+          "icon": "☁",
+          "temp_c": 24.6,
+          "humidity_pct": 77.0,
+          "heat_index_c": 24.6,
+          "rain_probability": 0.0,
+          "wind_kmh": 4.3,
+          "risk_score": 0,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        },
+        {
+          "hour": "12:00",
+          "condition": "Cerah berawan",
+          "icon": "◉",
+          "temp_c": 27.0,
+          "humidity_pct": 65.0,
+          "heat_index_c": 27.8,
+          "rain_probability": 0.0,
+          "wind_kmh": 6.7,
+          "risk_score": 0,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        },
+        {
+          "hour": "14:00",
+          "condition": "Awan tumbuh, potensi hujan",
+          "icon": "◒",
+          "temp_c": 27.1,
+          "humidity_pct": 64.0,
+          "heat_index_c": 28.2,
+          "rain_probability": 36.0,
+          "wind_kmh": 7.9,
+          "risk_score": 34.6,
+          "risk_class": "watch",
+          "risk_label": "Dipantau",
+          "advice": "Masih bisa, tetapi pantau awan, angin, dan perubahan lokal."
+        },
+        {
+          "hour": "15:00",
+          "condition": "Awan tumbuh, potensi hujan",
+          "icon": "◒",
+          "temp_c": 26.4,
+          "humidity_pct": 69.0,
+          "heat_index_c": 26.4,
+          "rain_probability": 36.0,
+          "wind_kmh": 6.8,
+          "risk_score": 34.6,
+          "risk_class": "watch",
+          "risk_label": "Dipantau",
+          "advice": "Masih bisa, tetapi pantau awan, angin, dan perubahan lokal."
+        },
+        {
+          "hour": "18:00",
+          "condition": "Awan tumbuh",
+          "icon": "◌",
+          "temp_c": 22.4,
+          "humidity_pct": 86.0,
+          "heat_index_c": 22.4,
+          "rain_probability": 23.0,
+          "wind_kmh": 3.0,
+          "risk_score": 17.9,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Kondisi relatif aman."
+        },
+        {
+          "hour": "21:00",
+          "condition": "Lembap malam",
+          "icon": "≋",
+          "temp_c": 21.9,
+          "humidity_pct": 92.0,
+          "heat_index_c": 21.9,
+          "rain_probability": 0.0,
+          "wind_kmh": 2.7,
+          "risk_score": 3.4,
+          "risk_class": "safe",
+          "risk_label": "Aman",
+          "advice": "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
+        }
+      ],
+      "confidence_label": "Lebih rendah saat hujan lokal sulit dipastikan",
+      "risk_score": 34.6,
+      "best_activity_window": [
+        "09:00",
+        "12:00",
+        "06:00",
+        "18:00"
+      ],
+      "decision_sentence": "Dago, Bandung: relatif aman, namun perubahan awan tetap dipantau sekitar 14:00.",
+      "nowcast": {
+        "window": "0–6 jam",
+        "status": "Dipantau",
+        "summary": "Masih cukup aman, namun perubahan awan perlu dipantau sekitar 15:00.",
+        "peak_hour": "15:00",
+        "peak_probability": 36.0,
+        "best_window": [
+          "09:00",
+          "12:00",
+          "06:00",
+          "18:00"
+        ]
+      },
+      "cloud_motion_proxy": {
+        "method": "proxy dari peluang hujan, RH, jam lokal, dan koreksi microclimate",
+        "rain_signal_trend": "stabil",
+        "summary": "Sinyal awan/hujan stabil; tetap validasi dengan kondisi langit dan radar/BMKG."
+      }
+    }
+  ],
+  "period_label": "Jumat, 12 Juni 2026 – Minggu, 14 Juni 2026",
+  "product": "Hyperlocal Weather Decision OS",
+  "schema_version": "1.0.0",
+  "today": {
+    "date": "2026-06-12",
+    "date_label": "Jumat, 12 Juni 2026",
+    "day_tag": "Hari ini",
+    "condition": "Berawan",
+    "icon": "☁️",
+    "risk": "sedang",
+    "risk_class": "medium",
+    "risk_hint": "Aktivitas masih memungkinkan, tetapi tetap pantau perubahan langit.",
+    "title": "Peluang hujan meningkat sekitar pukul 17:00.",
+    "advice": "Aktivitas masih bisa dilakukan. Tetap pantau langit dan siapkan payung bila keluar mendekati pukul 17:00.",
+    "peak_rain_probability": 36.0,
+    "peak_rain_hour": "17:00",
+    "avg_temperature_c": 22.9,
+    "max_temperature_c": 29.0,
+    "avg_humidity_pct": 78.0,
+    "max_heat_index_c": 29.5,
+    "max_wind_kmh": 8.9,
+    "attention_hours": "00:00, 03:00, 06:00, 09:00",
+    "periods": [
+      {
+        "period": "Pagi",
+        "condition": "Berawan",
+        "risk": "rendah",
+        "risk_class": "green",
+        "hint": "Aktivitas relatif aman dengan pemantauan cuaca sekitar.",
+        "attention_hour": "05:00",
+        "avg_temp_c": 21.4,
+        "avg_humidity_pct": 80.0,
+        "peak_rain_probability": 0.0
+      },
+      {
+        "period": "Siang",
+        "condition": "Berawan",
+        "risk": "rendah",
+        "risk_class": "green",
+        "hint": "Aktivitas relatif aman dengan pemantauan cuaca sekitar.",
+        "attention_hour": "14:00",
+        "avg_temp_c": 28.3,
+        "avg_humidity_pct": 50.0,
+        "peak_rain_probability": 9.0
+      },
+      {
+        "period": "Sore",
+        "condition": "Berawan",
+        "risk": "sedang",
+        "risk_class": "yellow",
+        "hint": "Aktivitas masih memungkinkan, tetapi tetap pantau perubahan langit.",
+        "attention_hour": "17:00",
+        "avg_temp_c": 25.4,
+        "avg_humidity_pct": 69.0,
+        "peak_rain_probability": 36.0
+      },
+      {
+        "period": "Malam",
+        "condition": "Berawan",
+        "risk": "rendah",
+        "risk_class": "green",
+        "hint": "Aktivitas relatif aman dengan pemantauan cuaca sekitar.",
+        "attention_hour": "19:00",
+        "avg_temp_c": 20.6,
+        "avg_humidity_pct": 91.0,
+        "peak_rain_probability": 24.0
+      }
+    ],
+    "important_hours": [
+      {
+        "hour": "00:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 20.2,
+        "humidity_pct": 94.0,
+        "heat_index_c": 20.2,
+        "rain_probability": 0.0,
+        "wind_kmh": 2.3,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "03:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 19.5,
+        "humidity_pct": 94.0,
+        "heat_index_c": 19.5,
+        "rain_probability": 0.0,
+        "wind_kmh": 1.6,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "06:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 18.8,
+        "humidity_pct": 93.0,
+        "heat_index_c": 18.8,
+        "rain_probability": 0.0,
+        "wind_kmh": 3.2,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "09:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 23.9,
+        "humidity_pct": 68.0,
+        "heat_index_c": 23.9,
+        "rain_probability": 0.0,
+        "wind_kmh": 4.1,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "12:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 29.0,
+        "humidity_pct": 48.0,
+        "heat_index_c": 29.5,
+        "rain_probability": 0.0,
+        "wind_kmh": 5.8,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "15:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 27.7,
+        "humidity_pct": 60.0,
+        "heat_index_c": 28.3,
+        "rain_probability": 11.0,
+        "wind_kmh": 8.9,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "17:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 24.5,
+        "humidity_pct": 71.0,
+        "heat_index_c": 24.5,
+        "rain_probability": 36.0,
+        "wind_kmh": 7.7,
+        "risk": "sedang",
+        "risk_class": "yellow"
+      },
+      {
+        "hour": "18:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 22.9,
+        "humidity_pct": 80.0,
+        "heat_index_c": 22.9,
+        "rain_probability": 36.0,
+        "wind_kmh": 4.7,
+        "risk": "sedang",
+        "risk_class": "yellow"
+      },
+      {
+        "hour": "21:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 21.9,
+        "humidity_pct": 89.0,
+        "heat_index_c": 21.9,
+        "rain_probability": 0.0,
+        "wind_kmh": 2.7,
+        "risk": "rendah",
+        "risk_class": "green"
+      }
+    ],
+    "raw_hour_count": 24,
+    "risk_label": "Waspada hujan",
+    "summary_sentence": "Untuk Dago, Bandung, cuaca masih cukup aman, namun tetap pantau perubahan awan terutama sekitar pukul 17:00.",
+    "activity_matrix": [
+      {
+        "activity": "Perjalanan / motor",
+        "status": "Relatif aman",
+        "advice": "Lebih hati-hati sekitar 17:00 bila hujan muncul; jalan dapat lebih licin.",
+        "priority_hour": "17:00",
+        "risk_class": "medium"
+      },
+      {
+        "activity": "Jalan kaki",
+        "status": "Perlu rencana cadangan",
+        "advice": "Masih memungkinkan. Siapkan payung bila keluar mendekati 17:00.",
+        "priority_hour": "17:00",
+        "risk_class": "medium"
+      },
+      {
+        "activity": "Jemur pakaian",
+        "status": "Lebih aman pagi",
+        "advice": "Utamakan pagi sampai menjelang siang; hindari terlalu sore bila awan mulai gelap.",
+        "priority_hour": "pagi–siang awal",
+        "risk_class": "watch"
+      },
+      {
+        "activity": "Olahraga luar ruang",
+        "status": "Relatif aman",
+        "advice": "Pagi lebih nyaman. Kurangi durasi jika terasa panas/lembap atau hujan mulai muncul.",
+        "priority_hour": "pagi",
+        "risk_class": "low"
+      },
+      {
+        "activity": "Acara outdoor",
+        "status": "Bisa dilanjutkan",
+        "advice": "Untuk agenda penting, sediakan opsi tempat teduh terutama sekitar 17:00.",
+        "priority_hour": "17:00",
+        "risk_class": "medium"
+      },
+      {
+        "activity": "Foto / city walk",
+        "status": "Pantau langit",
+        "advice": "Cek perubahan awan dan angin sebelum berangkat; cahaya setelah hujan bisa berubah cepat.",
+        "priority_hour": "17:00",
+        "risk_class": "medium"
+      }
+    ],
+    "key_hours": [
+      {
+        "hour": "00:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 20.2,
+        "humidity_pct": 94.0,
+        "heat_index_c": 20.2,
+        "rain_probability": 0.0,
+        "wind_kmh": 2.3,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "03:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 19.5,
+        "humidity_pct": 94.0,
+        "heat_index_c": 19.5,
+        "rain_probability": 0.0,
+        "wind_kmh": 1.6,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "06:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 18.8,
+        "humidity_pct": 93.0,
+        "heat_index_c": 18.8,
+        "rain_probability": 0.0,
+        "wind_kmh": 3.2,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "09:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 23.9,
+        "humidity_pct": 68.0,
+        "heat_index_c": 23.9,
+        "rain_probability": 0.0,
+        "wind_kmh": 4.1,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "12:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 29.0,
+        "humidity_pct": 48.0,
+        "heat_index_c": 29.5,
+        "rain_probability": 0.0,
+        "wind_kmh": 5.8,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "15:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 27.7,
+        "humidity_pct": 60.0,
+        "heat_index_c": 28.3,
+        "rain_probability": 11.0,
+        "wind_kmh": 8.9,
+        "risk": "rendah",
+        "risk_class": "green"
+      },
+      {
+        "hour": "17:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 24.5,
+        "humidity_pct": 71.0,
+        "heat_index_c": 24.5,
+        "rain_probability": 36.0,
+        "wind_kmh": 7.7,
+        "risk": "sedang",
+        "risk_class": "yellow"
+      },
+      {
+        "hour": "18:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 22.9,
+        "humidity_pct": 80.0,
+        "heat_index_c": 22.9,
+        "rain_probability": 36.0,
+        "wind_kmh": 4.7,
+        "risk": "sedang",
+        "risk_class": "yellow"
+      },
+      {
+        "hour": "21:00",
+        "condition": "—",
+        "icon": "🌡️",
+        "temp_c": 21.9,
+        "humidity_pct": 89.0,
+        "heat_index_c": 21.9,
+        "rain_probability": 0.0,
+        "wind_kmh": 2.7,
+        "risk": "rendah",
+        "risk_class": "green"
+      }
+    ],
+    "confidence_label": "Lebih rendah saat hujan lokal sulit dipastikan"
+  },
+  "public_brief": {
+    "location": "Dago, Bandung",
+    "headline": "Untuk Dago, Bandung, cuaca masih cukup aman, namun tetap pantau perubahan awan terutama sekitar pukul 17:00.",
+    "period": "Jumat, 12 Juni 2026 – Minggu, 14 Juni 2026",
+    "updated": "Jumat, 12 Juni 2026, 15:25 WIB",
+    "disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat."
+  },
+  "ui_version": "langit-v60-brutal-hyperlocal-decision-os",
+  "microclimate": {
+    "profile": "Urban highland / orografis",
+    "note": "utara Bandung: lebih sejuk, awan tumbuh siang–sore, hujan lokal bisa muncul cepat",
+    "zone_count": 4,
+    "engine": "diurnal + terrain/personality adjustment"
+  },
+  "source_court": {
+    "status": "Aktif",
+    "agreement": "Tinggi",
+    "summary": "9/9 sumber aktif. Agreement operasional: Tinggi.",
+    "sources": [
+      {
+        "source_id": "BMKG",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "38"
+      },
+      {
+        "source_id": "CMA",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "433"
+      },
+      {
+        "source_id": "ECMWF",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "464"
+      },
+      {
+        "source_id": "GFS",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "444"
+      },
+      {
+        "source_id": "ICON",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "439"
+      },
+      {
+        "source_id": "KMA",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "425"
+      },
+      {
+        "source_id": "METEOFRANCE",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "442"
+      },
+      {
+        "source_id": "METNO",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "410"
+      },
+      {
+        "source_id": "UKMO",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "426"
+      }
+    ]
+  },
+  "map_layers": [
+    "Rain Risk",
+    "Activity Safety",
+    "Heat Stress",
+    "Source Confidence",
+    "Microclimate",
+    "Time Slider"
+  ]
+}
