@@ -1,7 +1,7 @@
 {
   "brand": "LANGIT",
-  "version": "LANGIT v65.0",
-  "generated_at": "Diperbarui 12/06/2026, 17:53 WIB",
+  "version": "LANGIT v65.1",
+  "generated_at": "Diperbarui 12 Juni, 12:00 WIB",
   "location_name": "Arjawinangun, Cirebon",
   "location_slug": "arjawinangun",
   "latitude": -6.6453,
@@ -211,7 +211,7 @@
     "risk_class": "safe",
     "risk_label": "Aman",
     "condition": "Cerah berawan",
-    "avg_temp_c": 28.388888888888893,
+    "avg_temp_c": 28.38888888888889,
     "avg_rh": 69.77777777777777,
     "max_heat_c": 34.9,
     "max_wind_kmh": 13.0,
@@ -426,7 +426,7 @@
       "risk_class": "safe",
       "risk_label": "Aman",
       "condition": "Cerah berawan",
-      "avg_temp_c": 28.388888888888893,
+      "avg_temp_c": 28.38888888888889,
       "avg_rh": 69.77777777777777,
       "max_heat_c": 34.9,
       "max_wind_kmh": 13.0,
@@ -472,7 +472,7 @@
           "wind_kmh": 5.4,
           "risk_score": 41,
           "risk_class": "watch",
-          "risk_label": "Pantau",
+          "risk_label": "Perlu diperhatikan",
           "condition": "Awan tumbuh, potensi hujan",
           "valid": true
         },
@@ -489,7 +489,7 @@
           "wind_kmh": 5.0,
           "risk_score": 41,
           "risk_class": "watch",
-          "risk_label": "Pantau",
+          "risk_label": "Perlu diperhatikan",
           "condition": "Awan tumbuh, potensi hujan",
           "valid": true
         },
@@ -557,7 +557,7 @@
           "wind_kmh": 13.3,
           "risk_score": 28,
           "risk_class": "watch",
-          "risk_label": "Pantau",
+          "risk_label": "Perlu diperhatikan",
           "condition": "Awan tumbuh",
           "valid": true
         },
@@ -622,7 +622,7 @@
           "temp_c": 28.1,
           "rain_probability": 28.0,
           "risk_class": "watch",
-          "risk_label": "Pantau"
+          "risk_label": "Perlu diperhatikan"
         },
         {
           "name": "Malam",
@@ -631,16 +631,16 @@
           "temp_c": 26.0,
           "rain_probability": 41.0,
           "risk_class": "watch",
-          "risk_label": "Pantau"
+          "risk_label": "Perlu diperhatikan"
         }
       ],
       "peak_rain_probability": 41.0,
       "peak_rain_hour": "02:00",
       "risk_score": 41,
       "risk_class": "watch",
-      "risk_label": "Pantau",
+      "risk_label": "Perlu diperhatikan",
       "condition": "Awan tumbuh, potensi hujan",
-      "avg_temp_c": 27.222222222222218,
+      "avg_temp_c": 27.22222222222222,
       "avg_rh": 79.22222222222223,
       "max_heat_c": 35.2,
       "max_wind_kmh": 13.3,
@@ -688,7 +688,7 @@
           "wind_kmh": 4.7,
           "risk_score": 50,
           "risk_class": "watch",
-          "risk_label": "Pantau",
+          "risk_label": "Perlu diperhatikan",
           "condition": "Hujan lokal",
           "valid": true
         },
@@ -1022,5 +1022,5 @@
       "error": "circuit_open host=api.open-meteo.com wait=17s"
     }
   ],
-  "raw_version": "LANGIT v63.1"
+  "raw_version": "LANGIT v65.0"
 }

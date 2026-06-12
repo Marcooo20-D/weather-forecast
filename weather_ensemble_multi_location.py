@@ -14248,7 +14248,7 @@ def _lg_class(score):
 
 
 def _lg_label(score):
-    return {"safe": "Aman", "watch": "Dipantau", "rain": "Waspada hujan", "danger": "Risiko tinggi"}.get(_lg_class(score), "Dipantau")
+    return {"safe": "Aman", "watch": "Perlu diperhatikan", "rain": "Waspada", "danger": "Berpotensi signifikan"}.get(_lg_class(score), "Perlu diperhatikan")
 
 
 def _lg_hour_note(prob, score, condition=None):
@@ -14256,16 +14256,16 @@ def _lg_hour_note(prob, score, condition=None):
     s = _lg_float(score, p) or p
     cond = _lg_text(condition, "kondisi").lower()
     if s >= 75 or p >= 75:
-        return "Kurangi aktivitas luar ruang; siapkan opsi indoor."
+        return "Kondisi cuaca dapat mengganggu aktivitas. Batasi kegiatan di luar ruang."
     if s >= 52 or p >= 50:
-        return "Payung/jas hujan sebaiknya siap; hindari rencana yang terlalu kaku."
+        return "Potensi hujan terpantau. Siapkan perlengkapan hujan sebelum beraktivitas."
     if s >= 28 or p >= 28:
-        return "Masih bisa, tetapi pantau awan, angin, dan perubahan lokal."
+        return "Kondisi secara umum kondusif, tetap pantau potensi hujan lokal."
     if "panas" in cond:
-        return "Aman dari hujan, tetapi perhatikan panas dan hidrasi."
+        return "Kondisi cuaca cerah. Kurangi aktivitas terpapar sinar matahari langsung."
     if "lembap" in cond:
-        return "Aman dipantau; jalan bisa terasa lembap/licin di beberapa titik."
-    return "Kondisi relatif aman."
+        return "Tingkat kelembapan terpantau cukup tinggi. Tetap berhati-hati."
+    return "Kondisi cuaca mendukung aktivitas luar ruang."
 
 
 def _lg_raw_days(api):
@@ -15008,9 +15008,9 @@ def sentinel_write_root_public_index(locations, run_rows, args):
 
 LANGIT_BRAND_NAME = "LANGIT"
 LANGIT_PUBLIC_VERSION = "LANGIT v60.4"
-LANGIT_PRODUCT_NAME = "Hyperlocal Weather Decision OS"
-LANGIT_TAGLINE = "Cuaca lokal yang langsung bisa dipakai untuk mengambil keputusan."
-LANGIT_DISCLAIMER = "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat."
+LANGIT_PRODUCT_NAME = "Platform Prakiraan Cuaca LANGIT"
+LANGIT_TAGLINE = "Prakiraan cuaca Indonesia yang disajikan secara ringkas, jelas, dan mudah dipantau."
+LANGIT_DISCLAIMER = "Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat."
 LANGIT_UI_VERSION = "langit-v60-brutal-hyperlocal-decision-os"
 
 ANEMOS_PUBLIC_VERSION = LANGIT_PUBLIC_VERSION
@@ -15192,15 +15192,17 @@ def _lg_best_window(hours):
 
 def _lg_decision_sentence(day, loc):
     p = _lg_prob(day.get("peak_rain_probability"), 0)
-    peak = _lg_hour(day.get("peak_rain_hour"), "jam rawan")
+    peak = _lg_hour(day.get("peak_rain_hour"), "—")
     best = _lg_best_window_text(day.get("best_activity_window"))
+    if not best or best == "" or best.strip() in {"", "—", "-"}:
+        best = "pagi hingga siang hari"
     if p >= 70:
-        return f"{loc}: kurangi aktivitas luar ruang dekat {peak}. Window relatif aman: {best}."
+        return f"{loc}: Disarankan untuk membatasi aktivitas luar ruang di sekitar pukul {peak} WIB (peluang {p}%). Periode nyaman terpantau pada: {best}."
     if p >= 45:
-        return f"{loc}: aktivitas masih bisa, tapi payung/jas hujan sebaiknya siap sekitar {peak}. Window aman: {best}."
+        return f"{loc}: Potensi hujan terpantau. Siapkan perlengkapan hujan di sekitar pukul {peak} WIB (peluang {p}%). Periode nyaman terpantau pada: {best}."
     if p >= 25:
-        return f"{loc}: relatif aman, namun perubahan awan tetap dipantau sekitar {peak}."
-    return f"{loc}: kondisi relatif aman untuk aktivitas harian. Window nyaman: {best}."
+        return f"{loc}: Kondisi cuaca secara umum kondusif, tetap pantau potensi hujan sekitar pukul {peak} WIB (peluang {p}%)."
+    return f"{loc}: Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: {best}."
 
 
 def _lg_kpi(label, value, note="", cls=""):
@@ -15824,37 +15826,37 @@ def _lg_activity_matrix(day):
     day = dict(day or {})
     p = _lg_prob(day.get("peak_rain_probability"), 0)
     score = _lg_float(day.get("risk_score"), p) or p
-    peak = _lg_hour(day.get("peak_rain_hour"), "jam rawan")
+    peak = _lg_hour(day.get("peak_rain_hour"), "—")
     best = _lg_best_window_text(day.get("best_activity_window"))
-    if not best or best == "—":
-        best = "pagi / siang awal"
+    if not best or best == "—" or best.strip() in {"", "—", "-"}:
+        best = "pagi hingga siang hari"
 
     if score >= 70 or p >= 70:
         raw = [
-            ("Perjalanan / motor", "Hindari jam rawan", f"Jangan paksa berangkat dekat {peak}; jalan licin dan visibilitas bisa turun.", peak, "danger"),
-            ("Jalan kaki", "Cari tempat berteduh", f"Tentukan titik berteduh sebelum {peak}; jangan menunggu hujan deras.", peak, "danger"),
-            ("Jemur pakaian", "Tidak disarankan", "Pilih pagi dan jangan ditinggal lama.", "pagi", "rain"),
-            ("Olahraga outdoor", "Ganti jam", f"Pilih window lebih aman: {best}.", best, "rain"),
-            ("Acara outdoor", "Wajib plan B", f"Siapkan indoor/tenda terutama sekitar {peak}.", peak, "danger"),
-            ("Foto / city walk", "Pantau langit", "Bawa pelindung elektronik; cahaya dan hujan lokal bisa berubah cepat.", peak, "rain"),
+            ("Perjalanan / Motor", "Bawa Jas Hujan", f"Hindari berkendara di sekitar pukul {peak} WIB.", peak, "rain"),
+            ("Jalan Kaki", "Siapkan Payung", f"Antisipasi tempat berteduh di sekitar pukul {peak} WIB.", peak, "rain"),
+            ("Jemur Pakaian", "Pagi Hari", "Hindari meninggalkan jemuran terlalu lama.", "pagi", "watch"),
+            ("Aktivitas Outdoor", "Siapkan Rencana Cadangan", "Gunakan opsi ruangan tertutup.", peak, "rain"),
+            ("Olahraga", "Sesuaikan Jadwal", f"Pilih jam alternatif: {best}.", best, "watch"),
+            ("Fotografi", "Gunakan Pelindung", "Lindungi peralatan elektronik dari kelembapan.", peak, "watch"),
         ]
     elif score >= 45 or p >= 45:
         raw = [
-            ("Perjalanan / motor", "Bawa jas hujan", f"Lebih hati-hati mendekati {peak}; jalan dapat lebih licin.", peak, "rain"),
-            ("Jalan kaki", "Pilih rute teduh", f"Cari rute yang mudah berteduh sekitar {peak}.", peak, "rain"),
-            ("Jemur pakaian", "Lebih aman pagi", "Utamakan pagi sampai siang awal dan cek langit berkala.", "pagi–siang awal", "watch"),
-            ("Olahraga outdoor", "Pilih jam aman", f"Gunakan window lebih aman: {best}.", best, "watch"),
-            ("Acara outdoor", "Siapkan plan B", f"Sediakan opsi tempat teduh terutama sekitar {peak}.", peak, "rain"),
-            ("Foto / city walk", "Pantau awan", "Cek awan, angin, dan radar/BMKG sebelum berangkat.", peak, "watch"),
+            ("Perjalanan / Motor", "Cukup Kondusif", f"Tetap antisipasi potensi hujan sekitar pukul {peak} WIB.", peak, "watch"),
+            ("Jalan Kaki", "Aman Bersyarat", f"Periode nyaman: {best}.", best, "safe"),
+            ("Jemur Pakaian", "Pagi–Siang", "Angkat pakaian sebelum memasuki sore hari.", "pagi hingga siang", "safe"),
+            ("Aktivitas Outdoor", "Kondusif", "Tetap pantau perkembangan awan.", peak, "watch"),
+            ("Olahraga", "Hindari Terik", f"Periode nyaman: {best}.", best, "safe"),
+            ("Fotografi", "Pantau Awan", f"Perhatikan perubahan intensitas cahaya sekitar pukul {peak} WIB.", peak, "watch"),
         ]
     else:
         raw = [
-            ("Perjalanan / motor", "Aman dipantau", "Kondisi relatif aman; tetap perhatikan perubahan lokal.", best, "safe"),
-            ("Jalan kaki", "Cocok", f"Jam nyaman: {best}.", best, "safe"),
-            ("Jemur pakaian", "Cukup aman", "Angkat sebelum sore jika awan mulai gelap.", "pagi–siang", "safe"),
-            ("Olahraga outdoor", "Aman dipantau", "Pagi atau sore biasanya lebih nyaman.", best, "safe"),
-            ("Acara outdoor", "Bisa dilanjutkan", "Tetap siapkan opsi teduh ringan untuk antisipasi.", best, "safe"),
-            ("Foto / city walk", "Cocok", "Pantau cahaya dan awan lokal sebelum berangkat.", best, "safe"),
+            ("Perjalanan / Motor", "Aman", "Kondisi cuaca mendukung perjalanan luar ruang.", best, "safe"),
+            ("Jalan Kaki", "Sangat Nyaman", f"Periode terbaik: {best}.", best, "safe"),
+            ("Jemur Pakaian", "Sangat Baik", "Pagi hingga siang hari sangat mendukung.", "pagi hingga siang", "safe"),
+            ("Aktivitas Outdoor", "Sangat Aman", "Sangat mendukung untuk kegiatan luar ruang.", best, "safe"),
+            ("Olahraga", "Pagi / Sore", f"Periode nyaman: {best}.", best, "safe"),
+            ("Fotografi", "Sangat Baik", "Kondisi cahaya pagi dan sore terpantau optimal.", best, "safe"),
         ]
     return _lg_activity_rows(raw, fallback_priority=peak)
 

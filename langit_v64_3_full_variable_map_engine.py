@@ -232,17 +232,17 @@ ALIASES: dict[str, list[str]] = {
 
 LAYER_DEFS: list[dict[str, Any]] = [
     {"key": "risk", "label": "Risiko", "field": "risk_score", "unit": "/100", "min": 0, "max": 100, "palette": "risk"},
-    {"key": "rain", "label": "Hujan", "field": "rain_probability_pct", "unit": "%", "min": 0, "max": 100, "palette": "rain"},
-    {"key": "temp", "label": "Suhu", "field": "temperature_c", "unit": "°C", "min": 18, "max": 38, "palette": "temp"},
-    {"key": "feels", "label": "Terasa", "field": "apparent_temperature_c", "unit": "°C", "min": 20, "max": 44, "palette": "temp"},
-    {"key": "humidity", "label": "Lembap", "field": "humidity_pct", "unit": "%", "min": 35, "max": 100, "palette": "humidity"},
-    {"key": "cloud", "label": "Awan", "field": "cloud_cover_pct", "unit": "%", "min": 0, "max": 100, "palette": "cloud"},
+    {"key": "rain", "label": "Peluang hujan", "field": "rain_probability_pct", "unit": "%", "min": 0, "max": 100, "palette": "rain"},
+    {"key": "temp", "label": "Suhu udara", "field": "temperature_c", "unit": "°C", "min": 18, "max": 38, "palette": "temp"},
+    {"key": "feels", "label": "Indeks panas", "field": "apparent_temperature_c", "unit": "°C", "min": 20, "max": 44, "palette": "temp"},
+    {"key": "humidity", "label": "Kelembapan", "field": "humidity_pct", "unit": "%", "min": 35, "max": 100, "palette": "humidity"},
+    {"key": "cloud", "label": "Tutupan awan", "field": "cloud_cover_pct", "unit": "%", "min": 0, "max": 100, "palette": "cloud"},
     {"key": "pressure", "label": "Tekanan", "field": "pressure_hpa", "unit": "hPa", "min": 990, "max": 1025, "palette": "pressure"},
-    {"key": "wind", "label": "Angin", "field": "wind_speed_ms", "unit": "m/s", "min": 0, "max": 12, "palette": "wind"},
-    {"key": "gust", "label": "Gust", "field": "wind_gust_ms", "unit": "m/s", "min": 0, "max": 20, "palette": "wind"},
+    {"key": "wind", "label": "Kecepatan angin", "field": "wind_speed_ms", "unit": "m/s", "min": 0, "max": 12, "palette": "wind"},
+    {"key": "gust", "label": "Hembusan angin", "field": "wind_gust_ms", "unit": "m/s", "min": 0, "max": 20, "palette": "wind"},
     {"key": "uv", "label": "UV", "field": "uv_index", "unit": "", "min": 0, "max": 12, "palette": "uv"},
     {"key": "visibility", "label": "Visibilitas", "field": "visibility_km", "unit": "km", "min": 0, "max": 25, "palette": "visibility"},
-    {"key": "confidence", "label": "Confidence", "field": "confidence_pct", "unit": "%", "min": 0, "max": 100, "palette": "confidence"},
+    {"key": "confidence", "label": "Tingkat akurasi", "field": "confidence_pct", "unit": "%", "min": 0, "max": 100, "palette": "confidence"},
 ]
 
 LAYER_BY_KEY = {layer["key"]: layer for layer in LAYER_DEFS}
@@ -583,11 +583,11 @@ def compute_risk(variables: dict[str, Any]) -> int:
 
 def status_from_risk(risk: int) -> str:
     if risk >= 76:
-        return "Tinggi"
+        return "Berpotensi signifikan"
     if risk >= 56:
         return "Waspada"
     if risk >= 31:
-        return "Pantau"
+        return "Perlu diperhatikan"
     return "Aman"
 
 
@@ -596,21 +596,21 @@ def note_for(status: str, variables: dict[str, Any], condition: str) -> str:
     feels = as_float(variables.get("apparent_temperature_c"))
     gust = as_float(variables.get("wind_gust_ms"))
     uv = as_float(variables.get("uv_index"))
-    if status == "Tinggi":
-        return "Risiko tinggi pada jam ini. Kurangi aktivitas luar ruang jika tidak mendesak."
+    if status == "Berpotensi signifikan":
+        return "Kondisi cuaca dapat mengganggu aktivitas. Batasi kegiatan di luar ruang."
     if status == "Waspada":
-        return "Perlu persiapan dan pantau perubahan lokal."
+        return "Siapkan langkah antisipasi dan pantau kondisi awan secara berkala."
     if rain >= 30:
-        return "Ada peluang hujan yang perlu dipantau."
+        return "Potensi hujan terpantau pada periode ini. Tetap perhatikan perubahan kondisi cuaca."
     if feels is not None and feels >= 34:
-        return "Panas terasa cukup kuat; pilih waktu yang lebih teduh."
+        return "Suhu udara terasa sangat hangat. Kurangi durasi terpapar sinar matahari secara langsung."
     if gust is not None and gust >= 8:
-        return "Angin terasa aktif; perhatikan aktivitas luar ruang ringan."
+        return "Kecepatan hembusan angin meningkat. Perhatikan objek yang mudah tertiup."
     if uv is not None and uv >= 6:
-        return "UV cukup tinggi; siapkan perlindungan matahari."
+        return "Indeks UV terpantau tinggi. Gunakan pelindung jika beraktivitas luar ruang."
     if "cerah" in condition.lower():
-        return "Kondisi cukup baik untuk aktivitas luar ruang."
-    return "Kondisi relatif aman, tetap pantau lokal."
+        return "Kondisi cuaca mendukung aktivitas luar ruang."
+    return "Kondisi cuaca secara umum kondusif untuk beraktivitas."
 
 
 def normalize_variables(row: dict[str, Any]) -> dict[str, float | int | str | None]:
@@ -1103,11 +1103,11 @@ body{overflow:hidden}.leaflet-container{background:#07111c}.leaflet-control-attr
 <canvas id="fieldCanvas" class="canvas-layer"></canvas>
 <canvas id="windCanvas" class="wind-layer"></canvas>
 <div class="grain"></div><div class="vignette"></div>
-<div class="brand"><div class="logo"></div><div><b>LANGIT</b><small>Real Atmospheric Field</small></div></div>
+<div class="brand"><div class="logo"></div><div><b>LANGIT</b><small>Visualisasi Atmosfer</small></div></div>
 <section class="panel">
-  <div class="eyebrow"><span class="pill-dot"></span>Forecast variable field</div>
+  <div class="eyebrow"><span class="pill-dot"></span>Parameter Cuaca</div>
   <h1 id="panelTitle">LANGIT Map</h1>
-  <p id="panelDesc">Peta memakai variabel jam aktif dari payload publik.</p>
+  <p id="panelDesc">Visualisasi parameter cuaca berdasarkan data prakiraan terbaru.</p>
   <div class="metrics">
     <div class="metric"><small>Layer aktif</small><b id="mLayer">Risiko</b></div>
     <div class="metric"><small>Nilai</small><b id="mValue">Data belum tersedia</b></div>
@@ -1118,10 +1118,10 @@ body{overflow:hidden}.leaflet-container{background:#07111c}.leaflet-control-attr
   <a id="backLink" class="backbtn" href="__BACK_URL__">Kembali</a>
 </section>
 <div class="layerbar" id="layerBar"></div>
-<button class="modebtn" id="modeBtn" type="button">Mode peta</button>
-<section class="note"><b id="noteTitle">Field atmosfer</b><p id="noteText">Pilih layer dan jam untuk melihat perubahan.</p></section>
-<section class="legend"><div class="legend-title"><span id="legendTitle">Risiko</span><small id="legendUnit">0-100/100</small></div><div class="scale" id="legendScale"></div><div class="legend-labels"><span>rendah</span><span>sedang</span><span>tinggi</span></div><p id="legendNote">Warna adalah estimasi field dari titik prakiraan, bukan radar observasi.</p></section>
-<section class="timeline"><div class="timeline-top"><button class="playbtn" id="playBtn" type="button">Play</button><div class="timeline-title" id="timelineTitle">Jam aktif</div></div><div class="timewrap" id="timeWrap"></div><div class="rangebar"><i id="rangeFill"></i></div></section>
+<button class="modebtn" id="modeBtn" type="button">Gaya Peta</button>
+<section class="note"><b id="noteTitle">Informasi Peta</b><p id="noteText">Pilih parameter dan waktu untuk melihat prakiraan wilayah.</p></section>
+<section class="legend"><div class="legend-title"><span id="legendTitle">Risiko</span><small id="legendUnit">0-100/100</small></div><div class="scale" id="legendScale"></div><div class="legend-labels"><span>Rendah</span><span>Sedang</span><span>Tinggi</span></div><p id="legendNote">Gradasi warna menunjukkan estimasi sebaran parameter dari titik prakiraan.</p></section>
+<section class="timeline"><div class="timeline-top"><button class="playbtn" id="playBtn" type="button">Putar</button><div class="timeline-title" id="timelineTitle">Waktu Prakiraan</div></div><div class="timewrap" id="timeWrap"></div><div class="rangebar"><i id="rangeFill"></i></div></section>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
 const PAYLOAD = __PAYLOAD__;
@@ -1263,7 +1263,7 @@ function drawWind(){
   wctx.globalAlpha=1;
   requestAnimationFrame(drawWind);
 }
-function statusColor(status){return status==='Tinggi'?'#ff4d6d':status==='Waspada'?'#f68d3b':status==='Pantau'?'#f8ca4f':'#38f4df';}
+function statusColor(status){return status==='Berpotensi signifikan'?'#ff4d6d':status==='Waspada'?'#f68d3b':status==='Perlu diperhatikan'?'#f8ca4f':'#38f4df';}
 function markerColor(pack){const h=hourFor(pack); return statusColor(h?h.status:'Aman');}
 const markers=[];
 function setupMarkers(){
@@ -1276,12 +1276,12 @@ function setupMarkers(){
       const vars=h.variables;
       const html=`<b>${p.name}</b><br>${h.date_label} ${h.hour}<br><b>${h.status}</b> - Risiko ${h.risk_score}/100
       <div class="popup-grid">
-        <div><small>Hujan</small><b>${valueLabel('rain',vars.rain_probability_pct)}</b></div>
-        <div><small>Suhu</small><b>${valueLabel('temp',vars.temperature_c)}</b></div>
-        <div><small>Terasa</small><b>${valueLabel('feels',vars.apparent_temperature_c)}</b></div>
-        <div><small>Angin</small><b>${valueLabel('wind',vars.wind_speed_ms)}</b></div>
-        <div><small>Lembap</small><b>${valueLabel('humidity',vars.humidity_pct)}</b></div>
-        <div><small>Awan</small><b>${valueLabel('cloud',vars.cloud_cover_pct)}</b></div>
+        <div><small>Peluang Hujan</small><b>${valueLabel('rain',vars.rain_probability_pct)}</b></div>
+        <div><small>Suhu Udara</small><b>${valueLabel('temp',vars.temperature_c)}</b></div>
+        <div><small>Indeks Panas</small><b>${valueLabel('feels',vars.apparent_temperature_c)}</b></div>
+        <div><small>Kecepatan Angin</small><b>${valueLabel('wind',vars.wind_speed_ms)}</b></div>
+        <div><small>Kelembapan</small><b>${valueLabel('humidity',vars.humidity_pct)}</b></div>
+        <div><small>Tutupan Awan</small><b>${valueLabel('cloud',vars.cloud_cover_pct)}</b></div>
       </div><br>${h.note}`;
       marker.bindPopup(html).openPopup();
     });
@@ -1322,13 +1322,13 @@ function updatePanel(){
   const h=hourFor(primary); const layer=layerByKey[activeLayer]; if(!h||!layer) return;
   const value=h.variables[layer.field];
   document.getElementById('panelTitle').textContent = portal ? 'LANGIT Portal Map' : (primary.name || 'LANGIT Map');
-  document.getElementById('panelDesc').textContent = portal ? 'Regional field dari seluruh lokasi aktif. Pilih layer dan jam.' : 'Peta memakai seluruh variabel jam aktif dari payload publik.';
+  document.getElementById('panelDesc').textContent = portal ? 'Representasi spasial dari seluruh lokasi aktif. Pilih parameter dan waktu.' : 'Peta menampilkan parameter cuaca berdasarkan data prakiraan terbaru.';
   document.getElementById('mLayer').textContent=layer.label;
   document.getElementById('mValue').textContent=valueLabel(activeLayer,value);
   document.getElementById('mStatus').textContent=h.status;
   document.getElementById('mHour').textContent=h.hour;
   document.getElementById('mDate').textContent=h.date_label;
-  document.getElementById('noteTitle').textContent=`${layer.label} field`;
+  document.getElementById('noteTitle').textContent=`${layer.label}`;
   document.getElementById('noteText').textContent=`${primary.name}, ${h.hour}. ${h.note}`;
   document.getElementById('legendTitle').textContent=layer.label;
   document.getElementById('legendUnit').textContent=`${layer.min}-${layer.max}${layer.unit||''}`;
@@ -1342,7 +1342,7 @@ function updateAll(){
   setupTimeline(); updatePanel(); updateLayerButtons(); refreshMarkers(); drawField();
 }
 document.getElementById('playBtn').onclick=()=>{
-  playing=!playing; document.getElementById('playBtn').textContent=playing?'Pause':'Play'; document.getElementById('playBtn').classList.toggle('active',playing);
+  playing=!playing; document.getElementById('playBtn').textContent=playing?'Jeda':'Putar'; document.getElementById('playBtn').classList.toggle('active',playing);
   if(playTimer) clearInterval(playTimer);
   if(playing){ playTimer=setInterval(()=>{activeTimeIndex=(activeTimeIndex+1)%Math.max(1,hourList.length); updateAll();},900); }
 };

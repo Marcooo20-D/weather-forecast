@@ -28,7 +28,7 @@ from zoneinfo import ZoneInfo
 BRAND = "LANGIT"
 VERSION = "LANGIT v63.1"
 TZ_NAME = "Asia/Jakarta"
-DISCLAIMER = "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti BMKG dan kondisi setempat."
+DISCLAIMER = "Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat."
 ID_BOUNDS = [[-11.25, 94.0], [6.45, 141.25]]
 MONTH_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
 DAY_ID = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
@@ -309,11 +309,11 @@ def risk_class(score: Any, valid: bool = True) -> str:
 def risk_label(cls: str) -> str:
     return {
         "safe": "Aman",
-        "watch": "Pantau",
+        "watch": "Perlu diperhatikan",
         "rain": "Waspada",
-        "danger": "Tinggi",
-        "limited": "Terbatas",
-    }.get(cls, "Pantau")
+        "danger": "Berpotensi signifikan",
+        "limited": "Data terbatas",
+    }.get(cls, "Perlu diperhatikan")
 
 
 def risk_color(cls: str) -> str:
@@ -487,12 +487,12 @@ def rain_phrase(day: Dict[str, Any]) -> str:
     p = prob(day.get("peak_rain_probability"), 0) or 0
     h = text(day.get("peak_rain_hour"), "—")
     if p >= 55:
-        return f"hujan paling perlu diwaspadai sekitar {h}"
+        return f"potensi hujan tertinggi diantisipasi sekitar pukul {h} WIB"
     if p >= 25:
-        return f"awan/hujan perlu dipantau sekitar {h}"
+        return f"perkembangan potensi hujan perlu dipantau sekitar pukul {h} WIB"
     if p > 0:
-        return f"peluang hujan kecil, puncaknya sekitar {h}"
-    return "peluang hujan rendah"
+        return f"peluang hujan rendah dengan puncak sekitar pukul {h} WIB"
+    return "peluang hujan terpantau rendah"
 
 
 def decision_sentence(location: str, day: Dict[str, Any], short: bool = False) -> str:
@@ -501,14 +501,14 @@ def decision_sentence(location: str, day: Dict[str, Any], short: bool = False) -
     peak = text(day.get("peak_rain_hour"), "—")
     win = ", ".join(day.get("safe_windows") or [])
     if c == "limited":
-        return "Data belum cukup. Cek langit lokal sebelum berangkat."
+        return "Data prakiraan belum lengkap. Pantau kondisi langit secara mandiri."
     if c == "danger":
-        return f"Tunda aktivitas luar saat jam rawan. Puncak {peak}, peluang {p}."
+        return f"Disarankan untuk membatasi aktivitas luar ruang pada jam rawan sekitar pukul {peak} WIB (peluang {p})."
     if c == "rain":
-        return f"Siapkan payung. Jam rawan {peak}, peluang {p}."
+        return f"Potensi hujan terpantau cukup tinggi. Siapkan perlengkapan hujan jika beraktivitas luar ruang di sekitar pukul {peak} WIB (peluang {p})."
     if c == "watch":
-        return f"Masih bisa. Pantau sekitar {peak}." if short else f"Masih bisa beraktivitas, tapi pantau awan sekitar {peak}."
-    return f"Relatif aman. Jam nyaman: {win or 'pagi hingga siang'}."
+        return f"Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul {peak} WIB." if short else f"Kondisi cuaca secara umum kondusif untuk beraktivitas, namun tetap pantau potensi hujan lokal di sekitar pukul {peak} WIB."
+    return f"Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: {win or 'pagi hingga siang hari'}."
 
 
 def short_activity_advice(day: Dict[str, Any]) -> List[Tuple[str, str, str, str]]:
@@ -518,38 +518,38 @@ def short_activity_advice(day: Dict[str, Any]) -> List[Tuple[str, str, str, str]
     heat = num(day.get("max_heat_c"), 0) or 0
     if c in {"danger", "rain"}:
         return [
-            ("Motor", "Bawa jas", f"Hindari {peak}.", "rain"),
-            ("Jalan kaki", "Cari teduh", f"Siapkan tempat berhenti.", "rain"),
-            ("Jemur", "Pagi saja", "Jangan ditinggal.", "watch"),
-            ("Outdoor", "Plan B", "Siapkan opsi indoor.", "rain"),
-            ("Olahraga", "Geser jam", win, "watch"),
-            ("Foto", "Aman bersyarat", "Lindungi kamera.", "watch"),
+            ("Perjalanan / Motor", "Bawa Jas Hujan", f"Hindari berkendara sekitar pukul {peak}.", "rain"),
+            ("Jalan Kaki", "Siapkan Payung", f"Antisipasi tempat berteduh di sekitar pukul {peak}.", "rain"),
+            ("Jemur Pakaian", "Pagi Hari", "Hindari meninggalkan jemuran terlalu lama.", "watch"),
+            ("Aktivitas Outdoor", "Siapkan Rencana Cadangan", "Gunakan opsi ruangan tertutup.", "rain"),
+            ("Olahraga", "Sesuaikan Jadwal", f"Pilih jam alternatif: {win}.", "watch"),
+            ("Fotografi", "Gunakan Pelindung", "Lindungi peralatan elektronik dari kelembapan.", "watch"),
         ]
     if c == "watch":
         return [
-            ("Motor", "Masih bisa", f"Waspadai {peak}.", "watch"),
-            ("Jalan kaki", "Aman bersyarat", win, "safe"),
-            ("Jemur", "Pagi–siang", "Angkat sebelum sore.", "safe" if heat < 36 else "watch"),
-            ("Outdoor", "Bisa", "Tetap lihat awan.", "watch"),
-            ("Olahraga", "Pilih teduh", win, "watch" if heat >= 34 else "safe"),
-            ("Foto", "Cek awan", f"Pantau {peak}.", "watch"),
+            ("Perjalanan / Motor", "Cukup Kondusif", f"Tetap antisipasi potensi hujan sekitar pukul {peak}.", "watch"),
+            ("Jalan Kaki", "Aman Bersyarat", f"Periode nyaman: {win}.", "safe"),
+            ("Jemur Pakaian", "Pagi–Siang", "Angkat pakaian sebelum memasuki sore hari.", "safe" if heat < 36 else "watch"),
+            ("Aktivitas Outdoor", "Kondusif", "Tetap pantau perkembangan awan.", "watch"),
+            ("Olahraga", "Hindari Terik", f"Periode nyaman: {win}.", "watch" if heat >= 34 else "safe"),
+            ("Fotografi", "Pantau Awan", f"Perhatikan perubahan intensitas cahaya sekitar pukul {peak}.", "watch"),
         ]
     if c == "limited":
         return [
-            ("Motor", "Cek manual", "Data belum lengkap.", "limited"),
-            ("Jalan kaki", "Hati-hati", "Lihat kondisi lokal.", "limited"),
-            ("Jemur", "Jangan ditinggal", "Pantau berkala.", "limited"),
-            ("Outdoor", "Fleksibel", "Siapkan teduh.", "limited"),
-            ("Olahraga", "Pendek saja", "Cek cuaca langsung.", "limited"),
-            ("Foto", "Cek langit", "Tunggu data lebih baik.", "limited"),
+            ("Perjalanan / Motor", "Pantau Mandiri", "Data prakiraan belum lengkap.", "limited"),
+            ("Jalan Kaki", "Perhatikan Cuaca", "Lihat kondisi langit setempat secara berkala.", "limited"),
+            ("Jemur Pakaian", "Pantau Berkala", "Sebaiknya tidak ditinggalkan dalam waktu lama.", "limited"),
+            ("Aktivitas Outdoor", "Fleksibel", "Siapkan opsi berteduh yang memadai.", "limited"),
+            ("Olahraga", "Durasi Singkat", "Periksa kondisi cuaca langsung di lokasi.", "limited"),
+            ("Fotografi", "Cek Kondisi", "Tunggu hingga data prakiraan diperbarui.", "limited"),
         ]
     return [
-        ("Motor", "Aman", "Tetap waspada lokal.", "safe"),
-        ("Jalan kaki", "Nyaman", win, "safe"),
-        ("Jemur", "Aman", "Pagi–siang bagus.", "safe"),
-        ("Outdoor", "Aman", "Cocok untuk acara kecil.", "safe"),
-        ("Olahraga", "Pilih pagi/sore", win, "safe"),
-        ("Foto", "Cocok", "Cahaya lebih enak pagi/sore.", "safe"),
+        ("Perjalanan / Motor", "Aman", "Kondisi cuaca mendukung perjalanan luar ruang.", "safe"),
+        ("Jalan Kaki", "Sangat Nyaman", f"Periode terbaik: {win}.", "safe"),
+        ("Jemur Pakaian", "Sangat Baik", "Pagi hingga siang hari sangat mendukung.", "safe"),
+        ("Aktivitas Outdoor", "Sangat Aman", "Sangat mendukung untuk kegiatan luar ruang.", "safe"),
+        ("Olahraga", "Pagi / Sore", f"Periode nyaman: {win}.", "safe"),
+        ("Fotografi", "Sangat Baik", "Kondisi cahaya pagi dan sore terpantau optimal.", "safe"),
     ]
 
 # -----------------------------------------------------------------------------
@@ -763,9 +763,9 @@ def hero(api: Dict[str, Any], heading: str, sub: str, day: Dict[str, Any]) -> st
     <p>{esc(sub)}</p>
   </article>
   <aside class="side">
-    <div class="tile main"><span>Cuaca</span><strong>{deg(day.get('avg_temp_c'))}</strong><p>{esc(day.get('condition'))}</p></div>
-    <div class="tile"><span>Hujan</span><b>{pct(day.get('peak_rain_probability'))}</b><p>puncak {esc(day.get('peak_rain_hour'))}</p></div>
-    <div class="tile"><span>Status</span><b>{esc(day.get('risk_label'))}</b><p>{round(clamp(day.get('risk_score'))):.0f}/100</p></div>
+    <div class="tile main"><span>Kondisi cuaca</span><strong>{deg(day.get('avg_temp_c'))}</strong><p>{esc(day.get('condition'))}</p></div>
+    <div class="tile"><span>Peluang hujan</span><b>{pct(day.get('peak_rain_probability'))}</b><p>puncak pukul {esc(day.get('peak_rain_hour'))} WIB</p></div>
+    <div class="tile"><span>Skor risiko</span><b>{esc(day.get('risk_label'))}</b><p>{round(clamp(day.get('risk_score'))):.0f}/100</p></div>
   </aside>
 </section>
 <div class="notice">{esc(DISCLAIMER)}</div>
@@ -784,13 +784,13 @@ def decision_block(api: Dict[str, Any], day: Dict[str, Any]) -> str:
 <section class="decision">
   <article class="decision-main">
     <div><span class="badge {esc(cls)}">{esc(day.get('risk_label'))}</span><h2>{esc(loc)}: {esc(decision_sentence(loc, day, short=False))}</h2></div>
-    <p>{esc(day.get('date_label'))}. {esc(rain_phrase(day))}. Jam nyaman: {esc(windows_text)}.</p>
+    <p>{esc(day.get('date_label'))}. {esc(rain_phrase(day))}. Periode nyaman: {esc(windows_text)}.</p>
   </article>
   <aside class="kpis">
-    {kpi('Risiko', f"{round(clamp(day.get('risk_score'))):.0f}/100", day.get('risk_label',''))}
-    {kpi('Puncak hujan', pct(day.get('peak_rain_probability')), day.get('peak_rain_hour','—'))}
-    {kpi('Jam nyaman', windows_text, 'aktivitas')}
-    {kpi('Panas terasa', deg(day.get('max_heat_c')), 'maksimum')}
+    {kpi('Skor risiko', f"{round(clamp(day.get('risk_score'))):.0f}/100", day.get('risk_label',''))}
+    {kpi('Puncak peluang hujan', pct(day.get('peak_rain_probability')), f"pukul {day.get('peak_rain_hour','—')} WIB" if day.get('peak_rain_hour') else '—')}
+    {kpi('Periode nyaman', windows_text, 'untuk beraktivitas')}
+    {kpi('Indeks panas', deg(day.get('max_heat_c')), 'estimasi maksimum')}
   </aside>
 </section>
 '''
@@ -815,16 +815,16 @@ def period_cards(day: Dict[str, Any]) -> str:
 <article class="card" style="border-color:{risk_color(cls)}">
   <h3>{esc(p.get('name'))}</h3>
   <p>{esc(p.get('condition'))}</p>
-  <div class="micro"><div class="stat"><span>Suhu</span><b>{deg(p.get('temp_c'))}</b></div><div class="stat"><span>Hujan</span><b>{pct(p.get('rain_probability'))}</b></div><div class="stat"><span>Jam</span><b>{esc(p.get('hour'))}</b></div></div>
+  <div class="micro"><div class="stat"><span>Suhu udara</span><b>{deg(p.get('temp_c'))}</b></div><div class="stat"><span>Peluang</span><b>{pct(p.get('rain_probability'))}</b></div><div class="stat"><span>Waktu</span><b>{esc(p.get('hour'))}</b></div></div>
 </article>''')
-    return f'<section class="panel"><div class="head"><h2>Pagi–malam</h2><p>{esc(day.get("date_label"))}</p></div><div class="grid4">{"".join(cards)}</div></section>'
+    return f'<section class="panel"><div class="head"><h2>Prakiraan per periode</h2><p>{esc(day.get("date_label"))}</p></div><div class="grid4">{"".join(cards)}</div></section>'
 
 
 def activity_cards(day: Dict[str, Any]) -> str:
     cards = []
     for name, status, advice, cls in short_activity_advice(day):
         cards.append(f'<article class="activity" style="--accent:{risk_color(cls)}"><h3>{esc(name)}</h3><b>{esc(status)}</b><p>{esc(advice)}</p></article>')
-    return f'<section class="panel"><div class="head"><h2>Saran aktivitas</h2><p>Singkat, praktis.</p></div><div class="activities">{"".join(cards)}</div></section>'
+    return f'<section class="panel"><div class="head"><h2>Panduan aktivitas luar ruang</h2><p>Panduan penyesuaian aktivitas berdasarkan kondisi cuaca.</p></div><div class="activities">{"".join(cards)}</div></section>'
 
 
 def hour_rows(day: Dict[str, Any], open_details: bool = False) -> str:
@@ -835,13 +835,13 @@ def hour_rows(day: Dict[str, Any], open_details: bool = False) -> str:
 <div class="hour" style="--accent:{risk_color(cls)}">
   <div class="time">{esc(x.get('hour'))}</div>
   <div><h3>{esc(x.get('condition'))}</h3><p>{esc(x.get('risk_label'))}</p></div>
-  <div class="hbox"><b>{deg(x.get('temp_c'))}</b><span>Suhu</span></div>
-  <div class="hbox"><b>{pct(x.get('humidity_pct'))}</b><span>RH</span></div>
-  <div class="hbox"><b>{deg(x.get('heat_index_c'))}</b><span>Terasa</span></div>
-  <div class="hbox rainbox"><b>{pct(x.get('rain_probability'))}</b><span>Hujan</span></div>
+  <div class="hbox"><b>{deg(x.get('temp_c'))}</b><span>Suhu udara</span></div>
+  <div class="hbox"><b>{pct(x.get('humidity_pct'))}</b><span>Kelembapan</span></div>
+  <div class="hbox"><b>{deg(x.get('heat_index_c'))}</b><span>Indeks panas</span></div>
+  <div class="hbox rainbox"><b>{pct(x.get('rain_probability'))}</b><span>Peluang hujan</span></div>
 </div>''')
     attr = " open" if open_details else ""
-    return f'<details class="clean"{attr}><summary>Detail jam · {esc(day.get("date_label"))}</summary><div class="hours" style="margin-top:12px">{"".join(rows)}</div></details>'
+    return f'<details class="clean"{attr}><summary>Rincian cuaca per jam · {esc(day.get("date_label"))}</summary><div class="hours" style="margin-top:12px">{"".join(rows)}</div></details>'
 
 
 def day_cards(days: List[Dict[str, Any]]) -> str:
@@ -853,14 +853,14 @@ def day_cards(days: List[Dict[str, Any]]) -> str:
   <span class="badge {esc(cls)}">{esc(d.get('relative'))}</span>
   <h3>{esc(d.get('risk_label'))}</h3>
   <p>{esc(d.get('date_label'))}. {esc(decision_sentence('', d, short=True))}</p>
-  <div class="micro"><div class="stat"><span>Hujan</span><b>{pct(d.get('peak_rain_probability'))}</b></div><div class="stat"><span>Jam</span><b>{esc(d.get('peak_rain_hour'))}</b></div><div class="stat"><span>Risiko</span><b>{round(clamp(d.get('risk_score'))):.0f}</b></div></div>
+  <div class="micro"><div class="stat"><span>Peluang</span><b>{pct(d.get('peak_rain_probability'))}</b></div><div class="stat"><span>Waktu</span><b>{esc(d.get('peak_rain_hour'))}</b></div><div class="stat"><span>Risiko</span><b>{round(clamp(d.get('risk_score'))):.0f}</b></div></div>
 </article>''')
-    return f'<section class="panel"><div class="head"><h2>Ringkasan 3 hari</h2><p>Tanggal jelas, angka secukupnya.</p></div><div class="grid3">{"".join(cards)}</div></section>'
+    return f'<section class="panel"><div class="head"><h2>Prakiraan 3 hari ke depan</h2><p>Ringkasan prakiraan harian.</p></div><div class="grid3">{"".join(cards)}</div></section>'
 
 
 def share_box(api: Dict[str, Any], day: Dict[str, Any]) -> str:
-    msg = f"LANGIT — {api['location_name']}\n{day['date_label']}\n{decision_sentence(api['location_name'], day, short=True)}\nPuncak hujan {pct(day.get('peak_rain_probability'))} sekitar {day.get('peak_rain_hour','—')}."
-    return f'<section class="grid2"><article class="panel"><div class="head"><h2>Share singkat</h2><p>Format WA.</p></div><textarea readonly style="width:100%;min-height:118px;border:1px solid rgba(148,190,235,.22);border-radius:16px;background:#071525;color:#f7fbff;padding:14px">{esc(msg)}</textarea></article><article class="panel"><div class="head"><h2>Catatan</h2><p>Ringkas.</p></div><p class="subtle">Prakiraan bisa bergeser beberapa kilometer atau beberapa jam. Untuk cuaca ekstrem, pakai informasi BMKG dan kondisi setempat.</p></article></section>'
+    msg = f"LANGIT — {api['location_name']}\n{day['date_label']}\n{decision_sentence(api['location_name'], day, short=True)}\nPeluang hujan tertinggi: {pct(day.get('peak_rain_probability'))} sekitar pukul {day.get('peak_rain_hour','—')} WIB."
+    return f'<section class="grid2"><article class="panel"><div class="head"><h2>Bagikan informasi</h2><p>Salin ringkasan prakiraan.</p></div><textarea readonly style="width:100%;min-height:118px;border:1px solid rgba(148,190,235,.22);border-radius:16px;background:#071525;color:#f7fbff;padding:14px">{esc(msg)}</textarea></article><article class="panel"><div class="head"><h2>Pemberitahuan</h2><p>Catatan penggunaan.</p></div><p class="subtle">Prakiraan cuaca bersifat dinamis dan dapat berubah sewaktu-waktu. Untuk cuaca ekstrem, selalu pantau informasi resmi BMKG serta kondisi di sekitar lokasi Anda.</p></article></section>'
 
 # -----------------------------------------------------------------------------
 # Map pages
@@ -946,7 +946,7 @@ try{
 
 
 def map_embed(api: Dict[str, Any], href: str = "langit_map_room.html") -> str:
-    return f'<section class="panel"><div class="head"><h2>Peta risiko</h2><p>Warna berubah per jam.</p></div><div class="map-card"><iframe class="map-frame" src="{esc(href)}" loading="lazy"></iframe><div class="actions"><a class="btn primary" href="{esc(href)}">Buka peta penuh</a><a class="btn" href="langit_location.geojson">GeoJSON</a></div></div></section>'
+    return f'<section class="panel"><div class="head"><h2>Peta risiko cuaca</h2><p>Visualisasi perubahan potensi cuaca buruk secara berkala.</p></div><div class="map-card"><iframe class="map-frame" src="{esc(href)}" loading="lazy"></iframe><div class="actions"><a class="btn primary" href="{esc(href)}">Buka peta interaktif</a><a class="btn" href="langit_location.geojson">GeoJSON</a></div></div></section>'
 
 # -----------------------------------------------------------------------------
 # Page builders
@@ -970,7 +970,7 @@ def today_page(api: Dict[str, Any]) -> str:
 def three_day_page(api: Dict[str, Any]) -> str:
     day = api["today"]
     sub = f"Mulai {api['days'][0]['date_label']} sampai {api['days'][-1]['date_label']}."
-    body = hero(api, "Prakiraan 3 hari", sub, day)
+    body = hero(api, "Prakiraan 3 hari ke depan", sub, day)
     body += day_cards(api["days"])
     for d in api["days"]:
         body += timeline(d["hours"], f"{d['relative']} · {d['date_label']}", d.get("risk_label", ""))
@@ -981,10 +981,10 @@ def three_day_page(api: Dict[str, Any]) -> str:
 
 def activity_page(api: Dict[str, Any]) -> str:
     day = api["today"]
-    body = hero(api, "Saran aktivitas", f"{day['date_label']}. Fokus pada jam yang perlu dipantau.", day)
+    body = hero(api, "Panduan aktivitas", f"{day['date_label']}. Rekomendasi kegiatan luar ruang berdasarkan potensi cuaca.", day)
     body += decision_block(api, day)
     body += activity_cards(day)
-    body += timeline(day["hours"], "Jam rawan", "Lihat warna, bukan tabel panjang.")
+    body += timeline(day["hours"], "Periode kerawanan cuaca", "Garis waktu tingkat potensi cuaca buruk.")
     body += period_cards(day)
     body += hour_rows(day, open_details=False)
     body += share_box(api, day)
@@ -996,25 +996,25 @@ def planner_page(api: Dict[str, Any]) -> str:
     rows = day.get("hours") or []
     options = "".join(f'<option value="{esc(x.get("hour"))}">{esc(x.get("hour"))} · {esc(x.get("condition"))} · hujan {pct(x.get("rain_probability"))}</option>' for x in rows)
     data = json.dumps(day, ensure_ascii=False)
-    body = hero(api, "Pilih jam", f"{day['date_label']}. Cek cepat untuk motor, jalan kaki, jemur, olahraga, acara luar, dan foto.", day)
+    body = hero(api, "Rencana kegiatan", f"{day['date_label']}. Analisis cuaca berdasarkan waktu dan jenis aktivitas.", day)
     body += f"""
 <section class="panel">
-  <div class="head"><h2>Planner cepat</h2><p>Tanpa paragraf panjang.</p></div>
+  <div class="head"><h2>Prakiraan rencana kegiatan</h2><p>Pilih aktivitas dan waktu untuk melihat analisis kesesuaian cuaca.</p></div>
   <div class="grid3">
     <select id="act" class="hbox" style="color:#fff;width:100%;min-height:54px">
-      <option>Motor</option><option>Jalan kaki</option><option>Jemur</option><option>Outdoor</option><option>Olahraga</option><option>Foto</option>
+      <option value="Motor">Perjalanan / Motor</option><option value="Jalan kaki">Jalan Kaki</option><option value="Jemur">Jemur Pakaian</option><option value="Outdoor">Aktivitas Outdoor</option><option value="Olahraga">Olahraga</option><option value="Foto">Fotografi</option>
     </select>
     <select id="hh" class="hbox" style="color:#fff;width:100%;min-height:54px">{options}</select>
-    <button class="btn primary" type="button" onclick="decidePlanner()">Cek jam</button>
+    <button class="btn primary" type="button" onclick="decidePlanner()">Periksa kesesuaian</button>
   </div>
   <article class="decision-main" style="margin-top:16px;min-height:150px">
-    <div><span id="plannerBadge" class="badge watch">Pilih jam</span><h2 id="plannerOut" style="font-size:clamp(30px,4vw,48px)">Cek sebelum berangkat.</h2></div>
-    <p id="plannerWhy">Pilih aktivitas dan jam. Sistem akan pakai peluang hujan, risiko, dan panas terasa.</p>
+    <div><span id="plannerBadge" class="badge watch">Pilih waktu</span><h2 id="plannerOut" style="font-size:clamp(30px,4vw,48px)">Analisis kondisi cuaca.</h2></div>
+    <p id="plannerWhy">Silakan pilih jenis aktivitas dan waktu pelaksanaan untuk menampilkan analisis kesesuaian cuaca.</p>
   </article>
 </section>
 <script>
 const plannerDay={data};
-function plannerRiskClass(x){{return x==='danger'?'Tinggi':x==='rain'?'Waspada':x==='watch'?'Pantau':x==='safe'?'Aman':'Terbatas';}}
+function plannerRiskClass(x){{return x==='danger'?'Berpotensi signifikan':x==='rain'?'Waspada':x==='watch'?'Perlu diperhatikan':x==='safe'?'Aman':'Data terbatas';}}
 function decidePlanner(){{
   const act=document.getElementById('act').value;
   const val=document.getElementById('hh').value;
@@ -1022,17 +1022,17 @@ function decidePlanner(){{
   const p=Math.round(Number(h.rain_probability||0));
   const r=Math.round(Number(h.risk_score||0));
   const hi=Number(h.heat_index_c||h.temp_c||0);
-  let msg='Bisa';
-  let why='Tetap lihat kondisi sekitar.';
-  if(r>=78 || p>=70){{msg='Tunda'; why='Risiko tinggi pada jam ini.';}}
-  else if(r>=55 || p>=45){{msg='Siapkan plan B'; why='Awan/hujan cukup perlu diwaspadai.';}}
-  else if(r>=25 || p>=25){{msg='Masih bisa, pantau'; why='Masih aman bersyarat.';}}
-  if((act==='Jemur'||act==='Foto') && p>=25){{msg='Pilih jam lain'; why='Hujan/awan bisa mengganggu aktivitas ini.';}}
-  if((act==='Olahraga'||act==='Jalan kaki') && hi>=36){{msg='Cari jam lebih teduh'; why='Panas terasa tinggi.';}}
+  let msg='Dapat dilakukan', cls='safe';
+  let why='Kondisi cuaca terpantau relatif mendukung.';
+  if(r>=78 || p>=70){{msg='Disarankan untuk ditunda'; cls='danger'; why='Potensi gangguan cuaca terpantau tinggi pada periode ini.';}}
+  else if(r>=55 || p>=45){{msg='Siapkan rencana cadangan'; cls='rain'; why='Terdapat indikasi pembentukan awan hujan.';}}
+  else if(r>=25 || p>=25){{msg='Dapat dilakukan dengan pemantauan berkala'; cls='watch'; why='Kondisi cuaca terpantau relatif mendukung dengan pemantauan.';}}
+  if((act==='Jemur'||act==='Foto') && p>=25){{msg='Pilih waktu alternatif'; cls='watch'; why='Potensi awan tebal atau hujan dapat memengaruhi kelancaran aktivitas.';}}
+  if((act==='Olahraga'||act==='Jalan kaki') && hi>=36){{msg='Pilih waktu yang lebih teduh'; cls='watch'; why='Suhu terasa (indeks panas) berada pada kategori tinggi.';}}
   document.getElementById('plannerBadge').className='badge '+(h.risk_class||'watch');
   document.getElementById('plannerBadge').textContent=plannerRiskClass(h.risk_class||'watch');
   document.getElementById('plannerOut').textContent=act+' '+val+': '+msg;
-  document.getElementById('plannerWhy').textContent=why+' Hujan '+p+'%, risiko '+r+'/100, kondisi '+(h.condition||'-')+'.';
+  document.getElementById('plannerWhy').textContent=why+' Peluang hujan '+p+'%, skor risiko '+r+'/100, kondisi cuaca: '+(h.condition||'-')+'.';
 }}
 </script>
 """
@@ -1054,16 +1054,15 @@ def data_page(api: Dict[str, Any]) -> str:
         f"<tr><td>{esc(pick(r,'model','source','name',default='—'))}</td><td>{esc(pick(r,'provider','origin',default='—'))}</td><td>{esc(pick(r,'active','is_active','used','ok',default='—'))}</td><td>{esc(pick(r,'weight','score','quality',default='—'))}</td></tr>"
         for r in sources
     ) or '<tr><td colspan="4">Belum ada tabel sumber.</td></tr>'
-    body = hero(api, "Keandalan data", f"{day['date_label']}. Ringkasan sumber dibuat pendek; detail teknis disimpan di bawah.", day)
-    body += f'<section class="panel"><div class="head"><h2>Sumber terbaca</h2><p>{active}/{total} aktif</p></div><div class="timeline" style="--n:1;min-height:70px"><div class="bar"><b>{round(active/total*100):.0f}%</b><div class="v" style="height:18px;--c:#35e8a4;width:100%"></div><small>keandalan</small></div></div></section>'
-    body += f'<section class="panel"><details class="clean" open><summary>Tabel teknis sumber</summary><div class="tablewrap"><table><thead><tr><th>Model</th><th>Sumber</th><th>Aktif</th><th>Bobot</th></tr></thead><tbody>{rows}</tbody></table></div></details></section>'
+    body = hero(api, "Informasi model & sumber data", f"{day['date_label']}. Detail keandalan data prakiraan cuaca berdasarkan model atmosfer.", day)
+    body += f'<section class="panel"><div class="head"><h2>Model data aktif</h2><p>{active}/{total} aktif</p></div><div class="timeline" style="--n:1;min-height:70px"><div class="bar"><b>{round(active/total*100):.0f}%</b><div class="v" style="height:18px;--c:#35e8a4;width:100%"></div><small>Keandalan model</small></div></div></section>'
+    body += f'<section class="panel"><details class="clean" open><summary>Detail parameter model prakiraan</summary><div class="tablewrap"><table><thead><tr><th>Model data</th><th>Penyedia</th><th>Status</th><th>Bobot kontribusi</th></tr></thead><tbody>{rows}</tbody></table></div></details></section>'
     body += map_embed(api)
     return document(api, "data", f"LANGIT Data — {api['location_name']}", body)
 
 
 def accuracy_page(api: Dict[str, Any], directory: Path) -> str:
     day = api["today"]
-    # Try multiple possible verification files. If none exist, show a useful empty state.
     summary: Dict[str, Any] = {}
     for name in ["sentinel_x_accuracy_summary.json", "verification_summary.json", "accuracy_summary.json", "sentinel_verification_summary.json"]:
         obj = read_json(directory / name, {})
@@ -1073,12 +1072,12 @@ def accuracy_page(api: Dict[str, Any], directory: Path) -> str:
     matched = int(num(pick(summary, "matched_cases", "pairs", "n", default=0), 0) or 0)
     target = int(num(pick(summary, "target_cases", "minimum_cases", default=30), 30) or 30)
     pct_done = clamp(matched / max(1, target) * 100)
-    body = hero(api, "Akurasi", f"{day['date_label']}. Skor ditampilkan setelah pasangan prakiraan–observasi cukup.", day)
-    body += f'<section class="panel"><div class="head"><h2>{"Data akurasi cukup" if matched >= target else "Belum cukup data"}</h2><p>{matched}/{target} pasangan</p></div><div class="timeline" style="--n:1;min-height:80px"><div class="bar"><b>{pct_done:.0f}%</b><div class="v" style="height:20px;--c:#32b7ff"></div><small>progress</small></div></div></section>'
+    body = hero(api, "Tingkat akurasi sistem", f"{day['date_label']}. Metrik evaluasi ketepatan prakiraan cuaca LANGIT.", day)
+    body += f'<section class="panel"><div class="head"><h2>{"Evaluasi akurasi tersedia" if matched >= target else "Menunggu kecukupan data"}</h2><p>{matched}/{target} pasangan</p></div><div class="timeline" style="--n:1;min-height:80px"><div class="bar"><b>{pct_done:.0f}%</b><div class="v" style="height:20px;--c:#32b7ff"></div><small>progress</small></div></div></section>'
     if matched >= target:
-        body += f'<section class="grid3"><article class="card"><h3>Error suhu</h3><p>{esc(pick(summary,"mae_temp","temperature_mae",default="—"))}</p></article><article class="card"><h3>Skor hujan</h3><p>{esc(pick(summary,"rain_score","brier_score",default="—"))}</p></article><article class="card"><h3>Alarm keliru</h3><p>{esc(pick(summary,"false_alarm_rate",default="—"))}</p></article></section>'
+        body += f'<section class="grid3"><article class="card"><h3>Selisih suhu rata-rata (MAE)</h3><p>{esc(pick(summary,"mae_temp","temperature_mae",default="—"))}</p></article><article class="card"><h3>Akurasi peluang hujan (Brier)</h3><p>{esc(pick(summary,"rain_score","brier_score",default="—"))}</p></article><article class="card"><h3>Tingkat alarm keliru (FAR)</h3><p>{esc(pick(summary,"false_alarm_rate",default="—"))}</p></article></section>'
     else:
-        body += '<section class="panel"><p class="subtle">Halaman ini sengaja tidak mengklaim akurasi sebelum data cukup. Begitu observasi terkumpul, metrik akan muncul otomatis.</p></section>'
+        body += '<section class="panel"><p class="subtle">Evaluasi akurasi memerlukan minimal 30 hari data observasi riil untuk menghasilkan metrik yang kredibel. Pengumpulan data sedang berjalan secara otomatis.</p></section>'
     return document(api, "accuracy", f"LANGIT Akurasi — {api['location_name']}", body)
 
 
@@ -1094,13 +1093,13 @@ def portal_page(apis: List[Dict[str, Any]], root: Path) -> str:
   <span class="badge {esc(cls)}">{esc(d.get('risk_label'))}</span>
   <h3>{esc(api.get('location_name'))}</h3>
   <p>{esc(d.get('date_label'))}. {esc(decision_sentence(api.get('location_name',''), d, short=True))}</p>
-  <div class="micro"><div class="stat"><span>Hujan</span><b>{pct(d.get('peak_rain_probability'))}</b></div><div class="stat"><span>Jam</span><b>{esc(d.get('peak_rain_hour'))}</b></div><div class="stat"><span>Risiko</span><b>{round(clamp(d.get('risk_score'))):.0f}</b></div></div>
-  <div class="actions"><a class="btn primary" href="{esc(api['location_slug'])}/anemos_app.html">Buka</a><a class="btn" href="{esc(api['location_slug'])}/anemos_3day.html">3 hari</a><a class="btn" href="{esc(api['location_slug'])}/anemos_activity.html">Aktivitas</a></div>
+  <div class="micro"><div class="stat"><span>Peluang</span><b>{pct(d.get('peak_rain_probability'))}</b></div><div class="stat"><span>Waktu</span><b>{esc(d.get('peak_rain_hour'))}</b></div><div class="stat"><span>Risiko</span><b>{round(clamp(d.get('risk_score'))):.0f}</b></div></div>
+  <div class="actions"><a class="btn primary" href="{esc(api['location_slug'])}/anemos_app.html">Detail prakiraan</a><a class="btn" href="{esc(api['location_slug'])}/anemos_3day.html">3 hari</a><a class="btn" href="{esc(api['location_slug'])}/anemos_activity.html">Aktivitas</a></div>
 </article>''')
-    body = hero(dummy, "Cuaca lokal visual", f"{fmt_date(local_now().date())}. Pilih lokasi dan lihat jam rawan tanpa tabel panjang.", today)
-    body += f'<section class="panel portal"><div class="head"><h2>Pilih lokasi</h2><p>Diurutkan dari yang paling perlu dipantau.</p></div><div class="grid3">{"".join(cards)}</div></section>'
-    body += '<section class="panel"><div class="head"><h2>Peta lokasi</h2><p>Warna mengikuti risiko hari ini.</p></div><div class="map-card"><iframe class="map-frame" src="langit_portal_map.html" loading="lazy"></iframe><div class="actions"><a class="btn primary" href="langit_portal_map.html">Buka peta penuh</a><a class="btn" href="langit_all_locations.geojson">GeoJSON</a></div></div></section>'
-    body += '<section class="panel"><div class="head"><h2>Data publik</h2><p>Untuk arsip dan integrasi.</p></div><div class="actions"><a class="btn" href="forecast_all_locations.csv">Forecast CSV</a><a class="btn" href="source_status_all_locations.csv">Sumber CSV</a><a class="btn" href="langit_portal_manifest.json">Manifest</a></div></section>'
+    body = hero(dummy, "Prakiraan cuaca wilayah", f"{fmt_date(local_now().date())}. Pilih lokasi untuk melihat ringkasan kondisi cuaca dan tingkat risiko saat ini.", today)
+    body += f'<section class="panel portal"><div class="head"><h2>Daftar lokasi pantauan</h2><p>Diurutkan berdasarkan tingkat kerawanan cuaca tertinggi.</p></div><div class="grid3">{"".join(cards)}</div></section>'
+    body += '<section class="panel"><div class="head"><h2>Peta sebaran wilayah</h2><p>Tingkat risiko cuaca ditampilkan secara visual di peta.</p></div><div class="map-card"><iframe class="map-frame" src="langit_portal_map.html" loading="lazy"></iframe><div class="actions"><a class="btn primary" href="langit_portal_map.html">Buka peta interaktif</a><a class="btn" href="langit_all_locations.geojson">GeoJSON</a></div></div></section>'
+    body += '<section class="panel"><div class="head"><h2>Arsip data & API</h2><p>Data prakiraan tersedia dalam format terbuka untuk diunduh.</p></div><div class="actions"><a class="btn" href="forecast_all_locations.csv">Forecast CSV</a><a class="btn" href="source_status_all_locations.csv">Sumber CSV</a><a class="btn" href="langit_portal_manifest.json">Manifest</a></div></section>'
     return document(dummy, "locations", "LANGIT Portal", body, root=True)
 
 

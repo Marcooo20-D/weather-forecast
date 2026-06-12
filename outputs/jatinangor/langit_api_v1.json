@@ -1,7 +1,7 @@
 {
   "brand": "LANGIT",
-  "version": "LANGIT v65.0",
-  "generated_at": "Diperbarui 12/06/2026, 17:53 WIB",
+  "version": "LANGIT v65.1",
+  "generated_at": "Diperbarui 12 Juni, 12:00 WIB",
   "location_name": "Jatinangor, Sumedang",
   "location_slug": "jatinangor",
   "latitude": -6.938,
@@ -211,7 +211,7 @@
     "risk_class": "safe",
     "risk_label": "Aman",
     "condition": "Lembap malam",
-    "avg_temp_c": 24.82222222222222,
+    "avg_temp_c": 24.822222222222223,
     "avg_rh": 74.22222222222223,
     "max_heat_c": 29.4,
     "max_wind_kmh": 10.9,
@@ -427,7 +427,7 @@
       "risk_class": "safe",
       "risk_label": "Aman",
       "condition": "Lembap malam",
-      "avg_temp_c": 24.82222222222222,
+      "avg_temp_c": 24.822222222222223,
       "avg_rh": 74.22222222222223,
       "max_heat_c": 29.4,
       "max_wind_kmh": 10.9,
@@ -642,7 +642,7 @@
       "risk_class": "rain",
       "risk_label": "Waspada",
       "condition": "Hujan lokal kuat",
-      "avg_temp_c": 22.68888888888889,
+      "avg_temp_c": 22.688888888888886,
       "avg_rh": 85.55555555555556,
       "max_heat_c": 25.9,
       "max_wind_kmh": 9.3,
@@ -672,7 +672,7 @@
           "wind_kmh": 0.2,
           "risk_score": 50,
           "risk_class": "watch",
-          "risk_label": "Pantau",
+          "risk_label": "Perlu diperhatikan",
           "condition": "Hujan lokal",
           "valid": true
         },
@@ -757,7 +757,7 @@
           "wind_kmh": 3.3,
           "risk_score": 50,
           "risk_class": "watch",
-          "risk_label": "Pantau",
+          "risk_label": "Perlu diperhatikan",
           "condition": "Hujan lokal",
           "valid": true
         },
@@ -774,7 +774,7 @@
           "wind_kmh": 3.3,
           "risk_score": 50,
           "risk_class": "watch",
-          "risk_label": "Pantau",
+          "risk_label": "Perlu diperhatikan",
           "condition": "Hujan lokal",
           "valid": true
         },
@@ -808,7 +808,7 @@
           "wind_kmh": 1.8,
           "risk_score": 50,
           "risk_class": "watch",
-          "risk_label": "Pantau",
+          "risk_label": "Perlu diperhatikan",
           "condition": "Hujan lokal",
           "valid": true
         }
@@ -839,7 +839,7 @@
           "temp_c": 23.0,
           "rain_probability": 50.0,
           "risk_class": "watch",
-          "risk_label": "Pantau"
+          "risk_label": "Perlu diperhatikan"
         },
         {
           "name": "Malam",
@@ -1022,5 +1022,5 @@
       "error": "circuit_open host=api.open-meteo.com wait=12s"
     }
   ],
-  "raw_version": "LANGIT v63.1"
+  "raw_version": "LANGIT v65.0"
 }

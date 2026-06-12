@@ -2,22 +2,22 @@
   "version": "v64.4.2",
   "engine": "LANGIT v64.4.2 Real Atmospheric Field Map Engine",
   "generated_at": "2026-06-12T18:58:40+07:00",
-  "portal": false,
-  "location_count": 1,
-  "hour_count": 72,
+  "portal": true,
+  "location_count": 3,
+  "hour_count": 216,
   "coverage": {
-    "risk": 72,
-    "rain": 30,
-    "temp": 72,
-    "feels": 72,
-    "humidity": 26,
+    "risk": 216,
+    "rain": 97,
+    "temp": 216,
+    "feels": 216,
+    "humidity": 84,
     "cloud": 0,
     "pressure": 0,
-    "wind": 69,
-    "gust": 69,
+    "wind": 205,
+    "gust": 205,
     "uv": 0,
     "visibility": 0,
-    "confidence": 42
+    "confidence": 119
   },
   "available_layers": [
     "risk",
@@ -48,6 +48,18 @@
   ],
   "locations": [
     {
+      "slug": "arjawinangun",
+      "name": "Arjawinangun, Cirebon",
+      "status": "Waspada",
+      "risk_score": 57,
+      "peak_hour": "04:00",
+      "safe_hour": "00:00",
+      "rain_probability_pct": 57,
+      "temperature_c": 25.9,
+      "wind_speed_ms": 4.7,
+      "wind_direction_deg": null
+    },
+    {
       "slug": "dago",
       "name": "Dago, Bandung",
       "status": "Perlu diperhatikan",
@@ -57,6 +69,18 @@
       "rain_probability_pct": 48,
       "temperature_c": 22.7,
       "wind_speed_ms": 6.7,
+      "wind_direction_deg": null
+    },
+    {
+      "slug": "jatinangor",
+      "name": "Jatinangor, Sumedang",
+      "status": "Berpotensi signifikan",
+      "risk_score": 78,
+      "peak_hour": "15:00",
+      "safe_hour": "01:00",
+      "rain_probability_pct": 78,
+      "temperature_c": 22.7,
+      "wind_speed_ms": 9.3,
       "wind_direction_deg": null
     }
   ],
