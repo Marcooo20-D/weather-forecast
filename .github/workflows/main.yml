@@ -1,4 +1,4 @@
-name: LANGIT v64.4.1 Forecast OS
+name: LANGIT v65.0 Forecast OS
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: langit-v64-4-1-forecast
+  group: langit-v65-0-forecast
   cancel-in-progress: true
 
 jobs:
@@ -66,12 +66,14 @@ jobs:
           ls -la
           test -f weather_ensemble_multi_location.py
           test -f langit_v63_product_rebuild.py
+          test -f langit_v65_cinematic_rebuild.py
           test -f langit_v64_3_full_variable_map_engine.py
 
       - name: Syntax check scripts
         run: |
           python -m py_compile weather_ensemble_multi_location.py
           python -m py_compile langit_v63_product_rebuild.py
+          python -m py_compile langit_v65_cinematic_rebuild.py
           python -m py_compile langit_v64_3_full_variable_map_engine.py
 
       - name: LANGIT generator doctor
@@ -122,7 +124,7 @@ jobs:
             ${{ steps.vars.outputs.debug_flag }} \
             --no-save-raw-payloads
 
-      - name: Rebuild LANGIT v63.1 product layer
+      - name: Rebuild LANGIT v63.1 product layer (baseline)
         run: |
           python langit_v63_product_rebuild.py \
             --root outputs \
@@ -135,9 +137,15 @@ jobs:
             --public-base-url "$PUBLIC_BASE_URL" \
             --debug
 
+      - name: Rebuild LANGIT v65.0 cinematic product layer
+        run: |
+          python langit_v65_cinematic_rebuild.py \
+            --root outputs \
+            --public-base-url "$PUBLIC_BASE_URL"
+
       - name: Verify public output
         run: |
-          python langit_v63_product_rebuild.py --root outputs --verify-only
+          python langit_v65_cinematic_rebuild.py --root outputs --verify-only
           python langit_v64_3_full_variable_map_engine.py --root outputs --verify-only
           test -f outputs/index.html
           test -f outputs/langit_portal_map.html
@@ -175,7 +183,7 @@ jobs:
       - name: Upload generated site artifact
         uses: actions/upload-artifact@v4
         with:
-          name: langit-v64-4-1-public-site
+          name: langit-v65-0-public-site
           path: outputs
           retention-days: 7
 
@@ -186,4 +194,4 @@ jobs:
           publish_dir: outputs
           publish_branch: gh-pages
           force_orphan: true
-          commit_message: "deploy: LANGIT v64.4.1 real atmospheric field map"
+          commit_message: "deploy: LANGIT v65.0 cinematic atmospheric experience"
