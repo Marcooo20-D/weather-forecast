@@ -2353,7 +2353,7 @@ def v65_portal_page(apis: List[Dict[str, Any]], root: Path) -> str:
     today = apis[0]["today"] if apis else summarize_day("Hari ini", local_now().date(), [])
     dummy = {"location_name": "Portal", "generated_at": fmt_update(), "today": today}
 
-    body = v65_hero(dummy, "LANGIT", "Atmosfer Indonesia, dibaca lebih hidup.", today, show_metrics=False)
+    body = v65_hero(dummy, "LANGIT", "Prakiraan cuaca untuk wilayah Institut Teknologi Bandung.", today, show_metrics=False)
     body += v65_notice()
 
     # Location cards
