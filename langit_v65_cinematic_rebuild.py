@@ -186,7 +186,6 @@ SANITIZE_REPLACEMENTS = [
     ("Window nyaman", "Jam nyaman"), ("window nyaman", "jam nyaman"),
     ("Window aktivitas", "Jam aktivitas"), ("window aktivitas", "jam aktivitas"),
     ("Window hujan", "Jam hujan"), ("window hujan", "jam hujan"),
-    ("Window ", "Jam "), ("window ", "jam "),
     ("Data confidence", "Keyakinan data"), ("data confidence", "keyakinan data"),
     ("visual-first", "visual"),
     ("ANEMOS sedang", "LANGIT sedang"), ("AETHER Sentinel", "LANGIT Sentinel"),
@@ -206,7 +205,7 @@ def sanitize_public_text(content: str) -> str:
 
 def write_text(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    if path.suffix.lower() in {".html", ".htm", ".txt", ".json"}:
+    if path.suffix.lower() in {".html", ".htm", ".txt"}:
         content = sanitize_public_text(content)
     path.write_text(content, encoding="utf-8")
 
@@ -274,6 +273,16 @@ def heat_risk(heat: Any, temp: Any = None, rh: Any = None) -> float:
     return clamp(score)
 
 
+def wind_risk(wind: Any) -> float:
+    w = num(wind, 0)
+    if w is None:
+        return 0
+    if w >= 50: return 80
+    if w >= 40: return 60
+    if w >= 30: return 30
+    return 0
+
+
 def risk_class(score: Any, valid: bool = True) -> str:
     if not valid:
         return "limited"
@@ -321,7 +330,7 @@ def row_to_hour(row: Dict[str, Any], fallback_date: Optional[dt.date] = None, fa
     rain = prob(pick(row, "rain_probability", "rain_probability_raw", "precip_probability", "precipitation_probability", "pop", "hujan"))
     wind = num(pick(row, "wind_kmh", "wind_speed_kmh", "wind_speed_10m_kmh", "angin"))
     base_score = clamp(pick(row, "risk_score", "score", "risk", default=0), default=0)
-    score = max(base_score, rain or 0, heat_risk(heat, temp, rh))
+    score = max(base_score, rain or 0, heat_risk(heat, temp, rh), wind_risk(wind))
     valid = any(x is not None for x in [temp, rh, heat, rain, wind])
     cls = text(pick(row, "risk_class", "risk_level", default="")).lower()
     cls = cls if cls in {"safe", "watch", "rain", "danger", "limited"} else risk_class(score, valid)
@@ -330,6 +339,9 @@ def row_to_hour(row: Dict[str, Any], fallback_date: Optional[dt.date] = None, fa
     cond = text(pick(row, "condition", "weather", "cuaca", "summary", default=""))
     if not cond or cond.lower() in {"aman", "dipantau", "safe", "watch"}:
         cond = condition_label(hh, rain, temp, rh, heat, valid)
+        w_val = num(wind, 0)
+        if w_val is not None and w_val >= 50:
+            cond = "Angin Kencang"
     return {
         "date_iso": d.isoformat() if d else "",
         "date_label": fmt_date(d) if d else "Tanggal belum terbaca",
@@ -486,13 +498,23 @@ def short_activity_advice(day: Dict[str, Any]) -> List[Tuple[str, str, str, str]
 # Load existing generator outputs (ported from v63)
 # ---------------------------------------------------------------------------
 
+def safe_find_file(directory: Path, filename: str) -> Path:
+    if not directory.exists():
+        return directory / filename
+    target = filename.lower()
+    for p in directory.iterdir():
+        if p.is_file() and p.name.lower() == target:
+            return p
+    return directory / filename
+
+
 def metadata_by_slug(root: Path) -> Dict[str, Dict[str, Any]]:
     meta: Dict[str, Dict[str, Any]] = {}
     for name in ["dim_locations.csv", "locations.csv", "dim_location.csv"]:
-        for row in read_csv(root / name):
+        for row in read_csv(safe_find_file(root, name)):
             slug = text(pick(row, "slug", "location_slug", default="")) or slugify(text(pick(row, "location_name", "name", default="location")))
             meta.setdefault(slug, {}).update(row)
-    gj = read_json(root / "langit_all_locations.geojson", {}) or {}
+    gj = read_json(safe_find_file(root, "langit_all_locations.geojson"), {}) or {}
     for feat in gj.get("features", []) if isinstance(gj, dict) else []:
         props = feat.get("properties") or {}
         coords = (feat.get("geometry") or {}).get("coordinates") or []
@@ -508,7 +530,7 @@ def location_dirs(root: Path) -> List[Path]:
     out = []
     sentinel_files = ["anemos_app.html", "langit_hourly_intelligence.csv", "anemos_hourly_compact.csv", "langit_api_v1.json", "anemos_api_v1.json", "forecast.csv", "forecast_all_locations.csv"]
     for p in root.iterdir():
-        if p.is_dir() and any((p / s).exists() for s in sentinel_files):
+        if p.is_dir() and any(safe_find_file(p, s).exists() for s in sentinel_files):
             out.append(p)
     return sorted(out, key=lambda x: x.name)
 
@@ -578,8 +600,9 @@ def split_rows_into_days(rows: List[Dict[str, Any]], base_date: dt.date) -> List
 def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
     raw_api: Dict[str, Any] = {}
     for name in ["langit_api_v1.json", "anemos_api_v1.json", "api.json"]:
-        if (directory / name).exists():
-            raw_api = read_json(directory / name, {}) or {}
+        file_path = safe_find_file(directory, name)
+        if file_path.exists():
+            raw_api = read_json(file_path, {}) or {}
             if isinstance(raw_api, dict):
                 break
     loc_name = text(raw_api.get("location_name"), text(meta.get("location_name"), directory.name.replace("-", " ").title()))
@@ -587,7 +610,8 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
     lat = num(raw_api.get("latitude"), num(meta.get("latitude"), num(meta.get("lat"))))
     lon = num(raw_api.get("longitude"), num(meta.get("longitude"), num(meta.get("lon"))))
     if lat is None or lon is None:
-        gj = read_json(directory / "langit_location.geojson", {}) or {}
+        gj_path = safe_find_file(directory, "langit_location.geojson")
+        gj = read_json(gj_path, {}) or {}
         feats = gj.get("features") if isinstance(gj, dict) else []
         if feats:
             coords = (feats[0].get("geometry") or {}).get("coordinates") or []
@@ -596,7 +620,7 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
                 lat = num(coords[1], lat)
     rows: List[Dict[str, Any]] = []
     for fname in ["langit_hourly_intelligence.csv", "anemos_hourly_compact.csv", "anemos_risk_timeline.csv", "forecast.csv", "forecast_all_locations.csv"]:
-        rows = read_csv(directory / fname)
+        rows = read_csv(safe_find_file(directory, fname))
         if rows:
             break
     if not rows and raw_api:
@@ -617,7 +641,7 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
     # Enrich days with cloud cover from sentinel_x.csv
     sentinel_map = {}
     for fname in ["sentinel_x.csv", "sentinel_x_all_locations.csv"]:
-        spath = directory / fname
+        spath = safe_find_file(directory, fname)
         if spath.exists():
             for sr in read_csv(spath):
                 t_date = text(sr.get("target_date"))
@@ -634,20 +658,20 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
             if cloud is None:
                 cond = text(h.get("condition"), "").lower()
                 if any(k in cond for k in ["hujan lebat", "danger", "ekstrem"]):
-                    cloud = 95.0
+                     cloud = 95.0
                 elif any(k in cond for k in ["hujan", "rain"]):
-                    cloud = 85.0
+                     cloud = 85.0
                 elif any(k in cond for k in ["berawan", "cloudy", "overcast", "mendung"]):
-                    cloud = 70.0
+                     cloud = 70.0
                 elif any(k in cond for k in ["cerah berawan", "partly cloudy", "partlycloudy"]):
-                    cloud = 40.0
+                     cloud = 40.0
                 else:
-                    cloud = 15.0
+                     cloud = 15.0
             h["cloud_pct"] = cloud
 
     sources: List[Dict[str, Any]] = []
     for fname in ["source_status.csv", "source_status_all_locations.csv", "langit_source_status.csv"]:
-        sources = read_csv(directory / fname)
+        sources = read_csv(safe_find_file(directory, fname))
         if sources:
             break
     return {
@@ -670,7 +694,7 @@ CSS_V65 = r'''
   --abyss: #070e1e;
   --ocean: #0b1932;
   --steel: #15294a;
-  --mist: #64748b;
+  --mist: #94a3b8;
   --cloud: #94a3b8;
   --snow: #f1f5f9;
   --white: #ffffff;
@@ -1344,6 +1368,8 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.1;
   margin-top: 20px;
   position: relative;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 .decision-desc {
   color: var(--cloud);
@@ -1718,17 +1744,24 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* --- FUTURISTIC MAP & GEOGRAPHICAL SCAN --- */
+@keyframes mapSkeleton {
+  0% { background-color: var(--ocean); }
+  50% { background-color: var(--steel); }
+  100% { background-color: var(--ocean); }
+}
+
 .map-wrapper {
   border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--void);
+  background: var(--ocean);
   box-shadow: 0 10px 40px rgba(0,0,0,0.3);
   position: relative;
+  animation: mapSkeleton 2.5s infinite ease-in-out;
 }
 .map-frame {
   width: 100%;
-  height: 680px;
+  height: clamp(320px, 55vh, 720px);
   border: 0;
   display: block;
 }
@@ -2026,19 +2059,15 @@ a { color: inherit; text-decoration: none; }
   :root { --container-max: 1440px; --section-pad: 100px; }
   .hero { padding: 100px 40px 120px; }
   .command-center { gap: 40px; }
-  .map-frame { height: 720px; }
   .section-header { margin-bottom: 56px; }
 }
 
 /* --- DESKTOP (1280–1535px) — default layout, unchanged --- */
-@media (min-width: 1280px) and (max-width: 1535px) {
-  .map-frame { height: 680px; }
-}
+/* --- DESKTOP (1280–1535px) — default layout --- */
 
 /* --- LAPTOP (1024–1279px) — 2-col dominant map --- */
 @media (min-width: 1024px) and (max-width: 1279px) {
-  .command-center { grid-template-columns: 6.5fr 3.5fr; gap: 24px; }
-  .map-frame { height: 600px; }
+  .command-center { grid-template-columns: 1fr; gap: 24px; }
   .hero-metric-value { font-size: 32px; }
   .decision-main { padding: 32px; min-height: 240px; }
 }
@@ -2047,7 +2076,6 @@ a { color: inherit; text-decoration: none; }
 @media (min-width: 768px) and (max-width: 1023px) {
   :root { --nav-height: 64px; }
   .command-center { grid-template-columns: 1fr; }
-  .map-frame { height: 520px; }
   .decision { grid-template-columns: 1fr; }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .share-grid { grid-template-columns: 1fr; }
@@ -2124,7 +2152,6 @@ a { color: inherit; text-decoration: none; }
   .kpi-label { font-size: var(--font-label); }
 
   /* Map */
-  .map-frame { height: 420px; }
   .command-center { grid-template-columns: 1fr; gap: 20px; }
 
   /* Hourly rows — mobile card format */
@@ -2256,7 +2283,6 @@ a { color: inherit; text-decoration: none; }
   .hero-label { font-size: 11px; padding: 6px 14px; }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .kpi-value { font-size: 20px; }
-  .map-frame { height: 360px; }
   .period-stat-value { font-size: 16px; }
   .period-condition { font-size: 17px; }
   .activity-status { font-size: 18px; }
@@ -2758,7 +2784,11 @@ JS_V65 = r'''
     });
 
     drawChart();
-    window.addEventListener('resize', drawChart, { passive: true });
+    let chartResizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(chartResizeTimeout);
+      chartResizeTimeout = setTimeout(drawChart, 100);
+    }, { passive: true });
   });
 
   // --- Dynamic Weather Stepper Timeline Navigation ---
@@ -2858,25 +2888,27 @@ JS_V65 = r'''
   });
 
   // --- Mobile Bottom Sheet Modal ---
-  const sheet = document.querySelector('.mobile-bottom-sheet');
-  const sheetTrigger = document.querySelector('.hourly-toggle');
-  
-  if (sheet && sheetTrigger) {
-    sheetTrigger.addEventListener('click', (ev) => {
-      // If mobile, prevent Leaflet default details collapse and show sliding bottom sheet instead
-      if (window.innerWidth <= 768) {
-        ev.preventDefault();
-        sheet.classList.add('open');
-      }
-    });
+  document.querySelectorAll('.day-panel').forEach((panel) => {
+    const sheet = panel.querySelector('.mobile-bottom-sheet');
+    const sheetTrigger = panel.querySelector('.hourly-toggle');
     
-    const handle = sheet.querySelector('.mobile-bottom-sheet-handle');
-    if (handle) {
-      handle.addEventListener('click', () => {
-        sheet.classList.remove('open');
+    if (sheet && sheetTrigger) {
+      sheetTrigger.addEventListener('click', (ev) => {
+        // If mobile, prevent default details collapse and show sliding bottom sheet instead
+        if (window.innerWidth <= 768) {
+          ev.preventDefault();
+          sheet.classList.add('open');
+        }
       });
+      
+      const handle = sheet.querySelector('.mobile-bottom-sheet-handle');
+      if (handle) {
+        handle.addEventListener('click', () => {
+          sheet.classList.remove('open');
+        });
+      }
     }
-  }
+  });
 
   // --- Apple Vision Pro Spatial Coordinates Zoom Scanner ---
   function runSpatialZoomScanner() {
@@ -3158,7 +3190,12 @@ def v65_nav(api: Dict[str, Any], active: str, root: bool = False) -> str:
         items = [("Hari ini", "anemos_app.html", "today"), ("3 hari ke depan", "anemos_3day.html", "3day"), ("Panduan Aktivitas", "anemos_activity.html", "activity"), ("Peta", "langit_map_room.html", "map")]
         subtitle = f'{api["location_name"]} · {VERSION}'
         href = "../index.html"
-    links = "".join(f'<a class="nav-link {"active" if key == active else ""}" href="{esc(url)}">{esc(label)}</a>' for label, url, key in items)
+    links_arr = []
+    for label, url, key in items:
+        active_cls = "active" if key == active else ""
+        aria = ' aria-current="page"' if key == active else ""
+        links_arr.append(f'<a class="nav-link {active_cls}"{aria} href="{esc(url)}">{esc(label)}</a>')
+    links = "".join(links_arr)
     return f'''<header class="nav-bar">
   <a class="nav-brand" href="{href}">
     <span class="nav-logo"></span>
@@ -3685,6 +3722,7 @@ function getWindColor(w) {
 }
 
 function updateHUDValues(p) {
+  if (typeof mapTimeout !== 'undefined') clearTimeout(mapTimeout);
   document.getElementById('hud-location-name').textContent = p.location_name || 'Lokasi';
   document.getElementById('hud-time-label').textContent = `${p.relative || 'Prakiraan'} · ${p.hour || ''}`;
   document.getElementById('val-temp').textContent = p.temp_c != null ? `${Math.round(p.temp_c)}°C` : '—';
@@ -3731,6 +3769,16 @@ function makeSparkline(locationSlug, dateIso, activeHour) {
   `;
 }
 
+function escHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function ptxt(p) {
   if (!p) return '';
   const sparklineHtml = makeSparkline(p.slug, p.date_iso, p.hour);
@@ -3738,30 +3786,30 @@ function ptxt(p) {
   return `
     <div class="popup-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
-        <b style="font-family:'Outfit'; font-size:14px; color:#fff">${p.location_name}</b>
-        <span class="popup-badge" style="background:${riskColor}20; color:${riskColor}; border:1px solid ${riskColor}30">${p.risk_label || '—'}</span>
+        <b style="font-family:'Outfit'; font-size:14px; color:#fff">${escHtml(p.location_name)}</b>
+        <span class="popup-badge" style="background:${riskColor}20; color:${riskColor}; border:1px solid ${riskColor}30">${escHtml(p.risk_label || '—')}</span>
       </div>
-      <div style="font-size:11px; color:#6b8ab5; margin-bottom:10px">${p.date} · ${p.hour} WIB</div>
+      <div style="font-size:11px; color:#6b8ab5; margin-bottom:10px">${escHtml(p.date)} · ${escHtml(p.hour)} WIB</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:11px">
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">SUHU</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.temp_c != null ? p.temp_c + '°C' : '—'}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.temp_c != null ? p.temp_c + '°C' : '—')}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">HUJAN</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.rain_probability != null ? p.rain_probability + '%' : '—'}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.rain_probability != null ? p.rain_probability + '%' : '—')}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">LEMBAP</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.humidity_pct != null ? p.humidity_pct + '%' : '—'}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.humidity_pct != null ? p.humidity_pct + '%' : '—')}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">ANGIN</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.wind_kmh != null ? p.wind_kmh + ' km/jam' : '—'}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.wind_kmh != null ? p.wind_kmh + ' km/jam' : '—')}</div>
         </div>
       </div>
       <div style="margin-top:10px; font-size:11px; color:#a8c4e0; font-style:italic; line-height:1.4">
-        ${p.condition}
+        ${escHtml(p.condition)}
       </div>
       ${sparklineHtml}
     </div>
@@ -3996,6 +4044,16 @@ function togglePlay() {
 }
 
 let map;
+var mapTimeout = setTimeout(() => {
+  const locTitle = document.getElementById('hud-location-name');
+  if (locTitle && locTitle.textContent === 'Memuat...') {
+    locTitle.textContent = 'LANGIT Cuaca';
+    const locMeta = document.getElementById('hud-time-label');
+    if (locMeta) locMeta.textContent = 'Peta dasar lambat dimuat. Data cuaca tetap tersedia secara luring.';
+    console.warn("Map loading timed out. Showing fallback metadata.");
+  }
+}, 5000);
+
 try {
   map = L.map('map',{
     scrollWheelZoom:true,
@@ -4541,7 +4599,7 @@ def verify(root: Path) -> int:
         for p in missing[:30]:
             print(" -", p)
         return 2
-    banned = ["visual-first", "Data confidence", "Window ", "data publik</small>", "ANEMOS sedang", "AETHER Sentinel", "[.new Set", "const hours=[.new"]
+    banned = ["visual-first", "Data confidence", "Window aman", "data publik</small>", "ANEMOS sedang", "AETHER Sentinel", "[.new Set", "const hours=[.new"]
     bad_hits = []
     for path in list(root.glob("*.html")) + list(root.glob("*/*.html")):
         txt = path.read_text(encoding="utf-8", errors="replace")

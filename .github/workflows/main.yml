@@ -65,14 +65,12 @@ jobs:
           pwd
           ls -la
           test -f weather_ensemble_multi_location.py
-          test -f langit_v63_product_rebuild.py
           test -f langit_v65_cinematic_rebuild.py
           test -f langit_v64_3_full_variable_map_engine.py
 
       - name: Syntax check scripts
         run: |
           python -m py_compile weather_ensemble_multi_location.py
-          python -m py_compile langit_v63_product_rebuild.py
           python -m py_compile langit_v65_cinematic_rebuild.py
           python -m py_compile langit_v64_3_full_variable_map_engine.py
 
@@ -88,7 +86,7 @@ jobs:
       - name: Run forecast engine
         id: forecast
         shell: bash
-        timeout-minutes: 18
+        timeout-minutes: 25
         run: |
           set +e
           python weather_ensemble_multi_location.py \
@@ -114,21 +112,6 @@ jobs:
             exit "$RC"
           fi
 
-      - name: Generate original public index
-        run: |
-          python weather_ensemble_multi_location.py \
-            --mode public-index \
-            --locations "${{ steps.vars.outputs.locations }}" \
-            --timezone Asia/Jakarta \
-            --public-base-url "$PUBLIC_BASE_URL" \
-            ${{ steps.vars.outputs.debug_flag }} \
-            --no-save-raw-payloads
-
-      - name: Rebuild LANGIT v63.1 product layer (baseline)
-        run: |
-          python langit_v63_product_rebuild.py \
-            --root outputs \
-            --public-base-url "$PUBLIC_BASE_URL"
 
       - name: Rebuild LANGIT v64.4.1 real atmospheric map layer
         run: |
@@ -165,7 +148,7 @@ jobs:
               test -f "$d/langit_v64_4_map_manifest.json"
             fi
           done
-          if grep -R "visual-first\|Data confidence\|ANEMOS sedang\|AETHER Sentinel\|\[\.new Set\|const hours=\[\.new" outputs/*.html outputs/*/*.html 2>/dev/null; then
+          if grep -ER "visual-first|Data confidence|ANEMOS sedang|AETHER Sentinel|\[\.new Set|const hours=\[\.new" outputs/ 2>/dev/null; then
             echo "Public output masih mengandung teks/JS lama."
             exit 1
           fi

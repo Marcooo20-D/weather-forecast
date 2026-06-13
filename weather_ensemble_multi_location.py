@@ -390,7 +390,7 @@ def write_dict_csv(path, fieldnames=None, rows=None):
     if rows is None and isinstance(fieldnames, (list, tuple)) and fieldnames and isinstance(fieldnames[0], dict):
         rows = fieldnames
         fieldnames = None
-    rows = list(rows or [])
+
     alias_map = {
         "bin": ["probability_bin"],
         "probability_bin": ["bin"],
@@ -402,13 +402,16 @@ def write_dict_csv(path, fieldnames=None, rows=None):
         "n": ["matched_cases", "cases"],
         "cases": ["n", "matched_cases"],
     }
+    
     safe_fieldnames = list(fieldnames or [])
     if not safe_fieldnames:
+        rows = list(rows or [])
+        seen_keys = {}
         for row in rows:
             if isinstance(row, dict):
                 for key in row.keys():
-                    if key not in safe_fieldnames:
-                        safe_fieldnames.append(key)
+                    seen_keys[key] = None
+        safe_fieldnames = list(seen_keys.keys())
     if not safe_fieldnames:
         safe_fieldnames = ["empty"]
 
@@ -422,17 +425,14 @@ def write_dict_csv(path, fieldnames=None, rows=None):
                 return row.get(alt, "")
         return ""
 
-    safe_rows = []
-    for row in rows:
-        if isinstance(row, dict):
-            safe_rows.append({name: pick_value(row, name) for name in safe_fieldnames})
-        else:
-            safe_rows.append({name: "" for name in safe_fieldnames})
-
     def writer_fn(f):
         writer = csv.DictWriter(f, fieldnames=safe_fieldnames, delimiter=CSV_DELIMITER, extrasaction="ignore")
         writer.writeheader()
-        writer.writerows(safe_rows)
+        for row in (rows or []):
+            if isinstance(row, dict):
+                writer.writerow({name: pick_value(row, name) for name in safe_fieldnames})
+            else:
+                writer.writerow({name: "" for name in safe_fieldnames})
 
     atomic_write_text(path, writer_fn, newline="")
 
@@ -602,7 +602,10 @@ def parse_naive_local_datetime(text, tz_name):
 
 
 def parse_open_meteo_time(text, tz_name):
-    return datetime.fromisoformat(text).replace(tzinfo=ZoneInfo(tz_name))
+    dt_obj = datetime.fromisoformat(text)
+    if dt_obj.tzinfo is not None:
+        return dt_obj.astimezone(ZoneInfo(tz_name))
+    return dt_obj.replace(tzinfo=ZoneInfo(tz_name))
 
 
 def parse_utc_iso_to_local(text, tz_name):

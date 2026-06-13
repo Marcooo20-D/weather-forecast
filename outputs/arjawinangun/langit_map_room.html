@@ -223,6 +223,7 @@ function getWindColor(w) {
 }
 
 function updateHUDValues(p) {
+  if (typeof mapTimeout !== 'undefined') clearTimeout(mapTimeout);
   document.getElementById('hud-location-name').textContent = p.location_name || 'Lokasi';
   document.getElementById('hud-time-label').textContent = `${p.relative || 'Prakiraan'} · ${p.hour || ''}`;
   document.getElementById('val-temp').textContent = p.temp_c != null ? `${Math.round(p.temp_c)}°C` : '—';
@@ -269,6 +270,16 @@ function makeSparkline(locationSlug, dateIso, activeHour) {
   `;
 }
 
+function escHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function ptxt(p) {
   if (!p) return '';
   const sparklineHtml = makeSparkline(p.slug, p.date_iso, p.hour);
@@ -276,30 +287,30 @@ function ptxt(p) {
   return `
     <div class="popup-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
-        <b style="font-family:'Outfit'; font-size:14px; color:#fff">${p.location_name}</b>
-        <span class="popup-badge" style="background:${riskColor}20; color:${riskColor}; border:1px solid ${riskColor}30">${p.risk_label || '—'}</span>
+        <b style="font-family:'Outfit'; font-size:14px; color:#fff">${escHtml(p.location_name)}</b>
+        <span class="popup-badge" style="background:${riskColor}20; color:${riskColor}; border:1px solid ${riskColor}30">${escHtml(p.risk_label || '—')}</span>
       </div>
-      <div style="font-size:11px; color:#6b8ab5; margin-bottom:10px">${p.date} · ${p.hour} WIB</div>
+      <div style="font-size:11px; color:#6b8ab5; margin-bottom:10px">${escHtml(p.date)} · ${escHtml(p.hour)} WIB</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:11px">
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">SUHU</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.temp_c != null ? p.temp_c + '°C' : '—'}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.temp_c != null ? p.temp_c + '°C' : '—')}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">HUJAN</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.rain_probability != null ? p.rain_probability + '%' : '—'}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.rain_probability != null ? p.rain_probability + '%' : '—')}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">LEMBAP</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.humidity_pct != null ? p.humidity_pct + '%' : '—'}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.humidity_pct != null ? p.humidity_pct + '%' : '—')}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">ANGIN</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.wind_kmh != null ? p.wind_kmh + ' km/jam' : '—'}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.wind_kmh != null ? p.wind_kmh + ' km/jam' : '—')}</div>
         </div>
       </div>
       <div style="margin-top:10px; font-size:11px; color:#a8c4e0; font-style:italic; line-height:1.4">
-        ${p.condition}
+        ${escHtml(p.condition)}
       </div>
       ${sparklineHtml}
     </div>
@@ -534,6 +545,16 @@ function togglePlay() {
 }
 
 let map;
+var mapTimeout = setTimeout(() => {
+  const locTitle = document.getElementById('hud-location-name');
+  if (locTitle && locTitle.textContent === 'Memuat...') {
+    locTitle.textContent = 'LANGIT Cuaca';
+    const locMeta = document.getElementById('hud-time-label');
+    if (locMeta) locMeta.textContent = 'Peta dasar lambat dimuat. Data cuaca tetap tersedia secara luring.';
+    console.warn("Map loading timed out. Showing fallback metadata.");
+  }
+}, 5000);
+
 try {
   map = L.map('map',{
     scrollWheelZoom:true,
