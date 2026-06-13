@@ -5,9 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>LANGIT Map — Jatinangor, Sumedang</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <style>html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
+  <style>*,*:before,*:after{box-sizing:border-box}
+html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
+.hud::-webkit-scrollbar{width:4px}
+.hud::-webkit-scrollbar-track{background:transparent}
+.hud::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
 #particle-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800}
 .hud{position:absolute;z-index:1000;left:24px;top:24px;width:min(340px,calc(100% - 48px));padding:24px;border-radius:24px;background:rgba(7,14,30,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);box-shadow:0 24px 80px rgba(0,0,0,0.5),inset 0 1px 1px rgba(255,255,255,0.1);animation:slideIn 0.6s cubic-bezier(0.16,1,0.3,1) both}
+.hud-collapse-toggle{display:none}
+.legend-toggle{display:none}
 .hud-brand{font-family:'Outfit',sans-serif;font-weight:800;font-size:10px;letter-spacing:0.1em;color:#32b7ff;text-transform:uppercase}
 .hud-version{font-family:'Outfit',sans-serif;font-weight:600;font-size:10px;color:rgba(255,255,255,0.3)}
 .hud h1{font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.02em;line-height:1.2;margin:12px 0 4px;color:#fff}
@@ -55,10 +61,51 @@
 .cloud-glow{border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center}
 @keyframes slideIn{from{transform:translateX(-20px);opacity:0}to{transform:translateX(0);opacity:1}}
 @keyframes slideUp{from{transform:translate(-50%,20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
-@media(max-width:768px){
-  .hud{left:12px;top:12px;width:calc(100% - 24px);padding:16px;border-radius:20px}
-  .timeline-container{bottom:16px;width:calc(100% - 24px);padding:10px;border-radius:20px}
-  .legend{right:12px;bottom:96px;width:120px;padding:12px;border-radius:16px}
+@media(max-width:1279px){
+  .hud{width:min(300px,calc(100% - 48px))}
+}
+@media(min-width:768px) and (max-width:1023px){
+  .hud{width:260px;padding:18px}
+  .hud h1{font-size:20px}
+  .legend{width:130px;padding:12px}
+  .timeline-container{width:calc(100% - 32px);padding:10px 14px}
+}
+@media(max-width:767px){
+  .hud{left:0;top:auto;bottom:0;width:100%;max-height:42vh;overflow-y:auto;padding:16px 16px 20px;border-radius:24px 24px 0 0;
+    box-shadow:0 -12px 40px rgba(0,0,0,0.5);animation:slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+    -webkit-overflow-scrolling:touch;transition:max-height 0.35s ease}
+  .hud.collapsed{max-height:60px;overflow:hidden}
+  .hud-collapse-toggle{display:flex;align-items:center;justify-content:center;width:100%;height:44px;margin:-12px auto 0;cursor:pointer;background:none;border:none;padding:0}
+  .hud-collapse-bar{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.2);transition:background 0.3s ease}
+  .hud-collapse-toggle:hover .hud-collapse-bar{background:rgba(255,255,255,0.4)}
+  .hud h1{font-size:18px;margin:8px 0 4px}
+  .hud-stats-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .hud-stat-val{font-size:15px}
+  .hud-stat-lbl{font-size:9px}
+  .parameter-tabs{margin-top:12px}
+  .param-tab{padding:10px 0;font-size:11px;min-height:40px}
+  .timeline-container{bottom:0;left:0;width:100%;border-radius:0;padding:8px 12px;
+    transform:translateX(0);animation:none}
+  .time-scrubber{scroll-snap-type:x mandatory}
+  .time-pill{scroll-snap-align:center;min-width:80px;padding:10px 14px}
+  .play-btn{width:44px;height:44px}
+  .legend.collapsed{max-height:30px;overflow:hidden;padding:8px 10px}
+  .legend.collapsed > :not(.legend-toggle){display:none!important}
+  .legend-toggle{display:block;cursor:pointer;background:none;border:none;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:0;font-family:inherit}
+  .btn{min-height:44px;padding:12px 20px}
+}
+@media(max-width:479px){
+  .hud{padding:12px 12px 16px;max-height:38vh}
+  .hud h1{font-size:16px}
+  .hud-stats-grid{gap:6px}
+  .hud-stat-box{padding:8px 10px}
+  .hud-stat-val{font-size:14px}
+  .time-pill{min-width:70px;padding:8px 10px;font-size:12px}
+  .legend{font-size:9px;min-width:90px}
+}
+@media(prefers-reduced-motion:reduce){
+  .pulse-ring,.radar-ping{display:none}
+  *{animation-duration:0.01ms !important;transition-duration:0.01ms !important}
 }
 </style>
 </head>
@@ -66,6 +113,7 @@
   <div id="map"></div>
   <canvas id="particle-canvas"></canvas>
     <section class="hud">
+    <button class="hud-collapse-toggle" aria-label="Toggle HUD"><span class="hud-collapse-bar"></span></button>
     <div style="display:flex; justify-content:space-between; align-items:center">
       <span class="hud-brand">LANGIT Cuaca</span>
       <span class="hud-version">Peta Prakiraan</span>
@@ -133,6 +181,18 @@ const state = {
   rainProb: 0.0,
   activeLayer: 'risiko'
 };
+
+function scrollPillIntoView(idx) {
+  const container = document.getElementById('time-scrubber');
+  const pills = document.querySelectorAll('.time-pill');
+  if (container && pills && pills[idx]) {
+    const pill = pills[idx];
+    container.scrollTo({
+      left: pill.offsetLeft - (container.clientWidth / 2) + (pill.clientWidth / 2),
+      behavior: 'smooth'
+    });
+  }
+}
 
 function getTempColor(t) {
   if (t <= 18) return '#3b82f6';
@@ -297,7 +357,8 @@ function updateLegend() {
       <div><i class="dot" style="background:#f1f5f9"></i>Mendung (&gt; 60%)</div>
     `;
   }
-  legendEl.innerHTML = legendHtml;
+  const isCollapsed = legendEl.classList.contains('collapsed');
+  legendEl.innerHTML = `<button class="legend-toggle" aria-label="Toggle Legend">Legenda ${isCollapsed ? '▴' : '▾'}</button>` + legendHtml;
 }
 
 let activeTimeIndex = 0;
@@ -467,7 +528,7 @@ function togglePlay() {
     playInterval = setInterval(() => {
       activeTimeIndex = (activeTimeIndex + 1) % pills.length;
       pills[activeTimeIndex].click();
-      pills[activeTimeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      scrollPillIntoView(activeTimeIndex);
     }, 2500);
   }
 }
@@ -568,11 +629,11 @@ try {
     if (e.key === 'ArrowRight') {
       activeTimeIndex = (activeTimeIndex + 1) % pills.length;
       pills[activeTimeIndex].click();
-      pills[activeTimeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      scrollPillIntoView(activeTimeIndex);
     } else if (e.key === 'ArrowLeft') {
       activeTimeIndex = (activeTimeIndex - 1 + pills.length) % pills.length;
       pills[activeTimeIndex].click();
-      pills[activeTimeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      scrollPillIntoView(activeTimeIndex);
     }
   });
 
@@ -585,6 +646,8 @@ try {
 window.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'switchLayer') {
     switchLayer(e.data.layer);
+  } else if (e.data && e.data.type === 'invalidateSize') {
+    if (map) map.invalidateSize();
   }
 });
 
@@ -593,6 +656,38 @@ if (window.self !== window.top) {
   const backBtn = document.getElementById('hud-back-btn');
   if (backBtn) backBtn.style.display = 'none';
 }
+
+// Collapsible HUD toggle
+const hudEl = document.querySelector('.hud');
+const hudToggle = document.querySelector('.hud-collapse-toggle');
+if (hudEl && hudToggle) {
+  hudToggle.addEventListener('click', () => {
+    hudEl.classList.toggle('collapsed');
+  });
+}
+
+// Collapsible Legend toggle
+const legendEl = document.getElementById('map-legend');
+if (legendEl) {
+  legendEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.legend-toggle');
+    if (btn) {
+      legendEl.classList.toggle('collapsed');
+      const isCollapsed = legendEl.classList.contains('collapsed');
+      btn.textContent = `Legenda ${isCollapsed ? '▴' : '▾'}`;
+    }
+  });
+}
+
+// Debounced resize handler for map invalidation
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    if (map) map.invalidateSize();
+  }, 150);
+});
+
 </script>
 </body>
 </html>
