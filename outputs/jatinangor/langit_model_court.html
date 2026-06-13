@@ -1005,7 +1005,7 @@ a { color: inherit; text-decoration: none; }
 }
 .map-frame {
   width: 100%;
-  height: 520px;
+  height: 680px;
   border: 0;
   display: block;
 }
@@ -1021,7 +1021,7 @@ a { color: inherit; text-decoration: none; }
 /* --- DESKTOP WEATHER COMMAND CENTER --- */
 .command-center {
   display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
+  grid-template-columns: 7fr 3fr;
   gap: 32px;
   margin-top: 40px;
 }
@@ -1325,7 +1325,7 @@ a { color: inherit; text-decoration: none; }
   }
   .hour-box { display: none; }
   .hour-box.hour-box-rain { display: block; grid-column: 1 / -1; }
-  .map-frame { height: 380px; }
+  .map-frame { height: 450px; }
   
   /* Mobile Bottom Sheet Reveal */
   .mobile-bottom-sheet {
@@ -1427,7 +1427,7 @@ data</h1>
 <footer class="footer">
   <div class="container">
     <div class="footer-brand">LANGIT</div>
-    <div class="footer-version">LANGIT v65.1 · Diperbarui 13 Juni, 13:00 WIB</div>
+    <div class="footer-version">LANGIT v65.1 · Diperbarui 13/06/2026, 09:32 WIB</div>
     <div class="footer-links">
       <a class="footer-link" href="langit_model_court.html">Keandalan data</a>
       <a class="footer-link" href="sentinel_x_accuracy_public.html">Akurasi</a>
@@ -1957,6 +1957,12 @@ data</h1>
           }
         });
       });
+
+      // Sync the embedded map iframe layer
+      const mapFrame = document.querySelector('.map-frame');
+      if (mapFrame && mapFrame.contentWindow) {
+        mapFrame.contentWindow.postMessage({ type: 'switchLayer', layer: state.activeLayer }, '*');
+      }
     });
   });
 

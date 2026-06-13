@@ -1005,7 +1005,7 @@ a { color: inherit; text-decoration: none; }
 }
 .map-frame {
   width: 100%;
-  height: 520px;
+  height: 680px;
   border: 0;
   display: block;
 }
@@ -1021,7 +1021,7 @@ a { color: inherit; text-decoration: none; }
 /* --- DESKTOP WEATHER COMMAND CENTER --- */
 .command-center {
   display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
+  grid-template-columns: 7fr 3fr;
   gap: 32px;
   margin-top: 40px;
 }
@@ -1325,7 +1325,7 @@ a { color: inherit; text-decoration: none; }
   }
   .hour-box { display: none; }
   .hour-box.hour-box-rain { display: block; grid-column: 1 / -1; }
-  .map-frame { height: 380px; }
+  .map-frame { height: 450px; }
   
   /* Mobile Bottom Sheet Reveal */
   .mobile-bottom-sheet {
@@ -2174,9 +2174,9 @@ Jatinangor, Sumedang</h1>
     </div>
   </div></section></div></div><section class="section-compact"><div class="container">
     <div class="section-header reveal">
-      <div class="section-overline">Command Center</div>
-      <h2 class="section-title">Konsol Cuaca Spasial</h2>
-      <p class="section-desc">Peta prakiraan taktis Kampus ITB dengan kendali layer partikel.</p>
+      <div class="section-overline">Peta Cuaca</div>
+      <h2 class="section-title">Peta Prakiraan Cuaca</h2>
+      <p class="section-desc">Peta prakiraan wilayah Kampus ITB dengan kendali lapisan cuaca.</p>
     </div>
     
     <div class="command-center reveal">
@@ -2188,8 +2188,8 @@ Jatinangor, Sumedang</h1>
       <!-- Right: Controls & Diagnostics -->
       <div class="command-sidebar">
         <div class="glass glass-static">
-          <div class="section-overline">Layer Cuaca</div>
-          <h3 style="font-size:18px;font-weight:800;margin:8px 0 16px;font-family:var(--font-display);">Parameter Partikel</h3>
+          <div class="section-overline">Lapisan Cuaca</div>
+          <h3 style="font-size:18px;font-weight:800;margin:8px 0 16px;font-family:var(--font-display);">Lapisan Cuaca</h3>
           
           <div class="layer-controls">
             <button class="layer-btn active" data-layer="rain" style="--active-bg:rgba(6,182,212,0.12); --active-color:var(--noon); --active-border:rgba(6,182,212,0.3);">Hujan</button>
@@ -2198,15 +2198,15 @@ Jatinangor, Sumedang</h1>
             <button class="layer-btn" data-layer="cloud" style="--active-bg:rgba(148,190,235,0.12); --active-color:var(--cloud); --active-border:rgba(148,190,235,0.3);">Awan</button>
             <button class="layer-btn" data-layer="humidity" style="--active-bg:rgba(99,102,241,0.12); --active-color:var(--limited); --active-border:rgba(99,102,241,0.3);">Kelembapan</button>
           </div>
-          <p style="font-size:12px;color:var(--mist);line-height:1.6;margin-top:12px;">Memilih parameter di atas akan mengubah simulasi visual partikel atmosfer pada background layar secara real-time.</p>
+          <p style="font-size:12px;color:var(--mist);line-height:1.6;margin-top:12px;">Memilih parameter di atas akan mengubah visualisasi cuaca pada peta secara langsung.</p>
         </div>
         
         <div class="glass glass-static">
-          <div class="section-overline">Sentinel OS</div>
-          <h3 style="font-size:18px;font-weight:800;margin:8px 0 12px;font-family:var(--font-display);">Status Keandalan</h3>
-          <p style="font-size:13px;color:var(--cloud);line-height:1.6;margin-bottom:16px;">Monitoring otomatis keandalan dan tingkat akurasi verifikasi data multisektor.</p>
+          <div class="section-overline">Status Data</div>
+          <h3 style="font-size:18px;font-weight:800;margin:8px 0 12px;font-family:var(--font-display);">Keandalan Data</h3>
+          <p style="font-size:13px;color:var(--cloud);line-height:1.6;margin-bottom:16px;">Monitoring otomatis keandalan dan tingkat akurasi verifikasi data cuaca.</p>
           <div style="display:flex;gap:12px;">
-            <a class="btn btn-primary" href="langit_model_court.html">Keandalan</a>
+            <a class="btn btn-primary" href="langit_model_court.html">Keandalan Data</a>
             <a class="btn" href="sentinel_x_accuracy_public.html">Akurasi</a>
           </div>
         </div>
@@ -2232,7 +2232,7 @@ Peluang hujan tertinggi: 11% sekitar pukul 17:00 WIB.</textarea>
 <footer class="footer">
   <div class="container">
     <div class="footer-brand">LANGIT</div>
-    <div class="footer-version">LANGIT v65.1 · Diperbarui 13 Juni, 13:00 WIB</div>
+    <div class="footer-version">LANGIT v65.1 · Diperbarui 13/06/2026, 09:32 WIB</div>
     <div class="footer-links">
       <a class="footer-link" href="langit_model_court.html">Keandalan data</a>
       <a class="footer-link" href="sentinel_x_accuracy_public.html">Akurasi</a>
@@ -2762,6 +2762,12 @@ Peluang hujan tertinggi: 11% sekitar pukul 17:00 WIB.</textarea>
           }
         });
       });
+
+      // Sync the embedded map iframe layer
+      const mapFrame = document.querySelector('.map-frame');
+      if (mapFrame && mapFrame.contentWindow) {
+        mapFrame.contentWindow.postMessage({ type: 'switchLayer', layer: state.activeLayer }, '*');
+      }
     });
   });
 

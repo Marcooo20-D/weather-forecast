@@ -1664,7 +1664,7 @@ a { color: inherit; text-decoration: none; }
 }
 .map-frame {
   width: 100%;
-  height: 520px;
+  height: 680px;
   border: 0;
   display: block;
 }
@@ -1680,7 +1680,7 @@ a { color: inherit; text-decoration: none; }
 /* --- DESKTOP WEATHER COMMAND CENTER --- */
 .command-center {
   display: grid;
-  grid-template-columns: 1.25fr 0.75fr;
+  grid-template-columns: 7fr 3fr;
   gap: 32px;
   margin-top: 40px;
 }
@@ -1984,7 +1984,7 @@ a { color: inherit; text-decoration: none; }
   }
   .hour-box { display: none; }
   .hour-box.hour-box-rain { display: block; grid-column: 1 / -1; }
-  .map-frame { height: 380px; }
+  .map-frame { height: 450px; }
   
   /* Mobile Bottom Sheet Reveal */
   .mobile-bottom-sheet {
@@ -2552,6 +2552,12 @@ JS_V65 = r'''
           }
         });
       });
+
+      // Sync the embedded map iframe layer
+      const mapFrame = document.querySelector('.map-frame');
+      if (mapFrame && mapFrame.contentWindow) {
+        mapFrame.contentWindow.postMessage({ type: 'switchLayer', layer: state.activeLayer }, '*');
+      }
     });
   });
 
@@ -3052,9 +3058,9 @@ def v65_hours(day: Dict[str, Any]) -> str:
 def v65_command_center(api: Dict[str, Any]) -> str:
     return f'''<section class="section-compact"><div class="container">
     <div class="section-header reveal">
-      <div class="section-overline">Command Center</div>
-      <h2 class="section-title">Konsol Cuaca Spasial</h2>
-      <p class="section-desc">Peta prakiraan taktis Kampus ITB dengan kendali layer partikel.</p>
+      <div class="section-overline">Peta Cuaca</div>
+      <h2 class="section-title">Peta Prakiraan Cuaca</h2>
+      <p class="section-desc">Peta prakiraan wilayah Kampus ITB dengan kendali lapisan cuaca.</p>
     </div>
     
     <div class="command-center reveal">
@@ -3066,8 +3072,8 @@ def v65_command_center(api: Dict[str, Any]) -> str:
       <!-- Right: Controls & Diagnostics -->
       <div class="command-sidebar">
         <div class="glass glass-static">
-          <div class="section-overline">Layer Cuaca</div>
-          <h3 style="font-size:18px;font-weight:800;margin:8px 0 16px;font-family:var(--font-display);">Parameter Partikel</h3>
+          <div class="section-overline">Lapisan Cuaca</div>
+          <h3 style="font-size:18px;font-weight:800;margin:8px 0 16px;font-family:var(--font-display);">Lapisan Cuaca</h3>
           
           <div class="layer-controls">
             <button class="layer-btn active" data-layer="rain" style="--active-bg:rgba(6,182,212,0.12); --active-color:var(--noon); --active-border:rgba(6,182,212,0.3);">Hujan</button>
@@ -3076,15 +3082,15 @@ def v65_command_center(api: Dict[str, Any]) -> str:
             <button class="layer-btn" data-layer="cloud" style="--active-bg:rgba(148,190,235,0.12); --active-color:var(--cloud); --active-border:rgba(148,190,235,0.3);">Awan</button>
             <button class="layer-btn" data-layer="humidity" style="--active-bg:rgba(99,102,241,0.12); --active-color:var(--limited); --active-border:rgba(99,102,241,0.3);">Kelembapan</button>
           </div>
-          <p style="font-size:12px;color:var(--mist);line-height:1.6;margin-top:12px;">Memilih parameter di atas akan mengubah simulasi visual partikel atmosfer pada background layar secara real-time.</p>
+          <p style="font-size:12px;color:var(--mist);line-height:1.6;margin-top:12px;">Memilih parameter di atas akan mengubah visualisasi cuaca pada peta secara langsung.</p>
         </div>
         
         <div class="glass glass-static">
-          <div class="section-overline">Sentinel OS</div>
-          <h3 style="font-size:18px;font-weight:800;margin:8px 0 12px;font-family:var(--font-display);">Status Keandalan</h3>
-          <p style="font-size:13px;color:var(--cloud);line-height:1.6;margin-bottom:16px;">Monitoring otomatis keandalan dan tingkat akurasi verifikasi data multisektor.</p>
+          <div class="section-overline">Status Data</div>
+          <h3 style="font-size:18px;font-weight:800;margin:8px 0 12px;font-family:var(--font-display);">Keandalan Data</h3>
+          <p style="font-size:13px;color:var(--cloud);line-height:1.6;margin-bottom:16px;">Monitoring otomatis keandalan dan tingkat akurasi verifikasi data cuaca.</p>
           <div style="display:flex;gap:12px;">
-            <a class="btn btn-primary" href="langit_model_court.html">Keandalan</a>
+            <a class="btn btn-primary" href="langit_model_court.html">Keandalan Data</a>
             <a class="btn" href="sentinel_x_accuracy_public.html">Akurasi</a>
           </div>
         </div>
@@ -3176,10 +3182,10 @@ def v65_geo_for_api(api: Dict[str, Any]) -> Dict[str, Any]:
                     "cloud_pct": num(h.get("cloud_pct"), 0.0),
                 },
             })
+    return {"type": "FeatureCollection", "features": features}
 def v65_map_page(title: str, geojson: Dict[str, Any], back_href: str) -> str:
     data = json.dumps(geojson, ensure_ascii=False)
-    css = r'''
-html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
+    css = r'''html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
 #particle-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800}
 .hud{position:absolute;z-index:1000;left:24px;top:24px;width:min(340px,calc(100% - 48px));padding:24px;border-radius:24px;background:rgba(7,14,30,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);box-shadow:0 24px 80px rgba(0,0,0,0.5),inset 0 1px 1px rgba(255,255,255,0.1);animation:slideIn 0.6s cubic-bezier(0.16,1,0.3,1) both}
 .hud-brand{font-family:'Outfit',sans-serif;font-weight:800;font-size:10px;letter-spacing:0.1em;color:#32b7ff;text-transform:uppercase}
@@ -3275,19 +3281,30 @@ function getCloudColor(c) {
   return '#f1f5f9';
 }
 
+function getWindColor(w) {
+  if (w <= 5) return '#10b981';
+  if (w <= 12) return '#3b82f6';
+  if (w <= 20) return '#f59e0b';
+  return '#ef4444';
+}
+
 function updateHUDValues(p) {
   document.getElementById('hud-location-name').textContent = p.location_name || 'Lokasi';
   document.getElementById('hud-time-label').textContent = `${p.relative || 'Prakiraan'} · ${p.hour || ''}`;
   document.getElementById('val-temp').textContent = p.temp_c != null ? `${Math.round(p.temp_c)}°C` : '—';
   document.getElementById('val-rain').textContent = p.rain_probability != null ? `${Math.round(p.rain_probability)}%` : '—';
-  document.getElementById('val-wind').textContent = p.wind_kmh != null ? `${p.wind_kmh.toFixed(1)} km/h` : '—';
+  document.getElementById('val-wind').textContent = p.wind_kmh != null ? `${p.wind_kmh.toFixed(1)} km/jam` : '—';
   document.getElementById('val-humidity').textContent = p.humidity_pct != null ? `${Math.round(p.humidity_pct)}%` : '—';
 }
 
 function makeSparkline(locationSlug, dateIso, activeHour) {
   const locFeatures = features.filter(f => f.properties.slug === locationSlug && f.properties.date_iso === dateIso);
   if (locFeatures.length < 2) return '';
-  locFeatures.sort((a,b) => a.properties.hour.localeCompare(b.properties.hour));
+  locFeatures.sort((a,b) => {
+    const ha = (a.properties && a.properties.hour) || '';
+    const hb = (b.properties && b.properties.hour) || '';
+    return ha.localeCompare(hb);
+  });
   const temps = locFeatures.map(f => f.properties.temp_c || 20);
   const minTemp = Math.min(...temps);
   const maxTemp = Math.max(...temps);
@@ -3344,7 +3361,7 @@ function ptxt(p) {
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">ANGIN</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.wind_kmh != null ? p.wind_kmh + ' km/h' : '—'}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.wind_kmh != null ? p.wind_kmh + ' km/jam' : '—'}</div>
         </div>
       </div>
       <div style="margin-top:10px; font-size:11px; color:#a8c4e0; font-style:italic; line-height:1.4">
@@ -3381,6 +3398,14 @@ function updateLegend() {
       <div><i class="dot" style="background:#3b82f6"></i>Rendah (&le; 20%)</div>
       <div><i class="dot" style="background:#f59e0b"></i>Sedang (21% - 50%)</div>
       <div><i class="dot" style="background:#ef4444"></i>Tinggi (&gt; 50%)</div>
+    `;
+  } else if (state.activeLayer === 'wind') {
+    legendHtml = `
+      <div class="legend-title">Kecepatan Angin</div>
+      <div><i class="dot" style="background:#10b981"></i>&le; 5 km/jam (Teduh)</div>
+      <div><i class="dot" style="background:#3b82f6"></i>6 - 12 km/jam (Sepoi)</div>
+      <div><i class="dot" style="background:#f59e0b"></i>13 - 20 km/jam (Kencang)</div>
+      <div><i class="dot" style="background:#ef4444"></i>&gt; 20 km/jam (Bahaya)</div>
     `;
   } else if (state.activeLayer === 'humidity') {
     legendHtml = `
@@ -3476,6 +3501,25 @@ function drawForTime(dateIso, activeHour) {
         })
       }).bindPopup(ptxt(p)).addTo(layer);
 
+    } else if (state.activeLayer === 'wind') {
+      const wind = p.wind_kmh || 0;
+      const color = getWindColor(wind);
+      const rotation = (coords[0] * 33 + coords[1] * 77) % 360;
+      const iconHtml = `
+        <div class="wind-badge" style="background:${color}; box-shadow:0 0 15px ${color}80; display:flex; align-items:center; gap:4px; padding:4px 8px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); color:#fff; font-family:'Outfit',sans-serif; font-size:11px; font-weight:800; white-space:nowrap;">
+          <span style="display:inline-block; transform:rotate(${rotation}deg);">➔</span>
+          ${wind.toFixed(1)} km/jam
+        </div>
+      `;
+      L.marker(latlng, {
+        icon: L.divIcon({
+          html: iconHtml,
+          className: 'custom-leaflet-marker',
+          iconSize: [80, 24],
+          iconAnchor: [40, 12]
+        })
+      }).bindPopup(ptxt(p)).addTo(layer);
+
     } else if (state.activeLayer === 'humidity') {
       const hum = p.humidity_pct || 70;
       const color = getHumidityColor(hum);
@@ -3530,7 +3574,6 @@ function switchLayer(layerName) {
   const pills = document.querySelectorAll('.time-pill');
   if (pills.length && pills[activeTimeIndex]) {
     const activePill = pills[activeTimeIndex];
-    // Trigger redraw without resetting active index
     const dateIso = activePill.getAttribute('data-date');
     const hourVal = activePill.getAttribute('data-hour');
     drawForTime(dateIso, hourVal);
@@ -3564,12 +3607,24 @@ try {
     maxBoundsViscosity:.8,
     minZoom:5,
     zoomControl:false
-  }).setView(center, 12);
+  });
   
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+  const baseTile = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
     maxZoom:19,
     attribution:'&copy; OpenStreetMap & CARTO'
-  }).addTo(map);
+  });
+  
+  baseTile.on('tileerror', function() {
+    console.warn("Tile loading failed.");
+    if (!document.getElementById('tile-warning')) {
+      document.body.insertAdjacentHTML('beforeend', '<div id="tile-warning" style="position:absolute; bottom:80px; left:24px; z-index:1001; background:rgba(239,68,68,0.85); color:#fff; padding:8px 16px; border-radius:12px; font-size:12px; font-family:sans-serif;">Peta dasar belum dapat dimuat. Data lokasi tetap tersedia.</div>');
+      setTimeout(() => {
+        const warn = document.getElementById('tile-warning');
+        if (warn) warn.remove();
+      }, 5000);
+    }
+  });
+  baseTile.addTo(map);
   
   L.control.zoom({ position: 'topright' }).addTo(map);
   
@@ -3614,6 +3669,22 @@ try {
   updateLegend();
   if (locTimeline.length) {
     drawForTime(locTimeline[0].properties.date_iso, locTimeline[0].properties.hour);
+  } else {
+    document.getElementById('hud-location-name').textContent = 'Peta Prakiraan Cuaca';
+    document.getElementById('hud-time-label').textContent = 'Data prakiraan tidak tersedia';
+    document.getElementById('val-temp').textContent = '—';
+    document.getElementById('val-rain').textContent = '—';
+    document.getElementById('val-wind').textContent = '—';
+    document.getElementById('val-humidity').textContent = '—';
+  }
+
+  // Fit map bounds to show all markers automatically
+  if (features.length) {
+    const coordsList = features.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0]]);
+    const bounds = L.latLngBounds(coordsList);
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+  } else {
+    map.setView(center, 12);
   }
 
   // Keyboard controls
@@ -3632,168 +3703,31 @@ try {
   });
 
 } catch(e) {
-  document.body.insertAdjacentHTML('beforeend','<div style="position:absolute;inset:0;display:grid;place-items:center;color:#6b8ab5;background:#030712;z-index:9999">Peta gagal ditampilkan. Coba muat ulang halaman.</div>');
+  console.error("Map initialization failed", e);
+  document.body.insertAdjacentHTML('beforeend','<div style="position:absolute;inset:0;display:grid;place-items:center;color:#6b8ab5;background:#030712;z-index:9999;font-family:sans-serif;padding:20px;text-align:center;">Peta dasar belum dapat dimuat. Data lokasi tetap tersedia.</div>');
 }
 
-// Particle Canvas Animation Engine
-const canvas = document.getElementById('particle-canvas');
-const ctx = canvas.getContext('2d');
-let width, height;
+// Sync with postMessage from parent dashboard window
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'switchLayer') {
+    switchLayer(e.data.layer);
+  }
+});
 
-function resizeCanvas() {
-  width = canvas.width = window.innerWidth;
-  height = canvas.height = window.innerHeight;
+// Hide the back button if embedded inside an iframe
+if (window.self !== window.top) {
+  const backBtn = document.getElementById('hud-back-btn');
+  if (backBtn) backBtn.style.display = 'none';
 }
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-
-class WindParticle {
-  constructor() { this.reset(true); }
-  reset(init = false) {
-    this.x = init ? Math.random() * width : -30;
-    this.y = Math.random() * height;
-    this.vx = (state.windSpeed * 0.4) + Math.random() * 0.5 + 0.5;
-    this.vy = (Math.random() - 0.5) * 0.15;
-    this.length = Math.random() * 30 + 15;
-    this.alpha = Math.random() * 0.15 + 0.05;
-  }
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.vx = (state.windSpeed * 0.3) + 0.5;
-    if (this.x > width + 30) this.reset();
-  }
-  draw() {
-    ctx.strokeStyle = `rgba(168, 196, 224, ${this.alpha * (state.windSpeed > 0 ? 1 : 0.2)})`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(this.x, this.y);
-    ctx.lineTo(this.x + this.length, this.y + this.vy * 8);
-    ctx.stroke();
-  }
-}
-
-class CloudParticle {
-  constructor() { this.reset(true); }
-  reset(init = false) {
-    this.x = init ? Math.random() * width : -160;
-    this.y = Math.random() * height;
-    this.vx = 0.04 + Math.random() * 0.04;
-    this.radius = Math.random() * 90 + 70;
-    this.alpha = Math.random() * 0.02 + 0.008;
-  }
-  update() {
-    this.x += this.vx;
-    if (this.x > width + 160) this.reset();
-  }
-  draw() {
-    ctx.fillStyle = `rgba(240, 244, 255, ${this.alpha * (state.cloudPct / 45)})`;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-class RainDrop {
-  constructor() { this.reset(); }
-  reset() {
-    this.x = Math.random() * width;
-    this.y = Math.random() * height;
-    this.radius = 1;
-    this.maxRadius = Math.random() * 16 + 10;
-    this.alpha = 0.4 + Math.random() * 0.3;
-  }
-  update() {
-    this.radius += 0.35;
-    this.alpha -= 0.012;
-    if (this.alpha <= 0) this.reset();
-  }
-  draw() {
-    ctx.strokeStyle = `rgba(50, 183, 255, ${this.alpha * (state.rainProb / 100)})`;
-    ctx.lineWidth = 1.0;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-}
-
-class ShimmerParticle {
-  constructor() { this.reset(); }
-  reset() {
-    this.x = Math.random() * width;
-    this.y = height + 10;
-    this.vy = -(Math.random() * 0.7 + 0.3);
-    this.vx = (Math.random() - 0.5) * 0.25;
-    this.radius = Math.random() * 2 + 1;
-    this.alpha = 0.15 + Math.random() * 0.25;
-    this.color = state.tempC > 27 ? 'rgba(255, 77, 109, ' : 'rgba(255, 157, 66, ';
-  }
-  update() {
-    this.y += this.vy;
-    this.x += this.vx;
-    this.alpha -= 0.0025;
-    if (this.alpha <= 0 || this.y < -10) this.reset();
-  }
-  draw() {
-    ctx.fillStyle = this.color + this.alpha + ')';
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-const pEngine = [];
-const pClouds = [];
-const pRain = [];
-const pShimmer = [];
-
-for (let i = 0; i < 35; i++) pEngine.push(new WindParticle());
-for (let i = 0; i < 6; i++) pClouds.push(new CloudParticle());
-for (let i = 0; i < 15; i++) pRain.push(new RainDrop());
-for (let i = 0; i < 20; i++) pShimmer.push(new ShimmerParticle());
-
-function animate() {
-  ctx.clearRect(0, 0, width, height);
-
-  // Heat shimmer overlay
-  if (state.activeLayer === 'temp' || state.tempC > 24) {
-    const count = Math.max(0, Math.min(20, Math.ceil((state.tempC - 20) * 2)));
-    for (let i = 0; i < count; i++) {
-      pShimmer[i].update();
-      pShimmer[i].draw();
-    }
-  }
-
-  // Cloud layer drifts
-  if (state.activeLayer === 'cloud' || state.cloudPct > 30) {
-    pClouds.forEach(c => { c.update(); c.draw(); });
-  }
-
-  // Wind drifts
-  pEngine.forEach(w => { w.update(); w.draw(); });
-
-  // Rain ripples
-  if (state.activeLayer === 'rain' || state.rainProb > 15) {
-    const count = Math.max(0, Math.min(15, Math.ceil(state.rainProb / 6)));
-    for (let i = 0; i < count; i++) {
-      pRain[i].update();
-      pRain[i].draw();
-    }
-  }
-
-  requestAnimationFrame(animate);
-}
-animate();
 '''.replace("__DATA__", data)
     
-    hud_html = f'''
-  <section class="hud">
+    hud_html = f'''  <section class="hud">
     <div style="display:flex; justify-content:space-between; align-items:center">
-      <span class="hud-brand">{BRAND} OS</span>
-      <span class="hud-version">v65.1 Map</span>
+      <span class="hud-brand">{BRAND} Cuaca</span>
+      <span class="hud-version">Peta Prakiraan</span>
     </div>
     <h1 id="hud-location-name">Memuat...</h1>
-    <div class="hud-meta" id="hud-time-label">Menghubungkan sensor...</div>
+    <div class="hud-meta" id="hud-time-label">Memuat data prakiraan cuaca.</div>
     
     <div class="hud-divider"></div>
     
@@ -3804,15 +3738,15 @@ animate();
       </div>
       <div class="hud-stat-box">
         <span class="hud-stat-val" id="val-rain">—</span>
-        <span class="hud-stat-lbl">Hujan</span>
+        <span class="hud-stat-lbl">Peluang Hujan</span>
       </div>
       <div class="hud-stat-box">
         <span class="hud-stat-val" id="val-wind">—</span>
-        <span class="hud-stat-lbl">Angin</span>
+        <span class="hud-stat-lbl">Kecepatan Angin</span>
       </div>
       <div class="hud-stat-box">
         <span class="hud-stat-val" id="val-humidity">—</span>
-        <span class="hud-stat-lbl">Lembap</span>
+        <span class="hud-stat-lbl">Kelembapan</span>
       </div>
     </div>
 
@@ -3822,22 +3756,20 @@ animate();
       <button class="param-tab active" data-layer="risiko" onclick="switchLayer('risiko')">Risiko</button>
       <button class="param-tab" data-layer="temp" onclick="switchLayer('temp')">Suhu</button>
       <button class="param-tab" data-layer="rain" onclick="switchLayer('rain')">Hujan</button>
+      <button class="param-tab" data-layer="wind" onclick="switchLayer('wind')">Angin</button>
       <button class="param-tab" data-layer="humidity" onclick="switchLayer('humidity')">Lembap</button>
       <button class="param-tab" data-layer="cloud" onclick="switchLayer('cloud')">Awan</button>
     </div>
 
     <div style="margin-top:20px; display:flex">
-      <a class="btn" style="flex:1; margin-top:0" href="{esc(back_href)}">Kembali</a>
+      <a class="btn" id="hud-back-btn" style="flex:1; margin-top:0" href="{esc(back_href)}">Kembali</a>
     </div>
-  </section>
-    '''
+  </section>'''
 
-    timeline_html = '''
-  <div class="timeline-container">
+    timeline_html = '''  <div class="timeline-container">
     <button class="play-btn" id="play-btn" onclick="togglePlay()">&#9654;</button>
     <div class="time-scrubber" id="time-scrubber"></div>
-  </div>
-    '''
+  </div>'''
 
     legend_html = '<div class="legend" id="map-legend"></div>'
 
@@ -3860,12 +3792,6 @@ animate();
   <script>{js}</script>
 </body>
 </html>'''
-
-
-# ---------------------------------------------------------------------------
-# v65 Page builders
-# ---------------------------------------------------------------------------
-
 def v65_today_page(api: Dict[str, Any]) -> str:
     day = api["today"]
     heading = f"Prakiraan\n{api['location_name']}"
