@@ -2039,6 +2039,18 @@ JS_V65 = r'''
 
   // Retrieve dynamic configuration injected from backend engine
   const config = window.LANGIT_CONFIG || {};
+
+  // Safe SessionStorage wrapper to prevent incognito/private mode crashes
+  const safeStorage = {
+    getItem(key) {
+      try { return sessionStorage.getItem(key); } catch (e) { return null; }
+    },
+    setItem(key, value) {
+      try { sessionStorage.setItem(key, value); } catch (e) {}
+    }
+  };
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let initialLayer = 'rain';
   const cond = (config.condition || '').toLowerCase();
   if (cond.includes('hujan') || cond.includes('gerimis') || cond.includes('rain') || cond.includes('drizzle')) {
@@ -2079,6 +2091,9 @@ JS_V65 = r'''
   // --- Smooth Numerical Counting Transition ---
   function animateValue(obj, start, end, duration, suffix = '', decimals = 0) {
     if (!obj) return;
+    if (obj._animId) {
+      window.cancelAnimationFrame(obj._animId);
+    }
     let startTimestamp = null;
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
@@ -2086,10 +2101,12 @@ JS_V65 = r'''
       const val = progress * (end - start) + start;
       obj.innerHTML = val.toFixed(decimals) + suffix;
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        obj._animId = window.requestAnimationFrame(step);
+      } else {
+        obj._animId = null;
       }
     };
-    window.requestAnimationFrame(step);
+    obj._animId = window.requestAnimationFrame(step);
   }
 
   // Parses value from element content to animate
@@ -2113,7 +2130,7 @@ JS_V65 = r'''
   let atmoWidth = 0, atmoHeight = 0;
   let animId = null;
 
-  if (atmoCanvas) {
+  if (atmoCanvas && !prefersReducedMotion) {
     atmoCtx = atmoCanvas.getContext('2d');
     resizeAtmo();
     window.addEventListener('resize', resizeAtmo, { passive: true });
@@ -2264,7 +2281,9 @@ JS_V65 = r'''
   // --- Interactive Curved SVG Bezier Chart Switcher ---
   const chartContainers = document.querySelectorAll('.chart-wrapper');
   chartContainers.forEach(container => {
-    const rawData = container.querySelector('.chart-svg-container').dataset.points;
+    const svgCont = container.querySelector('.chart-svg-container');
+    if (!svgCont) return;
+    const rawData = svgCont.dataset.points;
     if (!rawData) return;
     let hours = [];
     try {
@@ -2586,8 +2605,8 @@ JS_V65 = r'''
     const isMainPage = document.querySelector('.hero') !== null;
     const sessionKey = 'langit_v65_spatial_scanner_run';
     
-    if (!isMainPage || sessionStorage.getItem(sessionKey)) {
-      // Clean up scanner markup and display page immediately if already run
+    if (!isMainPage || safeStorage.getItem(sessionKey) || prefersReducedMotion) {
+      // Clean up scanner markup and display page immediately if already run or reduced motion
       const overlay = document.getElementById('spatial-overlay');
       if (overlay) overlay.remove();
       return;
@@ -2761,7 +2780,7 @@ JS_V65 = r'''
 
     function closeScanner() {
       if (requestID) window.cancelAnimationFrame(requestID);
-      sessionStorage.setItem(sessionKey, 'true');
+      safeStorage.setItem(sessionKey, 'true');
       overlay.style.opacity = '0';
       overlay.style.transform = 'scale(1.05)';
       setTimeout(() => {
@@ -3300,6 +3319,7 @@ function makeSparkline(locationSlug, dateIso, activeHour) {
 }
 
 function ptxt(p) {
+  if (!p) return '';
   const sparklineHtml = makeSparkline(p.slug, p.date_iso, p.hour);
   const riskColor = colors[p.risk_class || 'limited'];
   return `
@@ -3557,15 +3577,19 @@ try {
   
   // Sort and build timeline
   features.sort((a,b) => {
-    if (a.properties.date_iso !== b.properties.date_iso) {
-      return a.properties.date_iso.localeCompare(b.properties.date_iso);
+    const da = (a.properties && a.properties.date_iso) || '';
+    const db = (b.properties && b.properties.date_iso) || '';
+    if (da !== db) {
+      return da.localeCompare(db);
     }
-    return a.properties.hour.localeCompare(b.properties.hour);
+    const ha = (a.properties && a.properties.hour) || '';
+    const hb = (b.properties && b.properties.hour) || '';
+    return ha.localeCompare(hb);
   });
   
   // Filter to get a single unique location's time slots
-  const firstLocSlug = first.properties.slug;
-  const locTimeline = features.filter(f => f.properties.slug === firstLocSlug);
+  const firstLocSlug = (first.properties && first.properties.slug) || '';
+  const locTimeline = features.filter(f => f.properties && f.properties.slug === firstLocSlug);
   const scrubber = document.getElementById('time-scrubber');
   
   locTimeline.forEach((tFeature, idx) => {
@@ -3733,7 +3757,7 @@ function animate() {
 
   // Heat shimmer overlay
   if (state.activeLayer === 'temp' || state.tempC > 24) {
-    const count = Math.min(20, Math.ceil((state.tempC - 20) * 2));
+    const count = Math.max(0, Math.min(20, Math.ceil((state.tempC - 20) * 2)));
     for (let i = 0; i < count; i++) {
       pShimmer[i].update();
       pShimmer[i].draw();
@@ -3750,7 +3774,7 @@ function animate() {
 
   // Rain ripples
   if (state.activeLayer === 'rain' || state.rainProb > 15) {
-    const count = Math.min(15, Math.ceil(state.rainProb / 6));
+    const count = Math.max(0, Math.min(15, Math.ceil(state.rainProb / 6)));
     for (let i = 0; i < count; i++) {
       pRain[i].update();
       pRain[i].draw();
@@ -4122,19 +4146,23 @@ def v65_portal_geo(apis: List[Dict[str, Any]]) -> Dict[str, Any]:
         lon = num(api.get("longitude"), None)
         if lat is None or lon is None:
             continue
-        d = api["today"]
-        h = d.get("peak_rain_hour") or (d.get("hours") or [{}])[0].get("hour", "00:00")
-        features.append({
-            "type": "Feature",
-            "geometry": {"type": "Point", "coordinates": [lon, lat]},
-            "properties": {
-                "location_name": api.get("location_name"), "slug": api.get("location_slug"),
-                "date": d.get("date_label"), "hour": h,
-                "rain_probability": d.get("peak_rain_probability"), "risk_score": d.get("risk_score"),
-                "risk_class": d.get("risk_class"), "risk_label": d.get("risk_label"),
-                "condition": d.get("condition"), "temp_c": d.get("avg_temp_c"),
-            },
-        })
+        for day in api.get("days", [])[:3]:
+            for h in day.get("hours", []):
+                features.append({
+                    "type": "Feature",
+                    "geometry": {"type": "Point", "coordinates": [lon, lat]},
+                    "properties": {
+                        "location_name": api.get("location_name"), "slug": api.get("location_slug"),
+                        "date": day.get("date_label"), "date_iso": day.get("date_iso"),
+                        "relative": day.get("relative"), "hour": h.get("hour"),
+                        "rain_probability": h.get("rain_probability"), "risk_score": h.get("risk_score"),
+                        "risk_class": h.get("risk_class"), "risk_label": h.get("risk_label"),
+                        "condition": h.get("condition"), "temp_c": h.get("temp_c"),
+                        "humidity_pct": h.get("humidity_pct"), "heat_index_c": h.get("heat_index_c"),
+                        "wind_kmh": num(h.get("wind_kmh"), 0.0),
+                        "cloud_pct": num(h.get("cloud_pct"), 0.0),
+                    },
+                })
     return {"type": "FeatureCollection", "features": features}
 
 

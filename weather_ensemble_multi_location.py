@@ -12082,7 +12082,7 @@ def _anemos21_detail_html(api, args, page='full'):
     elif page == '3day':
         body += [_v23_decision(api), f"<section class='panel'><div class='head'><h2>Ringkasan 3 hari</h2><p>Bandingkan hari ini, besok, dan lusa.</p></div><div class='grid g3'>{_v23_day_cards(days,3)}</div></section>"]
         for i,d in enumerate(days[:3]):
-            body += [f"<section class='panel'><div class='head'><h2>{_v23_esc(_v23_day_tag(i,d))}</h2><p>{_v23_esc(_v23_summary_sentence(d, _v23_location(api)))}</p></div><div class='grid g4'>{''.join(_v23_period_cards(d).split('<div class=\'grid g4\'>')[-1].split('</div></section>')[:1]) if _v23_period_cards(d) else ''}</div>{_v23_hour_rows(d,8)}</section>"]
+            body += [f"""<section class='panel'><div class='head'><h2>{_v23_esc(_v23_day_tag(i,d))}</h2><p>{_v23_esc(_v23_summary_sentence(d, _v23_location(api)))}</p></div><div class='grid g4'>{''.join(_v23_period_cards(d).split("<div class='grid g4'>")[-1].split("</div></section>")[:1]) if _v23_period_cards(d) else ''}</div>{_v23_hour_rows(d,8)}</section>"""]
     elif page == 'activity':
         body += [_v23_decision(api), _v23_activity_cards(today), _v23_share_notes(api), _v23_hours_section(today,'Jam penting untuk aktivitas',9)]
     else:
@@ -12492,7 +12492,7 @@ def _v23_share_notes(api):
 
 
 def _v24_day_block(day, idx, api):
-    return f"""<section class='panel'><div class='head'><h2>{_v23_esc(_v23_day_tag(idx, day))}</h2><p>{_v23_esc(_v24_summary_sentence(day, _v23_location(api)))}</p></div>{_v23_period_cards(day).replace('<section class=\'panel\'>','').rsplit('</section>',1)[0] if _v23_period_cards(day) else ''}<details class='clean'><summary>Lihat jam penting</summary>{_v23_hour_rows(day, limit=9)}</details></section>"""
+    return f"""<section class='panel'><div class='head'><h2>{_v23_esc(_v23_day_tag(idx, day))}</h2><p>{_v23_esc(_v24_summary_sentence(day, _v23_location(api)))}</p></div>{_v23_period_cards(day).replace("<section class='panel'>","").rsplit('</section>',1)[0] if _v23_period_cards(day) else ''}<details class='clean'><summary>Lihat jam penting</summary>{_v23_hour_rows(day, limit=9)}</details></section>"""
 
 
 def _anemos21_detail_html(api, args, page='full'):
@@ -13691,7 +13691,7 @@ def _lg_hours_section(day, title="Jam penting", risky_only=False):
     for h in hours:
         cls = _lg_text(h.get("risk_class"), "safe")
         rows.append(f"<article class='hour {cls}'><div class='time'>{_lg_hour(h.get('hour'))}</div><div class='cond'><b>{_lg_icon(h.get('condition'))} {_lg_esc(h.get('condition'))}</b><small>{_lg_esc(h.get('advice'))}</small></div><div class='hbox'><b>{_lg_num(h.get('temp_c'),'°C',1)}</b><small>Suhu</small></div><div class='hbox'><b>{_lg_pct(h.get('humidity_pct'))}</b><small>RH</small></div><div class='hbox'><b>{_lg_num(h.get('heat_index_c'),'°C',1)}</b><small>Terasa</small></div><div class='hbox'><b>{_lg_pct(h.get('rain_probability'))}</b><small>Hujan</small></div><div class='hbox'><b>{_lg_esc(h.get('risk_label'))}</b><small>Risiko</small></div></article>")
-    return f"<section class='panel'><div class='head'><h2>{_lg_esc(title)}</h2><p>{'Dipilih dari jam utama dan jam rawan.' if risky_only else 'Semua teks dipisah rapi: kondisi, angka, dan risiko tidak menumpuk.'}</p></div>{''.join(rows) or '<p class=\'muted\'>Data jam belum tersedia.</p>'}</section>"
+    return f"""<section class='panel'><div class='head'><h2>{_lg_esc(title)}</h2><p>{'Dipilih dari jam utama dan jam rawan.' if risky_only else 'Semua teks dipisah rapi: kondisi, angka, dan risiko tidak menumpuk.'}</p></div>{''.join(rows) or '<p class="muted">Data jam belum tersedia.</p>'}</section>"""
 
 
 def _lg_rain_chart(day):
@@ -15431,7 +15431,7 @@ def _lg_hours_section(day, title="Jam penting", risky_only=False):
             f"<div class='hbox'><b>{_lg_pct(h.get('rain_probability'))}</b><small>Hujan</small></div>"
             f"<div class='hbox'><b>{_lg_esc(h.get('risk_label'))}</b><small>Risiko</small></div></article>"
         )
-    return f"<section class='panel'><div class='head'><h2>{_lg_esc(title)}</h2><p>{'Dipilih dari jam utama dan jam rawan.' if risky_only else 'Kondisi, angka, dan risiko dipisah agar tidak menumpuk.'}</p></div>{''.join(rows) or '<p class=\"muted\">Data jam belum tersedia.</p>'}</section>"
+    return f"""<section class='panel'><div class='head'><h2>{_lg_esc(title)}</h2><p>{'Dipilih dari jam utama dan jam rawan.' if risky_only else 'Kondisi, angka, dan risiko dipisah agar tidak menumpuk.'}</p></div>{''.join(rows) or '<p class="muted">Data jam belum tersedia.</p>'}</section>"""
 
 
 def _lg_rain_chart(day):

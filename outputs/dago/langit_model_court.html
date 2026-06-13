@@ -1387,11 +1387,11 @@ a { color: inherit; text-decoration: none; }
     <div class="container">
       <div class="hero-label reveal">
         <span class="hero-dot"></span>
-        <span>Jumat, 12 Juni 2026</span>
+        <span>Sabtu, 13 Juni 2026</span>
       </div>
       <h1 class="hero-title reveal reveal-delay-1">Keandalan
 data</h1>
-      <p class="hero-subtitle reveal reveal-delay-2">Jumat, 12 Juni 2026. Ringkasan sumber prakiraan.</p>
+      <p class="hero-subtitle reveal reveal-delay-2">Sabtu, 13 Juni 2026. Ringkasan sumber prakiraan.</p>
       
     </div>
     <div class="hero-scroll">
@@ -1427,7 +1427,7 @@ data</h1>
 <footer class="footer">
   <div class="container">
     <div class="footer-brand">LANGIT</div>
-    <div class="footer-version">LANGIT v65.1 · Diperbarui 12 Juni, 12:00 WIB</div>
+    <div class="footer-version">LANGIT v65.1 · Diperbarui 13 Juni, 13:00 WIB</div>
     <div class="footer-links">
       <a class="footer-link" href="langit_model_court.html">Keandalan data</a>
       <a class="footer-link" href="sentinel_x_accuracy_public.html">Akurasi</a>
@@ -1444,6 +1444,18 @@ data</h1>
 
   // Retrieve dynamic configuration injected from backend engine
   const config = window.LANGIT_CONFIG || {};
+
+  // Safe SessionStorage wrapper to prevent incognito/private mode crashes
+  const safeStorage = {
+    getItem(key) {
+      try { return sessionStorage.getItem(key); } catch (e) { return null; }
+    },
+    setItem(key, value) {
+      try { sessionStorage.setItem(key, value); } catch (e) {}
+    }
+  };
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let initialLayer = 'rain';
   const cond = (config.condition || '').toLowerCase();
   if (cond.includes('hujan') || cond.includes('gerimis') || cond.includes('rain') || cond.includes('drizzle')) {
@@ -1484,6 +1496,9 @@ data</h1>
   // --- Smooth Numerical Counting Transition ---
   function animateValue(obj, start, end, duration, suffix = '', decimals = 0) {
     if (!obj) return;
+    if (obj._animId) {
+      window.cancelAnimationFrame(obj._animId);
+    }
     let startTimestamp = null;
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
@@ -1491,10 +1506,12 @@ data</h1>
       const val = progress * (end - start) + start;
       obj.innerHTML = val.toFixed(decimals) + suffix;
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        obj._animId = window.requestAnimationFrame(step);
+      } else {
+        obj._animId = null;
       }
     };
-    window.requestAnimationFrame(step);
+    obj._animId = window.requestAnimationFrame(step);
   }
 
   // Parses value from element content to animate
@@ -1518,7 +1535,7 @@ data</h1>
   let atmoWidth = 0, atmoHeight = 0;
   let animId = null;
 
-  if (atmoCanvas) {
+  if (atmoCanvas && !prefersReducedMotion) {
     atmoCtx = atmoCanvas.getContext('2d');
     resizeAtmo();
     window.addEventListener('resize', resizeAtmo, { passive: true });
@@ -1669,7 +1686,9 @@ data</h1>
   // --- Interactive Curved SVG Bezier Chart Switcher ---
   const chartContainers = document.querySelectorAll('.chart-wrapper');
   chartContainers.forEach(container => {
-    const rawData = container.querySelector('.chart-svg-container').dataset.points;
+    const svgCont = container.querySelector('.chart-svg-container');
+    if (!svgCont) return;
+    const rawData = svgCont.dataset.points;
     if (!rawData) return;
     let hours = [];
     try {
@@ -1991,8 +2010,8 @@ data</h1>
     const isMainPage = document.querySelector('.hero') !== null;
     const sessionKey = 'langit_v65_spatial_scanner_run';
     
-    if (!isMainPage || sessionStorage.getItem(sessionKey)) {
-      // Clean up scanner markup and display page immediately if already run
+    if (!isMainPage || safeStorage.getItem(sessionKey) || prefersReducedMotion) {
+      // Clean up scanner markup and display page immediately if already run or reduced motion
       const overlay = document.getElementById('spatial-overlay');
       if (overlay) overlay.remove();
       return;
@@ -2166,7 +2185,7 @@ data</h1>
 
     function closeScanner() {
       if (requestID) window.cancelAnimationFrame(requestID);
-      sessionStorage.setItem(sessionKey, 'true');
+      safeStorage.setItem(sessionKey, 'true');
       overlay.style.opacity = '0';
       overlay.style.transform = 'scale(1.05)';
       setTimeout(() => {

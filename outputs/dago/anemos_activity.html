@@ -1387,11 +1387,11 @@ a { color: inherit; text-decoration: none; }
     <div class="container">
       <div class="hero-label reveal">
         <span class="hero-dot"></span>
-        <span>Jumat, 12 Juni 2026</span>
+        <span>Sabtu, 13 Juni 2026</span>
       </div>
       <h1 class="hero-title reveal reveal-delay-1">Saran
 aktivitas</h1>
-      <p class="hero-subtitle reveal reveal-delay-2">Jumat, 12 Juni 2026. Fokus pada jam yang perlu dipantau.</p>
+      <p class="hero-subtitle reveal reveal-delay-2">Sabtu, 13 Juni 2026. Fokus pada jam yang perlu dipantau.</p>
       <div class="hero-metrics reveal reveal-delay-3">
         <div class="hero-metric">
           <div class="hero-metric-value" data-animate-value="23.155555555555555" data-animate-suffix="°C" data-animate-decimals="1">23.2°C</div>
@@ -1418,7 +1418,7 @@ aktivitas</h1>
           <span class="status-badge status-watch">Perlu diperhatikan</span>
           <h2 class="decision-title">Kondisi cuaca secara umum kondusif untuk beraktivitas, namun tetap pantau potensi hujan lokal di sekitar pukul 17:00 WIB.</h2>
         </div>
-        <p class="decision-desc">Jumat, 12 Juni 2026. awan/hujan perlu dipantau sekitar 17:00. Jam nyaman: 00:00–15:00, 21:00.</p>
+        <p class="decision-desc">Sabtu, 13 Juni 2026. awan/hujan perlu dipantau sekitar 17:00. Jam nyaman: 00:00–15:00, 21:00.</p>
       </article>
       <aside class="kpi-grid">
         <div class="kpi-card"><div class="kpi-label">Risiko</div><div class="kpi-value" data-animate-value="36" data-animate-suffix="/100">36<span style="font-size:16px;color:var(--mist)">/100</span></div><div class="kpi-sub">Perlu diperhatikan</div></div>
@@ -1486,7 +1486,7 @@ aktivitas</h1>
     <div class="section-header reveal">
       <div class="section-overline">Periode</div>
       <h2 class="section-title">Pagi hingga malam</h2>
-      <p class="section-desc">Jumat, 12 Juni 2026</p>
+      <p class="section-desc">Sabtu, 13 Juni 2026</p>
     </div>
     <div class="period-grid"><div class="period-card reveal reveal-delay-1" style="--accent-color:#35e8a4;background:linear-gradient(180deg,rgba(249,115,22,0.06),var(--glass))">
         <div class="period-name">Pagi</div>
@@ -1520,7 +1520,7 @@ aktivitas</h1>
   </div></section><section class="section-compact"><div class="container">
     <details class="hourly-section reveal">
       <summary class="hourly-toggle">
-        <span>Detail per jam · Jumat, 12 Juni 2026</span>
+        <span>Detail per jam · Sabtu, 13 Juni 2026</span>
         <svg class="hourly-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </summary>
       <div class="hourly-list"><div class="hour-row" style="--accent-color:#35e8a4">
@@ -1664,7 +1664,7 @@ aktivitas</h1>
         <div class="section-overline">Bagikan</div>
         <h3 style="font-size:18px;font-weight:700;margin:8px 0 12px">Format singkat</h3>
         <textarea class="share-text" readonly>LANGIT — Dago, Bandung
-Jumat, 12 Juni 2026
+Sabtu, 13 Juni 2026
 Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul 17:00 WIB.
 Peluang hujan tertinggi: 36% sekitar pukul 17:00 WIB.</textarea>
       </div>
@@ -1678,7 +1678,7 @@ Peluang hujan tertinggi: 36% sekitar pukul 17:00 WIB.</textarea>
 <footer class="footer">
   <div class="container">
     <div class="footer-brand">LANGIT</div>
-    <div class="footer-version">LANGIT v65.1 · Diperbarui 12 Juni, 12:00 WIB</div>
+    <div class="footer-version">LANGIT v65.1 · Diperbarui 13 Juni, 13:00 WIB</div>
     <div class="footer-links">
       <a class="footer-link" href="langit_model_court.html">Keandalan data</a>
       <a class="footer-link" href="sentinel_x_accuracy_public.html">Akurasi</a>
@@ -1695,6 +1695,18 @@ Peluang hujan tertinggi: 36% sekitar pukul 17:00 WIB.</textarea>
 
   // Retrieve dynamic configuration injected from backend engine
   const config = window.LANGIT_CONFIG || {};
+
+  // Safe SessionStorage wrapper to prevent incognito/private mode crashes
+  const safeStorage = {
+    getItem(key) {
+      try { return sessionStorage.getItem(key); } catch (e) { return null; }
+    },
+    setItem(key, value) {
+      try { sessionStorage.setItem(key, value); } catch (e) {}
+    }
+  };
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let initialLayer = 'rain';
   const cond = (config.condition || '').toLowerCase();
   if (cond.includes('hujan') || cond.includes('gerimis') || cond.includes('rain') || cond.includes('drizzle')) {
@@ -1735,6 +1747,9 @@ Peluang hujan tertinggi: 36% sekitar pukul 17:00 WIB.</textarea>
   // --- Smooth Numerical Counting Transition ---
   function animateValue(obj, start, end, duration, suffix = '', decimals = 0) {
     if (!obj) return;
+    if (obj._animId) {
+      window.cancelAnimationFrame(obj._animId);
+    }
     let startTimestamp = null;
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
@@ -1742,10 +1757,12 @@ Peluang hujan tertinggi: 36% sekitar pukul 17:00 WIB.</textarea>
       const val = progress * (end - start) + start;
       obj.innerHTML = val.toFixed(decimals) + suffix;
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        obj._animId = window.requestAnimationFrame(step);
+      } else {
+        obj._animId = null;
       }
     };
-    window.requestAnimationFrame(step);
+    obj._animId = window.requestAnimationFrame(step);
   }
 
   // Parses value from element content to animate
@@ -1769,7 +1786,7 @@ Peluang hujan tertinggi: 36% sekitar pukul 17:00 WIB.</textarea>
   let atmoWidth = 0, atmoHeight = 0;
   let animId = null;
 
-  if (atmoCanvas) {
+  if (atmoCanvas && !prefersReducedMotion) {
     atmoCtx = atmoCanvas.getContext('2d');
     resizeAtmo();
     window.addEventListener('resize', resizeAtmo, { passive: true });
@@ -1920,7 +1937,9 @@ Peluang hujan tertinggi: 36% sekitar pukul 17:00 WIB.</textarea>
   // --- Interactive Curved SVG Bezier Chart Switcher ---
   const chartContainers = document.querySelectorAll('.chart-wrapper');
   chartContainers.forEach(container => {
-    const rawData = container.querySelector('.chart-svg-container').dataset.points;
+    const svgCont = container.querySelector('.chart-svg-container');
+    if (!svgCont) return;
+    const rawData = svgCont.dataset.points;
     if (!rawData) return;
     let hours = [];
     try {
@@ -2242,8 +2261,8 @@ Peluang hujan tertinggi: 36% sekitar pukul 17:00 WIB.</textarea>
     const isMainPage = document.querySelector('.hero') !== null;
     const sessionKey = 'langit_v65_spatial_scanner_run';
     
-    if (!isMainPage || sessionStorage.getItem(sessionKey)) {
-      // Clean up scanner markup and display page immediately if already run
+    if (!isMainPage || safeStorage.getItem(sessionKey) || prefersReducedMotion) {
+      // Clean up scanner markup and display page immediately if already run or reduced motion
       const overlay = document.getElementById('spatial-overlay');
       if (overlay) overlay.remove();
       return;
@@ -2417,7 +2436,7 @@ Peluang hujan tertinggi: 36% sekitar pukul 17:00 WIB.</textarea>
 
     function closeScanner() {
       if (requestID) window.cancelAnimationFrame(requestID);
-      sessionStorage.setItem(sessionKey, 'true');
+      safeStorage.setItem(sessionKey, 'true');
       overlay.style.opacity = '0';
       overlay.style.transform = 'scale(1.05)';
       setTimeout(() => {

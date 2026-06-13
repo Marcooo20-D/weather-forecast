@@ -203,6 +203,7 @@ function makeSparkline(locationSlug, dateIso, activeHour) {
 }
 
 function ptxt(p) {
+  if (!p) return '';
   const sparklineHtml = makeSparkline(p.slug, p.date_iso, p.hour);
   const riskColor = colors[p.risk_class || 'limited'];
   return `
@@ -460,15 +461,19 @@ try {
   
   // Sort and build timeline
   features.sort((a,b) => {
-    if (a.properties.date_iso !== b.properties.date_iso) {
-      return a.properties.date_iso.localeCompare(b.properties.date_iso);
+    const da = (a.properties && a.properties.date_iso) || '';
+    const db = (b.properties && b.properties.date_iso) || '';
+    if (da !== db) {
+      return da.localeCompare(db);
     }
-    return a.properties.hour.localeCompare(b.properties.hour);
+    const ha = (a.properties && a.properties.hour) || '';
+    const hb = (b.properties && b.properties.hour) || '';
+    return ha.localeCompare(hb);
   });
   
   // Filter to get a single unique location's time slots
-  const firstLocSlug = first.properties.slug;
-  const locTimeline = features.filter(f => f.properties.slug === firstLocSlug);
+  const firstLocSlug = (first.properties && first.properties.slug) || '';
+  const locTimeline = features.filter(f => f.properties && f.properties.slug === firstLocSlug);
   const scrubber = document.getElementById('time-scrubber');
   
   locTimeline.forEach((tFeature, idx) => {
@@ -636,7 +641,7 @@ function animate() {
 
   // Heat shimmer overlay
   if (state.activeLayer === 'temp' || state.tempC > 24) {
-    const count = Math.min(20, Math.ceil((state.tempC - 20) * 2));
+    const count = Math.max(0, Math.min(20, Math.ceil((state.tempC - 20) * 2)));
     for (let i = 0; i < count; i++) {
       pShimmer[i].update();
       pShimmer[i].draw();
@@ -653,7 +658,7 @@ function animate() {
 
   // Rain ripples
   if (state.activeLayer === 'rain' || state.rainProb > 15) {
-    const count = Math.min(15, Math.ceil(state.rainProb / 6));
+    const count = Math.max(0, Math.min(15, Math.ceil(state.rainProb / 6)));
     for (let i = 0; i < count; i++) {
       pRain[i].update();
       pRain[i].draw();

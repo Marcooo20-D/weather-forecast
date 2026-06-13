@@ -1387,7 +1387,7 @@ a { color: inherit; text-decoration: none; }
     <div class="container">
       <div class="hero-label reveal">
         <span class="hero-dot"></span>
-        <span>Jumat, 12 Juni 2026</span>
+        <span>Sabtu, 13 Juni 2026</span>
       </div>
       <h1 class="hero-title reveal reveal-delay-1">LANGIT</h1>
       <p class="hero-subtitle reveal reveal-delay-2">Atmosfer Indonesia, dibaca lebih hidup.</p>
@@ -1406,7 +1406,7 @@ a { color: inherit; text-decoration: none; }
     <div class="location-grid"><a class="location-card reveal reveal-delay-1" href="arjawinangun/anemos_app.html" style="--accent-color:#35e8a4;--accent-glow:rgba(16,185,129,0.08)">
         <span class="status-badge status-safe">Aman</span>
         <h3 class="location-name">Arjawinangun, Cirebon</h3>
-        <p class="location-desc">Jumat, 12 Juni 2026. Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: 00:00–21:00.</p>
+        <p class="location-desc">Sabtu, 13 Juni 2026. Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: 00:00–21:00.</p>
         <div class="location-stats">
           <div class="location-stat"><div class="location-stat-value">25%</div><div class="location-stat-label">Hujan</div></div>
           <div class="location-stat"><div class="location-stat-value">18:00</div><div class="location-stat-label">Puncak</div></div>
@@ -1420,7 +1420,7 @@ a { color: inherit; text-decoration: none; }
       </a><a class="location-card reveal reveal-delay-2" href="dago/anemos_app.html" style="--accent-color:#ffd052;--accent-glow:rgba(245,158,11,0.08)">
         <span class="status-badge status-watch">Perlu diperhatikan</span>
         <h3 class="location-name">Dago, Bandung</h3>
-        <p class="location-desc">Jumat, 12 Juni 2026. Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul 17:00 WIB.</p>
+        <p class="location-desc">Sabtu, 13 Juni 2026. Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul 17:00 WIB.</p>
         <div class="location-stats">
           <div class="location-stat"><div class="location-stat-value">36%</div><div class="location-stat-label">Hujan</div></div>
           <div class="location-stat"><div class="location-stat-value">17:00</div><div class="location-stat-label">Puncak</div></div>
@@ -1434,7 +1434,7 @@ a { color: inherit; text-decoration: none; }
       </a><a class="location-card reveal reveal-delay-3" href="jatinangor/anemos_app.html" style="--accent-color:#35e8a4;--accent-glow:rgba(16,185,129,0.08)">
         <span class="status-badge status-safe">Aman</span>
         <h3 class="location-name">Jatinangor, Sumedang</h3>
-        <p class="location-desc">Jumat, 12 Juni 2026. Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: 00:00, 06:00–21:00.</p>
+        <p class="location-desc">Sabtu, 13 Juni 2026. Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: 00:00, 06:00–21:00.</p>
         <div class="location-stats">
           <div class="location-stat"><div class="location-stat-value">11%</div><div class="location-stat-label">Hujan</div></div>
           <div class="location-stat"><div class="location-stat-value">17:00</div><div class="location-stat-label">Puncak</div></div>
@@ -1476,7 +1476,7 @@ a { color: inherit; text-decoration: none; }
 <footer class="footer">
   <div class="container">
     <div class="footer-brand">LANGIT</div>
-    <div class="footer-version">LANGIT v65.1 · Diperbarui 12/06/2026, 23:16 WIB</div>
+    <div class="footer-version">LANGIT v65.1 · Diperbarui 13/06/2026, 08:23 WIB</div>
     
   </div>
 </footer>
@@ -1488,6 +1488,18 @@ a { color: inherit; text-decoration: none; }
 
   // Retrieve dynamic configuration injected from backend engine
   const config = window.LANGIT_CONFIG || {};
+
+  // Safe SessionStorage wrapper to prevent incognito/private mode crashes
+  const safeStorage = {
+    getItem(key) {
+      try { return sessionStorage.getItem(key); } catch (e) { return null; }
+    },
+    setItem(key, value) {
+      try { sessionStorage.setItem(key, value); } catch (e) {}
+    }
+  };
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let initialLayer = 'rain';
   const cond = (config.condition || '').toLowerCase();
   if (cond.includes('hujan') || cond.includes('gerimis') || cond.includes('rain') || cond.includes('drizzle')) {
@@ -1528,6 +1540,9 @@ a { color: inherit; text-decoration: none; }
   // --- Smooth Numerical Counting Transition ---
   function animateValue(obj, start, end, duration, suffix = '', decimals = 0) {
     if (!obj) return;
+    if (obj._animId) {
+      window.cancelAnimationFrame(obj._animId);
+    }
     let startTimestamp = null;
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
@@ -1535,10 +1550,12 @@ a { color: inherit; text-decoration: none; }
       const val = progress * (end - start) + start;
       obj.innerHTML = val.toFixed(decimals) + suffix;
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        obj._animId = window.requestAnimationFrame(step);
+      } else {
+        obj._animId = null;
       }
     };
-    window.requestAnimationFrame(step);
+    obj._animId = window.requestAnimationFrame(step);
   }
 
   // Parses value from element content to animate
@@ -1562,7 +1579,7 @@ a { color: inherit; text-decoration: none; }
   let atmoWidth = 0, atmoHeight = 0;
   let animId = null;
 
-  if (atmoCanvas) {
+  if (atmoCanvas && !prefersReducedMotion) {
     atmoCtx = atmoCanvas.getContext('2d');
     resizeAtmo();
     window.addEventListener('resize', resizeAtmo, { passive: true });
@@ -1713,7 +1730,9 @@ a { color: inherit; text-decoration: none; }
   // --- Interactive Curved SVG Bezier Chart Switcher ---
   const chartContainers = document.querySelectorAll('.chart-wrapper');
   chartContainers.forEach(container => {
-    const rawData = container.querySelector('.chart-svg-container').dataset.points;
+    const svgCont = container.querySelector('.chart-svg-container');
+    if (!svgCont) return;
+    const rawData = svgCont.dataset.points;
     if (!rawData) return;
     let hours = [];
     try {
@@ -2035,8 +2054,8 @@ a { color: inherit; text-decoration: none; }
     const isMainPage = document.querySelector('.hero') !== null;
     const sessionKey = 'langit_v65_spatial_scanner_run';
     
-    if (!isMainPage || sessionStorage.getItem(sessionKey)) {
-      // Clean up scanner markup and display page immediately if already run
+    if (!isMainPage || safeStorage.getItem(sessionKey) || prefersReducedMotion) {
+      // Clean up scanner markup and display page immediately if already run or reduced motion
       const overlay = document.getElementById('spatial-overlay');
       if (overlay) overlay.remove();
       return;
@@ -2210,7 +2229,7 @@ a { color: inherit; text-decoration: none; }
 
     function closeScanner() {
       if (requestID) window.cancelAnimationFrame(requestID);
-      sessionStorage.setItem(sessionKey, 'true');
+      safeStorage.setItem(sessionKey, 'true');
       overlay.style.opacity = '0';
       overlay.style.transform = 'scale(1.05)';
       setTimeout(() => {
