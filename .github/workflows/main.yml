@@ -66,13 +66,11 @@ jobs:
           ls -la
           test -f weather_ensemble_multi_location.py
           test -f langit_v65_cinematic_rebuild.py
-          test -f langit_v64_3_full_variable_map_engine.py
 
       - name: Syntax check scripts
         run: |
           python -m py_compile weather_ensemble_multi_location.py
           python -m py_compile langit_v65_cinematic_rebuild.py
-          python -m py_compile langit_v64_3_full_variable_map_engine.py
 
       - name: LANGIT generator doctor
         run: |
@@ -113,13 +111,6 @@ jobs:
           fi
 
 
-      - name: Rebuild LANGIT v64.4.1 real atmospheric map layer
-        run: |
-          python langit_v64_3_full_variable_map_engine.py \
-            --root outputs \
-            --public-base-url "$PUBLIC_BASE_URL" \
-            --debug
-
       - name: Rebuild LANGIT v65.0 cinematic product layer
         run: |
           python langit_v65_cinematic_rebuild.py \
@@ -129,23 +120,19 @@ jobs:
       - name: Verify public output
         run: |
           python langit_v65_cinematic_rebuild.py --root outputs --verify-only
-          python langit_v64_3_full_variable_map_engine.py --root outputs --verify-only
           test -f outputs/index.html
           test -f outputs/langit_portal_map.html
-          test -f outputs/langit_v64_4_manifest.json
           for d in outputs/*; do
             if [ -d "$d" ]; then
-              test -f "$d/anemos_app.html"
-              test -f "$d/anemos_3day.html"
-              test -f "$d/anemos_activity.html"
+              test -f "$d/langit_app.html"
+              test -f "$d/langit_3day.html"
+              test -f "$d/langit_activity.html"
               test -f "$d/langit_map_room.html"
               test -f "$d/langit_map.html"
-              test -f "$d/anemos_map.html"
-              test -f "$d/langit_model_court.html"
-              test -f "$d/sentinel_x_accuracy_public.html"
+              test -f "$d/keandalan_data.html"
+              test -f "$d/akurasi_data.html"
               test -f "$d/langit_api_v1.json"
               test -f "$d/langit_location.geojson"
-              test -f "$d/langit_v64_4_map_manifest.json"
             fi
           done
           if grep -ER "visual-first|Data confidence|ANEMOS sedang|AETHER Sentinel|\[\.new Set|const hours=\[\.new" outputs/ 2>/dev/null; then

@@ -13,7 +13,7 @@ def check_file(path, checks):
     return content
 
 # Check map HTML
-check_file('outputs/dago/anemos_map.html', {
+check_file('outputs/dago/langit_map_room.html', {
     'fitBounds': 'fitBounds',
     'postMessage_listener': 'switchLayer',
     'Angin_layer': 'angin',
@@ -24,14 +24,14 @@ check_file('outputs/dago/anemos_map.html', {
 })
 
 # Check app HTML
-check_file('outputs/dago/anemos_app.html', {
+check_file('outputs/dago/langit_app.html', {
     'map_frame': 'map-frame',
     'command_center': 'command-center',
     'postMessage_send': 'postMessage',
     'layer_btn': 'layer-btn',
     'peta_prakiraan': 'Peta Prakiraan',
     'lapisan_cuaca': 'Lapisan Cuaca',
-    'iframe_map': 'anemos_map.html',
+    'iframe_map': 'langit_map_room.html',
 })
 
 # Check portal map

@@ -1645,7 +1645,7 @@ a { color: inherit; text-decoration: none; }
     <span><span class="nav-title">LANGIT</span><span class="nav-sub">Jatinangor, Sumedang · LANGIT v65.1</span></span>
   </a>
   <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
-  <nav class="nav-links"><a class="nav-link " href="anemos_app.html">Hari ini</a><a class="nav-link " href="anemos_3day.html">3 hari ke depan</a><a class="nav-link active" aria-current="page" href="anemos_activity.html">Panduan Aktivitas</a><a class="nav-link " href="langit_map_room.html">Peta</a></nav>
+  <nav class="nav-links"><a class="nav-link " href="langit_app.html">Hari ini</a><a class="nav-link " href="langit_3day.html">3 hari ke depan</a><a class="nav-link active" aria-current="page" href="langit_activity.html">Panduan Aktivitas</a><a class="nav-link " href="langit_map_room.html">Peta</a></nav>
 </header>
 <main class="page">
 <section class="hero">
@@ -1655,11 +1655,11 @@ a { color: inherit; text-decoration: none; }
     <div class="container">
       <div class="hero-label reveal">
         <span class="hero-dot"></span>
-        <span>Sabtu, 13 Juni 2026</span>
+        <span>Minggu, 14 Juni 2026</span>
       </div>
       <h1 class="hero-title reveal reveal-delay-1">Planner
 cuaca</h1>
-      <p class="hero-subtitle reveal reveal-delay-2">Sabtu, 13 Juni 2026. Cek jam terbaik untuk aktivitas.</p>
+      <p class="hero-subtitle reveal reveal-delay-2">Minggu, 14 Juni 2026. Cek jam terbaik untuk aktivitas.</p>
       
     </div>
     <div class="hero-scroll">
@@ -1676,7 +1676,7 @@ cuaca</h1>
         <select id="act" class="btn" style="background:var(--glass);text-align:left;min-height:48px">
           <option>Motor</option><option>Jalan kaki</option><option>Jemur</option><option>Outdoor</option><option>Olahraga</option><option>Foto</option>
         </select>
-        <select id="hh" class="btn" style="background:var(--glass);text-align:left;min-height:48px"><option value="00:00">00:00 · Lembap pagi · hujan 0%</option><option value="06:00">06:00 · Lembap pagi · hujan 0%</option><option value="09:00">09:00 · Berawan dipantau · hujan 0%</option><option value="12:00">12:00 · Cerah berawan · hujan 0%</option><option value="14:00">14:00 · Cerah berawan · hujan 0%</option><option value="15:00">15:00 · Cerah berawan · hujan 0%</option><option value="17:00">17:00 · Berawan sore · hujan 11%</option><option value="18:00">18:00 · Berawan sore · hujan 11%</option><option value="21:00">21:00 · Lembap malam · hujan 10%</option></select>
+        <select id="hh" class="btn" style="background:var(--glass);text-align:left;min-height:48px"><option value="00:00">00:00 · Lembap pagi · hujan 0%</option><option value="03:00">03:00 · Lembap pagi · hujan 0%</option><option value="06:00">06:00 · Lembap pagi · hujan 33%</option><option value="09:00">09:00 · Berawan dipantau · hujan 0%</option><option value="12:00">12:00 · Cerah berawan · hujan 0%</option><option value="14:00">14:00 · Hujan lokal · hujan 61%</option><option value="15:00">15:00 · Hujan lokal · hujan 61%</option><option value="18:00">18:00 · Awan tumbuh · hujan 22%</option><option value="21:00">21:00 · Lembap malam · hujan 0%</option></select>
         <button class="btn btn-primary" type="button" onclick="decidePlanner()" style="min-height:48px">Cek</button>
       </div>
       <div class="decision-main" style="min-height:140px;margin:0;--accent-glow:rgba(50,183,255,0.06)">
@@ -1689,7 +1689,7 @@ cuaca</h1>
     </div>
   </div></section>
 <script>
-const plannerDay={"relative": "Hari ini", "date_iso": "2026-06-13", "date_label": "Sabtu, 13 Juni 2026", "date_short": "13 Juni", "weekday": "Sabtu", "hours": [{"date_iso": "2026-06-12", "date_label": "Jumat, 12 Juni 2026", "date_short": "12 Juni", "relative": "Hari ini", "hour": "00:00", "temp_c": 21.0, "humidity_pct": 96.0, "heat_index_c": 21.0, "rain_probability": 0, "wind_kmh": 3.6, "risk_score": 5, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "valid": true, "cloud_pct": 15.0}, {"date_iso": "2026-06-12", "date_label": "Jumat, 12 Juni 2026", "date_short": "12 Juni", "relative": "Hari ini", "hour": "06:00", "temp_c": 19.2, "humidity_pct": 96.0, "heat_index_c": 19.2, "rain_probability": 0, "wind_kmh": 4.2, "risk_score": 5, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "valid": true, "cloud_pct": 15.0}, {"date_iso": "2026-06-12", "date_label": "Jumat, 12 Juni 2026", "date_short": "12 Juni", "relative": "Hari ini", "hour": "09:00", "temp_c": 25.4, "humidity_pct": 62.0, "heat_index_c": 25.4, "rain_probability": 0, "wind_kmh": 4.5, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "valid": true, "cloud_pct": 70.0}, {"date_iso": "2026-06-12", "date_label": "Jumat, 12 Juni 2026", "date_short": "12 Juni", "relative": "Hari ini", "hour": "12:00", "temp_c": 29.4, "humidity_pct": 48.0, "heat_index_c": 29.4, "rain_probability": 0, "wind_kmh": 7.6, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "valid": true, "cloud_pct": 70.0}, {"date_iso": "2026-06-12", "date_label": "Jumat, 12 Juni 2026", "date_short": "12 Juni", "relative": "Hari ini", "hour": "14:00", "temp_c": 29.1, "humidity_pct": 56.0, "heat_index_c": 29.4, "rain_probability": 0, "wind_kmh": 10.9, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "valid": true, "cloud_pct": 70.0}, {"date_iso": "2026-06-12", "date_label": "Jumat, 12 Juni 2026", "date_short": "12 Juni", "relative": "Hari ini", "hour": "15:00", "temp_c": 28.6, "humidity_pct": 60.0, "heat_index_c": 29.0, "rain_probability": 0, "wind_kmh": 10.8, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "valid": true, "cloud_pct": 70.0}, {"date_iso": "2026-06-12", "date_label": "Jumat, 12 Juni 2026", "date_short": "12 Juni", "relative": "Hari ini", "hour": "17:00", "temp_c": 25.2, "humidity_pct": 74.0, "heat_index_c": 25.2, "rain_probability": 11.0, "wind_kmh": 10.7, "risk_score": 11, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan sore", "valid": true, "cloud_pct": 70.0}, {"date_iso": "2026-06-12", "date_label": "Jumat, 12 Juni 2026", "date_short": "12 Juni", "relative": "Hari ini", "hour": "18:00", "temp_c": 24.1, "humidity_pct": 81.0, "heat_index_c": 24.1, "rain_probability": 11.0, "wind_kmh": 5.5, "risk_score": 11, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan sore", "valid": true, "cloud_pct": 70.0}, {"date_iso": "2026-06-12", "date_label": "Jumat, 12 Juni 2026", "date_short": "12 Juni", "relative": "Hari ini", "hour": "21:00", "temp_c": 21.4, "humidity_pct": 95.0, "heat_index_c": 21.4, "rain_probability": 10.0, "wind_kmh": 4.0, "risk_score": 12, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap malam", "valid": true, "cloud_pct": 15.0}], "periods": [{"name": "Pagi", "hour": "06:00", "condition": "Lembap pagi", "temp_c": 22.299999999999997, "rain_probability": 0.0, "risk_class": "safe", "risk_label": "Aman"}, {"name": "Siang", "hour": "12:00", "condition": "Cerah berawan", "temp_c": 29.25, "rain_probability": 0.0, "risk_class": "safe", "risk_label": "Aman"}, {"name": "Sore", "hour": "17:00", "condition": "Berawan sore", "temp_c": 25.96666666666667, "rain_probability": 11.0, "risk_class": "safe", "risk_label": "Aman"}, {"name": "Malam", "hour": "21:00", "condition": "Lembap malam", "temp_c": 21.2, "rain_probability": 10.0, "risk_class": "safe", "risk_label": "Aman"}], "peak_rain_probability": 11.0, "peak_rain_hour": "17:00", "risk_score": 12, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap malam", "avg_temp_c": 24.82222222222222, "avg_rh": 74.22222222222223, "max_heat_c": 29.4, "max_wind_kmh": 10.9, "safe_windows": ["00:00", "06:00–21:00"], "valid_points": 9};
+const plannerDay={"relative": "Hari ini", "date_iso": "2026-06-14", "date_label": "Minggu, 14 Juni 2026", "date_short": "14 Juni", "weekday": "Minggu", "hours": [{"date_iso": "2026-06-14", "date_label": "Minggu, 14 Juni 2026", "date_short": "14 Juni", "relative": "Hari ini", "hour": "00:00", "temp_c": 20.4, "humidity_pct": 96.0, "heat_index_c": 20.4, "rain_probability": 0, "wind_kmh": 3.9, "risk_score": 5, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "valid": true, "wind_dir": 0.0, "cloud_pct": 15.0}, {"date_iso": "2026-06-14", "date_label": "Minggu, 14 Juni 2026", "date_short": "14 Juni", "relative": "Hari ini", "hour": "03:00", "temp_c": 19.9, "humidity_pct": 94.0, "heat_index_c": 19.9, "rain_probability": 0, "wind_kmh": 3.2, "risk_score": 4, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "valid": true, "wind_dir": 0.0, "cloud_pct": 15.0}, {"date_iso": "2026-06-14", "date_label": "Minggu, 14 Juni 2026", "date_short": "14 Juni", "relative": "Hari ini", "hour": "06:00", "temp_c": 20.8, "humidity_pct": 93.0, "heat_index_c": 20.8, "rain_probability": 33.0, "wind_kmh": 3.2, "risk_score": 33, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Lembap pagi", "valid": true, "wind_dir": 0.0, "cloud_pct": 15.0}, {"date_iso": "2026-06-14", "date_label": "Minggu, 14 Juni 2026", "date_short": "14 Juni", "relative": "Hari ini", "hour": "09:00", "temp_c": 24.5, "humidity_pct": 77.0, "heat_index_c": 24.5, "rain_probability": 0, "wind_kmh": 5.8, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "valid": true, "wind_dir": 0.0, "cloud_pct": 70.0}, {"date_iso": "2026-06-14", "date_label": "Minggu, 14 Juni 2026", "date_short": "14 Juni", "relative": "Hari ini", "hour": "12:00", "temp_c": 27.1, "humidity_pct": 69.0, "heat_index_c": 28.8, "rain_probability": 0, "wind_kmh": 8.0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "valid": true, "wind_dir": 0.0, "cloud_pct": 70.0}, {"date_iso": "2026-06-14", "date_label": "Minggu, 14 Juni 2026", "date_short": "14 Juni", "relative": "Hari ini", "hour": "14:00", "temp_c": 26.9, "humidity_pct": 74.0, "heat_index_c": 28.4, "rain_probability": 61.0, "wind_kmh": 8.7, "risk_score": 61, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "valid": true, "wind_dir": 0.0, "cloud_pct": 85.0}, {"date_iso": "2026-06-14", "date_label": "Minggu, 14 Juni 2026", "date_short": "14 Juni", "relative": "Hari ini", "hour": "15:00", "temp_c": 25.4, "humidity_pct": 79.0, "heat_index_c": 25.4, "rain_probability": 61.0, "wind_kmh": 8.8, "risk_score": 61, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "valid": true, "wind_dir": 0.0, "cloud_pct": 85.0}, {"date_iso": "2026-06-14", "date_label": "Minggu, 14 Juni 2026", "date_short": "14 Juni", "relative": "Hari ini", "hour": "18:00", "temp_c": 22.7, "humidity_pct": 88.0, "heat_index_c": 22.7, "rain_probability": 22.0, "wind_kmh": 5.5, "risk_score": 22, "risk_class": "safe", "risk_label": "Aman", "condition": "Awan tumbuh", "valid": true, "wind_dir": 0.0, "cloud_pct": 15.0}, {"date_iso": "2026-06-14", "date_label": "Minggu, 14 Juni 2026", "date_short": "14 Juni", "relative": "Hari ini", "hour": "21:00", "temp_c": 21.4, "humidity_pct": 93.0, "heat_index_c": 21.4, "rain_probability": 0, "wind_kmh": 3.7, "risk_score": 4, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap malam", "valid": true, "wind_dir": 0.0, "cloud_pct": 15.0}], "periods": [{"name": "Pagi", "hour": "06:00", "condition": "Lembap pagi", "temp_c": 22.65, "rain_probability": 33.0, "risk_class": "watch", "risk_label": "Perlu diperhatikan"}, {"name": "Siang", "hour": "14:00", "condition": "Hujan lokal", "temp_c": 27.0, "rain_probability": 61.0, "risk_class": "rain", "risk_label": "Waspada"}, {"name": "Sore", "hour": "15:00", "condition": "Hujan lokal", "temp_c": 24.049999999999997, "rain_probability": 61.0, "risk_class": "rain", "risk_label": "Waspada"}, {"name": "Malam", "hour": "00:00", "condition": "Lembap pagi", "temp_c": 20.566666666666666, "rain_probability": 0.0, "risk_class": "safe", "risk_label": "Aman"}], "peak_rain_probability": 61.0, "peak_rain_hour": "14:00", "risk_score": 61, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "avg_temp_c": 23.233333333333334, "avg_rh": 84.77777777777777, "max_heat_c": 28.8, "max_wind_kmh": 8.8, "safe_windows": ["00:00–03:00", "09:00–12:00", "18:00–21:00"], "valid_points": 9};
 function plannerRiskClass(x){return x==='danger'?'Tinggi':x==='rain'?'Waspada':x==='watch'?'Pantau':x==='safe'?'Aman':'Terbatas';}
 function decidePlanner(){
   const act=document.getElementById('act').value;
@@ -1716,7 +1716,7 @@ function decidePlanner(){
       <div class="section-header">
         <div class="section-overline">Timeline</div>
         <h2 class="section-title">Timeline hari ini</h2>
-        <p class="section-desc">Sabtu, 13 Juni 2026</p>
+        <p class="section-desc">Minggu, 14 Juni 2026</p>
       </div>
       
       <!-- Multi-Variable Switches -->
@@ -1727,7 +1727,7 @@ function decidePlanner(){
         <button class="chart-chip" data-var="wind">Kecepatan Angin</button>
       </div>
       
-      <div class="chart-svg-container" data-points="[{&quot;date_iso&quot;: &quot;2026-06-12&quot;, &quot;date_label&quot;: &quot;Jumat, 12 Juni 2026&quot;, &quot;date_short&quot;: &quot;12 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;00:00&quot;, &quot;temp_c&quot;: 21.0, &quot;humidity_pct&quot;: 96.0, &quot;heat_index_c&quot;: 21.0, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 3.6, &quot;risk_score&quot;: 5, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap pagi&quot;, &quot;valid&quot;: true, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-12&quot;, &quot;date_label&quot;: &quot;Jumat, 12 Juni 2026&quot;, &quot;date_short&quot;: &quot;12 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;06:00&quot;, &quot;temp_c&quot;: 19.2, &quot;humidity_pct&quot;: 96.0, &quot;heat_index_c&quot;: 19.2, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 4.2, &quot;risk_score&quot;: 5, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap pagi&quot;, &quot;valid&quot;: true, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-12&quot;, &quot;date_label&quot;: &quot;Jumat, 12 Juni 2026&quot;, &quot;date_short&quot;: &quot;12 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;09:00&quot;, &quot;temp_c&quot;: 25.4, &quot;humidity_pct&quot;: 62.0, &quot;heat_index_c&quot;: 25.4, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 4.5, &quot;risk_score&quot;: 0, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Berawan dipantau&quot;, &quot;valid&quot;: true, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-12&quot;, &quot;date_label&quot;: &quot;Jumat, 12 Juni 2026&quot;, &quot;date_short&quot;: &quot;12 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;12:00&quot;, &quot;temp_c&quot;: 29.4, &quot;humidity_pct&quot;: 48.0, &quot;heat_index_c&quot;: 29.4, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 7.6, &quot;risk_score&quot;: 0, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Cerah berawan&quot;, &quot;valid&quot;: true, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-12&quot;, &quot;date_label&quot;: &quot;Jumat, 12 Juni 2026&quot;, &quot;date_short&quot;: &quot;12 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;14:00&quot;, &quot;temp_c&quot;: 29.1, &quot;humidity_pct&quot;: 56.0, &quot;heat_index_c&quot;: 29.4, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 10.9, &quot;risk_score&quot;: 0, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Cerah berawan&quot;, &quot;valid&quot;: true, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-12&quot;, &quot;date_label&quot;: &quot;Jumat, 12 Juni 2026&quot;, &quot;date_short&quot;: &quot;12 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;15:00&quot;, &quot;temp_c&quot;: 28.6, &quot;humidity_pct&quot;: 60.0, &quot;heat_index_c&quot;: 29.0, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 10.8, &quot;risk_score&quot;: 0, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Cerah berawan&quot;, &quot;valid&quot;: true, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-12&quot;, &quot;date_label&quot;: &quot;Jumat, 12 Juni 2026&quot;, &quot;date_short&quot;: &quot;12 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;17:00&quot;, &quot;temp_c&quot;: 25.2, &quot;humidity_pct&quot;: 74.0, &quot;heat_index_c&quot;: 25.2, &quot;rain_probability&quot;: 11.0, &quot;wind_kmh&quot;: 10.7, &quot;risk_score&quot;: 11, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Berawan sore&quot;, &quot;valid&quot;: true, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-12&quot;, &quot;date_label&quot;: &quot;Jumat, 12 Juni 2026&quot;, &quot;date_short&quot;: &quot;12 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;18:00&quot;, &quot;temp_c&quot;: 24.1, &quot;humidity_pct&quot;: 81.0, &quot;heat_index_c&quot;: 24.1, &quot;rain_probability&quot;: 11.0, &quot;wind_kmh&quot;: 5.5, &quot;risk_score&quot;: 11, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Berawan sore&quot;, &quot;valid&quot;: true, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-12&quot;, &quot;date_label&quot;: &quot;Jumat, 12 Juni 2026&quot;, &quot;date_short&quot;: &quot;12 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;21:00&quot;, &quot;temp_c&quot;: 21.4, &quot;humidity_pct&quot;: 95.0, &quot;heat_index_c&quot;: 21.4, &quot;rain_probability&quot;: 10.0, &quot;wind_kmh&quot;: 4.0, &quot;risk_score&quot;: 12, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap malam&quot;, &quot;valid&quot;: true, &quot;cloud_pct&quot;: 15.0}]">
+      <div class="chart-svg-container" data-points="[{&quot;date_iso&quot;: &quot;2026-06-14&quot;, &quot;date_label&quot;: &quot;Minggu, 14 Juni 2026&quot;, &quot;date_short&quot;: &quot;14 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;00:00&quot;, &quot;temp_c&quot;: 20.4, &quot;humidity_pct&quot;: 96.0, &quot;heat_index_c&quot;: 20.4, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 3.9, &quot;risk_score&quot;: 5, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap pagi&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-14&quot;, &quot;date_label&quot;: &quot;Minggu, 14 Juni 2026&quot;, &quot;date_short&quot;: &quot;14 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;03:00&quot;, &quot;temp_c&quot;: 19.9, &quot;humidity_pct&quot;: 94.0, &quot;heat_index_c&quot;: 19.9, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 3.2, &quot;risk_score&quot;: 4, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap pagi&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-14&quot;, &quot;date_label&quot;: &quot;Minggu, 14 Juni 2026&quot;, &quot;date_short&quot;: &quot;14 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;06:00&quot;, &quot;temp_c&quot;: 20.8, &quot;humidity_pct&quot;: 93.0, &quot;heat_index_c&quot;: 20.8, &quot;rain_probability&quot;: 33.0, &quot;wind_kmh&quot;: 3.2, &quot;risk_score&quot;: 33, &quot;risk_class&quot;: &quot;watch&quot;, &quot;risk_label&quot;: &quot;Perlu diperhatikan&quot;, &quot;condition&quot;: &quot;Lembap pagi&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-14&quot;, &quot;date_label&quot;: &quot;Minggu, 14 Juni 2026&quot;, &quot;date_short&quot;: &quot;14 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;09:00&quot;, &quot;temp_c&quot;: 24.5, &quot;humidity_pct&quot;: 77.0, &quot;heat_index_c&quot;: 24.5, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 5.8, &quot;risk_score&quot;: 0, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Berawan dipantau&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-14&quot;, &quot;date_label&quot;: &quot;Minggu, 14 Juni 2026&quot;, &quot;date_short&quot;: &quot;14 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;12:00&quot;, &quot;temp_c&quot;: 27.1, &quot;humidity_pct&quot;: 69.0, &quot;heat_index_c&quot;: 28.8, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 8.0, &quot;risk_score&quot;: 0, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Cerah berawan&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-14&quot;, &quot;date_label&quot;: &quot;Minggu, 14 Juni 2026&quot;, &quot;date_short&quot;: &quot;14 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;14:00&quot;, &quot;temp_c&quot;: 26.9, &quot;humidity_pct&quot;: 74.0, &quot;heat_index_c&quot;: 28.4, &quot;rain_probability&quot;: 61.0, &quot;wind_kmh&quot;: 8.7, &quot;risk_score&quot;: 61, &quot;risk_class&quot;: &quot;rain&quot;, &quot;risk_label&quot;: &quot;Waspada&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}, {&quot;date_iso&quot;: &quot;2026-06-14&quot;, &quot;date_label&quot;: &quot;Minggu, 14 Juni 2026&quot;, &quot;date_short&quot;: &quot;14 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;15:00&quot;, &quot;temp_c&quot;: 25.4, &quot;humidity_pct&quot;: 79.0, &quot;heat_index_c&quot;: 25.4, &quot;rain_probability&quot;: 61.0, &quot;wind_kmh&quot;: 8.8, &quot;risk_score&quot;: 61, &quot;risk_class&quot;: &quot;rain&quot;, &quot;risk_label&quot;: &quot;Waspada&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}, {&quot;date_iso&quot;: &quot;2026-06-14&quot;, &quot;date_label&quot;: &quot;Minggu, 14 Juni 2026&quot;, &quot;date_short&quot;: &quot;14 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;18:00&quot;, &quot;temp_c&quot;: 22.7, &quot;humidity_pct&quot;: 88.0, &quot;heat_index_c&quot;: 22.7, &quot;rain_probability&quot;: 22.0, &quot;wind_kmh&quot;: 5.5, &quot;risk_score&quot;: 22, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Awan tumbuh&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-14&quot;, &quot;date_label&quot;: &quot;Minggu, 14 Juni 2026&quot;, &quot;date_short&quot;: &quot;14 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;21:00&quot;, &quot;temp_c&quot;: 21.4, &quot;humidity_pct&quot;: 93.0, &quot;heat_index_c&quot;: 21.4, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 3.7, &quot;risk_score&quot;: 4, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap malam&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}]">
         <svg class="rain-curve" viewBox="0 0 900 200" preserveAspectRatio="none"></svg>
         <div class="chart-tooltip">
           <div class="chart-tooltip-time">00:00</div>
@@ -1741,46 +1741,46 @@ function decidePlanner(){
       <h2 class="section-title">Saran hari ini</h2>
       <p class="section-desc">Ringkas dan praktis.</p>
     </div>
-    <div class="activity-grid"><div class="activity-card reveal reveal-delay-1" style="--accent-color:#35e8a4">
+    <div class="activity-grid"><div class="activity-card reveal reveal-delay-1" style="--accent-color:#ff9346">
         <div class="activity-name">Perjalanan / Motor</div>
-        <div class="activity-status">Aman</div>
-        <div class="activity-advice">Kondisi cuaca mendukung perjalanan luar ruang.</div>
-      </div><div class="activity-card reveal reveal-delay-2" style="--accent-color:#35e8a4">
+        <div class="activity-status">Bawa Jas Hujan</div>
+        <div class="activity-advice">Hindari berkendara sekitar pukul 14:00.</div>
+      </div><div class="activity-card reveal reveal-delay-2" style="--accent-color:#ff9346">
         <div class="activity-name">Jalan Kaki</div>
-        <div class="activity-status">Sangat Nyaman</div>
-        <div class="activity-advice">Periode terbaik: 00:00, 06:00–21:00.</div>
-      </div><div class="activity-card reveal reveal-delay-3" style="--accent-color:#35e8a4">
+        <div class="activity-status">Siapkan Payung</div>
+        <div class="activity-advice">Antisipasi tempat berteduh di sekitar pukul 14:00.</div>
+      </div><div class="activity-card reveal reveal-delay-3" style="--accent-color:#ffd052">
         <div class="activity-name">Jemur Pakaian</div>
-        <div class="activity-status">Sangat Baik</div>
-        <div class="activity-advice">Pagi hingga siang hari sangat mendukung.</div>
-      </div><div class="activity-card reveal reveal-delay-1" style="--accent-color:#35e8a4">
+        <div class="activity-status">Pagi Hari</div>
+        <div class="activity-advice">Hindari meninggalkan jemuran terlalu lama.</div>
+      </div><div class="activity-card reveal reveal-delay-1" style="--accent-color:#ff9346">
         <div class="activity-name">Aktivitas Outdoor</div>
-        <div class="activity-status">Sangat Aman</div>
-        <div class="activity-advice">Sangat mendukung untuk kegiatan luar ruang.</div>
-      </div><div class="activity-card reveal reveal-delay-2" style="--accent-color:#35e8a4">
+        <div class="activity-status">Siapkan Rencana Cadangan</div>
+        <div class="activity-advice">Gunakan opsi ruangan tertutup.</div>
+      </div><div class="activity-card reveal reveal-delay-2" style="--accent-color:#ffd052">
         <div class="activity-name">Olahraga</div>
-        <div class="activity-status">Pagi / Sore</div>
-        <div class="activity-advice">Periode nyaman: 00:00, 06:00–21:00.</div>
-      </div><div class="activity-card reveal reveal-delay-3" style="--accent-color:#35e8a4">
+        <div class="activity-status">Sesuaikan Jadwal</div>
+        <div class="activity-advice">Pilih jam alternatif: 00:00–03:00, 09:00–12:00, 18:00–21:00.</div>
+      </div><div class="activity-card reveal reveal-delay-3" style="--accent-color:#ffd052">
         <div class="activity-name">Fotografi</div>
-        <div class="activity-status">Sangat Baik</div>
-        <div class="activity-advice">Kondisi cahaya pagi dan sore terpantau optimal.</div>
+        <div class="activity-status">Gunakan Pelindung</div>
+        <div class="activity-advice">Lindungi peralatan elektronik dari kelembapan.</div>
       </div></div>
   </div></section>
 <footer class="footer">
   <div class="container">
     <div class="footer-brand">LANGIT</div>
-    <div class="footer-version">LANGIT v65.1 · Diperbarui 13/06/2026, 20:35 WIB</div>
+    <div class="footer-version">LANGIT v65.1 · Diperbarui 14/06/2026, 10:23 WIB</div>
     <div class="footer-links">
-      <a class="footer-link" href="langit_model_court.html">Keandalan data</a>
-      <a class="footer-link" href="sentinel_x_accuracy_public.html">Akurasi</a>
+      <a class="footer-link" href="keandalan_data.html">Keandalan data</a>
+      <a class="footer-link" href="akurasi_data.html">Akurasi</a>
       <a class="footer-link" href="langit_api_v1.json">JSON</a>
       <a class="footer-link" href="langit_location.geojson">GeoJSON</a>
     </div>
   </div>
 </footer>
 </main>
-<script>window.LANGIT_CONFIG = {"location_name": "Jatinangor, Sumedang", "location_slug": "jatinangor", "latitude": -6.938, "longitude": 107.7556, "risk_class": "safe", "condition": "Lembap malam", "is_portal": false};</script>
+<script>window.LANGIT_CONFIG = {"location_name": "Jatinangor, Sumedang", "location_slug": "jatinangor", "latitude": -6.938, "longitude": 107.7556, "altitude": 725, "risk_class": "rain", "condition": "Hujan lokal", "is_portal": false};</script>
 <script>
 (function(){
   'use strict';
@@ -1878,11 +1878,28 @@ function decidePlanner(){
   let atmoWidth = 0, atmoHeight = 0;
   let animId = null;
 
+  let isAtmoVisible = true;
   if (atmoCanvas && !prefersReducedMotion) {
     atmoCtx = atmoCanvas.getContext('2d');
     resizeAtmo();
     initParticles();
-    animLoop();
+    
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          isAtmoVisible = entry.isIntersecting;
+          if (isAtmoVisible && !animId) {
+            animLoop();
+          } else if (!isAtmoVisible && animId) {
+            cancelAnimationFrame(animId);
+            animId = null;
+          }
+        });
+      }, { threshold: 0.01 });
+      observer.observe(atmoCanvas);
+    } else {
+      animLoop();
+    }
   }
 
   function resizeAtmo() {
@@ -1955,7 +1972,10 @@ function decidePlanner(){
   }
 
   function animLoop() {
-    if (!atmoCtx) return;
+    if (!atmoCtx || !isAtmoVisible) {
+      animId = null;
+      return;
+    }
     atmoCtx.clearRect(0, 0, atmoWidth, atmoHeight);
 
     particles.forEach(p => {
@@ -2286,6 +2306,13 @@ function decidePlanner(){
         triggerCounters(targetPanel);
       }
       
+      // Notify map frames to update layout when tabs change
+      document.querySelectorAll('.map-frame').forEach(iframe => {
+        if (iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ type: 'invalidateSize' }, '*');
+        }
+      });
+      
       updateTimelineProgress();
     });
   });
@@ -2352,7 +2379,7 @@ function decidePlanner(){
     if (sheet && sheetTrigger) {
       sheetTrigger.addEventListener('click', (ev) => {
         // If mobile, prevent default details collapse and show sliding bottom sheet instead
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth < 768) {
           ev.preventDefault();
           sheet.classList.add('open');
         }
@@ -2388,10 +2415,10 @@ function decidePlanner(){
       overlay.innerHTML = `
         <canvas id="spatial-canvas"></canvas>
         <div class="spatial-hud">
-          <div class="spatial-title">INITIALIZING SPACE SCANNER</div>
-          <div class="spatial-status" id="spatial-status">CONNECTING TO ORBIT...</div>
+          <div class="spatial-title">MENYIAPKAN DATA CUACA</div>
+          <div class="spatial-status" id="spatial-status">MEMUAT DATA PRAKIRAAN...</div>
         </div>
-        <button class="spatial-skip">Skip Scan</button>
+        <button class="spatial-skip">Lewati</button>
       `;
       document.body.appendChild(overlay);
     }
@@ -2414,18 +2441,18 @@ function decidePlanner(){
     let frame = 0;
     
     const telemetrySteps = [
-      { p: 0.0, txt: 'CONNECTING TO WEATHER SATELLITE...' },
-      { p: 0.2, txt: 'TELEMETRY SECURED. MAPPING ORBIT...' },
-      { p: 0.45, txt: 'INITIALIZING COORDINATE SEARCH: INDONESIA [ACTIVE]' },
-      { p: 0.7, txt: 'SCANNING REGION: ' + (config.location_name || 'ITB AREA').toUpperCase() + ' [TARGET: ITB AREA]' },
-      { p: 0.9, txt: 'COORDINATES LOCKED: ' + (config.location_name || 'ITB').toUpperCase() + ' CAMPUS' }
+      { p: 0.0, txt: 'Menghubungkan ke satelit cuaca...' },
+      { p: 0.2, txt: 'Telemetri aman. Memetakan orbit...' },
+      { p: 0.45, txt: 'Menginisialisasi pencarian koordinat wilayah Indonesia...' },
+      { p: 0.7, txt: 'Memindai wilayah: ' + (config.location_name || 'ITB').toUpperCase() },
+      { p: 0.9, txt: 'Koordinat terkunci: Kampus ' + (config.location_name || 'ITB').toUpperCase() }
     ];
 
     let requestID = null;
 
     function drawScanner() {
       frame++;
-      scanProgress += 0.006;
+      scanProgress += 0.014;
       if (scanProgress >= 1.0) scanProgress = 1.0;
 
       // Draw High Tech background grid
@@ -2521,11 +2548,7 @@ function decidePlanner(){
         const lat = config.latitude !== undefined && config.latitude !== null ? config.latitude : -6.8830;
         const lon = config.longitude !== undefined && config.longitude !== null ? config.longitude : 107.6130;
         
-        let alt = '832';
-        const slug = config.location_slug || '';
-        if (slug.includes('dago')) alt = '760';
-        else if (slug.includes('jatinangor')) alt = '725';
-        else if (slug.includes('arjawinangun')) alt = '10';
+        const alt = config.altitude !== undefined && config.altitude !== null ? config.altitude : '832';
 
         const latSign = lat < 0 ? 'S' : 'N';
         const lonSign = lon < 0 ? 'W' : 'E';

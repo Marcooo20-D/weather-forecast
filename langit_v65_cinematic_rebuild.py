@@ -350,6 +350,8 @@ def row_to_hour(row: Dict[str, Any], fallback_date: Optional[dt.date] = None, fa
         "hour": hh, "temp_c": temp, "humidity_pct": rh, "heat_index_c": heat,
         "rain_probability": rain, "wind_kmh": wind, "risk_score": round(score),
         "risk_class": cls, "risk_label": risk_label(cls), "condition": cond, "valid": valid,
+        "wind_dir": num(pick(row, "wind_direction_deg", "wind_direction", "wind_dir", "arah_angin")),
+        "cloud_pct": num(pick(row, "cloud_cover_pct", "cloud_cover", "cloud_p50", "cloud_pct", "awan")),
     }
 
 
@@ -638,7 +640,7 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
         parsed = [row_to_hour(r, date_value, relatives[i]) for r in chunk] if chunk else default_hours(date_value, relatives[i])
         days.append(summarize_day(relatives[i], date_value, parsed))
     
-    # Enrich days with cloud cover from sentinel_x.csv
+    # Enrich days with cloud cover and wind direction from sentinel_x.csv
     sentinel_map = {}
     for fname in ["sentinel_x.csv", "sentinel_x_all_locations.csv"]:
         spath = safe_find_file(directory, fname)
@@ -647,14 +649,22 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
                 t_date = text(sr.get("target_date"))
                 t_jam = hour(sr.get("jam"))
                 if t_date and t_jam:
-                    sentinel_map[(t_date, t_jam)] = num(sr.get("cloud_p50"))
+                    sentinel_map[(t_date, t_jam)] = (
+                        num(sr.get("cloud_p50")),
+                        num(sr.get("wind_direction_deg"))
+                    )
             break
             
     for d in days:
         date_iso = text(d.get("date_iso"))
         for h in d.get("hours", []):
             h_time = h.get("hour")
-            cloud = sentinel_map.get((date_iso, h_time))
+            sentinel_data = sentinel_map.get((date_iso, h_time))
+            
+            # Cloud cover enrichment
+            cloud = sentinel_data[0] if sentinel_data else None
+            if cloud is None:
+                cloud = h.get("cloud_pct")
             if cloud is None:
                 cond = text(h.get("condition"), "").lower()
                 if any(k in cond for k in ["hujan lebat", "danger", "ekstrem"]):
@@ -668,6 +678,14 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
                 else:
                      cloud = 15.0
             h["cloud_pct"] = cloud
+
+            # Wind direction enrichment
+            wind_dir = sentinel_data[1] if sentinel_data else None
+            if wind_dir is None:
+                wind_dir = h.get("wind_dir")
+            if wind_dir is None:
+                wind_dir = 0.0
+            h["wind_dir"] = wind_dir
 
     sources: List[Dict[str, Any]] = []
     for fname in ["source_status.csv", "source_status_all_locations.csv", "langit_source_status.csv"]:
@@ -2421,11 +2439,28 @@ JS_V65 = r'''
   let atmoWidth = 0, atmoHeight = 0;
   let animId = null;
 
+  let isAtmoVisible = true;
   if (atmoCanvas && !prefersReducedMotion) {
     atmoCtx = atmoCanvas.getContext('2d');
     resizeAtmo();
     initParticles();
-    animLoop();
+    
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          isAtmoVisible = entry.isIntersecting;
+          if (isAtmoVisible && !animId) {
+            animLoop();
+          } else if (!isAtmoVisible && animId) {
+            cancelAnimationFrame(animId);
+            animId = null;
+          }
+        });
+      }, { threshold: 0.01 });
+      observer.observe(atmoCanvas);
+    } else {
+      animLoop();
+    }
   }
 
   function resizeAtmo() {
@@ -2498,7 +2533,10 @@ JS_V65 = r'''
   }
 
   function animLoop() {
-    if (!atmoCtx) return;
+    if (!atmoCtx || !isAtmoVisible) {
+      animId = null;
+      return;
+    }
     atmoCtx.clearRect(0, 0, atmoWidth, atmoHeight);
 
     particles.forEach(p => {
@@ -2829,6 +2867,13 @@ JS_V65 = r'''
         triggerCounters(targetPanel);
       }
       
+      // Notify map frames to update layout when tabs change
+      document.querySelectorAll('.map-frame').forEach(iframe => {
+        if (iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ type: 'invalidateSize' }, '*');
+        }
+      });
+      
       updateTimelineProgress();
     });
   });
@@ -2895,7 +2940,7 @@ JS_V65 = r'''
     if (sheet && sheetTrigger) {
       sheetTrigger.addEventListener('click', (ev) => {
         // If mobile, prevent default details collapse and show sliding bottom sheet instead
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth < 768) {
           ev.preventDefault();
           sheet.classList.add('open');
         }
@@ -2931,10 +2976,10 @@ JS_V65 = r'''
       overlay.innerHTML = `
         <canvas id="spatial-canvas"></canvas>
         <div class="spatial-hud">
-          <div class="spatial-title">INITIALIZING SPACE SCANNER</div>
-          <div class="spatial-status" id="spatial-status">CONNECTING TO ORBIT...</div>
+          <div class="spatial-title">MENYIAPKAN DATA CUACA</div>
+          <div class="spatial-status" id="spatial-status">MEMUAT DATA PRAKIRAAN...</div>
         </div>
-        <button class="spatial-skip">Skip Scan</button>
+        <button class="spatial-skip">Lewati</button>
       `;
       document.body.appendChild(overlay);
     }
@@ -2957,18 +3002,18 @@ JS_V65 = r'''
     let frame = 0;
     
     const telemetrySteps = [
-      { p: 0.0, txt: 'CONNECTING TO WEATHER SATELLITE...' },
-      { p: 0.2, txt: 'TELEMETRY SECURED. MAPPING ORBIT...' },
-      { p: 0.45, txt: 'INITIALIZING COORDINATE SEARCH: INDONESIA [ACTIVE]' },
-      { p: 0.7, txt: 'SCANNING REGION: ' + (config.location_name || 'ITB AREA').toUpperCase() + ' [TARGET: ITB AREA]' },
-      { p: 0.9, txt: 'COORDINATES LOCKED: ' + (config.location_name || 'ITB').toUpperCase() + ' CAMPUS' }
+      { p: 0.0, txt: 'Menghubungkan ke satelit cuaca...' },
+      { p: 0.2, txt: 'Telemetri aman. Memetakan orbit...' },
+      { p: 0.45, txt: 'Menginisialisasi pencarian koordinat wilayah Indonesia...' },
+      { p: 0.7, txt: 'Memindai wilayah: ' + (config.location_name || 'ITB').toUpperCase() },
+      { p: 0.9, txt: 'Koordinat terkunci: Kampus ' + (config.location_name || 'ITB').toUpperCase() }
     ];
 
     let requestID = null;
 
     function drawScanner() {
       frame++;
-      scanProgress += 0.006;
+      scanProgress += 0.014;
       if (scanProgress >= 1.0) scanProgress = 1.0;
 
       // Draw High Tech background grid
@@ -3064,11 +3109,7 @@ JS_V65 = r'''
         const lat = config.latitude !== undefined && config.latitude !== null ? config.latitude : -6.8830;
         const lon = config.longitude !== undefined && config.longitude !== null ? config.longitude : 107.6130;
         
-        let alt = '832';
-        const slug = config.location_slug || '';
-        if (slug.includes('dago')) alt = '760';
-        else if (slug.includes('jatinangor')) alt = '725';
-        else if (slug.includes('arjawinangun')) alt = '10';
+        const alt = config.altitude !== undefined && config.altitude !== null ? config.altitude : '832';
 
         const latSign = lat < 0 ? 'S' : 'N';
         const lonSign = lon < 0 ? 'W' : 'E';
@@ -3187,7 +3228,7 @@ def v65_nav(api: Dict[str, Any], active: str, root: bool = False) -> str:
         subtitle = f"Portal · {VERSION}"
         href = "index.html"
     else:
-        items = [("Hari ini", "anemos_app.html", "today"), ("3 hari ke depan", "anemos_3day.html", "3day"), ("Panduan Aktivitas", "anemos_activity.html", "activity"), ("Peta", "langit_map_room.html", "map")]
+        items = [("Hari ini", "langit_app.html", "today"), ("3 hari ke depan", "langit_3day.html", "3day"), ("Panduan Aktivitas", "langit_activity.html", "activity"), ("Peta", "langit_map_room.html", "map")]
         subtitle = f'{api["location_name"]} · {VERSION}'
         href = "../index.html"
     links_arr = []
@@ -3210,19 +3251,28 @@ def v65_document(api: Dict[str, Any], active: str, title: str, body: str, root: 
     footer_links = ""
     if not root:
         footer_links = '''<div class="footer-links">
-      <a class="footer-link" href="langit_model_court.html">Keandalan data</a>
-      <a class="footer-link" href="sentinel_x_accuracy_public.html">Akurasi</a>
+      <a class="footer-link" href="keandalan_data.html">Keandalan data</a>
+      <a class="footer-link" href="akurasi_data.html">Akurasi</a>
       <a class="footer-link" href="langit_api_v1.json">JSON</a>
       <a class="footer-link" href="langit_location.geojson">GeoJSON</a>
     </div>'''
     
     # Inject dynamic metadata config for client-side spatial scripts
     import json
+    slug = api.get("location_slug", "portal")
+    alt = 832
+    if "dago" in slug:
+        alt = 760
+    elif "jatinangor" in slug:
+        alt = 725
+    elif "arjawinangun" in slug:
+        alt = 10
     config = {
         "location_name": api.get("location_name", "ITB Bandung"),
-        "location_slug": api.get("location_slug", "portal"),
+        "location_slug": slug,
         "latitude": api.get("latitude"),
         "longitude": api.get("longitude"),
+        "altitude": alt,
         "risk_class": api.get("today", {}).get("risk_class", "watch") if api.get("today") else "watch",
         "condition": api.get("today", {}).get("condition", "Berawan") if api.get("today") else "Berawan",
         "is_portal": root
@@ -3464,8 +3514,8 @@ def v65_command_center(api: Dict[str, Any]) -> str:
           <h3 style="font-size:18px;font-weight:800;margin:8px 0 12px;font-family:var(--font-display);">Keandalan Data</h3>
           <p style="font-size:13px;color:var(--cloud);line-height:1.6;margin-bottom:16px;">Monitoring otomatis keandalan dan tingkat akurasi verifikasi data cuaca.</p>
           <div style="display:flex;gap:12px;">
-            <a class="btn btn-primary" href="langit_model_court.html">Keandalan Data</a>
-            <a class="btn" href="sentinel_x_accuracy_public.html">Akurasi</a>
+            <a class="btn btn-primary" href="keandalan_data.html">Keandalan Data</a>
+            <a class="btn" href="akurasi_data.html">Akurasi</a>
           </div>
         </div>
       </div>
@@ -3553,6 +3603,7 @@ def v65_geo_for_api(api: Dict[str, Any]) -> Dict[str, Any]:
                     "condition": h.get("condition"), "temp_c": h.get("temp_c"),
                     "humidity_pct": h.get("humidity_pct"), "heat_index_c": h.get("heat_index_c"),
                     "wind_kmh": num(h.get("wind_kmh"), 0.0),
+                    "wind_dir": num(h.get("wind_dir"), 0.0),
                     "cloud_pct": num(h.get("cloud_pct"), 0.0),
                 },
             })
@@ -3564,7 +3615,8 @@ html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family
 .hud::-webkit-scrollbar{width:4px}
 .hud::-webkit-scrollbar-track{background:transparent}
 .hud::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
-#particle-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800}
+.canvas-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:430}
+.wind-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:440}
 .hud{position:absolute;z-index:1000;left:24px;top:24px;width:min(340px,calc(100% - 48px));padding:24px;border-radius:24px;background:rgba(7,14,30,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);box-shadow:0 24px 80px rgba(0,0,0,0.5),inset 0 1px 1px rgba(255,255,255,0.1);animation:slideIn 0.6s cubic-bezier(0.16,1,0.3,1) both}
 .hud-collapse-toggle{display:none}
 .legend-toggle{display:none}
@@ -3663,15 +3715,13 @@ html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family
 }
 '''
     js = r'''
-const data = __DATA__;
+const geojson = __DATA__;
 const colors = {safe:'#10b981', watch:'#f59e0b', rain:'#ff9d42', danger:'#ef4444', limited:'#94a3b8'};
-const features = (data && data.features) ? data.features : [];
+const features = (geojson && geojson.features) ? geojson.features : [];
 
-// Find first coordinate center
 const first = features[0] || {geometry:{coordinates:[106.8,-6.2]}, properties:{location_name:'Lokasi'}};
 const center = first.geometry && first.geometry.coordinates ? [first.geometry.coordinates[1], first.geometry.coordinates[0]] : [-6.2,106.8];
 
-// Particle Engine live states
 const state = {
   windSpeed: 2.0,
   cloudPct: 40.0,
@@ -3679,6 +3729,27 @@ const state = {
   humidityPct: 70.0,
   rainProb: 0.0,
   activeLayer: 'risiko'
+};
+
+let currentSelectedFeatures = [];
+let activeLocSlug = (first.properties && first.properties.slug) || '';
+
+const layerDefs = {
+  risiko: { key: 'risiko', label: 'Risiko', field: 'risk_score', unit: '/100', min: 0, max: 100, palette: 'risk' },
+  temp: { key: 'temp', label: 'Suhu', field: 'temp_c', unit: '°C', min: 18, max: 38, palette: 'temp' },
+  rain: { key: 'rain', label: 'Hujan', field: 'rain_probability', unit: '%', min: 0, max: 100, palette: 'rain' },
+  wind: { key: 'wind', label: 'Angin', field: 'wind_kmh', unit: ' km/jam', min: 0, max: 45, palette: 'wind' },
+  humidity: { key: 'humidity', label: 'Lembap', field: 'humidity_pct', unit: '%', min: 35, max: 100, palette: 'humidity' },
+  cloud: { key: 'cloud', label: 'Awan', field: 'cloud_pct', unit: '%', min: 0, max: 100, palette: 'cloud' }
+};
+
+const palettes = {
+  risk: ['#2ee6c9','#f4cd4c','#f06b3a','#ff486b'],
+  rain: ['#35d9ff','#2f8dff','#8554ff','#ff4f8b'],
+  temp: ['#1a7cff','#27e2d1','#f6cf48','#ff6c3e'],
+  humidity: ['#26dfc7','#377cff','#7b5cff'],
+  cloud: ['#0fa7ff','#9aa7b7','#f0f5ff'],
+  wind: ['#21d8d0','#f0ca45','#ff5b45']
 };
 
 function scrollPillIntoView(idx) {
@@ -3873,12 +3944,140 @@ function updateLegend() {
 
 let activeTimeIndex = 0;
 
+function num(v){ const n = Number(v); return Number.isFinite(n) ? n : null; }
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function norm(v, min, max){ const n=num(v); if(n===null) return null; return clamp((n-min)/(max-min),0,1); }
+function hexToRgb(hex){ const h=hex.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+function mix(a,b,t){return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)];}
+
+function colorFor(layerKey, value){
+  const layer=layerDefs[layerKey]; const t=norm(value, layer.min, layer.max); if(t===null) return null;
+  const pal=(palettes[layer.palette]||palettes.risk).map(hexToRgb);
+  const x=t*(pal.length-1); const i=Math.min(pal.length-2, Math.floor(x)); const f=x-i;
+  const c=mix(pal[i],pal[i+1],f); return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+function valueLabel(layerKey,value){
+  const layer=layerDefs[layerKey]; const n=num(value);
+  if(n===null) return 'Data belum tersedia';
+  const rounded = Math.abs(n)>=100 ? Math.round(n) : (Math.round(n*10)/10);
+  return `${rounded}${layer.unit||''}`;
+}
+
+function fieldValueAtPoint(layerKey, x, y){
+  const layer = layerDefs[layerKey]; 
+  if(!layer) return {value:null, alpha:0, windDir:null, windSpeed:null};
+  let total=0, wsum=0, nearestKm=Infinity, windX=0, windY=0, windW=0;
+  const ll = map.containerPointToLatLng([x,y]);
+  const isPortal = new Set(features.map(f => f.properties.slug)).size > 1;
+  for(const f of currentSelectedFeatures){
+    const p = f.properties;
+    const value = num(p[layer.field]); 
+    if(value===null) continue;
+    const coords = f.geometry.coordinates;
+    const d = map.distance(ll, [coords[1], coords[0]]) / 1000;
+    nearestKm = Math.min(nearestKm, d);
+    let w;
+    if(isPortal){ 
+      w = 1 / Math.pow(d + 12, 2.15); 
+    } else { 
+      const radius=72; 
+      if(d>radius) continue; 
+      w = Math.pow(1 - d/radius, 2.2); 
+    }
+    total += value*w; wsum += w;
+
+    const ws = num(p.wind_kmh) / 3.6; // m/s
+    const wd = num(p.wind_dir);
+    if(ws!==null && wd!==null){
+      const rad = (wd + 180) * Math.PI / 180;
+      windX += Math.sin(rad)*ws*w; 
+      windY += -Math.cos(rad)*ws*w; 
+      windW += w;
+    }
+  }
+  if(wsum<=0) return {value:null, alpha:0, windDir:null, windSpeed:null};
+  let alpha = isPortal ? 0.55 : clamp(1 - nearestKm/72, 0, .62);
+  if(state.activeLayer==='wind') alpha += .08;
+  const wx = windW>0 ? windX/windW : null, wy = windW>0 ? windY/windW : null;
+  const speed = wx===null ? null : Math.sqrt(wx*wx + wy*wy);
+  const dir = wx===null ? null : (Math.atan2(wx, -wy)*180/Math.PI + 360) % 360;
+  return {value:total/wsum, alpha, windDir:dir, windSpeed:speed};
+}
+
+const fieldCanvas = document.getElementById('fieldCanvas');
+const windCanvas = document.getElementById('windCanvas');
+const fctx = fieldCanvas.getContext('2d');
+const wctx = windCanvas.getContext('2d');
+
+function resizeCanvas(){
+  const s = map.getSize();
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  for (const c of [fieldCanvas, windCanvas]) {
+    if (!c) continue;
+    c.style.width = s.x + 'px'; c.style.height = s.y + 'px';
+    c.width = Math.round(s.x*dpr); c.height = Math.round(s.y*dpr);
+    const ctx = c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+}
+
+function drawField(){
+  resizeCanvas();
+  const s=map.getSize(); fctx.clearRect(0,0,s.x,s.y);
+  const layer=layerDefs[state.activeLayer]; if(!layer) return;
+  const step = map.getZoom() >= 10 ? 7 : 9;
+  for(let y=0;y<s.y;y+=step){
+    for(let x=0;x<s.x;x+=step){
+      const fv=fieldValueAtPoint(state.activeLayer,x+step/2,y+step/2);
+      if(fv.value===null || fv.alpha<=.02) continue;
+      fctx.fillStyle=colorFor(state.activeLayer,fv.value);
+      fctx.globalAlpha=fv.alpha;
+      fctx.fillRect(x,y,step+1,step+1);
+    }
+  }
+  fctx.globalAlpha=1;
+}
+
+let particles=[];
+function resetParticles(){
+  const s=map.getSize(); particles=[];
+  const count = Math.round(clamp((s.x*s.y)/14500, 55, 160));
+  for(let i=0;i<count;i++) particles.push({x:Math.random()*s.x,y:Math.random()*s.y,age:Math.random()*90});
+}
+
+function drawWind(){
+  if (!document.getElementById('windCanvas')) return;
+  const s=map.getSize();
+  wctx.clearRect(0,0,s.x,s.y);
+  const anyWind = currentSelectedFeatures.some(f => f.properties.wind_kmh > 0);
+  if(!anyWind){ requestAnimationFrame(drawWind); return; }
+  wctx.lineWidth = 1.1; wctx.strokeStyle='rgba(188,230,255,.26)';
+  for(const p of particles){
+    const fv=fieldValueAtPoint('wind',p.x,p.y); const sp=num(fv.windSpeed), dir=num(fv.windDir);
+    if(sp===null || dir===null || fv.alpha<=.02){ p.x=Math.random()*s.x; p.y=Math.random()*s.y; p.age=0; continue; }
+    const rad=dir*Math.PI/180; const scale=0.22+Math.min(1.5,sp)*0.05;
+    const vx=Math.sin(rad)*(1.8+sp)*scale, vy=-Math.cos(rad)*(1.8+sp)*scale;
+    const px=p.x-vx*5, py=p.y-vy*5;
+    wctx.globalAlpha=clamp(.08+fv.alpha*.35,0,.44);
+    wctx.beginPath(); wctx.moveTo(px,py); wctx.lineTo(p.x,p.y); wctx.stroke();
+    p.x+=vx; p.y+=vy; p.age++;
+    if(p.x<0||p.y<0||p.x>s.x||p.y>s.y||p.age>180){p.x=Math.random()*s.x;p.y=Math.random()*s.y;p.age=0;}
+  }
+  wctx.globalAlpha=1;
+  requestAnimationFrame(drawWind);
+}
+
 function drawForTime(dateIso, activeHour) {
   layer.clearLayers();
-  const selected = features.filter(f => f.properties.date_iso === dateIso && f.properties.hour === activeHour);
-  if (!selected.length) return;
+  currentSelectedFeatures = features.filter(f => f.properties.date_iso === dateIso && f.properties.hour === activeHour);
+  if (!currentSelectedFeatures.length) return;
 
-  const activeLoc = selected[0].properties;
+  let activeLocFeature = currentSelectedFeatures.find(f => f.properties.slug === activeLocSlug);
+  if (!activeLocFeature) {
+    activeLocFeature = currentSelectedFeatures[0];
+    activeLocSlug = activeLocFeature.properties.slug;
+  }
+  const activeLoc = activeLocFeature.properties;
   state.windSpeed = activeLoc.wind_kmh || 2.0;
   state.cloudPct = activeLoc.cloud_pct || 40.0;
   state.tempC = activeLoc.temp_c || 24.0;
@@ -3887,10 +4086,11 @@ function drawForTime(dateIso, activeHour) {
 
   updateHUDValues(activeLoc);
 
-  selected.forEach(f => {
+  currentSelectedFeatures.forEach(f => {
     const p = f.properties;
     const coords = f.geometry.coordinates;
     const latlng = [coords[1], coords[0]];
+    let marker = null;
 
     if (state.activeLayer === 'risiko') {
       const cls = p.risk_class || 'limited';
@@ -3902,14 +4102,14 @@ function drawForTime(dateIso, activeHour) {
           <div class="pulse-ring"></div>
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [size * 3, size * 3],
           iconAnchor: [size * 1.5, size * 1.5]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
 
     } else if (state.activeLayer === 'temp') {
       const temp = p.temp_c || 24;
@@ -3919,14 +4119,14 @@ function drawForTime(dateIso, activeHour) {
           ${Math.round(temp)}°C
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [45, 24],
           iconAnchor: [22, 12]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
 
     } else if (state.activeLayer === 'rain') {
       const rain = p.rain_probability || 0;
@@ -3937,14 +4137,14 @@ function drawForTime(dateIso, activeHour) {
           <div class="radar-core"></div>
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [60, 60],
           iconAnchor: [30, 30]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
 
     } else if (state.activeLayer === 'wind') {
       const wind = p.wind_kmh || 0;
@@ -3956,14 +4156,14 @@ function drawForTime(dateIso, activeHour) {
           ${wind.toFixed(1)} km/jam
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [80, 24],
           iconAnchor: [40, 12]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
 
     } else if (state.activeLayer === 'humidity') {
       const hum = p.humidity_pct || 70;
@@ -3974,14 +4174,14 @@ function drawForTime(dateIso, activeHour) {
           <div style="width:6px; height:6px; background:#fff; border-radius:50%; margin:auto; position:absolute; inset:0"></div>
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [size, size],
           iconAnchor: [size/2, size/2]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
 
     } else if (state.activeLayer === 'cloud') {
       const cld = p.cloud_pct || 40;
@@ -3992,23 +4192,33 @@ function drawForTime(dateIso, activeHour) {
           <div style="width:4px; height:4px; background:#fff; border-radius:50%; margin:auto; position:absolute; inset:0"></div>
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
+    }
+
+    if (marker) {
+      marker.on('click', () => {
+        activeLocSlug = p.slug;
+        updateHUDValues(p);
+      });
+      marker.bindPopup(ptxt(p)).addTo(layer);
     }
   });
+
+  drawField();
 }
 
 function switchLayer(layerName) {
   state.activeLayer = layerName;
   document.querySelectorAll('.param-tab').forEach(tab => {
     if (tab.getAttribute('data-layer') === layerName) {
-      tab.classList.add('active');
+      tab.classList.add('active\');
     } else {
       tab.classList.remove('active');
     }
@@ -4085,7 +4295,6 @@ try {
   
   var layer = L.layerGroup().addTo(map);
   
-  // Sort and build timeline
   features.sort((a,b) => {
     const da = (a.properties && a.properties.date_iso) || '';
     const db = (b.properties && b.properties.date_iso) || '';
@@ -4097,7 +4306,6 @@ try {
     return ha.localeCompare(hb);
   });
   
-  // Filter to get a single unique location's time slots
   const firstLocSlug = (first.properties && first.properties.slug) || '';
   const locTimeline = features.filter(f => f.properties && f.properties.slug === firstLocSlug);
   const scrubber = document.getElementById('time-scrubber');
@@ -4133,7 +4341,6 @@ try {
     document.getElementById('val-humidity').textContent = '—';
   }
 
-  // Fit map bounds to show all markers automatically
   if (features.length) {
     const coordsList = features.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0]]);
     const bounds = L.latLngBounds(coordsList);
@@ -4142,7 +4349,6 @@ try {
     map.setView(center, 12);
   }
 
-  // Keyboard controls
   document.addEventListener('keydown', (e) => {
     const pills = document.querySelectorAll('.time-pill');
     if (!pills.length) return;
@@ -4162,7 +4368,6 @@ try {
   document.body.insertAdjacentHTML('beforeend','<div style="position:absolute;inset:0;display:grid;place-items:center;color:#6b8ab5;background:#030712;z-index:9999;font-family:sans-serif;padding:20px;text-align:center;">Peta dasar belum dapat dimuat. Data lokasi tetap tersedia.</div>');
 }
 
-// Sync with postMessage from parent dashboard window
 window.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'switchLayer') {
     switchLayer(e.data.layer);
@@ -4171,13 +4376,11 @@ window.addEventListener('message', (e) => {
   }
 });
 
-// Hide the back button if embedded inside an iframe
 if (window.self !== window.top) {
   const backBtn = document.getElementById('hud-back-btn');
   if (backBtn) backBtn.style.display = 'none';
 }
 
-// Collapsible HUD toggle
 const hudEl = document.querySelector('.hud');
 const hudToggle = document.querySelector('.hud-collapse-toggle');
 if (hudEl && hudToggle) {
@@ -4186,7 +4389,6 @@ if (hudEl && hudToggle) {
   });
 }
 
-// Collapsible Legend toggle
 const legendEl = document.getElementById('map-legend');
 if (legendEl) {
   legendEl.addEventListener('click', (e) => {
@@ -4199,7 +4401,6 @@ if (legendEl) {
   });
 }
 
-// Debounced resize handler for map invalidation
 let resizeTimeout;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimeout);
@@ -4207,9 +4408,7 @@ window.addEventListener('resize', () => {
     if (map) map.invalidateSize();
   }, 150);
 });
-
-'''.replace("__DATA__", data)
-    
+'''
     hud_html = f'''  <section class="hud">
     <button class="hud-collapse-toggle" aria-label="Toggle HUD"><span class="hud-collapse-bar"></span></button>
     <div style="display:flex; justify-content:space-between; align-items:center">
@@ -4274,14 +4473,20 @@ window.addEventListener('resize', () => {
 </head>
 <body>
   <div id="map"></div>
-  <canvas id="particle-canvas"></canvas>
+  <canvas id="fieldCanvas" class="canvas-layer"></canvas>
+  <canvas id="windCanvas" class="wind-layer"></canvas>
   {hud_html}
   {timeline_html}
   {legend_html}
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>{js}</script>
+  <script>
+    resetParticles();
+    drawWind();
+  </script>
 </body>
 </html>'''
+
 def v65_today_page(api: Dict[str, Any]) -> str:
     day = api["today"]
     heading = f"Prakiraan\n{api['location_name']}"
@@ -4497,7 +4702,7 @@ def v65_portal_page(apis: List[Dict[str, Any]], root: Path) -> str:
     for i, api in enumerate(sorted(apis, key=lambda a: clamp(a["today"].get("risk_score"), default=0), reverse=True)):
         d = api["today"]
         cls = d.get("risk_class", "limited")
-        cards.append(f'''<a class="location-card reveal reveal-delay-{(i % 3) + 1}" href="{esc(api["location_slug"])}/anemos_app.html" style="--accent-color:{risk_color(cls)};--accent-glow:{_accent_glow(cls)}">
+        cards.append(f'''<a class="location-card reveal reveal-delay-{(i % 3) + 1}" href="{esc(api["location_slug"])}/langit_app.html" style="--accent-color:{risk_color(cls)};--accent-glow:{_accent_glow(cls)}">
         <span class="status-badge status-{esc(cls)}">{esc(d.get("risk_label"))}</span>
         <h3 class="location-name">{esc(api.get("location_name"))}</h3>
         <p class="location-desc">{esc(d.get("date_label"))}. {esc(decision_sentence(api.get("location_name",""), d, short=True))}</p>
@@ -4508,8 +4713,8 @@ def v65_portal_page(apis: List[Dict[str, Any]], root: Path) -> str:
         </div>
         <div class="location-actions">
           <span class="btn btn-primary">Buka</span>
-          <span class="btn" onclick="event.preventDefault();window.location.href=\'{esc(api["location_slug"])}/anemos_3day.html\'">3 hari</span>
-          <span class="btn" onclick="event.preventDefault();window.location.href=\'{esc(api["location_slug"])}/anemos_activity.html\'">Aktivitas</span>
+          <span class="btn" onclick="event.preventDefault();window.location.href=\'{esc(api["location_slug"])}/langit_3day.html\'">3 hari</span>
+          <span class="btn" onclick="event.preventDefault();window.location.href=\'{esc(api["location_slug"])}/langit_activity.html\'">Aktivitas</span>
         </div>
       </a>''')
 
@@ -4576,6 +4781,7 @@ def v65_portal_geo(apis: List[Dict[str, Any]]) -> Dict[str, Any]:
                         "condition": h.get("condition"), "temp_c": h.get("temp_c"),
                         "humidity_pct": h.get("humidity_pct"), "heat_index_c": h.get("heat_index_c"),
                         "wind_kmh": num(h.get("wind_kmh"), 0.0),
+                        "wind_dir": num(h.get("wind_dir"), 0.0),
                         "cloud_pct": num(h.get("cloud_pct"), 0.0),
                     },
                 })
@@ -4591,7 +4797,7 @@ def verify(root: Path) -> int:
     required_root = [root / "index.html", root / "langit_portal_map.html", root / "langit_portal_manifest.json"]
     missing = [str(p) for p in required_root if not p.exists()]
     for d in location_dirs(root):
-        for name in ["anemos_app.html", "anemos_3day.html", "anemos_activity.html", "langit_map_room.html", "langit_model_court.html", "sentinel_x_accuracy_public.html", "langit_api_v1.json", "langit_location.geojson"]:
+        for name in ["langit_app.html", "langit_3day.html", "langit_activity.html", "langit_map_room.html", "keandalan_data.html", "akurasi_data.html", "langit_api_v1.json", "langit_location.geojson"]:
             if not (d / name).exists():
                 missing.append(str(d / name))
     if missing:
@@ -4630,26 +4836,15 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
         write_json(d / "langit_location.geojson", gj)
         write_json(d / "langit_map_layers.json", {"brand": BRAND, "version": VERSION, "geojson": gj})
         # Main pages
-        write_text(d / "anemos_app.html", v65_today_page(api))
         write_text(d / "langit_app.html", v65_today_page(api))
-        write_text(d / "anemos_today.html", v65_today_page(api))
-        write_text(d / "anemos_3day.html", v65_three_day_page(api))
         write_text(d / "langit_3day.html", v65_three_day_page(api))
-        write_text(d / "anemos_activity.html", v65_activity_page(api))
         write_text(d / "langit_activity.html", v65_activity_page(api))
-        write_text(d / "langit_model_court.html", v65_data_page(api))
-        write_text(d / "sentinel_x_accuracy_public.html", v65_accuracy_page(api, d))
-        map_html = v65_map_page(f"LANGIT Map — {api['location_name']}", gj, "anemos_app.html")
+        write_text(d / "keandalan_data.html", v65_data_page(api))
+        write_text(d / "akurasi_data.html", v65_accuracy_page(api, d))
+        map_html = v65_map_page(f"LANGIT Map — {api['location_name']}", gj, "langit_app.html")
         write_text(d / "langit_map_room.html", map_html)
-        write_text(d / "anemos_map.html", map_html)
-        # Overwrite legacy pages
-        write_text(d / "command_center_sentinel_x.html", v65_today_page(api))
-        write_text(d / "langit_planer.html", v65_planner_page(api))
+        # Overwrite legacy pages/utilities
         write_text(d / "langit_planner.html", v65_planner_page(api))
-        write_text(d / "anemos_commute_advice.html", v65_activity_page(api))
-        write_text(d / "anemos_laundry_advice.html", v65_activity_page(api))
-        write_text(d / "anemos_public_landing.html", v65_today_page(api))
-        write_text(d / "langit_public_landing.html", v65_today_page(api))
         write_text(d / "langit_whatsapp_brief.txt", f"LANGIT — {api['location_name']}\n{api['today']['date_label']}\n{decision_sentence(api['location_name'], api['today'], short=True)}\n")
 
     pgeo = v65_portal_geo(apis)

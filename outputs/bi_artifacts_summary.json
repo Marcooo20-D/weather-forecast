@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-06-14T10:23:40.208351+07:00",
+  "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
+  "dim_sources": {
+    "path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dim_sources.csv",
+    "rows": 9
+  },
+  "dim_locations": {
+    "path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dim_locations.csv",
+    "rows": 3
+  },
+  "ensemble_fact": {
+    "path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\ensemble_fact_all_locations.csv",
+    "rows": 216
+  }
+}

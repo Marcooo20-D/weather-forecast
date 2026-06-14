@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-06-13T20:47:14.479408+07:00",
+  "generated_at": "2026-06-14T10:22:13.692728+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "bmkg_point_name": "Dago",
@@ -14,7 +14,7 @@
   "target_date": "2026-06-14",
   "sources_total": 9,
   "sources_success": 9,
-  "points_total": 216,
+  "points_total": 202,
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -59,8 +59,8 @@
   "low_coverage_slots": [],
   "run_status": "ok",
   "sentinel_x": {
-    "version": "ANEMOS v20 Civic Weather OS",
-    "run_id": "dago_20260614_20260613204714",
+    "version": "ANEMOS Public Weather v11",
+    "run_id": "dago_20260614_20260614102213",
     "csv": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x.csv",
     "json": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x.json",
     "dashboard": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\command_center_sentinel_x.html",
@@ -68,6 +68,6 @@
     "contract": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_forecast_contract.json",
     "ledger": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_ledger.sqlite",
     "daily_operational_status": "GREEN",
-    "autopilot_summary": "Sentinel membaca hari ini sebagai HUMID_STABLE_MORNING untuk Dago, Bandung. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 32.5/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: urban_highland_local_rain; Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
+    "autopilot_summary": "Sentinel membaca hari ini sebagai HUMID_STABLE_MORNING untuk Dago, Bandung. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 29.5/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: urban_highland_local_rain; Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
   }
 }

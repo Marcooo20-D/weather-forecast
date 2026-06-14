@@ -10,7 +10,8 @@ html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family
 .hud::-webkit-scrollbar{width:4px}
 .hud::-webkit-scrollbar-track{background:transparent}
 .hud::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
-#particle-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800}
+.canvas-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:430}
+.wind-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:440}
 .hud{position:absolute;z-index:1000;left:24px;top:24px;width:min(340px,calc(100% - 48px));padding:24px;border-radius:24px;background:rgba(7,14,30,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);box-shadow:0 24px 80px rgba(0,0,0,0.5),inset 0 1px 1px rgba(255,255,255,0.1);animation:slideIn 0.6s cubic-bezier(0.16,1,0.3,1) both}
 .hud-collapse-toggle{display:none}
 .legend-toggle{display:none}
@@ -111,7 +112,8 @@ html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family
 </head>
 <body>
   <div id="map"></div>
-  <canvas id="particle-canvas"></canvas>
+  <canvas id="fieldCanvas" class="canvas-layer"></canvas>
+  <canvas id="windCanvas" class="wind-layer"></canvas>
     <section class="hud">
     <button class="hud-collapse-toggle" aria-label="Toggle HUD"><span class="hud-collapse-bar"></span></button>
     <div style="display:flex; justify-content:space-between; align-items:center">
@@ -154,7 +156,7 @@ html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family
     </div>
 
     <div style="margin-top:20px; display:flex">
-      <a class="btn" id="hud-back-btn" style="flex:1; margin-top:0" href="anemos_app.html">Kembali</a>
+      <a class="btn" id="hud-back-btn" style="flex:1; margin-top:0" href="langit_app.html">Kembali</a>
     </div>
   </section>
     <div class="timeline-container">
@@ -164,15 +166,13 @@ html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family
   <div class="legend" id="map-legend"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-const data = {"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Sabtu, 13 Juni 2026", "date_iso": "2026-06-13", "relative": "Hari ini", "hour": "00:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 25.6, "humidity_pct": 83.0, "heat_index_c": 25.6, "wind_kmh": 4.7, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Sabtu, 13 Juni 2026", "date_iso": "2026-06-13", "relative": "Hari ini", "hour": "03:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 25.1, "humidity_pct": 84.0, "heat_index_c": 25.1, "wind_kmh": 3.6, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Sabtu, 13 Juni 2026", "date_iso": "2026-06-13", "relative": "Hari ini", "hour": "06:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 25.0, "humidity_pct": 85.0, "heat_index_c": 25.0, "wind_kmh": 3.3, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Sabtu, 13 Juni 2026", "date_iso": "2026-06-13", "relative": "Hari ini", "hour": "09:00", "rain_probability": 0, "risk_score": 4, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 29.3, "humidity_pct": 62.0, "heat_index_c": 31.9, "wind_kmh": 4.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Sabtu, 13 Juni 2026", "date_iso": "2026-06-13", "relative": "Hari ini", "hour": "12:00", "rain_probability": 0, "risk_score": 38, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 32.0, "humidity_pct": 51.0, "heat_index_c": 34.6, "wind_kmh": 11.2, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Sabtu, 13 Juni 2026", "date_iso": "2026-06-13", "relative": "Hari ini", "hour": "14:00", "rain_probability": 0, "risk_score": 38, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 31.8, "humidity_pct": 52.0, "heat_index_c": 34.9, "wind_kmh": 13.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Sabtu, 13 Juni 2026", "date_iso": "2026-06-13", "relative": "Hari ini", "hour": "15:00", "rain_probability": 0, "risk_score": 38, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 31.3, "humidity_pct": 56.0, "heat_index_c": 34.7, "wind_kmh": 13.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Sabtu, 13 Juni 2026", "date_iso": "2026-06-13", "relative": "Hari ini", "hour": "18:00", "rain_probability": 25.0, "risk_score": 25, "risk_class": "safe", "risk_label": "Aman", "condition": "Awan tumbuh", "temp_c": 28.5, "humidity_pct": 73.0, "heat_index_c": 31.8, "wind_kmh": 9.1, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Sabtu, 13 Juni 2026", "date_iso": "2026-06-13", "relative": "Hari ini", "hour": "21:00", "rain_probability": 11.0, "risk_score": 11, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 26.9, "humidity_pct": 82.0, "heat_index_c": 29.4, "wind_kmh": 6.5, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 14 Juni 2026", "date_iso": "2026-06-14", "relative": "Besok", "hour": "00:00", "rain_probability": 0, "risk_score": 1, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 26.2, "humidity_pct": 87.0, "heat_index_c": 26.2, "wind_kmh": 6.5, "cloud_pct": 75.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 14 Juni 2026", "date_iso": "2026-06-14", "relative": "Besok", "hour": "02:00", "rain_probability": 41.0, "risk_score": 41, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Awan tumbuh, potensi hujan", "temp_c": 25.8, "humidity_pct": 88.0, "heat_index_c": 25.8, "wind_kmh": 5.4, "cloud_pct": 75.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 14 Juni 2026", "date_iso": "2026-06-14", "relative": "Besok", "hour": "03:00", "rain_probability": 41.0, "risk_score": 41, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Awan tumbuh, potensi hujan", "temp_c": 25.3, "humidity_pct": 89.0, "heat_index_c": 25.3, "wind_kmh": 5.0, "cloud_pct": 88.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 14 Juni 2026", "date_iso": "2026-06-14", "relative": "Besok", "hour": "06:00", "rain_probability": 0, "risk_score": 1, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 25.5, "humidity_pct": 86.0, "heat_index_c": 25.5, "wind_kmh": 5.8, "cloud_pct": 75.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 14 Juni 2026", "date_iso": "2026-06-14", "relative": "Besok", "hour": "09:00", "rain_probability": 0, "risk_score": 24, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 28.3, "humidity_pct": 76.0, "heat_index_c": 32.0, "wind_kmh": 6.2, "cloud_pct": 75.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 14 Juni 2026", "date_iso": "2026-06-14", "relative": "Besok", "hour": "12:00", "rain_probability": 11.0, "risk_score": 38, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 31.0, "humidity_pct": 61.0, "heat_index_c": 35.2, "wind_kmh": 7.6, "cloud_pct": 75.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 14 Juni 2026", "date_iso": "2026-06-14", "relative": "Besok", "hour": "15:00", "rain_probability": 27.0, "risk_score": 28, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Awan tumbuh", "temp_c": 29.0, "humidity_pct": 66.0, "heat_index_c": 33.1, "wind_kmh": 13.3, "cloud_pct": 75.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 14 Juni 2026", "date_iso": "2026-06-14", "relative": "Besok", "hour": "18:00", "rain_probability": 28.0, "risk_score": 28, "risk_class": "safe", "risk_label": "Aman", "condition": "Awan tumbuh", "temp_c": 27.2, "humidity_pct": 79.0, "heat_index_c": 30.3, "wind_kmh": 9.9, "cloud_pct": 45.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 14 Juni 2026", "date_iso": "2026-06-14", "relative": "Besok", "hour": "21:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 26.7, "humidity_pct": 81.0, "heat_index_c": 29.0, "wind_kmh": 7.6, "cloud_pct": 45.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 15 Juni 2026", "date_iso": "2026-06-15", "relative": "Lusa", "hour": "00:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 25.0, "humidity_pct": 84.0, "heat_index_c": 25.0, "wind_kmh": 3.5, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 15 Juni 2026", "date_iso": "2026-06-15", "relative": "Lusa", "hour": "03:00", "rain_probability": 50.0, "risk_score": 50, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 24.0, "humidity_pct": 89.0, "heat_index_c": 24.0, "wind_kmh": 4.7, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 15 Juni 2026", "date_iso": "2026-06-15", "relative": "Lusa", "hour": "04:00", "rain_probability": 57.0, "risk_score": 57, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "temp_c": 24.0, "humidity_pct": 89.0, "heat_index_c": 24.0, "wind_kmh": 4.7, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 15 Juni 2026", "date_iso": "2026-06-15", "relative": "Lusa", "hour": "06:00", "rain_probability": 0, "risk_score": 5, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 24.0, "humidity_pct": 95.0, "heat_index_c": 24.0, "wind_kmh": 4.4, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 15 Juni 2026", "date_iso": "2026-06-15", "relative": "Lusa", "hour": "09:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 27.0, "humidity_pct": 82.0, "heat_index_c": 29.9, "wind_kmh": 3.7, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 15 Juni 2026", "date_iso": "2026-06-15", "relative": "Lusa", "hour": "12:00", "rain_probability": 0, "risk_score": 38, "risk_class": "safe", "risk_label": "Aman", "condition": "Panas lembap", "temp_c": 30.0, "humidity_pct": 73.0, "heat_index_c": 35.8, "wind_kmh": 3.7, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 15 Juni 2026", "date_iso": "2026-06-15", "relative": "Lusa", "hour": "15:00", "rain_probability": 0, "risk_score": 3, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 28.0, "humidity_pct": 78.0, "heat_index_c": 31.8, "wind_kmh": 4.1, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 15 Juni 2026", "date_iso": "2026-06-15", "relative": "Lusa", "hour": "18:00", "rain_probability": 0, "risk_score": 2, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan sore", "temp_c": 26.0, "humidity_pct": 90.0, "heat_index_c": 26.0, "wind_kmh": 4.1, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 15 Juni 2026", "date_iso": "2026-06-15", "relative": "Lusa", "hour": "21:00", "rain_probability": 0, "risk_score": 4, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap malam", "temp_c": 25.0, "humidity_pct": 93.0, "heat_index_c": 25.0, "wind_kmh": 2.1, "cloud_pct": 15.0}}]};
+const geojson = __DATA__;
 const colors = {safe:'#10b981', watch:'#f59e0b', rain:'#ff9d42', danger:'#ef4444', limited:'#94a3b8'};
-const features = (data && data.features) ? data.features : [];
+const features = (geojson && geojson.features) ? geojson.features : [];
 
-// Find first coordinate center
 const first = features[0] || {geometry:{coordinates:[106.8,-6.2]}, properties:{location_name:'Lokasi'}};
 const center = first.geometry && first.geometry.coordinates ? [first.geometry.coordinates[1], first.geometry.coordinates[0]] : [-6.2,106.8];
 
-// Particle Engine live states
 const state = {
   windSpeed: 2.0,
   cloudPct: 40.0,
@@ -180,6 +180,27 @@ const state = {
   humidityPct: 70.0,
   rainProb: 0.0,
   activeLayer: 'risiko'
+};
+
+let currentSelectedFeatures = [];
+let activeLocSlug = (first.properties && first.properties.slug) || '';
+
+const layerDefs = {
+  risiko: { key: 'risiko', label: 'Risiko', field: 'risk_score', unit: '/100', min: 0, max: 100, palette: 'risk' },
+  temp: { key: 'temp', label: 'Suhu', field: 'temp_c', unit: '°C', min: 18, max: 38, palette: 'temp' },
+  rain: { key: 'rain', label: 'Hujan', field: 'rain_probability', unit: '%', min: 0, max: 100, palette: 'rain' },
+  wind: { key: 'wind', label: 'Angin', field: 'wind_kmh', unit: ' km/jam', min: 0, max: 45, palette: 'wind' },
+  humidity: { key: 'humidity', label: 'Lembap', field: 'humidity_pct', unit: '%', min: 35, max: 100, palette: 'humidity' },
+  cloud: { key: 'cloud', label: 'Awan', field: 'cloud_pct', unit: '%', min: 0, max: 100, palette: 'cloud' }
+};
+
+const palettes = {
+  risk: ['#2ee6c9','#f4cd4c','#f06b3a','#ff486b'],
+  rain: ['#35d9ff','#2f8dff','#8554ff','#ff4f8b'],
+  temp: ['#1a7cff','#27e2d1','#f6cf48','#ff6c3e'],
+  humidity: ['#26dfc7','#377cff','#7b5cff'],
+  cloud: ['#0fa7ff','#9aa7b7','#f0f5ff'],
+  wind: ['#21d8d0','#f0ca45','#ff5b45']
 };
 
 function scrollPillIntoView(idx) {
@@ -374,12 +395,140 @@ function updateLegend() {
 
 let activeTimeIndex = 0;
 
+function num(v){ const n = Number(v); return Number.isFinite(n) ? n : null; }
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function norm(v, min, max){ const n=num(v); if(n===null) return null; return clamp((n-min)/(max-min),0,1); }
+function hexToRgb(hex){ const h=hex.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
+function mix(a,b,t){return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)];}
+
+function colorFor(layerKey, value){
+  const layer=layerDefs[layerKey]; const t=norm(value, layer.min, layer.max); if(t===null) return null;
+  const pal=(palettes[layer.palette]||palettes.risk).map(hexToRgb);
+  const x=t*(pal.length-1); const i=Math.min(pal.length-2, Math.floor(x)); const f=x-i;
+  const c=mix(pal[i],pal[i+1],f); return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+function valueLabel(layerKey,value){
+  const layer=layerDefs[layerKey]; const n=num(value);
+  if(n===null) return 'Data belum tersedia';
+  const rounded = Math.abs(n)>=100 ? Math.round(n) : (Math.round(n*10)/10);
+  return `${rounded}${layer.unit||''}`;
+}
+
+function fieldValueAtPoint(layerKey, x, y){
+  const layer = layerDefs[layerKey]; 
+  if(!layer) return {value:null, alpha:0, windDir:null, windSpeed:null};
+  let total=0, wsum=0, nearestKm=Infinity, windX=0, windY=0, windW=0;
+  const ll = map.containerPointToLatLng([x,y]);
+  const isPortal = new Set(features.map(f => f.properties.slug)).size > 1;
+  for(const f of currentSelectedFeatures){
+    const p = f.properties;
+    const value = num(p[layer.field]); 
+    if(value===null) continue;
+    const coords = f.geometry.coordinates;
+    const d = map.distance(ll, [coords[1], coords[0]]) / 1000;
+    nearestKm = Math.min(nearestKm, d);
+    let w;
+    if(isPortal){ 
+      w = 1 / Math.pow(d + 12, 2.15); 
+    } else { 
+      const radius=72; 
+      if(d>radius) continue; 
+      w = Math.pow(1 - d/radius, 2.2); 
+    }
+    total += value*w; wsum += w;
+
+    const ws = num(p.wind_kmh) / 3.6; // m/s
+    const wd = num(p.wind_dir);
+    if(ws!==null && wd!==null){
+      const rad = (wd + 180) * Math.PI / 180;
+      windX += Math.sin(rad)*ws*w; 
+      windY += -Math.cos(rad)*ws*w; 
+      windW += w;
+    }
+  }
+  if(wsum<=0) return {value:null, alpha:0, windDir:null, windSpeed:null};
+  let alpha = isPortal ? 0.55 : clamp(1 - nearestKm/72, 0, .62);
+  if(state.activeLayer==='wind') alpha += .08;
+  const wx = windW>0 ? windX/windW : null, wy = windW>0 ? windY/windW : null;
+  const speed = wx===null ? null : Math.sqrt(wx*wx + wy*wy);
+  const dir = wx===null ? null : (Math.atan2(wx, -wy)*180/Math.PI + 360) % 360;
+  return {value:total/wsum, alpha, windDir:dir, windSpeed:speed};
+}
+
+const fieldCanvas = document.getElementById('fieldCanvas');
+const windCanvas = document.getElementById('windCanvas');
+const fctx = fieldCanvas.getContext('2d');
+const wctx = windCanvas.getContext('2d');
+
+function resizeCanvas(){
+  const s = map.getSize();
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  for (const c of [fieldCanvas, windCanvas]) {
+    if (!c) continue;
+    c.style.width = s.x + 'px'; c.style.height = s.y + 'px';
+    c.width = Math.round(s.x*dpr); c.height = Math.round(s.y*dpr);
+    const ctx = c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+}
+
+function drawField(){
+  resizeCanvas();
+  const s=map.getSize(); fctx.clearRect(0,0,s.x,s.y);
+  const layer=layerDefs[state.activeLayer]; if(!layer) return;
+  const step = map.getZoom() >= 10 ? 7 : 9;
+  for(let y=0;y<s.y;y+=step){
+    for(let x=0;x<s.x;x+=step){
+      const fv=fieldValueAtPoint(state.activeLayer,x+step/2,y+step/2);
+      if(fv.value===null || fv.alpha<=.02) continue;
+      fctx.fillStyle=colorFor(state.activeLayer,fv.value);
+      fctx.globalAlpha=fv.alpha;
+      fctx.fillRect(x,y,step+1,step+1);
+    }
+  }
+  fctx.globalAlpha=1;
+}
+
+let particles=[];
+function resetParticles(){
+  const s=map.getSize(); particles=[];
+  const count = Math.round(clamp((s.x*s.y)/14500, 55, 160));
+  for(let i=0;i<count;i++) particles.push({x:Math.random()*s.x,y:Math.random()*s.y,age:Math.random()*90});
+}
+
+function drawWind(){
+  if (!document.getElementById('windCanvas')) return;
+  const s=map.getSize();
+  wctx.clearRect(0,0,s.x,s.y);
+  const anyWind = currentSelectedFeatures.some(f => f.properties.wind_kmh > 0);
+  if(!anyWind){ requestAnimationFrame(drawWind); return; }
+  wctx.lineWidth = 1.1; wctx.strokeStyle='rgba(188,230,255,.26)';
+  for(const p of particles){
+    const fv=fieldValueAtPoint('wind',p.x,p.y); const sp=num(fv.windSpeed), dir=num(fv.windDir);
+    if(sp===null || dir===null || fv.alpha<=.02){ p.x=Math.random()*s.x; p.y=Math.random()*s.y; p.age=0; continue; }
+    const rad=dir*Math.PI/180; const scale=0.22+Math.min(1.5,sp)*0.05;
+    const vx=Math.sin(rad)*(1.8+sp)*scale, vy=-Math.cos(rad)*(1.8+sp)*scale;
+    const px=p.x-vx*5, py=p.y-vy*5;
+    wctx.globalAlpha=clamp(.08+fv.alpha*.35,0,.44);
+    wctx.beginPath(); wctx.moveTo(px,py); wctx.lineTo(p.x,p.y); wctx.stroke();
+    p.x+=vx; p.y+=vy; p.age++;
+    if(p.x<0||p.y<0||p.x>s.x||p.y>s.y||p.age>180){p.x=Math.random()*s.x;p.y=Math.random()*s.y;p.age=0;}
+  }
+  wctx.globalAlpha=1;
+  requestAnimationFrame(drawWind);
+}
+
 function drawForTime(dateIso, activeHour) {
   layer.clearLayers();
-  const selected = features.filter(f => f.properties.date_iso === dateIso && f.properties.hour === activeHour);
-  if (!selected.length) return;
+  currentSelectedFeatures = features.filter(f => f.properties.date_iso === dateIso && f.properties.hour === activeHour);
+  if (!currentSelectedFeatures.length) return;
 
-  const activeLoc = selected[0].properties;
+  let activeLocFeature = currentSelectedFeatures.find(f => f.properties.slug === activeLocSlug);
+  if (!activeLocFeature) {
+    activeLocFeature = currentSelectedFeatures[0];
+    activeLocSlug = activeLocFeature.properties.slug;
+  }
+  const activeLoc = activeLocFeature.properties;
   state.windSpeed = activeLoc.wind_kmh || 2.0;
   state.cloudPct = activeLoc.cloud_pct || 40.0;
   state.tempC = activeLoc.temp_c || 24.0;
@@ -388,10 +537,11 @@ function drawForTime(dateIso, activeHour) {
 
   updateHUDValues(activeLoc);
 
-  selected.forEach(f => {
+  currentSelectedFeatures.forEach(f => {
     const p = f.properties;
     const coords = f.geometry.coordinates;
     const latlng = [coords[1], coords[0]];
+    let marker = null;
 
     if (state.activeLayer === 'risiko') {
       const cls = p.risk_class || 'limited';
@@ -403,14 +553,14 @@ function drawForTime(dateIso, activeHour) {
           <div class="pulse-ring"></div>
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [size * 3, size * 3],
           iconAnchor: [size * 1.5, size * 1.5]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
 
     } else if (state.activeLayer === 'temp') {
       const temp = p.temp_c || 24;
@@ -420,14 +570,14 @@ function drawForTime(dateIso, activeHour) {
           ${Math.round(temp)}°C
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [45, 24],
           iconAnchor: [22, 12]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
 
     } else if (state.activeLayer === 'rain') {
       const rain = p.rain_probability || 0;
@@ -438,14 +588,14 @@ function drawForTime(dateIso, activeHour) {
           <div class="radar-core"></div>
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [60, 60],
           iconAnchor: [30, 30]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
 
     } else if (state.activeLayer === 'wind') {
       const wind = p.wind_kmh || 0;
@@ -457,14 +607,14 @@ function drawForTime(dateIso, activeHour) {
           ${wind.toFixed(1)} km/jam
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [80, 24],
           iconAnchor: [40, 12]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
 
     } else if (state.activeLayer === 'humidity') {
       const hum = p.humidity_pct || 70;
@@ -475,14 +625,14 @@ function drawForTime(dateIso, activeHour) {
           <div style="width:6px; height:6px; background:#fff; border-radius:50%; margin:auto; position:absolute; inset:0"></div>
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [size, size],
           iconAnchor: [size/2, size/2]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
 
     } else if (state.activeLayer === 'cloud') {
       const cld = p.cloud_pct || 40;
@@ -493,23 +643,33 @@ function drawForTime(dateIso, activeHour) {
           <div style="width:4px; height:4px; background:#fff; border-radius:50%; margin:auto; position:absolute; inset:0"></div>
         </div>
       `;
-      L.marker(latlng, {
+      marker = L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      });
+    }
+
+    if (marker) {
+      marker.on('click', () => {
+        activeLocSlug = p.slug;
+        updateHUDValues(p);
+      });
+      marker.bindPopup(ptxt(p)).addTo(layer);
     }
   });
+
+  drawField();
 }
 
 function switchLayer(layerName) {
   state.activeLayer = layerName;
   document.querySelectorAll('.param-tab').forEach(tab => {
     if (tab.getAttribute('data-layer') === layerName) {
-      tab.classList.add('active');
+      tab.classList.add('active\');
     } else {
       tab.classList.remove('active');
     }
@@ -586,7 +746,6 @@ try {
   
   var layer = L.layerGroup().addTo(map);
   
-  // Sort and build timeline
   features.sort((a,b) => {
     const da = (a.properties && a.properties.date_iso) || '';
     const db = (b.properties && b.properties.date_iso) || '';
@@ -598,7 +757,6 @@ try {
     return ha.localeCompare(hb);
   });
   
-  // Filter to get a single unique location's time slots
   const firstLocSlug = (first.properties && first.properties.slug) || '';
   const locTimeline = features.filter(f => f.properties && f.properties.slug === firstLocSlug);
   const scrubber = document.getElementById('time-scrubber');
@@ -634,7 +792,6 @@ try {
     document.getElementById('val-humidity').textContent = '—';
   }
 
-  // Fit map bounds to show all markers automatically
   if (features.length) {
     const coordsList = features.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0]]);
     const bounds = L.latLngBounds(coordsList);
@@ -643,7 +800,6 @@ try {
     map.setView(center, 12);
   }
 
-  // Keyboard controls
   document.addEventListener('keydown', (e) => {
     const pills = document.querySelectorAll('.time-pill');
     if (!pills.length) return;
@@ -663,7 +819,6 @@ try {
   document.body.insertAdjacentHTML('beforeend','<div style="position:absolute;inset:0;display:grid;place-items:center;color:#6b8ab5;background:#030712;z-index:9999;font-family:sans-serif;padding:20px;text-align:center;">Peta dasar belum dapat dimuat. Data lokasi tetap tersedia.</div>');
 }
 
-// Sync with postMessage from parent dashboard window
 window.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'switchLayer') {
     switchLayer(e.data.layer);
@@ -672,13 +827,11 @@ window.addEventListener('message', (e) => {
   }
 });
 
-// Hide the back button if embedded inside an iframe
 if (window.self !== window.top) {
   const backBtn = document.getElementById('hud-back-btn');
   if (backBtn) backBtn.style.display = 'none';
 }
 
-// Collapsible HUD toggle
 const hudEl = document.querySelector('.hud');
 const hudToggle = document.querySelector('.hud-collapse-toggle');
 if (hudEl && hudToggle) {
@@ -687,7 +840,6 @@ if (hudEl && hudToggle) {
   });
 }
 
-// Collapsible Legend toggle
 const legendEl = document.getElementById('map-legend');
 if (legendEl) {
   legendEl.addEventListener('click', (e) => {
@@ -700,7 +852,6 @@ if (legendEl) {
   });
 }
 
-// Debounced resize handler for map invalidation
 let resizeTimeout;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimeout);
@@ -708,7 +859,10 @@ window.addEventListener('resize', () => {
     if (map) map.invalidateSize();
   }, 150);
 });
-
 </script>
+  <script>
+    resetParticles();
+    drawWind();
+  </script>
 </body>
 </html>

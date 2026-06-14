@@ -1,0 +1,10 @@
+source_id,provider,kind,endpoint,models,base_weight
+BMKG,BMKG,bmkg,,,1.35
+CMA,Open-Meteo / CMA GRAPES,open_meteo,https://api.open-meteo.com/v1/cma,,0.85
+ECMWF,Open-Meteo / ECMWF,open_meteo,https://api.open-meteo.com/v1/ecmwf,,1.2
+GFS,Open-Meteo / NOAA GFS,open_meteo,https://api.open-meteo.com/v1/gfs,,1.0
+ICON,Open-Meteo / DWD ICON,open_meteo,https://api.open-meteo.com/v1/dwd-icon,,1.05
+KMA,Open-Meteo / KMA,open_meteo,https://api.open-meteo.com/v1/forecast,kma_seamless,0.9
+METEOFRANCE,Open-Meteo / Meteo-France,open_meteo,https://api.open-meteo.com/v1/meteofrance,,1.1
+METNO,MET Norway,met_no,,,1.0
+UKMO,Open-Meteo / UK Met Office,open_meteo,https://api.open-meteo.com/v1/forecast,ukmo_seamless,0.95
