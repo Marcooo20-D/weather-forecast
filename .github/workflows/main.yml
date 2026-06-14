@@ -14,8 +14,8 @@ on:
         options: ["false", "true"]
         default: "false"
   schedule:
-    # WIB: 07:00, 11:00, 15:00, 18:00
-    - cron: "0 0,4,8,11 * * *"
+    # WIB: 07:00, 11:00, 15:00, 18
+    - cron: "0 0,2,4,6,8,10,12 * * *"
 
 permissions:
   contents: write
