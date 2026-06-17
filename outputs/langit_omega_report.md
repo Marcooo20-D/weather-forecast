@@ -23,11 +23,11 @@
 | Indeks panas | true | C | 0% | compact | P1 |
 | Kelembapan | true | % | 0% | compact | P1 |
 | Awan | true | % | 0% | detail | P2 |
-| Curah hujan | true | mm | 33% | detail | P2 |
-| Keandalan | true | % | 67% | detail | P2 |
+| Curah hujan | true | mm | 67% | detail | P2 |
 | Dew point | false | C | 100% | disabled | P5 |
 | Gust | false | km/jam | 100% | disabled | P5 |
 | Jarak pandang | false | m | 100% | disabled | P5 |
+| Keandalan | false | % | 100% | disabled | P5 |
 | Tekanan | false | hPa | 100% | disabled | P5 |
 | UV | false | index | 100% | disabled | P5 |
 

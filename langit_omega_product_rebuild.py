@@ -269,6 +269,17 @@ def update_source_for_location(root: Path, directory: Path) -> Optional[str]:
     return None
 
 
+def current_run_update_label(run_time: Optional[dt.datetime] = None) -> str:
+    run_time = run_time or now_wib()
+    months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+    return f"Diperbarui {run_time.day} {months[run_time.month - 1]} {run_time.year}, {run_time.hour:02d}:{run_time.minute:02d} WIB"
+
+
+def current_run_dates(run_time: Optional[dt.datetime] = None) -> List[dt.date]:
+    base = (run_time or now_wib()).date()
+    return [base + dt.timedelta(days=i) for i in range(3)]
+
+
 def target_dates_for_location(root: Path, slug: str) -> List[dt.date]:
     batch = read_json(root / "forecast_batch_summary.json", {}) or {}
     for loc in batch.get("locations", []) if isinstance(batch.get("locations"), list) else []:
@@ -1058,14 +1069,15 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
     if not dirs:
         print("ERROR: tidak ada folder lokasi di outputs/. Jalankan forecast dulu.")
         return 2
+    run_time = now_wib()
+    run_dates = current_run_dates(run_time)
+    run_update_label = current_run_update_label(run_time)
     apis: List[Dict[str, Any]] = []
     packs: List[Dict[str, Any]] = []
     for d in dirs:
         api = load_location_api(d, meta.get(d.name, {"slug": d.name}))
-        update_source = update_source_for_location(root, d)
-        if update_source:
-            api["generated_at"] = format_update_label(update_source)
-        lock_api_dates(api, target_dates_for_location(root, api.get("location_slug") or d.name))
+        api["generated_at"] = run_update_label
+        lock_api_dates(api, run_dates)
         pack = build_semantic_pack(d, api)
         apis.append(api)
         packs.append(pack)
@@ -1095,7 +1107,7 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
     write_json(root / "langit_portal_manifest.json", {
         "brand": BRAND,
         "version": OMEGA_VERSION,
-        "generated_at": fmt_update(),
+        "generated_at": run_update_label,
         "public_base_url": public_base_url,
         "locations": [{"slug": a["location_slug"], "name": a["location_name"]} for a in apis],
         "data_atlas": "langit_data_atlas.json",
