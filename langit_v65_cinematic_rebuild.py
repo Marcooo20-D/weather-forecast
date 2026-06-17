@@ -4218,7 +4218,7 @@ function switchLayer(layerName) {
   state.activeLayer = layerName;
   document.querySelectorAll('.param-tab').forEach(tab => {
     if (tab.getAttribute('data-layer') === layerName) {
-      tab.classList.add('active\');
+      tab.classList.add('active');
     } else {
       tab.classList.remove('active');
     }
