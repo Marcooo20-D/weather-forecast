@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-06-20T00:01:42.098488+07:00",
+  "mode": "doctor",
+  "locations_file": "",
+  "default_multi_locations": [
+    "dago",
+    "jatinangor",
+    "arjawinangun"
+  ],
+  "locations_total": 3,
+  "locations": [
+    {
+      "location_slug": "dago",
+      "location_name": "Dago, Bandung",
+      "checks_ok": 9,
+      "checks_total": 9,
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago"
+    },
+    {
+      "location_slug": "jatinangor",
+      "location_name": "Jatinangor, Sumedang",
+      "checks_ok": 9,
+      "checks_total": 9,
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor"
+    },
+    {
+      "location_slug": "arjawinangun",
+      "location_name": "Arjawinangun, Cirebon",
+      "checks_ok": 9,
+      "checks_total": 9,
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun"
+    }
+  ]
+}
