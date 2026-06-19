@@ -173,8 +173,8 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # Stage outputs/ and source weights
-          git add outputs/**/*.csv outputs/**/*.json
+          # Stage all outputs/ changes
+          git add outputs/
           # Check if there are changes to commit
           if git diff --cached --quiet; then
             echo "No changes to commit."
