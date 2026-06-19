@@ -6,12 +6,12 @@
 | Advanced/Sentinel | 90 | advanced panel, risk/confidence, exploration |  |
 | Ensemble | 24 | confidence, spread, dominant weather |  |
 | Forecast per provider | 21 | advanced comparison, source transparency |  |
-| Generated HTML | 31 |  |  |
-| Map | 20 | map layer and marker/timeline |  |
-| Other | 73 |  |  |
+| Generated HTML | 52 |  |  |
+| Map | 23 | map layer and marker/timeline |  |
+| Other | 173 |  |  |
 | Public API | 9 | primary UI contract |  |
 | Raw payload | 27 | debug/archive only | do not expose raw public payload |
-| Source status | 24 | data status bar and reliability |  |
+| Source status | 30 | data status bar and reliability |  |
 
 ## VARIABLE INVENTORY
 | Variable | Available | Unit | Missing Rate | Recommended UI Usage | Priority |

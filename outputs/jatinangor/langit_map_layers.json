@@ -1,6 +1,6 @@
 {
   "brand": "LANGIT",
-  "version": "LANGIT v65.1",
+  "version": "LANGIT Omega 1.0",
   "geojson": {
     "type": "FeatureCollection",
     "features": [
@@ -788,5 +788,303 @@
         }
       }
     ]
-  }
+  },
+  "variables": [
+    {
+      "key": "rain",
+      "label": "Hujan",
+      "available": true,
+      "field": "rainProbability",
+      "sourceFields": [
+        "rain_probability",
+        "prob_rain",
+        "peluang_hujan_pct",
+        "rain_mean"
+      ],
+      "unit": "%",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 0.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "utama",
+      "priority": "P0",
+      "chart": "bar-area",
+      "mapLayer": "rain",
+      "level": 1
+    },
+    {
+      "key": "temperature",
+      "label": "Suhu",
+      "available": true,
+      "field": "temperature",
+      "sourceFields": [
+        "temp_c",
+        "temp_p50",
+        "suhu_C",
+        "temp_mean"
+      ],
+      "unit": "C",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 0.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "utama",
+      "priority": "P0",
+      "chart": "line",
+      "mapLayer": "temp",
+      "level": 1
+    },
+    {
+      "key": "risk",
+      "label": "Risiko",
+      "available": true,
+      "field": "riskScore",
+      "sourceFields": [
+        "risk_score",
+        "rain_threat_score",
+        "forecast_stress_index"
+      ],
+      "unit": "/100",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 0.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "utama",
+      "priority": "P0",
+      "chart": "bar",
+      "mapLayer": "risiko",
+      "level": 1
+    },
+    {
+      "key": "wind",
+      "label": "Angin",
+      "available": true,
+      "field": "windSpeed",
+      "sourceFields": [
+        "wind_kmh",
+        "wind_p50",
+        "angin_kmh"
+      ],
+      "unit": "km/jam",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 0.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "compact",
+      "priority": "P1",
+      "chart": "line",
+      "mapLayer": "wind",
+      "level": 1
+    },
+    {
+      "key": "humidity",
+      "label": "Kelembapan",
+      "available": true,
+      "field": "humidity",
+      "sourceFields": [
+        "humidity_pct",
+        "rh_p50",
+        "kelembapan_RH_pct",
+        "rh_mean"
+      ],
+      "unit": "%",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 0.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "compact",
+      "priority": "P1",
+      "chart": "line",
+      "mapLayer": "humidity",
+      "level": 2
+    },
+    {
+      "key": "heat",
+      "label": "Indeks panas",
+      "available": true,
+      "field": "heatIndex",
+      "sourceFields": [
+        "heat_index_c",
+        "heat_index_p50",
+        "heat_index_C",
+        "apparent_temperature_c"
+      ],
+      "unit": "C",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 0.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "compact",
+      "priority": "P1",
+      "chart": "line",
+      "mapLayer": null,
+      "level": 2
+    },
+    {
+      "key": "cloud",
+      "label": "Awan",
+      "available": true,
+      "field": "cloudCover",
+      "sourceFields": [
+        "cloud_pct",
+        "cloud_p50",
+        "tutupan_awan_pct"
+      ],
+      "unit": "%",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 0.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "detail",
+      "priority": "P2",
+      "chart": "line",
+      "mapLayer": "cloud",
+      "level": 3
+    },
+    {
+      "key": "rain_amount",
+      "label": "Curah hujan",
+      "available": true,
+      "field": "rainAmount",
+      "sourceFields": [
+        "rainAmount",
+        "curah_hujan_p50_mm",
+        "rain_p50",
+        "rain_mm"
+      ],
+      "unit": "mm",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 0.667,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "detail",
+      "priority": "P2",
+      "chart": "bar",
+      "mapLayer": "rain",
+      "level": 3
+    },
+    {
+      "key": "confidence",
+      "label": "Keandalan",
+      "available": false,
+      "field": "confidence",
+      "sourceFields": [
+        "confidence",
+        "confidence_score",
+        "coverage_fraction",
+        "confidence_score_base"
+      ],
+      "unit": "%",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 1.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "disabled",
+      "priority": "P5",
+      "chart": "line",
+      "mapLayer": null,
+      "level": 4
+    },
+    {
+      "key": "pressure",
+      "label": "Tekanan",
+      "available": false,
+      "field": "pressure",
+      "sourceFields": [
+        "pressure_msl_hpa",
+        "surface_pressure_hpa",
+        "tekanan_udara_hpa"
+      ],
+      "unit": "hPa",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 1.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "disabled",
+      "priority": "P5",
+      "chart": "line",
+      "mapLayer": null,
+      "level": 4
+    },
+    {
+      "key": "visibility",
+      "label": "Jarak pandang",
+      "available": false,
+      "field": "visibility",
+      "sourceFields": [
+        "visibility_p10",
+        "jarak_pandang_p10_m"
+      ],
+      "unit": "m",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 1.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "disabled",
+      "priority": "P5",
+      "chart": "line",
+      "mapLayer": null,
+      "level": 4
+    },
+    {
+      "key": "dew_point",
+      "label": "Dew point",
+      "available": false,
+      "field": "dewPoint",
+      "sourceFields": [
+        "dew_point_c",
+        "dew_point_C"
+      ],
+      "unit": "C",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 1.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "disabled",
+      "priority": "P5",
+      "chart": "line",
+      "mapLayer": null,
+      "level": 4
+    },
+    {
+      "key": "gust",
+      "label": "Gust",
+      "available": false,
+      "field": "windGust",
+      "sourceFields": [
+        "gust_p90",
+        "hembusan_angin_p90_kmh"
+      ],
+      "unit": "km/jam",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 1.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "disabled",
+      "priority": "P5",
+      "chart": "line",
+      "mapLayer": null,
+      "level": 4
+    },
+    {
+      "key": "uv",
+      "label": "UV",
+      "available": false,
+      "field": "uvIndex",
+      "sourceFields": [
+        "uv_index",
+        "indeks_uv"
+      ],
+      "unit": "index",
+      "temporalResolution": "1-3 jam",
+      "spatialResolution": "titik lokasi kampus",
+      "missingRate": 1.0,
+      "currentUIUsage": "parsial",
+      "recommendedUIUsage": "disabled",
+      "priority": "P5",
+      "chart": "line",
+      "mapLayer": null,
+      "level": 4
+    }
+  ]
 }
