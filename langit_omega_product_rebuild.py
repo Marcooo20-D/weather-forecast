@@ -200,7 +200,7 @@ VARIABLE_MODEL: Dict[str, Dict[str, Any]] = {
     "uv": {
         "label": "UV",
         "field": "uvIndex",
-        "source_fields": ["uv_index"],
+        "source_fields": ["uv_index", "indeks_uv"],
         "unit": "index",
         "priority": "P4",
         "display": "advanced",

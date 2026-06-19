@@ -109,6 +109,25 @@ jobs:
             exit "$RC"
           fi
 
+      - name: Sync historical observations
+        shell: bash
+        run: |
+          python weather_ensemble_multi_location.py \
+            --mode sync-observations \
+            --locations "${{ steps.vars.outputs.locations }}" \
+            --timezone Asia/Jakarta \
+            ${{ steps.vars.outputs.debug_flag }} \
+            --no-save-raw-payloads
+
+      - name: Evaluate performance (backtesting)
+        shell: bash
+        run: |
+          python weather_ensemble_multi_location.py \
+            --mode evaluate \
+            --locations "${{ steps.vars.outputs.locations }}" \
+            --timezone Asia/Jakarta \
+            ${{ steps.vars.outputs.debug_flag }} \
+            --no-save-raw-payloads
 
       - name: Rebuild LANGIT v65.0 cinematic product layer
         run: |
@@ -148,6 +167,21 @@ jobs:
           find outputs -type f -name "*.py" -delete || true
           find outputs -type f -name "*.pyc" -delete || true
           find outputs -maxdepth 3 -type f | sort | sed -n '1,320p'
+
+      - name: Commit and push changes back to main
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Stage outputs/ and source weights
+          git add outputs/**/*.csv outputs/**/*.json
+          # Check if there are changes to commit
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: update weather forecast history, observations, and accuracy metrics [skip ci]"
+            git pull origin main --rebase
+            git push origin main
+          fi
 
       - name: Upload generated site artifact
         uses: actions/upload-artifact@v4

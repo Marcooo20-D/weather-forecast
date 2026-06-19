@@ -1,0 +1,43 @@
+{
+  "generated_at": "2026-06-19T19:25:39.359227+07:00",
+  "mode": "sync-observations",
+  "locations_file": "",
+  "default_multi_locations": [
+    "dago",
+    "jatinangor",
+    "arjawinangun"
+  ],
+  "locations_total": 3,
+  "locations": [
+    {
+      "location_slug": "dago",
+      "location_name": "Dago, Bandung",
+      "bmkg_point_name": "Dago",
+      "area_level": "kelurahan",
+      "is_proxy_bmkg": false,
+      "days_processed": 14,
+      "output_dir": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago",
+      "log_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\logs\\sync-observations_20260619_192430.log"
+    },
+    {
+      "location_slug": "jatinangor",
+      "location_name": "Jatinangor, Sumedang",
+      "bmkg_point_name": "Hegarmanah",
+      "area_level": "kecamatan",
+      "is_proxy_bmkg": true,
+      "days_processed": 14,
+      "output_dir": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\jatinangor",
+      "log_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\jatinangor\\logs\\sync-observations_20260619_192454.log"
+    },
+    {
+      "location_slug": "arjawinangun",
+      "location_name": "Arjawinangun, Cirebon",
+      "bmkg_point_name": "Arjawinangun",
+      "area_level": "kecamatan",
+      "is_proxy_bmkg": false,
+      "days_processed": 14,
+      "output_dir": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun",
+      "log_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\logs\\sync-observations_20260619_192516.log"
+    }
+  ]
+}

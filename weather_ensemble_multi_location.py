@@ -1307,6 +1307,7 @@ def extract_open_meteo_points(target_date, payload, config, args):
     direct_normal_irradiance = hourly.get("direct_normal_irradiance") or []
     global_tilted_irradiance = hourly.get("global_tilted_irradiance") or []
     cape = hourly.get("cape") or []
+    uv_index = hourly.get("uv_index") or []
 
     candidates = []
     for idx, time_text in enumerate(times):
@@ -1342,6 +1343,7 @@ def extract_open_meteo_points(target_date, payload, config, args):
                 "direct_normal_irradiance_wm2": safe_float(direct_normal_irradiance[idx] if idx < len(direct_normal_irradiance) else None),
                 "global_tilted_irradiance_wm2": safe_float(global_tilted_irradiance[idx] if idx < len(global_tilted_irradiance) else None),
                 "cape_jkg": safe_float(cape[idx] if idx < len(cape) else None),
+                "uv_index": safe_float(uv_index[idx] if idx < len(uv_index) else None),
             }
         )
 
@@ -1389,6 +1391,7 @@ def extract_open_meteo_points(target_date, payload, config, args):
             direct_normal_irradiance_wm2=match.get("direct_normal_irradiance_wm2"),
             global_tilted_irradiance_wm2=match.get("global_tilted_irradiance_wm2"),
             cape_jkg=match.get("cape_jkg"),
+            uv_index=match.get("uv_index"),
         )
     return points
 
@@ -1612,6 +1615,7 @@ class ForecastPoint:
     direct_normal_irradiance_wm2: Optional[float] = None
     global_tilted_irradiance_wm2: Optional[float] = None
     cape_jkg: Optional[float] = None
+    uv_index: Optional[float] = None
 
 
 @dataclass
@@ -2163,7 +2167,7 @@ def fetch_archive_observations(target_date, args):
         "timezone": args.timezone,
         "start_date": target_date.isoformat(),
         "end_date": target_date.isoformat(),
-        "hourly": ",".join(aether_open_meteo_variables(args, include_extra=getattr(args, "aether_extra_vars", False))),
+        "hourly": ",".join(AETHER_BASIC_OPEN_METEO_VARIABLES),
     }
     url = build_url(OBSERVATION_ARCHIVE_URL, params)
     payload, status, duration_ms = fetch_json_with_retry(url, source_id="OBSERVATION_ARCHIVE", timeout=args.http_timeout, max_retry=args.max_retry_http)
@@ -4157,6 +4161,7 @@ AETHER_EXTRA_OPEN_METEO_VARIABLES = [
     "wind_gusts_10m",
     "visibility",
     "cape",
+    "uv_index",
 ]
 
 
@@ -6056,7 +6061,8 @@ def build_arg_parser():
     )
 
     # LANGIT Sentinel X knobs
-    parser.add_argument("--aether-extra-vars", action="store_true", default=False, help="Minta variabel ekstra Open-Meteo jika tersedia; jika gagal, source akan fallback ke variabel dasar.")
+    parser.add_argument("--aether-extra-vars", action="store_true", default=True, help="Minta variabel ekstra Open-Meteo jika tersedia; jika gagal, source akan fallback ke variabel dasar.")
+    parser.add_argument("--no-aether-extra-vars", action="store_false", dest="aether_extra_vars", help="Jangan minta variabel ekstra Open-Meteo.")
     parser.add_argument("--microclimate", default="auto", choices=["auto", "generic_local", "valley_highland", "urban_highland", "lowland_agriculture", "coastal"], help="Profil koreksi microclimate LANGIT Sentinel X.")
     parser.add_argument("--umbrella-threshold", type=float, default=25.0, help="Threshold cost-loss peluang hujan untuk rekomendasi payung.")
     parser.add_argument("--mission", default="safety_first", choices=["safety_first", "avoid_rain", "outdoor_event", "fieldwork", "commute", "photography", "sport", "laundry", "research", "public_warning"], help="Misi Sentinel X; mengubah gaya rekomendasi dan toleransi risiko.")
@@ -7369,7 +7375,7 @@ def _v8_write_variables_csv(rows):
         "jam", "cuaca", "suhu_C", "kelembapan_RH_pct", "heat_index_C", "terasa_seperti_C",
         "dew_point_C", "tekanan_udara_hpa", "peluang_hujan_pct",
         "curah_hujan_p50_mm", "curah_hujan_p90_mm", "angin_kmh", "hembusan_angin_p90_kmh",
-        "arah_angin_derajat", "tutupan_awan_pct", "jarak_pandang_p10_m", "risiko_hujan", "saran",
+        "arah_angin_derajat", "tutupan_awan_pct", "jarak_pandang_p10_m", "indeks_uv", "risiko_hujan", "saran",
     ]
     out = []
     for r in rows or []:
@@ -7390,6 +7396,7 @@ def _v8_write_variables_csv(rows):
             "arah_angin_derajat": r.get("wind_direction_deg", ""),
             "tutupan_awan_pct": r.get("cloud_p50", ""),
             "jarak_pandang_p10_m": r.get("visibility_p10", ""),
+            "indeks_uv": r.get("uv_index", ""),
             "risiko_hujan": str(r.get("rain_threat_level", "")).lower(),
             "saran": r.get("decision_recommendation", ""),
         })
@@ -7490,6 +7497,7 @@ def _v8_enrich_rows_with_source_variables(points, rows):
         row["pressure_msl_hpa"] = aether_round(_v8_weighted_attr(bucket, "pressure_msl_hpa"), 1)
         row["surface_pressure_hpa"] = aether_round(_v8_weighted_attr(bucket, "surface_pressure_hpa"), 1)
         row["wind_direction_deg"] = aether_round(_v8_weighted_attr(bucket, "wind_direction_deg"), 0)
+        row["uv_index"] = aether_round(_v8_weighted_attr(bucket, "uv_index"), 1)
         # If apparent temperature is missing, use heat index as practical fallback.
         if row.get("apparent_temperature_c") in (None, ""):
             row["apparent_temperature_c"] = row.get("heat_index_p50", "")
@@ -8534,7 +8542,23 @@ def _anemos11_accuracy_html(rows, args):
 
 
 def sentinel_write_verification_artifacts(rows, args):
-    doc, summary = _anemos11_accuracy_html(rows, args)
+    # Load all historical forecasts
+    all_rows = []
+    try:
+        import glob
+        import re
+        pattern = os.path.join(ACTIVE_OUTPUT_DIR, "sentinel_x_*.csv")
+        for filepath in glob.glob(pattern):
+            filename = os.path.basename(filepath)
+            if re.match(r"sentinel_x_\d{8}\.csv", filename):
+                all_rows.extend(read_dict_csv(filepath))
+    except Exception as exc:
+        log_warning("Gagal memuat histori sentinel_x_*.csv untuk akurasi:", exc)
+    
+    if not all_rows:
+        all_rows = list(rows or [])
+        
+    doc, summary = _anemos11_accuracy_html(all_rows, args)
     atomic_write_text(path_output('akurasi_data.html'), lambda f: f.write(doc))
     write_json(path_output('sentinel_x_verification_summary.json'), summary)
     reliability = summary.get('reliability_bins') or []
@@ -10470,13 +10494,22 @@ def _lg_accuracy_html(rows, args):
 
 
 def aether_write_public_accuracy_page(args):
-    rows = []
+    all_rows = []
     try:
-        if os.path.exists(path_output(AETHER_CSV_FILENAME)):
-            rows = read_dict_csv(path_output(AETHER_CSV_FILENAME))
-    except Exception:
-        rows = []
-    atomic_write_text(path_output("sentinel_x_accuracy_public.html"), lambda f: f.write(_lg_accuracy_html(rows, args)))
+        import glob
+        import re
+        pattern = os.path.join(ACTIVE_OUTPUT_DIR, "sentinel_x_*.csv")
+        for filepath in glob.glob(pattern):
+            filename = os.path.basename(filepath)
+            if re.match(r"sentinel_x_\d{8}\.csv", filename):
+                all_rows.extend(read_dict_csv(filepath))
+    except Exception as exc:
+        log_warning("Gagal memuat histori sentinel_x_*.csv untuk akurasi:", exc)
+    
+    if not all_rows and os.path.exists(path_output(AETHER_CSV_FILENAME)):
+        all_rows = read_dict_csv(path_output(AETHER_CSV_FILENAME))
+        
+    atomic_write_text(path_output("sentinel_x_accuracy_public.html"), lambda f: f.write(_lg_accuracy_html(all_rows, args)))
     return path_output("sentinel_x_accuracy_public.html")
 
 

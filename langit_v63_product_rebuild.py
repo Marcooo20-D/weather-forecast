@@ -1064,18 +1064,24 @@ def data_page(api: Dict[str, Any]) -> str:
 def accuracy_page(api: Dict[str, Any], directory: Path) -> str:
     day = api["today"]
     summary: Dict[str, Any] = {}
-    for name in ["sentinel_x_accuracy_summary.json", "verification_summary.json", "accuracy_summary.json", "sentinel_verification_summary.json"]:
+    for name in ["sentinel_x_verification_summary.json", "sentinel_x_accuracy_summary.json", "verification_summary.json", "accuracy_summary.json", "sentinel_verification_summary.json"]:
         obj = read_json(directory / name, {})
         if isinstance(obj, dict) and obj:
             summary = obj
             break
     matched = int(num(pick(summary, "matched_cases", "pairs", "n", default=0), 0) or 0)
-    target = int(num(pick(summary, "target_cases", "minimum_cases", default=30), 30) or 30)
+    target = int(num(pick(summary, "verification_min_cases", "target_cases", "minimum_cases", default=30), 30) or 30)
     pct_done = clamp(matched / max(1, target) * 100)
     body = hero(api, "Tingkat akurasi sistem", f"{day['date_label']}. Metrik evaluasi ketepatan prakiraan cuaca LANGIT.", day)
     body += f'<section class="panel"><div class="head"><h2>{"Evaluasi akurasi tersedia" if matched >= target else "Menunggu kecukupan data"}</h2><p>{matched}/{target} pasangan</p></div><div class="timeline" style="--n:1;min-height:80px"><div class="bar"><b>{pct_done:.0f}%</b><div class="v" style="height:20px;--c:#32b7ff"></div><small>progress</small></div></div></section>'
     if matched >= target:
-        body += f'<section class="grid3"><article class="card"><h3>Selisih suhu rata-rata (MAE)</h3><p>{esc(pick(summary,"mae_temp","temperature_mae",default="—"))}</p></article><article class="card"><h3>Akurasi peluang hujan (Brier)</h3><p>{esc(pick(summary,"rain_score","brier_score",default="—"))}</p></article><article class="card"><h3>Tingkat alarm keliru (FAR)</h3><p>{esc(pick(summary,"false_alarm_rate",default="—"))}</p></article></section>'
+        mae_val = num(pick(summary, "temperature_mae_c", "mae_temp", "temperature_mae"))
+        mae_str = f"{mae_val:.1f}°C" if mae_val is not None else "—"
+        brier_val = num(pick(summary, "rain_brier_score", "rain_score", "brier_score"))
+        brier_str = f"{brier_val:.3f}" if brier_val is not None else "—"
+        far_val = num(pick(summary, "rain_far", "false_alarm_rate"))
+        far_str = f"{far_val * 100.0:.1f}%" if far_val is not None else "—"
+        body += f'<section class="grid3"><article class="card"><h3>Selisih suhu rata-rata (MAE)</h3><p>{esc(mae_str)}</p></article><article class="card"><h3>Akurasi peluang hujan (Brier)</h3><p>{esc(brier_str)}</p></article><article class="card"><h3>Tingkat alarm keliru (FAR)</h3><p>{esc(far_str)}</p></article></section>'
     else:
         body += '<section class="panel"><p class="subtle">Evaluasi akurasi memerlukan minimal 30 hari data observasi riil untuk menghasilkan metrik yang kredibel. Pengumpulan data sedang berjalan secara otomatis.</p></section>'
     return document(api, "accuracy", f"LANGIT Akurasi — {api['location_name']}", body)

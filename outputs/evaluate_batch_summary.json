@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-06-19T19:27:21.017131+07:00",
+  "mode": "evaluate",
+  "locations_file": "",
+  "default_multi_locations": [
+    "dago",
+    "jatinangor",
+    "arjawinangun"
+  ],
+  "locations_total": 3,
+  "locations": [
+    {
+      "location_slug": "dago",
+      "location_name": "Dago, Bandung",
+      "bmkg_point_name": "Dago",
+      "area_level": "kelurahan",
+      "is_proxy_bmkg": false,
+      "evaluated_sources": 9,
+      "evaluated_rows": 572,
+      "weights_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\source_weights.json",
+      "output_dir": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago",
+      "log_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\logs\\evaluate_20260619_192720.log"
+    },
+    {
+      "location_slug": "jatinangor",
+      "location_name": "Jatinangor, Sumedang",
+      "bmkg_point_name": "Hegarmanah",
+      "area_level": "kecamatan",
+      "is_proxy_bmkg": true,
+      "evaluated_sources": 9,
+      "evaluated_rows": 571,
+      "weights_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\jatinangor\\source_weights.json",
+      "output_dir": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\jatinangor",
+      "log_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\jatinangor\\logs\\evaluate_20260619_192720.log"
+    },
+    {
+      "location_slug": "arjawinangun",
+      "location_name": "Arjawinangun, Cirebon",
+      "bmkg_point_name": "Arjawinangun",
+      "area_level": "kecamatan",
+      "is_proxy_bmkg": false,
+      "evaluated_sources": 9,
+      "evaluated_rows": 570,
+      "weights_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\source_weights.json",
+      "output_dir": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun",
+      "log_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\logs\\evaluate_20260619_192720.log"
+    }
+  ]
+}

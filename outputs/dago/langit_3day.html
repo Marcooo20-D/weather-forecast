@@ -1,164 +1,3085 @@
 <!doctype html><html lang="id"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LANGIT - Dago, Bandung</title><meta name="theme-color" content="#07080b">
-<meta name="description" content="LANGIT - prakiraan cuaca ringkas berbasis data untuk Institut Teknologi Bandung.">
+<title>LANGIT 3 hari — Dago, Bandung</title>
+<meta name="theme-color" content="#030712">
+<meta name="description" content="LANGIT 3 hari — Dago, Bandung — Prakiraan cuaca premium untuk Indonesia">
 <style>
-:root{
-  --bg:#07080b;--panel:#101318;--panel-2:#151a22;--line:rgba(255,255,255,.09);
-  --text:#f4f7fb;--muted:#8f9aaa;--soft:#c8d1de;--cyan:#4cc9f0;--green:#37d399;
-  --amber:#f5b84b;--orange:#f47c48;--red:#ef4f5f;--blue:#6aa8ff;--violet:#9a8cff;
-  --r-sm:8px;--r-md:12px;--r-lg:18px;--shadow:0 22px 80px rgba(0,0,0,.38);
-  --max:1380px;--pad:clamp(14px,3vw,36px);--gap:14px;
-}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 60% -20%,rgba(76,201,240,.10),transparent 34%),linear-gradient(180deg,#090a0e,#07080b 46%,#0b0d10);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.45;letter-spacing:0;overflow-x:hidden}
-a{color:inherit;text-decoration:none}button,input{font:inherit}.app{min-height:100vh}.shell{width:min(var(--max),calc(100% - var(--pad)*2));margin:0 auto}
-.topbar{position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);background:rgba(7,8,11,.78);backdrop-filter:blur(18px)}
-.topbar .shell{height:64px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{display:flex;align-items:center;gap:10px}.mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--green));box-shadow:0 0 24px rgba(76,201,240,.35)}.brand b{display:block;font-size:14px}.brand span span{display:block;color:var(--muted);font-size:11px}.nav{display:flex;gap:6px;align-items:center}.nav a,.btn{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:999px;color:var(--soft);padding:8px 11px;font-size:12px;font-weight:700;cursor:pointer}.nav a.active,.btn.primary{background:#f4f7fb;color:#08090c;border-color:#f4f7fb}.btn:disabled,.chip:disabled{opacity:.35;cursor:not-allowed}
-.hero{padding:26px 0 14px}.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:var(--gap);align-items:stretch}.hero-main{min-height:270px;border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;background:linear-gradient(140deg,rgba(255,255,255,.075),rgba(255,255,255,.025)),radial-gradient(circle at 78% 22%,rgba(76,201,240,.18),transparent 38%);box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:space-between}.eyebrow{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12px;font-weight:750}.pill{border:1px solid var(--line);border-radius:999px;padding:6px 9px;background:rgba(255,255,255,.035)}.title-row{display:flex;align-items:end;justify-content:space-between;gap:16px}.temp{font-size:clamp(58px,9vw,112px);font-weight:820;line-height:.85;letter-spacing:0}.condition{font-size:clamp(22px,3vw,38px);font-weight:780;max-width:560px}.microcopy{color:var(--muted);font-size:13px;max-width:540px;margin-top:10px}.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--green);box-shadow:0 0 18px currentColor}.summary{border:1px solid var(--line);border-radius:var(--r-lg);background:rgba(16,19,24,.86);padding:16px;display:grid;gap:10px}.summary-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;border-radius:var(--r-sm);background:rgba(255,255,255,.03)}.summary-row small,.metric small,.compare small{color:var(--muted);font-size:11px;font-weight:750;text-transform:uppercase}.summary-row b{font-size:18px}.risk-badge{border:1px solid currentColor;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;width:max-content}
-.strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:10px 0 18px}.metric{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:var(--r-md);padding:13px;min-height:86px}.metric b{display:block;font-size:22px;margin-top:8px}.metric em{display:block;color:var(--muted);font-style:normal;font-size:12px;margin-top:2px}
-.stage{display:grid;grid-template-columns:minmax(0,1.55fr) 430px;gap:var(--gap);align-items:start}.panel{border:1px solid var(--line);border-radius:var(--r-lg);background:rgba(16,19,24,.78);box-shadow:0 18px 60px rgba(0,0,0,.20)}.panel-head{padding:16px 16px 0;display:flex;align-items:end;justify-content:space-between;gap:12px}.overline{color:var(--cyan);font-size:11px;text-transform:uppercase;font-weight:850;letter-spacing:.08em}.panel h2{font-size:19px;margin:3px 0 0}.mapbox{padding:12px}.mapbox iframe{width:100%;height:580px;border:0;border-radius:12px;background:#07080b}.layerbar,.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.04);color:var(--soft);padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer}.chip.active{background:var(--text);color:var(--bg);border-color:var(--text)}
-.side-stack{display:grid;gap:var(--gap)}.explorer{padding:16px}.variable-now{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;margin:16px 0}.variable-now b{font-size:38px;line-height:1}.variable-now small{color:var(--muted)}.insight{min-height:44px;color:var(--soft);font-size:14px;border-left:3px solid var(--cyan);padding:8px 0 8px 12px}.chart{height:210px;margin-top:12px;border:1px solid var(--line);border-radius:var(--r-md);background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.015));padding:10px}.chart svg{width:100%;height:100%;overflow:visible}.axis{color:var(--muted);font-size:11px}
-.timeline{padding:16px;margin:14px 0}.day-tabs{display:flex;gap:8px;overflow:auto;padding-bottom:2px}.timeline-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-top:14px;align-items:end}.timebar{min-height:96px;display:flex;flex-direction:column;justify-content:end;gap:6px}.bar{border-radius:8px 8px 3px 3px;min-height:8px;background:linear-gradient(180deg,var(--cyan),rgba(76,201,240,.12))}.timebar b{font-size:11px}.timebar span{color:var(--muted);font-size:11px}.compare-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.compare{padding:13px;border:1px solid var(--line);border-radius:var(--r-md);background:rgba(255,255,255,.03)}.compare b{display:block;font-size:17px;margin:6px 0}
-.advanced{margin:14px 0 30px}.advanced summary{cursor:pointer;padding:16px;font-weight:850}.advanced-body{border-top:1px solid var(--line);padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:var(--r-md)}table{width:100%;border-collapse:collapse;min-width:620px}th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);font-size:12px}th{color:var(--muted);text-transform:uppercase;font-size:10px}.statusbar{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin:10px 0 24px}.empty{padding:16px;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r-md)}
-@media(max-width:1279px){.hero-grid,.stage{grid-template-columns:1fr}.mapbox iframe{height:520px}.strip{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:767px){.topbar .shell{height:auto;min-height:58px;padding:10px 0;align-items:flex-start}.nav{max-width:54vw;overflow:auto;justify-content:flex-end}.hero{padding-top:16px}.hero-main{min-height:230px;padding:18px}.title-row{display:block}.condition{margin-top:10px}.summary{padding:12px}.strip{grid-template-columns:repeat(2,1fr);overflow:visible}.stage{gap:12px}.panel-head{display:block}.mapbox iframe{height:430px}.layerbar,.chips{overflow:auto;flex-wrap:nowrap;padding-bottom:2px}.chip{white-space:nowrap;min-height:40px}.variable-now b{font-size:32px}.timeline-grid{display:flex;overflow:auto;align-items:end}.timebar{min-width:54px}.advanced-body{grid-template-columns:1fr}.compare-grid{grid-template-columns:1fr}.microcopy{font-size:12px}}
-@media(max-width:420px){.shell{width:calc(100% - 22px)}.temp{font-size:62px}.strip{grid-template-columns:1fr 1fr}.metric{padding:11px}.metric b{font-size:19px}.mapbox{padding:8px}.mapbox iframe{height:390px}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-</style></head><body>
-<div class="app">
-  <header class="topbar"><div class="shell">
-    <a class="brand" href="../index.html"><span class="mark"></span><span><b>LANGIT</b><span>LANGIT Omega 1.0</span></span></a>
-    <nav class="nav"><a class="active" href="../index.html">Lokasi</a><a href="../langit_portal_map.html">Peta</a><a href="../langit_omega_report.md">Data</a></nav>
-  </div></header>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --void: #030712;
+  --abyss: #070e1e;
+  --ocean: #0b1932;
+  --steel: #15294a;
+  --mist: #94a3b8;
+  --cloud: #94a3b8;
+  --snow: #f1f5f9;
+  --white: #ffffff;
+  --dawn: #f97316;
+  --noon: #06b6d4;
+  --dusk: #8b5cf6;
+  --safe: #10b981;
+  --watch: #f59e0b;
+  --alert: #f97316;
+  --danger: #ef4444;
+  --limited: #6366f1;
+
+  --glow-noon: rgba(6, 182, 212, 0.15);
+  --glow-dawn: rgba(249, 115, 22, 0.1);
+  --glow-dusk: rgba(139, 92, 246, 0.12);
+  --glow-void: rgba(99, 102, 241, 0.08);
+
+  --glass: rgba(10, 20, 40, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-glow: rgba(50, 183, 255, 0.05);
+  --glass-hover: rgba(15, 30, 60, 0.55);
   
-  <main>
-    <section class="hero"><div class="shell hero-grid">
-      <div class="hero-main">
-        <div class="eyebrow"><span class="pill">Dago, Bandung</span><span class="pill">Diperbarui 18 Juni 2026, 01:48 WIB</span><span class="pill" style="color:#35e8a4"><span class="status-dot"></span> Data diperbarui</span></div>
-        <div>
-          <div class="title-row"><div><div class="temp">21&deg;C</div><div class="condition">Lembap malam</div></div><span class="risk-badge" style="color:#35e8a4">Aman</span></div>
-          <div class="microcopy">Puncak hujan 82% sekitar 16:00 WIB. Risiko tertinggi 82/100.</div>
-        </div>
-      </div>
-      <aside class="summary">
-        <div class="summary-row"><small>Lokasi aktif</small><b>Dago, Bandung</b></div>
-        <div class="summary-row"><small>Hujan</small><b>0%</b></div>
-        <div class="summary-row"><small>Angin</small><b>2.5 km/jam</b></div>
-        <div class="summary-row"><small>Kelembapan</small><b>89%</b></div>
-        <div class="summary-row"><small>Status data</small><b>Data diperbarui</b></div>
-      </aside>
-    </div></section>
-    <section class="shell strip"><div class="metric"><small>Risiko</small><b>82/100</b><em>16:00</em></div><div class="metric"><small>Hujan</small><b>82%</b><em>16:00</em></div><div class="metric"><small>Angin</small><b>2.5 km/jam</b><em>saat ini</em></div><div class="metric"><small>Lembap</small><b>89%</b><em>saat ini</em></div><div class="metric"><small>Terasa</small><b>21&deg;C</b><em>indeks panas</em></div><div class="metric"><small>Sumber</small><b>0/9</b><em>berhasil</em></div></section>
-    <section class="shell stage command-center">
-      <div class="panel">
-        <div class="panel-head"><div><div class="overline">Lapisan Cuaca</div><h2>Peta Prakiraan</h2></div><div class="layerbar"><button class="chip layer-btn active" data-var="rain">Hujan</button><button class="chip layer-btn" data-var="temperature">Suhu</button><button class="chip layer-btn" data-var="risk">Risiko</button><button class="chip layer-btn" data-var="wind">Angin</button><button class="chip layer-btn" data-var="humidity">Lembap</button><button class="chip layer-btn" data-var="cloud">Awan</button></div></div>
-        <div class="mapbox"><iframe class="map-frame" src="langit_map_room.html" loading="lazy"></iframe></div>
-      </div>
-      <aside class="side-stack">
-        <div class="panel explorer">
-          <div class="overline">Variable explorer</div><h2>Pilih variabel</h2>
-          <div class="chips" style="margin-top:12px"><button class="chip active" data-var="rain">Hujan</button><button class="chip" data-var="temperature">Suhu</button><button class="chip" data-var="risk">Risiko</button><button class="chip" data-var="wind">Angin</button><button class="chip" data-var="humidity">Kelembapan</button><button class="chip" data-var="heat">Indeks panas</button><button class="chip" data-var="cloud">Awan</button><button class="chip" data-var="rain_amount">Curah hujan</button></div>
-          <div class="variable-now"><div><b id="varValue">-</b><small id="varLabel">-</small></div></div>
-          <div id="insight" class="insight">Memuat ringkasan.</div>
-          <div id="chart" class="chart"></div>
-        </div>
-      </aside>
-    </section>
-    <section class="shell panel timeline">
-      <div class="panel-head"><div><div class="overline">Forecast timeline</div><h2>Periode tersedia</h2></div><div class="day-tabs"><button class="chip active" data-day="0">Hari ini</button><button class="chip" data-day="1">Besok</button><button class="chip" data-day="2">Lusa</button></div></div>
-      <div id="timelineGrid" class="timeline-grid"></div>
-    </section>
-    <section class="shell panel timeline"><div class="panel-head"><div><div class="overline">Perbandingan lokasi</div><h2>Prioritas pantau</h2></div></div><div class="compare-grid" style="padding:16px">
-        <a class="compare" href="langit_app.html">
-          <small>Waspada</small>
-          <b>Dago, Bandung</b>
-          <span>75% hujan - 17:00</span>
-        </a>
-        <a class="compare" href="../jatinangor/langit_app.html">
-          <small>Waspada</small>
-          <b>Jatinangor, Sumedang</b>
-          <span>61% hujan - 14:00</span>
-        </a>
-        <a class="compare" href="../arjawinangun/langit_app.html">
-          <small>Perlu diperhatikan</small>
-          <b>Arjawinangun, Cirebon</b>
-          <span>50% hujan - 23:00</span>
-        </a></div></section>
-    
-    <details class="shell panel advanced">
-      <summary>Advanced data</summary>
-      <div class="advanced-body">
-        <div>
-          <div class="overline">Variable Inventory</div>
-          <div class="tablewrap"><table><thead><tr><th>Variable</th><th>Ada</th><th>Unit</th><th>Missing</th><th>UI</th><th>Prioritas</th></tr></thead><tbody><tr><td>Hujan</td><td>Ya</td><td>%</td><td>0%</td><td>utama</td><td>P0</td></tr><tr><td>Suhu</td><td>Ya</td><td>C</td><td>0%</td><td>utama</td><td>P0</td></tr><tr><td>Risiko</td><td>Ya</td><td>/100</td><td>0%</td><td>utama</td><td>P0</td></tr><tr><td>Angin</td><td>Ya</td><td>km/jam</td><td>0%</td><td>compact</td><td>P1</td></tr><tr><td>Kelembapan</td><td>Ya</td><td>%</td><td>0%</td><td>compact</td><td>P1</td></tr><tr><td>Indeks panas</td><td>Ya</td><td>C</td><td>0%</td><td>compact</td><td>P1</td></tr><tr><td>Awan</td><td>Ya</td><td>%</td><td>0%</td><td>detail</td><td>P2</td></tr><tr><td>Curah hujan</td><td>Ya</td><td>mm</td><td>67%</td><td>detail</td><td>P2</td></tr><tr><td>Keandalan</td><td>Tidak</td><td>%</td><td>100%</td><td>disabled</td><td>P5</td></tr><tr><td>Tekanan</td><td>Tidak</td><td>hPa</td><td>100%</td><td>disabled</td><td>P5</td></tr><tr><td>Jarak pandang</td><td>Tidak</td><td>m</td><td>100%</td><td>disabled</td><td>P5</td></tr><tr><td>Dew point</td><td>Tidak</td><td>C</td><td>100%</td><td>disabled</td><td>P5</td></tr><tr><td>Gust</td><td>Tidak</td><td>km/jam</td><td>100%</td><td>disabled</td><td>P5</td></tr><tr><td>UV</td><td>Tidak</td><td>index</td><td>100%</td><td>disabled</td><td>P5</td></tr></tbody></table></div>
-        </div>
-        <div>
-          <div class="overline">Source Status</div>
-          <div class="tablewrap"><table><thead><tr><th>ID</th><th>Provider</th><th>Status</th><th>Points</th><th>ms</th></tr></thead><tbody><tr><td>BMKG</td><td>BMKG</td><td>yes</td><td>24</td><td>99</td></tr><tr><td>CMA</td><td>Open-Meteo / CMA GRAPES</td><td>yes</td><td>24</td><td>773</td></tr><tr><td>ECMWF</td><td>Open-Meteo / ECMWF</td><td>yes</td><td>24</td><td>870</td></tr><tr><td>GFS</td><td>Open-Meteo / NOAA GFS</td><td>yes</td><td>24</td><td>901</td></tr><tr><td>ICON</td><td>Open-Meteo / DWD ICON</td><td>yes</td><td>24</td><td>843</td></tr><tr><td>KMA</td><td>Open-Meteo / KMA</td><td>yes</td><td>24</td><td>856</td></tr><tr><td>METEOFRANCE</td><td>Open-Meteo / Meteo-France</td><td>yes</td><td>24</td><td>923</td></tr><tr><td>METNO</td><td>MET Norway</td><td>yes</td><td>24</td><td>1324</td></tr><tr><td>UKMO</td><td>Open-Meteo / UK Met Office</td><td>yes</td><td>24</td><td>861</td></tr></tbody></table></div>
-        </div>
-      </div>
-    </details>
-    <div class="shell statusbar">
-      <span>Contract: LangitWeatherPoint</span>
-      <span>Report: <a href="../langit_omega_report.md">langit_omega_report.md</a></span>
-      <span>Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat.</span>
-    </div>
-    
-  </main>
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  
+  --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Responsive Design Tokens */
+  --container-max: 1200px;
+  --container-pad: clamp(16px, 4vw, 80px);
+  --section-pad: clamp(32px, 6vw, 80px);
+  --card-pad: clamp(16px, 3vw, 32px);
+  --font-body: clamp(14px, 0.25vw + 13px, 16px);
+  --font-label: clamp(10px, 0.15vw + 9px, 12px);
+  --nav-height: 72px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; min-width: 0; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--void);
+  color: var(--snow);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: var(--font-body);
+  letter-spacing: -0.01em;
+  line-height: 1.5;
+  overflow-x: hidden;
+  transition: background 1.2s var(--ease-in-out);
+}
+
+img, svg, canvas, video, iframe { max-width: 100%; }
+
+/* Adaptive visibility utilities */
+.desktop-only { display: none !important; }
+.mobile-only { display: initial !important; }
+@media (min-width: 768px) {
+  .desktop-only { display: initial !important; }
+  .mobile-only { display: none !important; }
+}
+
+/* Word-break safety for long text */
+.hero-title, .section-title, .decision-title, .location-name,
+.period-condition, .activity-name, h1, h2, h3 {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+body.theme-dawn { background: radial-gradient(circle at 50% -100px, rgba(249,115,22,0.18), var(--void) 70%), var(--void); }
+body.theme-noon { background: radial-gradient(circle at 50% -100px, rgba(6,182,212,0.18), var(--void) 70%), var(--void); }
+body.theme-dusk { background: radial-gradient(circle at 50% -100px, rgba(139,92,246,0.18), var(--void) 70%), var(--void); }
+body.theme-void { background: radial-gradient(circle at 50% -100px, rgba(99,102,241,0.15), var(--void) 70%), var(--void); }
+
+a { color: inherit; text-decoration: none; }
+
+/* --- ATMOSPHERIC CANVAS --- */
+.atmo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+#atmo-canvas {
+  width: 100%;
+  height: 100%;
+  opacity: 0.8;
+  mix-blend-mode: screen;
+}
+
+/* --- SPATIAL ZOOMS / SCANNER OVERLAY --- */
+#spatial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: var(--void);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+  overflow: hidden;
+}
+#spatial-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.spatial-hud {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  font-family: var(--font-display);
+  color: var(--snow);
+  max-width: 90vw;
+}
+.spatial-title {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--noon);
+  margin-bottom: 12px;
+  animation: tracking-pulse 2s infinite ease-in-out;
+}
+.spatial-status {
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  margin-bottom: 24px;
+}
+.spatial-skip {
+  position: absolute;
+  bottom: 40px;
+  z-index: 11;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: 10px 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--mist);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s var(--ease-out);
+}
+.spatial-skip:hover {
+  color: var(--white);
+  border-color: rgba(6, 182, 212, 0.4);
+  background: rgba(6, 182, 212, 0.1);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+@keyframes tracking-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* --- NAVIGATION --- */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--container-pad);
+  height: var(--nav-height);
+  background: rgba(3, 7, 18, 0.6);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.4s var(--ease-out), border-color 0.4s var(--ease-out);
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.nav-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6 50%, #10b981);
+  box-shadow: 0 0 24px rgba(6, 182, 212, 0.35);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.5s var(--ease-spring);
+  flex-shrink: 0;
+}
+.nav-brand:hover .nav-logo {
+  transform: rotate(180deg) scale(1.1);
+}
+.nav-logo::after {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 15%;
+  width: 40%;
+  height: 40%;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  filter: blur(2px);
+}
+.nav-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.04em;
+  background: linear-gradient(to right, var(--white), var(--cloud));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.nav-sub {
+  font-size: 11px;
+  color: var(--mist);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+/* Hamburger toggle (hidden on desktop) */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+  flex-shrink: 0;
+}
+.nav-toggle span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--cloud);
+  border-radius: 2px;
+  transition: all 0.3s var(--ease-out);
+}
+.nav-toggle:hover {
+  border-color: rgba(6, 182, 212, 0.3);
+  background: rgba(255, 255, 255, 0.03);
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.nav-toggle[aria-expanded="true"] span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+.nav-links {
+  display: flex;
+  gap: 8px;
+}
+.nav-link {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cloud);
+  border: 1px solid transparent;
+  transition: all 0.3s var(--ease-out);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--white);
+}
+.nav-link.active {
+  background: rgba(6, 182, 212, 0.12);
+  color: var(--noon);
+  border-color: rgba(6, 182, 212, 0.25);
+}
+
+/* --- SCROLL REVEAL --- */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
+
+/* --- LAYOUT --- */
+.page { position: relative; z-index: 1; padding-top: var(--nav-height); }
+.container { width: min(var(--container-max), calc(100% - var(--container-pad) * 2)); margin: 0 auto; }
+.section { padding: var(--section-pad) 0; }
+.section-compact { padding: 32px 0; }
+
+/* --- ULTRA CINEMATIC HERO --- */
+.hero {
+  min-height: calc(100vh - 72px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 80px 24px 100px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: 0.25;
+  transition: all 1.5s var(--ease-in-out);
+}
+.hero-glow-1 { width: 50vw; height: 50vw; background: var(--noon); top: -20%; left: 10%; }
+.hero-glow-2 { width: 40vw; height: 40vw; background: var(--dusk); bottom: -10%; right: 10%; }
+.hero-glow-3 { width: 30vw; height: 30vw; background: var(--safe); top: 30%; left: 35%; opacity: 0.1; }
+
+.hero-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cloud);
+  margin-bottom: 24px;
+  backdrop-filter: blur(16px);
+}
+.hero-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--safe);
+  box-shadow: 0 0 12px var(--safe);
+  animation: heartbeat-pulse 2s infinite var(--ease-in-out);
+}
+@keyframes heartbeat-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px var(--safe); }
+  50% { transform: scale(1.3); opacity: 0.6; box-shadow: 0 0 16px var(--safe), 0 0 24px var(--safe); }
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6.5vw, 80px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, var(--white) 0%, var(--cloud) 50%, var(--noon) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-subtitle {
+  font-size: clamp(15px, 1.8vw, 20px);
+  color: var(--mist);
+  font-weight: 400;
+  max-width: 620px;
+  line-height: 1.6;
+  margin-bottom: 48px;
+}
+.hero-metrics {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 24px;
+}
+.hero-metric {
+  padding: var(--card-pad);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(32px);
+  text-align: center;
+  min-width: 140px;
+  flex: 1 1 140px;
+  transition: all 0.4s var(--ease-out);
+}
+.hero-metric:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-6px);
+  border-color: rgba(6, 182, 212, 0.3);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(6, 182, 212, 0.08);
+}
+.hero-metric-value {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.hero-metric-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--mist);
+  margin-top: 6px;
+}
+.hero-scroll {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--mist);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.hero-scroll-line {
+  width: 1px;
+  height: 50px;
+  background: linear-gradient(to bottom, var(--mist), transparent);
+  position: relative;
+  overflow: hidden;
+}
+.hero-scroll-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: var(--noon);
+  animation: scroll-hint-anim 2s infinite ease-in-out;
+}
+@keyframes scroll-hint-anim {
+  0% { transform: translateY(-20px); }
+  80%, 100% { transform: translateY(50px); }
+}
+
+/* --- STATUS BADGES --- */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid currentColor;
+  backdrop-filter: blur(16px);
+  text-transform: uppercase;
+}
+.status-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: badge-pulse 1.8s infinite ease-in-out;
+}
+.status-safe { color: var(--safe); background: rgba(16, 185, 129, 0.08); }
+.status-watch { color: var(--watch); background: rgba(245, 158, 11, 0.08); }
+.status-rain { color: var(--alert); background: rgba(249, 115, 22, 0.08); }
+.status-danger { color: var(--danger); background: rgba(239, 68, 68, 0.08); }
+.status-limited { color: var(--limited); background: rgba(99, 102, 241, 0.08); }
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.4; }
+}
+
+/* --- GLASS CARD --- */
+.glass {
+  background: rgba(10, 20, 38, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 0.4s var(--ease-out), border-color 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out), background 0.4s var(--ease-out);
+}
+.glass:hover {
+  background: rgba(12, 25, 48, 0.55);
+  border-color: rgba(6, 182, 212, 0.25);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 30px rgba(6, 182, 212, 0.08);
+  transform: translateY(-4px);
+}
+.glass-static:hover { transform: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); border-color: rgba(255, 255, 255, 0.06); background: rgba(10, 20, 38, 0.45); }
+
+/* --- SECTION HEADERS --- */
+.section-header {
+  margin-bottom: 48px;
+}
+.section-overline {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--noon);
+  margin-bottom: 12px;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+.section-desc {
+  font-size: 16px;
+  color: var(--mist);
+  max-width: 580px;
+  line-height: 1.6;
+}
+
+/* --- SCROLL-DRIVEN WEATHER TIMELINE MORPH --- */
+.day-tabs-container {
+  max-width: 720px;
+  margin: 0 auto 56px;
+}
+.timeline-progress-container {
+  width: 100%;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.timeline-progress-bar {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  width: 100%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+.timeline-progress-fill {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--noon), var(--dusk));
+  transform: translateY(-50%);
+  z-index: 2;
+  transition: width 0.6s var(--ease-out);
+  width: 0%;
+}
+.timeline-node {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+}
+.timeline-node-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--void);
+  border: 2px solid var(--mist);
+  transition: all 0.4s var(--ease-out);
+}
+.timeline-node:hover .timeline-node-dot {
+  border-color: var(--snow);
+  transform: scale(1.2);
+}
+.timeline-node.active .timeline-node-dot {
+  background: var(--noon);
+  border-color: var(--noon);
+  box-shadow: 0 0 16px var(--noon), 0 0 24px rgba(6,182,212,0.5);
+  transform: scale(1.3);
+}
+.timeline-node-label {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mist);
+  transition: color 0.3s;
+}
+.timeline-node.active .timeline-node-label {
+  color: var(--white);
+}
+
+.day-panel { display: none; }
+.day-panel.active { display: block; animation: panel-in 0.8s var(--ease-out); }
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- DECISION BLOCK --- */
+.decision {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+  margin-top: 32px;
+}
+.decision-main {
+  border-radius: var(--radius-xl);
+  padding: 44px;
+  background: rgba(10, 20, 38, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(32px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 280px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  transition: all 0.4s var(--ease-out);
+}
+.decision-main::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: var(--accent-glow, rgba(6,182,212,0.08));
+  filter: blur(80px);
+  transition: background 1s var(--ease-in-out);
+}
+.decision-main:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+}
+.decision-title {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3.2vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-top: 20px;
+  position: relative;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.decision-desc {
+  color: var(--cloud);
+  font-size: 15px;
+  line-height: 1.6;
+  margin-top: 20px;
+  position: relative;
+}
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.kpi-card {
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  background: rgba(10, 20, 38, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  transition: all 0.3s;
+}
+.kpi-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(12, 25, 48, 0.55);
+}
+.kpi-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--mist);
+}
+.kpi-value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-sub {
+  font-size: 12px;
+  color: var(--cloud);
+  margin-top: 4px;
+}
+
+/* --- CURVED NEON DATA VISUALIZATION --- */
+.chart-wrapper {
+  position: relative;
+  background: rgba(7, 14, 30, 0.45);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(32px);
+}
+.chart-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.chart-chip {
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mist);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+  font-family: inherit;
+}
+.chart-chip:hover {
+  color: var(--snow);
+  background: rgba(255, 255, 255, 0.06);
+}
+.chart-chip.active {
+  background: rgba(6, 182, 212, 0.12);
+  color: var(--noon);
+  border-color: rgba(6, 182, 212, 0.35);
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.15);
+}
+.chart-svg-container {
+  width: 100%;
+  position: relative;
+  height: clamp(150px, 20vw, 200px);
+}
+.chart-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 100;
+  background: rgba(6, 14, 28, 0.9);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--snow);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(6, 182, 212, 0.1);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.1s;
+  min-width: 140px;
+}
+.chart-tooltip-time {
+  font-weight: 800;
+  margin-bottom: 4px;
+  color: var(--cloud);
+}
+.chart-tooltip-value {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.rain-curve {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.rain-curve path.curve-fill {
+  transition: d 0.6s var(--ease-out);
+  opacity: 0.15;
+}
+.rain-curve path.curve-line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: d 0.6s var(--ease-out);
+  filter: drop-shadow(0 4px 8px rgba(6, 182, 212, 0.3));
+}
+.rain-curve circle.curve-dot {
+  stroke: var(--void);
+  stroke-width: 2.5;
+  cursor: pointer;
+  transition: r 0.2s, transform 0.2s;
+}
+.rain-curve circle.curve-dot:hover { r: 8; }
+.rain-curve text.curve-label {
+  fill: var(--mist);
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  text-anchor: middle;
+}
+.rain-curve text.curve-value {
+  fill: var(--snow);
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  text-anchor: middle;
+}
+
+/* --- PERIOD CARDS --- */
+.period-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+.period-card {
+  border-radius: var(--radius-xl);
+  padding: var(--card-pad);
+  background: rgba(10, 20, 38, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s var(--ease-out);
+}
+.period-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(6, 182, 212, 0.08);
+}
+.period-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--accent-color, var(--noon));
+  opacity: 0.8;
+  transition: background 0.4s;
+}
+.period-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--mist);
+  margin-bottom: 14px;
+}
+.period-condition {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 24px;
+  line-height: 1.2;
+}
+.period-stats {
+  display: flex;
+  gap: 20px;
+}
+.period-stat-value {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.period-stat-label {
+  font-size: 10px;
+  color: var(--mist);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+/* --- ACTIVITY CARDS --- */
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+.activity-card {
+  border-radius: var(--radius-xl);
+  padding: var(--card-pad);
+  background: rgba(10, 20, 38, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  border-left: 4px solid var(--accent-color, var(--noon));
+  transition: all 0.4s var(--ease-out);
+}
+.activity-card:hover {
+  transform: translateY(-4px);
+  background: rgba(12, 25, 48, 0.55);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+}
+.activity-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.activity-status {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.activity-advice {
+  font-size: 13px;
+  color: var(--mist);
+  line-height: 1.5;
+}
+
+/* --- HOURLY SECTION --- */
+.hourly-section {
+  border-radius: var(--radius-xl);
+  background: rgba(10, 20, 38, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  overflow: hidden;
+}
+.hourly-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--white);
+  user-select: none;
+  transition: background 0.3s ease;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+.hourly-toggle:hover { background: rgba(255, 255, 255, 0.04); }
+.hourly-chevron {
+  transition: transform 0.4s var(--ease-out);
+  color: var(--mist);
+}
+.hourly-section[open] .hourly-chevron { transform: rotate(180deg); }
+.hourly-list { padding: 0 24px 24px; display: grid; gap: 10px; }
+.hour-row {
+  display: grid;
+  grid-template-columns: 70px 1.2fr repeat(4, minmax(70px, 0.5fr));
+  gap: 12px;
+  align-items: center;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--accent-color, var(--noon));
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.3s;
+}
+.hour-row:hover { background: rgba(255, 255, 255, 0.04); }
+.hour-time {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.hour-condition {
+  font-size: 14px;
+  font-weight: 700;
+}
+.hour-status {
+  font-size: 12px;
+  color: var(--mist);
+  margin-top: 2px;
+}
+.hour-box {
+  text-align: center;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(11, 25, 50, 0.5);
+  border: 1px solid rgba(6, 182, 212, 0.15);
+}
+.hour-box-value {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.hour-box-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--mist);
+  margin-top: 2px;
+}
+
+/* --- DYNAMIC WEATHER LAYERS --- */
+.layer-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.layer-btn {
+  padding: 12px 20px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cloud);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: inherit;
+  min-height: 44px;
+}
+.layer-btn:hover {
+  color: var(--white);
+  background: rgba(255, 255, 255, 0.06);
+}
+.layer-btn.active {
+  background: var(--active-bg, rgba(6, 182, 212, 0.15));
+  color: var(--active-color, var(--noon));
+  border-color: var(--active-border, rgba(6, 182, 212, 0.4));
+  box-shadow: 0 4px 16px var(--active-shadow, rgba(6, 182, 212, 0.15));
+}
+
+/* --- FUTURISTIC MAP & GEOGRAPHICAL SCAN --- */
+@keyframes mapSkeleton {
+  0% { background-color: var(--ocean); }
+  50% { background-color: var(--steel); }
+  100% { background-color: var(--ocean); }
+}
+
+.map-wrapper {
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--ocean);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  position: relative;
+  animation: mapSkeleton 2.5s infinite ease-in-out;
+}
+.map-frame {
+  width: 100%;
+  height: clamp(320px, 55vh, 720px);
+  border: 0;
+  display: block;
+}
+.map-actions {
+  display: flex;
+  gap: 10px;
+  padding: 20px 24px;
+  background: rgba(7, 14, 30, 0.7);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* --- DESKTOP WEATHER COMMAND CENTER --- */
+.command-center {
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: 32px;
+  margin-top: 40px;
+}
+.command-sidebar {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 24px;
+}
+
+/* --- LOCATION PORTAL CARDS --- */
+.location-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+.location-card {
+  border-radius: var(--radius-xl);
+  padding: var(--card-pad);
+  background: rgba(10, 20, 38, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(28px);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.5s var(--ease-out);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 280px;
+}
+.location-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.35), 0 0 30px rgba(6, 182, 212, 0.1);
+  border-color: var(--accent-color, rgba(6, 182, 212, 0.3));
+}
+.location-card::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: var(--accent-glow, rgba(16,185,129,0.06));
+  filter: blur(50px);
+  transition: opacity 0.5s ease;
+}
+.location-card:hover::before { opacity: 1.5; }
+
+.location-name {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin: 16px 0 10px;
+  position: relative;
+}
+.location-desc {
+  font-size: 14px;
+  color: var(--cloud);
+  line-height: 1.5;
+  margin-bottom: 24px;
+  position: relative;
+}
+.location-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+  position: relative;
+}
+.location-stat {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: rgba(11, 25, 50, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  text-align: center;
+}
+.location-stat-value {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.location-stat-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--mist);
+  margin-top: 4px;
+}
+.location-actions {
+  display: flex;
+  gap: 10px;
+  position: relative;
+}
+
+/* --- BUTTONS --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--snow);
+  cursor: pointer;
+  transition: all 0.3s var(--ease-out);
+  backdrop-filter: blur(12px);
+}
+.btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+.btn-primary {
+  background: rgba(6, 182, 212, 0.12);
+  border-color: rgba(6, 182, 212, 0.3);
+  color: var(--noon);
+}
+.btn-primary:hover {
+  background: rgba(6, 182, 212, 0.22);
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.2);
+}
+
+/* --- WARNING NOTICE --- */
+.notice {
+  padding: 16px 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.03);
+  color: var(--watch);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  margin: 32px 0;
+  backdrop-filter: blur(12px);
+}
+
+/* --- SHARE PANEL --- */
+.share-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.share-text {
+  width: 100%;
+  min-height: 130px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  background: rgba(3, 7, 18, 0.5);
+  color: var(--snow);
+  padding: 16px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: none;
+}
+
+/* --- TRUST ACCURACY BAR --- */
+.trust-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  margin-top: 16px;
+}
+.trust-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--noon), var(--safe));
+  transition: width 1.5s var(--ease-out);
+}
+
+/* --- FOOTER --- */
+.footer {
+  padding: 80px 0 48px;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+}
+.footer-brand {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--white), var(--mist));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 14px;
+}
+.footer-version {
+  font-size: 12px;
+  color: var(--mist);
+}
+.footer-links {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+.footer-link {
+  font-size: 13px;
+  color: var(--noon);
+  font-weight: 600;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+.footer-link:hover { opacity: 1; }
+
+/* --- 3-DAY AND OTHER LAYOUTS --- */
+.day-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+.day-overview-card {
+  border-radius: var(--radius-xl);
+  padding: var(--card-pad);
+  background: rgba(10, 20, 38, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(28px);
+  transition: all 0.4s var(--ease-out);
+}
+.day-overview-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+/* --- DATA SOURCES TABLE --- */
+.source-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+.source-table th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--noon);
+}
+.source-table td {
+  padding: 16px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.01);
+  border-top: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.source-table tr td:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-left: 1px solid rgba(255,255,255,0.03); }
+.source-table tr td:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; border-right: 1px solid rgba(255,255,255,0.03); }
+.source-table tr:hover td { background: rgba(255, 255, 255, 0.03); }
+
+/* --- SEPARATOR DIVIDER --- */
+.divider {
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--noon), transparent);
+  margin: 64px auto;
+  opacity: 0.4;
+}
+
+/* --- MOBILE BOTTOM SHEET --- */
+.mobile-bottom-sheet { display: none; }
+
+/* ============================================================
+   ADAPTIVE RESPONSIVE BREAKPOINT SYSTEM (6-Tier)
+   ============================================================ */
+
+/* --- WIDE DESKTOP (≥1536px) — cinematic spacing, max-width cap --- */
+@media (min-width: 1536px) {
+  :root { --container-max: 1440px; --section-pad: 100px; }
+  .hero { padding: 100px 40px 120px; }
+  .command-center { gap: 40px; }
+  .section-header { margin-bottom: 56px; }
+}
+
+/* --- DESKTOP (1280–1535px) — default layout, unchanged --- */
+/* --- DESKTOP (1280–1535px) — default layout --- */
+
+/* --- LAPTOP (1024–1279px) — 2-col dominant map --- */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .command-center { grid-template-columns: 1fr; gap: 24px; }
+  .hero-metric-value { font-size: 32px; }
+  .decision-main { padding: 32px; min-height: 240px; }
+}
+
+/* --- TABLET (768–1023px) — hybrid layout --- */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root { --nav-height: 64px; }
+  .command-center { grid-template-columns: 1fr; }
+  .decision { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .share-grid { grid-template-columns: 1fr; }
+  .hero { min-height: auto; padding: 48px 24px 64px; }
+  .hero-metric-value { font-size: 30px; }
+  .hero-scroll { display: none; }
+  .section-header { margin-bottom: 36px; }
+  .decision-main { padding: 28px; }
+  .location-card { min-height: 240px; }
+  .divider { margin: 40px auto; }
+  .footer { padding: 48px 0 32px; }
+  .footer-brand { font-size: 26px; }
+}
+
+/* --- MOBILE LARGE (480–767px) — single column premium --- */
+@media (max-width: 767px) {
+  :root { --nav-height: 60px; --container-pad: 16px; --section-pad: 32px; --card-pad: 20px; }
+
+  /* Navbar: hamburger menu */
+  .nav-toggle { display: flex; }
+  .nav-links {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    background: rgba(3, 7, 18, 0.95);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-direction: column;
+    padding: 16px;
+    gap: 8px;
+    transform: translateY(-110%);
+    transition: transform 0.35s var(--ease-out);
+    z-index: 999;
+  }
+  .nav-links.open {
+    transform: translateY(0);
+  }
+  .nav-link {
+    padding: 14px 20px;
+    font-size: 15px;
+    border-radius: var(--radius-md);
+    text-align: center;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav-sub { display: none; }
+  .nav-title { font-size: 18px; }
+
+  /* Hero: compact */
+  .hero { padding: 24px 16px 40px; min-height: auto; }
+  .hero-title { font-size: clamp(32px, 8vw, 42px); }
+  .hero-subtitle { font-size: 15px; margin-bottom: 24px; }
+  .hero-metrics { gap: 12px; }
+  .hero-metric { min-width: 0; flex: 1 1 100%; }
+  .hero-metric-value { font-size: 28px; }
+  .hero-metric-label { font-size: var(--font-label); }
+  .hero-scroll { display: none; }
+  .hero-glow-1, .hero-glow-2, .hero-glow-3 { opacity: 0.12; }
+
+  /* Decision */
+  .decision { grid-template-columns: 1fr; gap: 16px; }
+  .decision-main { padding: 24px; min-height: auto; }
+  .decision-title { font-size: clamp(22px, 5vw, 32px); }
+  .decision-desc { font-size: 14px; }
+
+  /* KPI */
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi-card { padding: 16px; }
+  .kpi-value { font-size: 22px; }
+  .kpi-label { font-size: var(--font-label); }
+
+  /* Map */
+  .command-center { grid-template-columns: 1fr; gap: 20px; }
+
+  /* Hourly rows — mobile card format */
+  .hour-row {
+    grid-template-columns: 60px 1fr;
+    gap: 6px;
+    padding: 12px 14px;
+  }
+  .hour-box { display: none; }
+  .hour-box.hour-box-main {
+    display: flex;
+    grid-column: 1 / -1;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .hour-box.hour-box-rain { display: block; grid-column: 1 / -1; }
+  .hourly-list { padding: 0 16px 16px; }
+
+  /* Layer controls — horizontal scroll chips */
+  .layer-controls {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .layer-controls::-webkit-scrollbar { display: none; }
+  .layer-btn { flex-shrink: 0; padding: 10px 16px; font-size: 11px; }
+
+  /* Timeline — scrollable */
+  .day-tabs-container { margin: 0 auto 32px; }
+  .timeline-progress-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 8px 0;
+  }
+  .timeline-progress-container::-webkit-scrollbar { display: none; }
+  .timeline-node {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+  }
+  .timeline-progress-bar, .timeline-progress-fill { display: none; }
+
+  /* Charts */
+  .chart-wrapper { padding: 20px; }
+  .chart-chip { padding: 8px 14px; font-size: 11px; min-height: 36px; }
+
+  /* Cards */
+  .location-card { min-height: auto; }
+  .location-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .location-stat { padding: 8px; }
+  .location-stat-value { font-size: 15px; }
+
+  /* Section headers */
+  .section-header { margin-bottom: 24px; }
+  .section-overline { font-size: 10px; letter-spacing: 0.15em; }
+
+  /* Share */
+  .share-grid { grid-template-columns: 1fr; gap: 16px; }
+
+  /* Glass card */
+  .glass { padding: var(--card-pad); }
+  .glass:hover { transform: none; }
+
+  /* Notice */
+  .notice { padding: 14px 20px; border-radius: var(--radius-lg); font-size: 12px; }
+
+  /* Footer */
+  .footer { padding: 32px 0 24px; }
+  .footer-brand { font-size: 22px; }
+  .footer-links { gap: 12px; }
+
+  /* Divider */
+  .divider { margin: 32px auto; }
+
+  /* Mobile Bottom Sheet */
+  .mobile-bottom-sheet {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+    background: rgba(7, 10, 22, 0.95);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 28px 28px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.4s var(--ease-out);
+    padding: 24px;
+    max-height: 75vh;
+    overflow-y: auto;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+    -webkit-overflow-scrolling: touch;
+  }
+  .mobile-bottom-sheet.open { transform: translateY(0); }
+  .mobile-bottom-sheet-handle {
+    width: 44px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: -10px auto 20px;
+    cursor: pointer;
+    min-height: 20px;
+    padding: 8px 0;
+  }
+
+  /* Disable hover lift effects on touch */
+  .period-card:hover,
+  .activity-card:hover,
+  .day-overview-card:hover,
+  .location-card:hover,
+  .hero-metric:hover {
+    transform: none;
+  }
+}
+
+/* --- MOBILE SMALL (≤479px) — compact everything --- */
+@media (max-width: 479px) {
+  :root { --nav-height: 56px; --card-pad: 16px; }
+  .nav-title { font-size: 16px; }
+  .nav-logo { width: 30px; height: 30px; border-radius: 10px; }
+  .hero-title { font-size: clamp(28px, 7vw, 36px); line-height: 1.05; }
+  .hero-subtitle { font-size: 14px; }
+  .hero-metric-value { font-size: 24px; }
+  .hero-label { font-size: 11px; padding: 6px 14px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .kpi-value { font-size: 20px; }
+  .period-stat-value { font-size: 16px; }
+  .period-condition { font-size: 17px; }
+  .activity-status { font-size: 18px; }
+  .hour-time { font-size: 18px; }
+  .location-name { font-size: 20px; }
+  .location-stat-value { font-size: 14px; }
+  .chart-chip { padding: 6px 10px; font-size: 10px; }
+  .source-table { font-size: 12px; }
+  .source-table td { padding: 10px; }
+  .btn { padding: 10px 18px; font-size: 12px; min-height: 44px; }
+}
+
+/* --- MOTION ADAPTATION --- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+  .hero-glow, .hero-glow-1, .hero-glow-2, .hero-glow-3 { display: none; }
+  .atmo, #atmo-canvas { display: none; }
+  .hero-scroll { display: none; }
+  .pulse-ring { display: none; }
+}
+
+/* --- PRINT STYLES --- */
+@media print {
+  .nav-bar, .atmo, .hero-scroll, .mobile-bottom-sheet,
+  .layer-controls, .map-wrapper, .footer { display: none; }
+  body { background: #fff; color: #000; }
+  .glass { background: #f5f5f5; border: 1px solid #ddd; backdrop-filter: none; }
+}
+</style>
+</head><body class="theme-noon">
+<div class="atmo">
+  <canvas id="atmo-canvas"></canvas>
 </div>
-<script>window.LANGIT_OMEGA_DATA={"brand": "LANGIT", "version": "LANGIT Omega 1.0", "location": {"name": "Dago, Bandung", "slug": "dago", "latitude": -6.889, "longitude": 107.61}, "generatedAt": "Diperbarui 18 Juni 2026, 01:48 WIB", "freshness": {"status": "fresh", "ageHours": 0.0}, "contract": {"name": "LangitWeatherPoint", "timezone": "WIB", "units": {"temperature": "C", "rainProbability": "%", "rainAmount": "mm", "windSpeed": "km/jam", "humidity": "%", "pressure": "hPa", "visibility": "m", "uvIndex": "index"}, "fields": ["id", "locationName", "latitude", "longitude", "timestamp", "updateTime", "condition", "temperature", "temperatureMin", "temperatureMax", "apparentTemperature", "heatIndex", "humidity", "dewPoint", "pressure", "windSpeed", "windDirection", "windGust", "rainProbability", "rainAmount", "rainIntensity", "precipitationTotal", "cloudCover", "visibility", "uvIndex", "solarRadiation", "weatherCode", "riskScore", "dataQuality", "source", "confidence"]}, "variables": [{"key": "rain", "label": "Hujan", "available": true, "field": "rainProbability", "sourceFields": ["rain_probability", "prob_rain", "peluang_hujan_pct", "rain_mean"], "unit": "%", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 0.0, "currentUIUsage": "parsial", "recommendedUIUsage": "utama", "priority": "P0", "chart": "bar-area", "mapLayer": "rain", "level": 1}, {"key": "temperature", "label": "Suhu", "available": true, "field": "temperature", "sourceFields": ["temp_c", "temp_p50", "suhu_C", "temp_mean"], "unit": "C", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 0.0, "currentUIUsage": "parsial", "recommendedUIUsage": "utama", "priority": "P0", "chart": "line", "mapLayer": "temp", "level": 1}, {"key": "risk", "label": "Risiko", "available": true, "field": "riskScore", "sourceFields": ["risk_score", "rain_threat_score", "forecast_stress_index"], "unit": "/100", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 0.0, "currentUIUsage": "parsial", "recommendedUIUsage": "utama", "priority": "P0", "chart": "bar", "mapLayer": "risiko", "level": 1}, {"key": "wind", "label": "Angin", "available": true, "field": "windSpeed", "sourceFields": ["wind_kmh", "wind_p50", "angin_kmh"], "unit": "km/jam", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 0.0, "currentUIUsage": "parsial", "recommendedUIUsage": "compact", "priority": "P1", "chart": "line", "mapLayer": "wind", "level": 1}, {"key": "humidity", "label": "Kelembapan", "available": true, "field": "humidity", "sourceFields": ["humidity_pct", "rh_p50", "kelembapan_RH_pct", "rh_mean"], "unit": "%", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 0.0, "currentUIUsage": "parsial", "recommendedUIUsage": "compact", "priority": "P1", "chart": "line", "mapLayer": "humidity", "level": 2}, {"key": "heat", "label": "Indeks panas", "available": true, "field": "heatIndex", "sourceFields": ["heat_index_c", "heat_index_p50", "heat_index_C", "apparent_temperature_c"], "unit": "C", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 0.0, "currentUIUsage": "parsial", "recommendedUIUsage": "compact", "priority": "P1", "chart": "line", "mapLayer": null, "level": 2}, {"key": "cloud", "label": "Awan", "available": true, "field": "cloudCover", "sourceFields": ["cloud_pct", "cloud_p50", "tutupan_awan_pct"], "unit": "%", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 0.0, "currentUIUsage": "parsial", "recommendedUIUsage": "detail", "priority": "P2", "chart": "line", "mapLayer": "cloud", "level": 3}, {"key": "rain_amount", "label": "Curah hujan", "available": true, "field": "rainAmount", "sourceFields": ["rainAmount", "curah_hujan_p50_mm", "rain_p50", "rain_mm"], "unit": "mm", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 0.667, "currentUIUsage": "parsial", "recommendedUIUsage": "detail", "priority": "P2", "chart": "bar", "mapLayer": "rain", "level": 3}, {"key": "confidence", "label": "Keandalan", "available": false, "field": "confidence", "sourceFields": ["confidence", "confidence_score", "coverage_fraction", "confidence_score_base"], "unit": "%", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 1.0, "currentUIUsage": "parsial", "recommendedUIUsage": "disabled", "priority": "P5", "chart": "line", "mapLayer": null, "level": 4}, {"key": "pressure", "label": "Tekanan", "available": false, "field": "pressure", "sourceFields": ["pressure_msl_hpa", "surface_pressure_hpa", "tekanan_udara_hpa"], "unit": "hPa", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 1.0, "currentUIUsage": "parsial", "recommendedUIUsage": "disabled", "priority": "P5", "chart": "line", "mapLayer": null, "level": 4}, {"key": "visibility", "label": "Jarak pandang", "available": false, "field": "visibility", "sourceFields": ["visibility_p10", "jarak_pandang_p10_m"], "unit": "m", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 1.0, "currentUIUsage": "parsial", "recommendedUIUsage": "disabled", "priority": "P5", "chart": "line", "mapLayer": null, "level": 4}, {"key": "dew_point", "label": "Dew point", "available": false, "field": "dewPoint", "sourceFields": ["dew_point_c", "dew_point_C"], "unit": "C", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 1.0, "currentUIUsage": "parsial", "recommendedUIUsage": "disabled", "priority": "P5", "chart": "line", "mapLayer": null, "level": 4}, {"key": "gust", "label": "Gust", "available": false, "field": "windGust", "sourceFields": ["gust_p90", "hembusan_angin_p90_kmh"], "unit": "km/jam", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 1.0, "currentUIUsage": "parsial", "recommendedUIUsage": "disabled", "priority": "P5", "chart": "line", "mapLayer": null, "level": 4}, {"key": "uv", "label": "UV", "available": false, "field": "uvIndex", "sourceFields": ["uv_index"], "unit": "index", "temporalResolution": "1-3 jam", "spatialResolution": "titik lokasi kampus", "missingRate": 1.0, "currentUIUsage": "parsial", "recommendedUIUsage": "disabled", "priority": "P5", "chart": "line", "mapLayer": null, "level": 4}], "points": [{"id": "dago-2026-06-18-00:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-18T00:00:00+07:00", "dateIso": "2026-06-18", "dateLabel": "Kamis, 18 Juni 2026", "relative": "Hari ini", "hour": "00:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Lembap malam", "temperature": 21.0, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 21.1, "heatIndex": 21.0, "humidity": 89.0, "dewPoint": null, "pressure": null, "windSpeed": 2.5, "windDirection": null, "windGust": null, "rainProbability": 0, "rainAmount": 0.0, "rainIntensity": 0.0, "precipitationTotal": 0.0, "cloudCover": 15.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 2.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-18-06:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-18T06:00:00+07:00", "dateIso": "2026-06-18", "dateLabel": "Kamis, 18 Juni 2026", "relative": "Hari ini", "hour": "06:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Berawan dipantau", "temperature": 20.4, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 19.4, "heatIndex": 20.4, "humidity": 88.0, "dewPoint": null, "pressure": null, "windSpeed": 3.3, "windDirection": null, "windGust": null, "rainProbability": 14.0, "rainAmount": 0.0, "rainIntensity": 0.0, "precipitationTotal": 0.0, "cloudCover": 70.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 14.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-18-09:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-18T09:00:00+07:00", "dateIso": "2026-06-18", "dateLabel": "Kamis, 18 Juni 2026", "relative": "Hari ini", "hour": "09:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Berawan dipantau", "temperature": 24.1, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 23.9, "heatIndex": 24.1, "humidity": 74.0, "dewPoint": null, "pressure": null, "windSpeed": 4.7, "windDirection": null, "windGust": null, "rainProbability": 18.0, "rainAmount": 0.0, "rainIntensity": 0.0, "precipitationTotal": 0.0, "cloudCover": 70.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 18.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-18-12:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-18T12:00:00+07:00", "dateIso": "2026-06-18", "dateLabel": "Kamis, 18 Juni 2026", "relative": "Hari ini", "hour": "12:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Cerah berawan", "temperature": 25.7, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 29.03, "heatIndex": 25.7, "humidity": 67.0, "dewPoint": null, "pressure": null, "windSpeed": 5.0, "windDirection": null, "windGust": null, "rainProbability": 15.0, "rainAmount": 0.0, "rainIntensity": 0.9, "precipitationTotal": 0.0, "cloudCover": 70.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 15.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-18-14:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-18T14:00:00+07:00", "dateIso": "2026-06-18", "dateLabel": "Kamis, 18 Juni 2026", "relative": "Hari ini", "hour": "14:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Hujan lokal", "temperature": 26.5, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 28.76, "heatIndex": 26.5, "humidity": 70.0, "dewPoint": null, "pressure": null, "windSpeed": 5.6, "windDirection": null, "windGust": null, "rainProbability": 59.0, "rainAmount": 0.0, "rainIntensity": 1.6, "precipitationTotal": 0.0, "cloudCover": 85.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 59.0, "riskClass": "watch", "riskLabel": "Perlu diperhatikan", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-18-15:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-18T15:00:00+07:00", "dateIso": "2026-06-18", "dateLabel": "Kamis, 18 Juni 2026", "relative": "Hari ini", "hour": "15:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Hujan lokal", "temperature": 26.0, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 28.23, "heatIndex": 26.0, "humidity": 71.0, "dewPoint": null, "pressure": null, "windSpeed": 5.1, "windDirection": null, "windGust": null, "rainProbability": 45.0, "rainAmount": 0.0, "rainIntensity": 1.3, "precipitationTotal": 0.0, "cloudCover": 85.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 45.0, "riskClass": "watch", "riskLabel": "Perlu diperhatikan", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-18-17:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-18T17:00:00+07:00", "dateIso": "2026-06-18", "dateLabel": "Kamis, 18 Juni 2026", "relative": "Hari ini", "hour": "17:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Hujan lokal", "temperature": 25.1, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 25.5, "heatIndex": 25.1, "humidity": 77.0, "dewPoint": null, "pressure": null, "windSpeed": 4.2, "windDirection": null, "windGust": null, "rainProbability": 75.0, "rainAmount": 0.0, "rainIntensity": 2.8, "precipitationTotal": 0.0, "cloudCover": 85.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 75.0, "riskClass": "rain", "riskLabel": "Waspada", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-18-18:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-18T18:00:00+07:00", "dateIso": "2026-06-18", "dateLabel": "Kamis, 18 Juni 2026", "relative": "Hari ini", "hour": "18:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Hujan lokal", "temperature": 23.6, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 24.1, "heatIndex": 23.6, "humidity": 86.0, "dewPoint": null, "pressure": null, "windSpeed": 4.3, "windDirection": null, "windGust": null, "rainProbability": 52.0, "rainAmount": 0.0, "rainIntensity": 2.9, "precipitationTotal": 0.0, "cloudCover": 85.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 52.0, "riskClass": "watch", "riskLabel": "Perlu diperhatikan", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-18-21:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-18T21:00:00+07:00", "dateIso": "2026-06-18", "dateLabel": "Kamis, 18 Juni 2026", "relative": "Hari ini", "hour": "21:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Berawan dipantau", "temperature": 21.8, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 22.4, "heatIndex": 21.8, "humidity": 87.0, "dewPoint": null, "pressure": null, "windSpeed": 2.7, "windDirection": null, "windGust": null, "rainProbability": 11.0, "rainAmount": 0.0, "rainIntensity": 1.4, "precipitationTotal": 0.0, "cloudCover": 70.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 11.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-19-00:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-19T00:00:00+07:00", "dateIso": "2026-06-19", "dateLabel": "Jumat, 19 Juni 2026", "relative": "Besok", "hour": "00:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Lembap malam", "temperature": 20.8, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 20.8, "heatIndex": 20.8, "humidity": 88.0, "dewPoint": null, "pressure": null, "windSpeed": 4.0, "windDirection": null, "windGust": null, "rainProbability": 11.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 15.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 11.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-19-06:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-19T06:00:00+07:00", "dateIso": "2026-06-19", "dateLabel": "Jumat, 19 Juni 2026", "relative": "Besok", "hour": "06:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Berawan dipantau", "temperature": 20.0, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 20.0, "heatIndex": 20.0, "humidity": 88.0, "dewPoint": null, "pressure": null, "windSpeed": 5.2, "windDirection": null, "windGust": null, "rainProbability": 10.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 70.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 10.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-19-09:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-19T09:00:00+07:00", "dateIso": "2026-06-19", "dateLabel": "Jumat, 19 Juni 2026", "relative": "Besok", "hour": "09:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Berawan dipantau", "temperature": 24.0, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 24.0, "heatIndex": 24.0, "humidity": 74.0, "dewPoint": null, "pressure": null, "windSpeed": 4.7, "windDirection": null, "windGust": null, "rainProbability": 0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 70.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 0.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-19-12:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-19T12:00:00+07:00", "dateIso": "2026-06-19", "dateLabel": "Jumat, 19 Juni 2026", "relative": "Besok", "hour": "12:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Cerah berawan", "temperature": 27.4, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 28.7, "heatIndex": 28.7, "humidity": 60.0, "dewPoint": null, "pressure": null, "windSpeed": 7.7, "windDirection": null, "windGust": null, "rainProbability": 0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 70.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 0.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-19-14:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-19T14:00:00+07:00", "dateIso": "2026-06-19", "dateLabel": "Jumat, 19 Juni 2026", "relative": "Besok", "hour": "14:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Awan tumbuh", "temperature": 28.6, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 29.7, "heatIndex": 29.7, "humidity": 56.0, "dewPoint": null, "pressure": null, "windSpeed": 8.3, "windDirection": null, "windGust": null, "rainProbability": 21.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 15.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 21.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-19-15:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-19T15:00:00+07:00", "dateIso": "2026-06-19", "dateLabel": "Jumat, 19 Juni 2026", "relative": "Besok", "hour": "15:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Awan tumbuh", "temperature": 28.7, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 29.3, "heatIndex": 29.3, "humidity": 63.0, "dewPoint": null, "pressure": null, "windSpeed": 8.2, "windDirection": null, "windGust": null, "rainProbability": 33.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 15.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 33.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-19-18:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-19T18:00:00+07:00", "dateIso": "2026-06-19", "dateLabel": "Jumat, 19 Juni 2026", "relative": "Besok", "hour": "18:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Awan tumbuh", "temperature": 25.0, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 25.0, "heatIndex": 25.0, "humidity": 88.0, "dewPoint": null, "pressure": null, "windSpeed": 4.0, "windDirection": null, "windGust": null, "rainProbability": 33.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 15.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 33.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-19-20:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-19T20:00:00+07:00", "dateIso": "2026-06-19", "dateLabel": "Jumat, 19 Juni 2026", "relative": "Besok", "hour": "20:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Hujan lokal", "temperature": 23.3, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 23.3, "heatIndex": 23.3, "humidity": 92.0, "dewPoint": null, "pressure": null, "windSpeed": 3.2, "windDirection": null, "windGust": null, "rainProbability": 45.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 85.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 45.0, "riskClass": "watch", "riskLabel": "Perlu diperhatikan", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-19-21:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-19T21:00:00+07:00", "dateIso": "2026-06-19", "dateLabel": "Jumat, 19 Juni 2026", "relative": "Besok", "hour": "21:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Hujan lokal", "temperature": 22.8, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 22.8, "heatIndex": 22.8, "humidity": 92.0, "dewPoint": null, "pressure": null, "windSpeed": 3.0, "windDirection": null, "windGust": null, "rainProbability": 43.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 85.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 43.0, "riskClass": "watch", "riskLabel": "Perlu diperhatikan", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-20-00:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-20T00:00:00+07:00", "dateIso": "2026-06-20", "dateLabel": "Sabtu, 20 Juni 2026", "relative": "Lusa", "hour": "00:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Lembap pagi", "temperature": 21.8, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 21.8, "heatIndex": 21.8, "humidity": 94.0, "dewPoint": null, "pressure": null, "windSpeed": 4.1, "windDirection": null, "windGust": null, "rainProbability": 0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 15.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 4.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-20-03:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-20T03:00:00+07:00", "dateIso": "2026-06-20", "dateLabel": "Sabtu, 20 Juni 2026", "relative": "Lusa", "hour": "03:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Lembap pagi", "temperature": 21.1, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 21.1, "heatIndex": 21.1, "humidity": 96.0, "dewPoint": null, "pressure": null, "windSpeed": 2.8, "windDirection": null, "windGust": null, "rainProbability": 0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 15.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 5.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-20-06:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-20T06:00:00+07:00", "dateIso": "2026-06-20", "dateLabel": "Sabtu, 20 Juni 2026", "relative": "Lusa", "hour": "06:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Lembap pagi", "temperature": 20.0, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 20.0, "heatIndex": 20.0, "humidity": 93.0, "dewPoint": null, "pressure": null, "windSpeed": 3.7, "windDirection": null, "windGust": null, "rainProbability": 0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 15.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 4.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-20-09:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-20T09:00:00+07:00", "dateIso": "2026-06-20", "dateLabel": "Sabtu, 20 Juni 2026", "relative": "Lusa", "hour": "09:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Berawan dipantau", "temperature": 24.7, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 24.7, "heatIndex": 24.7, "humidity": 74.0, "dewPoint": null, "pressure": null, "windSpeed": 3.6, "windDirection": null, "windGust": null, "rainProbability": 11.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 70.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 11.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-20-12:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-20T12:00:00+07:00", "dateIso": "2026-06-20", "dateLabel": "Sabtu, 20 Juni 2026", "relative": "Lusa", "hour": "12:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Hujan lokal", "temperature": 27.8, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 29.1, "heatIndex": 29.1, "humidity": 64.0, "dewPoint": null, "pressure": null, "windSpeed": 7.2, "windDirection": null, "windGust": null, "rainProbability": 47.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 85.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 47.0, "riskClass": "watch", "riskLabel": "Perlu diperhatikan", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-20-15:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-20T15:00:00+07:00", "dateIso": "2026-06-20", "dateLabel": "Sabtu, 20 Juni 2026", "relative": "Lusa", "hour": "15:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Hujan lokal", "temperature": 26.0, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 26.0, "heatIndex": 26.0, "humidity": 75.0, "dewPoint": null, "pressure": null, "windSpeed": 5.9, "windDirection": null, "windGust": null, "rainProbability": 71.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 85.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 71.0, "riskClass": "rain", "riskLabel": "Waspada", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-20-16:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-20T16:00:00+07:00", "dateIso": "2026-06-20", "dateLabel": "Sabtu, 20 Juni 2026", "relative": "Lusa", "hour": "16:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Hujan lokal", "temperature": 26.0, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 26.0, "heatIndex": 26.0, "humidity": 76.0, "dewPoint": null, "pressure": null, "windSpeed": 4.3, "windDirection": null, "windGust": null, "rainProbability": 82.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 85.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 82.0, "riskClass": "rain", "riskLabel": "Waspada", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-20-18:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-20T18:00:00+07:00", "dateIso": "2026-06-20", "dateLabel": "Sabtu, 20 Juni 2026", "relative": "Lusa", "hour": "18:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Awan tumbuh", "temperature": 24.0, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 24.0, "heatIndex": 24.0, "humidity": 85.0, "dewPoint": null, "pressure": null, "windSpeed": 2.2, "windDirection": null, "windGust": null, "rainProbability": 33.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 15.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 33.0, "riskClass": "safe", "riskLabel": "Aman", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}, {"id": "dago-2026-06-20-21:00", "locationName": "Dago, Bandung", "locationSlug": "dago", "latitude": -6.889, "longitude": 107.61, "timestamp": "2026-06-20T21:00:00+07:00", "dateIso": "2026-06-20", "dateLabel": "Sabtu, 20 Juni 2026", "relative": "Lusa", "hour": "21:00", "updateTime": "Diperbarui 18 Juni 2026, 01:48 WIB", "condition": "Hujan lokal", "temperature": 22.5, "temperatureMin": null, "temperatureMax": null, "apparentTemperature": 22.5, "heatIndex": 22.5, "humidity": 89.0, "dewPoint": null, "pressure": null, "windSpeed": 3.1, "windDirection": null, "windGust": null, "rainProbability": 46.0, "rainAmount": null, "rainIntensity": null, "precipitationTotal": null, "cloudCover": 85.0, "visibility": null, "uvIndex": null, "solarRadiation": null, "weatherCode": null, "riskScore": 46.0, "riskClass": "watch", "riskLabel": "Perlu diperhatikan", "dataQuality": "public", "source": "LANGIT ensemble", "confidence": null}], "sources": [{"tanggal": "16-06-2026", "source_id": "BMKG", "provider": "BMKG", "success": "yes", "base_weight": "1.35", "health_factor": "0.9859", "effective_base_weight": "1.331", "points_collected": "24", "target_points": "24", "http_status": "200", "duration_ms": "99", "error_content_type": "", "error_snippet": "", "payload_saved_path": "", "error": ""}, {"tanggal": "16-06-2026", "source_id": "CMA", "provider": "Open-Meteo / CMA GRAPES", "success": "yes", "base_weight": "0.85", "health_factor": "1.0", "effective_base_weight": "0.85", "points_collected": "24", "target_points": "24", "http_status": "200", "duration_ms": "773", "error_content_type": "", "error_snippet": "", "payload_saved_path": "", "error": ""}, {"tanggal": "16-06-2026", "source_id": "ECMWF", "provider": "Open-Meteo / ECMWF", "success": "yes", "base_weight": "1.2", "health_factor": "1.0", "effective_base_weight": "1.2", "points_collected": "24", "target_points": "24", "http_status": "200", "duration_ms": "870", "error_content_type": "", "error_snippet": "", "payload_saved_path": "", "error": ""}, {"tanggal": "16-06-2026", "source_id": "GFS", "provider": "Open-Meteo / NOAA GFS", "success": "yes", "base_weight": "1.0", "health_factor": "1.0", "effective_base_weight": "1.0", "points_collected": "24", "target_points": "24", "http_status": "200", "duration_ms": "901", "error_content_type": "", "error_snippet": "", "payload_saved_path": "", "error": ""}, {"tanggal": "16-06-2026", "source_id": "ICON", "provider": "Open-Meteo / DWD ICON", "success": "yes", "base_weight": "1.05", "health_factor": "1.0", "effective_base_weight": "1.05", "points_collected": "24", "target_points": "24", "http_status": "200", "duration_ms": "843", "error_content_type": "", "error_snippet": "", "payload_saved_path": "", "error": ""}, {"tanggal": "16-06-2026", "source_id": "KMA", "provider": "Open-Meteo / KMA", "success": "yes", "base_weight": "0.9", "health_factor": "1.0", "effective_base_weight": "0.9", "points_collected": "24", "target_points": "24", "http_status": "200", "duration_ms": "856", "error_content_type": "", "error_snippet": "", "payload_saved_path": "", "error": ""}, {"tanggal": "16-06-2026", "source_id": "METEOFRANCE", "provider": "Open-Meteo / Meteo-France", "success": "yes", "base_weight": "1.1", "health_factor": "1.0", "effective_base_weight": "1.1", "points_collected": "24", "target_points": "24", "http_status": "200", "duration_ms": "923", "error_content_type": "", "error_snippet": "", "payload_saved_path": "", "error": ""}, {"tanggal": "16-06-2026", "source_id": "METNO", "provider": "MET Norway", "success": "yes", "base_weight": "1.0", "health_factor": "0.9859", "effective_base_weight": "0.9859", "points_collected": "24", "target_points": "24", "http_status": "200", "duration_ms": "1324", "error_content_type": "", "error_snippet": "", "payload_saved_path": "", "error": ""}, {"tanggal": "16-06-2026", "source_id": "UKMO", "provider": "Open-Meteo / UK Met Office", "success": "yes", "base_weight": "0.95", "health_factor": "1.0", "effective_base_weight": "0.95", "points_collected": "24", "target_points": "24", "http_status": "200", "duration_ms": "861", "error_content_type": "", "error_snippet": "", "payload_saved_path": "", "error": ""}]};</script>
+<header class="nav-bar">
+  <a class="nav-brand" href="../index.html">
+    <span class="nav-logo"></span>
+    <span><span class="nav-title">LANGIT</span><span class="nav-sub">Dago, Bandung · LANGIT v65.1</span></span>
+  </a>
+  <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  <nav class="nav-links"><a class="nav-link " href="langit_app.html">Hari ini</a><a class="nav-link active" aria-current="page" href="langit_3day.html">3 hari ke depan</a><a class="nav-link " href="langit_activity.html">Panduan Aktivitas</a><a class="nav-link " href="langit_map_room.html">Peta</a></nav>
+</header>
+<main class="page">
+<section class="hero">
+    <div class="hero-glow hero-glow-1"></div>
+    <div class="hero-glow hero-glow-2"></div>
+    <div class="hero-glow hero-glow-3"></div>
+    <div class="container">
+      <div class="hero-label reveal">
+        <span class="hero-dot"></span>
+        <span>Jumat, 19 Juni 2026</span>
+      </div>
+      <h1 class="hero-title reveal reveal-delay-1">Prakiraan
+3 hari</h1>
+      <p class="hero-subtitle reveal reveal-delay-2">Mulai Jumat, 19 Juni 2026 sampai Minggu, 21 Juni 2026.</p>
+      
+    </div>
+    <div class="hero-scroll">
+      <span>Scroll</span>
+      <div class="hero-scroll-line"></div>
+    </div>
+  </section><div class="container"><div class="notice reveal">Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat.</div></div><section class="section"><div class="container">
+    <div class="section-header reveal">
+      <div class="section-overline">Prakiraan</div>
+      <h2 class="section-title">Prakiraan 3 hari ke depan</h2>
+    </div>
+    <div class="day-card-grid"><div class="day-overview-card reveal reveal-delay-1">
+        <span class="status-badge status-rain" style="margin-bottom:12px">Hari ini</span>
+        <h3 style="font-size:24px;font-weight:800;margin:12px 0 8px">Waspada</h3>
+        <p style="color:var(--cloud);font-size:14px;line-height:1.5;margin-bottom:16px">Jumat, 19 Juni 2026. Potensi hujan terpantau cukup tinggi. Siapkan perlengkapan hujan jika beraktivitas luar ruang di sekitar pukul 17:00 WIB (peluang 75%).</p>
+        <div class="location-stats">
+          <div class="location-stat"><div class="location-stat-value">75%</div><div class="location-stat-label">Peluang hujan</div></div>
+          <div class="location-stat"><div class="location-stat-value">17:00</div><div class="location-stat-label">Waktu</div></div>
+          <div class="location-stat"><div class="location-stat-value">75</div><div class="location-stat-label">Risiko</div></div>
+        </div>
+      </div><div class="day-overview-card reveal reveal-delay-2">
+        <span class="status-badge status-watch" style="margin-bottom:12px">Besok</span>
+        <h3 style="font-size:24px;font-weight:800;margin:12px 0 8px">Perlu diperhatikan</h3>
+        <p style="color:var(--cloud);font-size:14px;line-height:1.5;margin-bottom:16px">Sabtu, 20 Juni 2026. Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul 20:00 WIB.</p>
+        <div class="location-stats">
+          <div class="location-stat"><div class="location-stat-value">45%</div><div class="location-stat-label">Peluang hujan</div></div>
+          <div class="location-stat"><div class="location-stat-value">20:00</div><div class="location-stat-label">Waktu</div></div>
+          <div class="location-stat"><div class="location-stat-value">45</div><div class="location-stat-label">Risiko</div></div>
+        </div>
+      </div><div class="day-overview-card reveal reveal-delay-3">
+        <span class="status-badge status-rain" style="margin-bottom:12px">Lusa</span>
+        <h3 style="font-size:24px;font-weight:800;margin:12px 0 8px">Waspada</h3>
+        <p style="color:var(--cloud);font-size:14px;line-height:1.5;margin-bottom:16px">Minggu, 21 Juni 2026. Potensi hujan terpantau cukup tinggi. Siapkan perlengkapan hujan jika beraktivitas luar ruang di sekitar pukul 16:00 WIB (peluang 82%).</p>
+        <div class="location-stats">
+          <div class="location-stat"><div class="location-stat-value">82%</div><div class="location-stat-label">Peluang hujan</div></div>
+          <div class="location-stat"><div class="location-stat-value">16:00</div><div class="location-stat-label">Waktu</div></div>
+          <div class="location-stat"><div class="location-stat-value">82</div><div class="location-stat-label">Risiko</div></div>
+        </div>
+      </div></div>
+  </div></section><section class="section-compact"><div class="container">
+    <div class="chart-wrapper reveal">
+      <div class="section-header">
+        <div class="section-overline">Timeline</div>
+        <h2 class="section-title">Hari ini · Jumat, 19 Juni 2026</h2>
+        <p class="section-desc">Waspada</p>
+      </div>
+      
+      <!-- Multi-Variable Switches -->
+      <div class="chart-selector">
+        <button class="chart-chip active" data-var="rain">Peluang Hujan</button>
+        <button class="chart-chip" data-var="temp">Suhu</button>
+        <button class="chart-chip" data-var="humidity">Kelembapan</button>
+        <button class="chart-chip" data-var="wind">Kecepatan Angin</button>
+      </div>
+      
+      <div class="chart-svg-container" data-points="[{&quot;date_iso&quot;: &quot;2026-06-19&quot;, &quot;date_label&quot;: &quot;Jumat, 19 Juni 2026&quot;, &quot;date_short&quot;: &quot;19 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;00:00&quot;, &quot;temp_c&quot;: 21.0, &quot;humidity_pct&quot;: 89.0, &quot;heat_index_c&quot;: 21.0, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 2.5, &quot;risk_score&quot;: 2, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap malam&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-19&quot;, &quot;date_label&quot;: &quot;Jumat, 19 Juni 2026&quot;, &quot;date_short&quot;: &quot;19 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;06:00&quot;, &quot;temp_c&quot;: 20.4, &quot;humidity_pct&quot;: 88.0, &quot;heat_index_c&quot;: 20.4, &quot;rain_probability&quot;: 14.0, &quot;wind_kmh&quot;: 3.3, &quot;risk_score&quot;: 14, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Berawan dipantau&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-19&quot;, &quot;date_label&quot;: &quot;Jumat, 19 Juni 2026&quot;, &quot;date_short&quot;: &quot;19 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;09:00&quot;, &quot;temp_c&quot;: 24.1, &quot;humidity_pct&quot;: 74.0, &quot;heat_index_c&quot;: 24.1, &quot;rain_probability&quot;: 18.0, &quot;wind_kmh&quot;: 4.7, &quot;risk_score&quot;: 18, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Berawan dipantau&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-19&quot;, &quot;date_label&quot;: &quot;Jumat, 19 Juni 2026&quot;, &quot;date_short&quot;: &quot;19 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;12:00&quot;, &quot;temp_c&quot;: 25.7, &quot;humidity_pct&quot;: 67.0, &quot;heat_index_c&quot;: 25.7, &quot;rain_probability&quot;: 15.0, &quot;wind_kmh&quot;: 5.0, &quot;risk_score&quot;: 15, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Cerah berawan&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-19&quot;, &quot;date_label&quot;: &quot;Jumat, 19 Juni 2026&quot;, &quot;date_short&quot;: &quot;19 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;14:00&quot;, &quot;temp_c&quot;: 26.5, &quot;humidity_pct&quot;: 70.0, &quot;heat_index_c&quot;: 26.5, &quot;rain_probability&quot;: 59.0, &quot;wind_kmh&quot;: 5.6, &quot;risk_score&quot;: 59, &quot;risk_class&quot;: &quot;watch&quot;, &quot;risk_label&quot;: &quot;Perlu diperhatikan&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}, {&quot;date_iso&quot;: &quot;2026-06-19&quot;, &quot;date_label&quot;: &quot;Jumat, 19 Juni 2026&quot;, &quot;date_short&quot;: &quot;19 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;15:00&quot;, &quot;temp_c&quot;: 26.0, &quot;humidity_pct&quot;: 71.0, &quot;heat_index_c&quot;: 26.0, &quot;rain_probability&quot;: 45.0, &quot;wind_kmh&quot;: 5.1, &quot;risk_score&quot;: 45, &quot;risk_class&quot;: &quot;watch&quot;, &quot;risk_label&quot;: &quot;Perlu diperhatikan&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}, {&quot;date_iso&quot;: &quot;2026-06-19&quot;, &quot;date_label&quot;: &quot;Jumat, 19 Juni 2026&quot;, &quot;date_short&quot;: &quot;19 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;17:00&quot;, &quot;temp_c&quot;: 25.1, &quot;humidity_pct&quot;: 77.0, &quot;heat_index_c&quot;: 25.1, &quot;rain_probability&quot;: 75.0, &quot;wind_kmh&quot;: 4.2, &quot;risk_score&quot;: 75, &quot;risk_class&quot;: &quot;rain&quot;, &quot;risk_label&quot;: &quot;Waspada&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}, {&quot;date_iso&quot;: &quot;2026-06-19&quot;, &quot;date_label&quot;: &quot;Jumat, 19 Juni 2026&quot;, &quot;date_short&quot;: &quot;19 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;18:00&quot;, &quot;temp_c&quot;: 23.6, &quot;humidity_pct&quot;: 86.0, &quot;heat_index_c&quot;: 23.6, &quot;rain_probability&quot;: 52.0, &quot;wind_kmh&quot;: 4.3, &quot;risk_score&quot;: 52, &quot;risk_class&quot;: &quot;watch&quot;, &quot;risk_label&quot;: &quot;Perlu diperhatikan&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}, {&quot;date_iso&quot;: &quot;2026-06-19&quot;, &quot;date_label&quot;: &quot;Jumat, 19 Juni 2026&quot;, &quot;date_short&quot;: &quot;19 Juni&quot;, &quot;relative&quot;: &quot;Hari ini&quot;, &quot;hour&quot;: &quot;21:00&quot;, &quot;temp_c&quot;: 21.8, &quot;humidity_pct&quot;: 87.0, &quot;heat_index_c&quot;: 21.8, &quot;rain_probability&quot;: 11.0, &quot;wind_kmh&quot;: 2.7, &quot;risk_score&quot;: 11, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Berawan dipantau&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 70.0}]">
+        <svg class="rain-curve" viewBox="0 0 900 200" preserveAspectRatio="none"></svg>
+        <div class="chart-tooltip">
+          <div class="chart-tooltip-time">00:00</div>
+          <div class="chart-tooltip-value">0%</div>
+        </div>
+      </div>
+    </div>
+  </div></section><section class="section-compact"><div class="container">
+    <div class="chart-wrapper reveal">
+      <div class="section-header">
+        <div class="section-overline">Timeline</div>
+        <h2 class="section-title">Besok · Sabtu, 20 Juni 2026</h2>
+        <p class="section-desc">Perlu diperhatikan</p>
+      </div>
+      
+      <!-- Multi-Variable Switches -->
+      <div class="chart-selector">
+        <button class="chart-chip active" data-var="rain">Peluang Hujan</button>
+        <button class="chart-chip" data-var="temp">Suhu</button>
+        <button class="chart-chip" data-var="humidity">Kelembapan</button>
+        <button class="chart-chip" data-var="wind">Kecepatan Angin</button>
+      </div>
+      
+      <div class="chart-svg-container" data-points="[{&quot;date_iso&quot;: &quot;2026-06-20&quot;, &quot;date_label&quot;: &quot;Sabtu, 20 Juni 2026&quot;, &quot;date_short&quot;: &quot;20 Juni&quot;, &quot;relative&quot;: &quot;Besok&quot;, &quot;hour&quot;: &quot;00:00&quot;, &quot;temp_c&quot;: 20.8, &quot;humidity_pct&quot;: 88.0, &quot;heat_index_c&quot;: 20.8, &quot;rain_probability&quot;: 11.0, &quot;wind_kmh&quot;: 4.0, &quot;risk_score&quot;: 11, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap malam&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-20&quot;, &quot;date_label&quot;: &quot;Sabtu, 20 Juni 2026&quot;, &quot;date_short&quot;: &quot;20 Juni&quot;, &quot;relative&quot;: &quot;Besok&quot;, &quot;hour&quot;: &quot;06:00&quot;, &quot;temp_c&quot;: 20.0, &quot;humidity_pct&quot;: 88.0, &quot;heat_index_c&quot;: 20.0, &quot;rain_probability&quot;: 10.0, &quot;wind_kmh&quot;: 5.2, &quot;risk_score&quot;: 10, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Berawan dipantau&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-20&quot;, &quot;date_label&quot;: &quot;Sabtu, 20 Juni 2026&quot;, &quot;date_short&quot;: &quot;20 Juni&quot;, &quot;relative&quot;: &quot;Besok&quot;, &quot;hour&quot;: &quot;09:00&quot;, &quot;temp_c&quot;: 24.0, &quot;humidity_pct&quot;: 74.0, &quot;heat_index_c&quot;: 24.0, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 4.7, &quot;risk_score&quot;: 0, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Berawan dipantau&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-20&quot;, &quot;date_label&quot;: &quot;Sabtu, 20 Juni 2026&quot;, &quot;date_short&quot;: &quot;20 Juni&quot;, &quot;relative&quot;: &quot;Besok&quot;, &quot;hour&quot;: &quot;12:00&quot;, &quot;temp_c&quot;: 27.4, &quot;humidity_pct&quot;: 60.0, &quot;heat_index_c&quot;: 28.7, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 7.7, &quot;risk_score&quot;: 0, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Cerah berawan&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-20&quot;, &quot;date_label&quot;: &quot;Sabtu, 20 Juni 2026&quot;, &quot;date_short&quot;: &quot;20 Juni&quot;, &quot;relative&quot;: &quot;Besok&quot;, &quot;hour&quot;: &quot;14:00&quot;, &quot;temp_c&quot;: 28.6, &quot;humidity_pct&quot;: 56.0, &quot;heat_index_c&quot;: 29.7, &quot;rain_probability&quot;: 21.0, &quot;wind_kmh&quot;: 8.3, &quot;risk_score&quot;: 21, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Awan tumbuh&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-20&quot;, &quot;date_label&quot;: &quot;Sabtu, 20 Juni 2026&quot;, &quot;date_short&quot;: &quot;20 Juni&quot;, &quot;relative&quot;: &quot;Besok&quot;, &quot;hour&quot;: &quot;15:00&quot;, &quot;temp_c&quot;: 28.7, &quot;humidity_pct&quot;: 63.0, &quot;heat_index_c&quot;: 29.3, &quot;rain_probability&quot;: 33.0, &quot;wind_kmh&quot;: 8.2, &quot;risk_score&quot;: 33, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Awan tumbuh&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-20&quot;, &quot;date_label&quot;: &quot;Sabtu, 20 Juni 2026&quot;, &quot;date_short&quot;: &quot;20 Juni&quot;, &quot;relative&quot;: &quot;Besok&quot;, &quot;hour&quot;: &quot;18:00&quot;, &quot;temp_c&quot;: 25.0, &quot;humidity_pct&quot;: 88.0, &quot;heat_index_c&quot;: 25.0, &quot;rain_probability&quot;: 33.0, &quot;wind_kmh&quot;: 4.0, &quot;risk_score&quot;: 33, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Awan tumbuh&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-20&quot;, &quot;date_label&quot;: &quot;Sabtu, 20 Juni 2026&quot;, &quot;date_short&quot;: &quot;20 Juni&quot;, &quot;relative&quot;: &quot;Besok&quot;, &quot;hour&quot;: &quot;20:00&quot;, &quot;temp_c&quot;: 23.3, &quot;humidity_pct&quot;: 92.0, &quot;heat_index_c&quot;: 23.3, &quot;rain_probability&quot;: 45.0, &quot;wind_kmh&quot;: 3.2, &quot;risk_score&quot;: 45, &quot;risk_class&quot;: &quot;watch&quot;, &quot;risk_label&quot;: &quot;Perlu diperhatikan&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}, {&quot;date_iso&quot;: &quot;2026-06-20&quot;, &quot;date_label&quot;: &quot;Sabtu, 20 Juni 2026&quot;, &quot;date_short&quot;: &quot;20 Juni&quot;, &quot;relative&quot;: &quot;Besok&quot;, &quot;hour&quot;: &quot;21:00&quot;, &quot;temp_c&quot;: 22.8, &quot;humidity_pct&quot;: 92.0, &quot;heat_index_c&quot;: 22.8, &quot;rain_probability&quot;: 43.0, &quot;wind_kmh&quot;: 3.0, &quot;risk_score&quot;: 43, &quot;risk_class&quot;: &quot;watch&quot;, &quot;risk_label&quot;: &quot;Perlu diperhatikan&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}]">
+        <svg class="rain-curve" viewBox="0 0 900 200" preserveAspectRatio="none"></svg>
+        <div class="chart-tooltip">
+          <div class="chart-tooltip-time">00:00</div>
+          <div class="chart-tooltip-value">0%</div>
+        </div>
+      </div>
+    </div>
+  </div></section><section class="section-compact"><div class="container">
+    <div class="chart-wrapper reveal">
+      <div class="section-header">
+        <div class="section-overline">Timeline</div>
+        <h2 class="section-title">Lusa · Minggu, 21 Juni 2026</h2>
+        <p class="section-desc">Waspada</p>
+      </div>
+      
+      <!-- Multi-Variable Switches -->
+      <div class="chart-selector">
+        <button class="chart-chip active" data-var="rain">Peluang Hujan</button>
+        <button class="chart-chip" data-var="temp">Suhu</button>
+        <button class="chart-chip" data-var="humidity">Kelembapan</button>
+        <button class="chart-chip" data-var="wind">Kecepatan Angin</button>
+      </div>
+      
+      <div class="chart-svg-container" data-points="[{&quot;date_iso&quot;: &quot;2026-06-21&quot;, &quot;date_label&quot;: &quot;Minggu, 21 Juni 2026&quot;, &quot;date_short&quot;: &quot;21 Juni&quot;, &quot;relative&quot;: &quot;Lusa&quot;, &quot;hour&quot;: &quot;00:00&quot;, &quot;temp_c&quot;: 21.8, &quot;humidity_pct&quot;: 94.0, &quot;heat_index_c&quot;: 21.8, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 4.1, &quot;risk_score&quot;: 4, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap pagi&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-21&quot;, &quot;date_label&quot;: &quot;Minggu, 21 Juni 2026&quot;, &quot;date_short&quot;: &quot;21 Juni&quot;, &quot;relative&quot;: &quot;Lusa&quot;, &quot;hour&quot;: &quot;03:00&quot;, &quot;temp_c&quot;: 21.1, &quot;humidity_pct&quot;: 96.0, &quot;heat_index_c&quot;: 21.1, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 2.8, &quot;risk_score&quot;: 5, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap pagi&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-21&quot;, &quot;date_label&quot;: &quot;Minggu, 21 Juni 2026&quot;, &quot;date_short&quot;: &quot;21 Juni&quot;, &quot;relative&quot;: &quot;Lusa&quot;, &quot;hour&quot;: &quot;06:00&quot;, &quot;temp_c&quot;: 20.0, &quot;humidity_pct&quot;: 93.0, &quot;heat_index_c&quot;: 20.0, &quot;rain_probability&quot;: 0, &quot;wind_kmh&quot;: 3.7, &quot;risk_score&quot;: 4, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Lembap pagi&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-21&quot;, &quot;date_label&quot;: &quot;Minggu, 21 Juni 2026&quot;, &quot;date_short&quot;: &quot;21 Juni&quot;, &quot;relative&quot;: &quot;Lusa&quot;, &quot;hour&quot;: &quot;09:00&quot;, &quot;temp_c&quot;: 24.7, &quot;humidity_pct&quot;: 74.0, &quot;heat_index_c&quot;: 24.7, &quot;rain_probability&quot;: 11.0, &quot;wind_kmh&quot;: 3.6, &quot;risk_score&quot;: 11, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Berawan dipantau&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 70.0}, {&quot;date_iso&quot;: &quot;2026-06-21&quot;, &quot;date_label&quot;: &quot;Minggu, 21 Juni 2026&quot;, &quot;date_short&quot;: &quot;21 Juni&quot;, &quot;relative&quot;: &quot;Lusa&quot;, &quot;hour&quot;: &quot;12:00&quot;, &quot;temp_c&quot;: 27.8, &quot;humidity_pct&quot;: 64.0, &quot;heat_index_c&quot;: 29.1, &quot;rain_probability&quot;: 47.0, &quot;wind_kmh&quot;: 7.2, &quot;risk_score&quot;: 47, &quot;risk_class&quot;: &quot;watch&quot;, &quot;risk_label&quot;: &quot;Perlu diperhatikan&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}, {&quot;date_iso&quot;: &quot;2026-06-21&quot;, &quot;date_label&quot;: &quot;Minggu, 21 Juni 2026&quot;, &quot;date_short&quot;: &quot;21 Juni&quot;, &quot;relative&quot;: &quot;Lusa&quot;, &quot;hour&quot;: &quot;15:00&quot;, &quot;temp_c&quot;: 26.0, &quot;humidity_pct&quot;: 75.0, &quot;heat_index_c&quot;: 26.0, &quot;rain_probability&quot;: 71.0, &quot;wind_kmh&quot;: 5.9, &quot;risk_score&quot;: 71, &quot;risk_class&quot;: &quot;rain&quot;, &quot;risk_label&quot;: &quot;Waspada&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}, {&quot;date_iso&quot;: &quot;2026-06-21&quot;, &quot;date_label&quot;: &quot;Minggu, 21 Juni 2026&quot;, &quot;date_short&quot;: &quot;21 Juni&quot;, &quot;relative&quot;: &quot;Lusa&quot;, &quot;hour&quot;: &quot;16:00&quot;, &quot;temp_c&quot;: 26.0, &quot;humidity_pct&quot;: 76.0, &quot;heat_index_c&quot;: 26.0, &quot;rain_probability&quot;: 82.0, &quot;wind_kmh&quot;: 4.3, &quot;risk_score&quot;: 82, &quot;risk_class&quot;: &quot;rain&quot;, &quot;risk_label&quot;: &quot;Waspada&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}, {&quot;date_iso&quot;: &quot;2026-06-21&quot;, &quot;date_label&quot;: &quot;Minggu, 21 Juni 2026&quot;, &quot;date_short&quot;: &quot;21 Juni&quot;, &quot;relative&quot;: &quot;Lusa&quot;, &quot;hour&quot;: &quot;18:00&quot;, &quot;temp_c&quot;: 24.0, &quot;humidity_pct&quot;: 85.0, &quot;heat_index_c&quot;: 24.0, &quot;rain_probability&quot;: 33.0, &quot;wind_kmh&quot;: 2.2, &quot;risk_score&quot;: 33, &quot;risk_class&quot;: &quot;safe&quot;, &quot;risk_label&quot;: &quot;Aman&quot;, &quot;condition&quot;: &quot;Awan tumbuh&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 15.0}, {&quot;date_iso&quot;: &quot;2026-06-21&quot;, &quot;date_label&quot;: &quot;Minggu, 21 Juni 2026&quot;, &quot;date_short&quot;: &quot;21 Juni&quot;, &quot;relative&quot;: &quot;Lusa&quot;, &quot;hour&quot;: &quot;21:00&quot;, &quot;temp_c&quot;: 22.5, &quot;humidity_pct&quot;: 89.0, &quot;heat_index_c&quot;: 22.5, &quot;rain_probability&quot;: 46.0, &quot;wind_kmh&quot;: 3.1, &quot;risk_score&quot;: 46, &quot;risk_class&quot;: &quot;watch&quot;, &quot;risk_label&quot;: &quot;Perlu diperhatikan&quot;, &quot;condition&quot;: &quot;Hujan lokal&quot;, &quot;valid&quot;: true, &quot;wind_dir&quot;: 0.0, &quot;cloud_pct&quot;: 85.0}]">
+        <svg class="rain-curve" viewBox="0 0 900 200" preserveAspectRatio="none"></svg>
+        <div class="chart-tooltip">
+          <div class="chart-tooltip-time">00:00</div>
+          <div class="chart-tooltip-value">0%</div>
+        </div>
+      </div>
+    </div>
+  </div></section><section class="section-compact"><div class="container">
+    <details class="hourly-section reveal">
+      <summary class="hourly-toggle">
+        <span>Detail per jam · Jumat, 19 Juni 2026</span>
+        <svg class="hourly-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </summary>
+      <div class="hourly-list"><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">00:00</div>
+        <div><div class="hour-condition">Lembap malam</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">89%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">06:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.4°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">88%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.4°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">14%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">09:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.1°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">74%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.1°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">18%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">12:00</div>
+        <div><div class="hour-condition">Cerah berawan</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.7°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">67%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.7°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">15%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">14:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.5°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">70%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.5°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">59%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">15:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">71%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">45%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ff9346">
+        <div class="hour-time">17:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Waspada</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.1°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">77%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.1°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">75%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">18:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">23.6°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">86%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">23.6°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">52%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">21:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.8°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">87%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.8°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">11%</div><div class="hour-box-label">Hujan</div></div>
+      </div></div>
+    </details>
+    
+    <!-- Mobile Bottom Sheet (Sliding Panel fallback) -->
+    <div class="mobile-bottom-sheet">
+      <div class="mobile-bottom-sheet-handle"></div>
+      <h3 style="font-family:var(--font-display);font-weight:800;font-size:18px;margin-bottom:16px;text-align:center;color:var(--white)">Prakiraan Per Jam</h3>
+      <div class="hourly-list"><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">00:00</div>
+        <div><div class="hour-condition">Lembap malam</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">89%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">06:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.4°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">88%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.4°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">14%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">09:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.1°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">74%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.1°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">18%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">12:00</div>
+        <div><div class="hour-condition">Cerah berawan</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.7°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">67%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.7°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">15%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">14:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.5°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">70%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.5°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">59%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">15:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">71%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">45%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ff9346">
+        <div class="hour-time">17:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Waspada</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.1°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">77%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.1°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">75%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">18:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">23.6°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">86%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">23.6°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">52%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">21:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.8°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">87%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.8°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">11%</div><div class="hour-box-label">Hujan</div></div>
+      </div></div>
+    </div>
+  </div></section><section class="section-compact"><div class="container">
+    <details class="hourly-section reveal">
+      <summary class="hourly-toggle">
+        <span>Detail per jam · Sabtu, 20 Juni 2026</span>
+        <svg class="hourly-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </summary>
+      <div class="hourly-list"><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">00:00</div>
+        <div><div class="hour-condition">Lembap malam</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.8°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">88%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.8°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">11%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">06:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">88%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">10%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">09:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">74%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">12:00</div>
+        <div><div class="hour-condition">Cerah berawan</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">27.4°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">60%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">28.7°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">14:00</div>
+        <div><div class="hour-condition">Awan tumbuh</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">28.6°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">56%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">29.7°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">21%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">15:00</div>
+        <div><div class="hour-condition">Awan tumbuh</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">28.7°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">63%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">29.3°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">33%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">18:00</div>
+        <div><div class="hour-condition">Awan tumbuh</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">88%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">33%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">20:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">23.3°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">92%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">23.3°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">45%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">21:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">22.8°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">92%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">22.8°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">43%</div><div class="hour-box-label">Hujan</div></div>
+      </div></div>
+    </details>
+    
+    <!-- Mobile Bottom Sheet (Sliding Panel fallback) -->
+    <div class="mobile-bottom-sheet">
+      <div class="mobile-bottom-sheet-handle"></div>
+      <h3 style="font-family:var(--font-display);font-weight:800;font-size:18px;margin-bottom:16px;text-align:center;color:var(--white)">Prakiraan Per Jam</h3>
+      <div class="hourly-list"><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">00:00</div>
+        <div><div class="hour-condition">Lembap malam</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.8°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">88%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.8°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">11%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">06:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">88%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">10%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">09:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">74%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">12:00</div>
+        <div><div class="hour-condition">Cerah berawan</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">27.4°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">60%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">28.7°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">14:00</div>
+        <div><div class="hour-condition">Awan tumbuh</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">28.6°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">56%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">29.7°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">21%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">15:00</div>
+        <div><div class="hour-condition">Awan tumbuh</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">28.7°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">63%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">29.3°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">33%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">18:00</div>
+        <div><div class="hour-condition">Awan tumbuh</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">88%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">25.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">33%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">20:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">23.3°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">92%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">23.3°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">45%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">21:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">22.8°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">92%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">22.8°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">43%</div><div class="hour-box-label">Hujan</div></div>
+      </div></div>
+    </div>
+  </div></section><section class="section-compact"><div class="container">
+    <details class="hourly-section reveal">
+      <summary class="hourly-toggle">
+        <span>Detail per jam · Minggu, 21 Juni 2026</span>
+        <svg class="hourly-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </summary>
+      <div class="hourly-list"><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">00:00</div>
+        <div><div class="hour-condition">Lembap pagi</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.8°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">94%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.8°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">03:00</div>
+        <div><div class="hour-condition">Lembap pagi</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.1°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">96%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.1°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">06:00</div>
+        <div><div class="hour-condition">Lembap pagi</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">93%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">09:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.7°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">74%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.7°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">11%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">12:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">27.8°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">64%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">29.1°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">47%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ff9346">
+        <div class="hour-time">15:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Waspada</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">75%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">71%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ff9346">
+        <div class="hour-time">16:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Waspada</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">76%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">82%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">18:00</div>
+        <div><div class="hour-condition">Awan tumbuh</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">85%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">33%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">21:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">22.5°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">89%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">22.5°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">46%</div><div class="hour-box-label">Hujan</div></div>
+      </div></div>
+    </details>
+    
+    <!-- Mobile Bottom Sheet (Sliding Panel fallback) -->
+    <div class="mobile-bottom-sheet">
+      <div class="mobile-bottom-sheet-handle"></div>
+      <h3 style="font-family:var(--font-display);font-weight:800;font-size:18px;margin-bottom:16px;text-align:center;color:var(--white)">Prakiraan Per Jam</h3>
+      <div class="hourly-list"><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">00:00</div>
+        <div><div class="hour-condition">Lembap pagi</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.8°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">94%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.8°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">03:00</div>
+        <div><div class="hour-condition">Lembap pagi</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.1°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">96%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">21.1°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">06:00</div>
+        <div><div class="hour-condition">Lembap pagi</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">93%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">20.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">0%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">09:00</div>
+        <div><div class="hour-condition">Berawan dipantau</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.7°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">74%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.7°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">11%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">12:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">27.8°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">64%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">29.1°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">47%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ff9346">
+        <div class="hour-time">15:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Waspada</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">75%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">71%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ff9346">
+        <div class="hour-time">16:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Waspada</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">76%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">26.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">82%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#35e8a4">
+        <div class="hour-time">18:00</div>
+        <div><div class="hour-condition">Awan tumbuh</div><div class="hour-status">Aman</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.0°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">85%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">24.0°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">33%</div><div class="hour-box-label">Hujan</div></div>
+      </div><div class="hour-row" style="--accent-color:#ffd052">
+        <div class="hour-time">21:00</div>
+        <div><div class="hour-condition">Hujan lokal</div><div class="hour-status">Perlu diperhatikan</div></div>
+        <div class="hour-box"><div class="hour-box-value">22.5°C</div><div class="hour-box-label">Suhu</div></div>
+        <div class="hour-box"><div class="hour-box-value">89%</div><div class="hour-box-label">Kelembapan</div></div>
+        <div class="hour-box"><div class="hour-box-value">22.5°C</div><div class="hour-box-label">Indeks panas</div></div>
+        <div class="hour-box hour-box-rain"><div class="hour-box-value">46%</div><div class="hour-box-label">Hujan</div></div>
+      </div></div>
+    </div>
+  </div></section>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-brand">LANGIT</div>
+    <div class="footer-version">LANGIT v65.1 · Diperbarui 19 Juni, 19:00 WIB</div>
+    <div class="footer-links">
+      <a class="footer-link" href="keandalan_data.html">Keandalan data</a>
+      <a class="footer-link" href="akurasi_data.html">Akurasi</a>
+      <a class="footer-link" href="langit_api_v1.json">JSON</a>
+      <a class="footer-link" href="langit_location.geojson">GeoJSON</a>
+    </div>
+  </div>
+</footer>
+</main>
+<script>window.LANGIT_CONFIG = {"location_name": "Dago, Bandung", "location_slug": "dago", "latitude": -6.889, "longitude": 107.61, "altitude": 760, "risk_class": "rain", "condition": "Hujan lokal", "is_portal": false};</script>
 <script>
-const DATA = window.LANGIT_OMEGA_DATA;
-const mapLayerFor = {rain:'rain',temperature:'temp',risk:'risiko',wind:'wind',humidity:'humidity',cloud:'cloud'};
-let activeVar = (DATA.variables.find(v => v.available && v.priority === 'P0') || DATA.variables.find(v => v.available) || {key:'rain'}).key;
-let activeDay = 0;
-function n(v){ const x=Number(v); return Number.isFinite(x)?x:null; }
-function fmt(v, unit){ const x=n(v); if(x===null) return '-'; const d=(unit==='C'||unit==='km/jam'||unit==='mm')?1:0; return x.toFixed(d).replace(/\.0$/,'') + (unit==='C'?'&deg;C':unit?(' '+unit):''); }
-function pointsForDay(){ const days=[...new Set(DATA.points.map(p=>p.dateIso))]; return DATA.points.filter(p=>p.dateIso===days[activeDay]); }
-function variable(){ return DATA.variables.find(v=>v.key===activeVar) || DATA.variables[0]; }
-function insight(v, pts){
-  if(!v || !pts.length) return 'Data belum cukup untuk ringkasan variabel ini.';
-  const vals=pts.map(p=>n(p[v.field])).filter(x=>x!==null); if(!vals.length) return 'Data belum cukup untuk ringkasan variabel ini.';
-  const max=Math.max(...vals), min=Math.min(...vals), avg=vals.reduce((a,b)=>a+b,0)/vals.length;
-  const peak=pts.find(p=>n(p[v.field])===max);
-  if(v.key==='rain') return max>=60 ? `Peluang hujan meningkat sekitar ${peak.hour} WIB.` : max>=25 ? `Hujan masih perlu dipantau sekitar ${peak.hour} WIB.` : 'Peluang hujan relatif rendah pada periode ini.';
-  if(v.key==='temperature') return (max-min)>=5 ? `Suhu berubah sekitar ${Math.round(max-min)}&deg;C sepanjang hari.` : 'Suhu udara relatif stabil pada periode ini.';
-  if(v.key==='wind') return max>=20 ? `Angin lebih terasa sekitar ${peak.hour} WIB.` : 'Angin bertiup lemah hingga sedang.';
-  if(v.key==='humidity') return avg>=80 ? 'Kelembapan cukup tinggi, terutama pagi dan malam hari.' : 'Kelembapan berada pada rentang moderat.';
-  if(v.key==='cloud') return max>=75 ? 'Tutupan awan cenderung dominan.' : 'Tutupan awan tidak dominan sepanjang periode ini.';
-  if(v.key==='risk') return max>=55 ? `Risiko cuaca tertinggi sekitar ${peak.hour} WIB.` : 'Risiko cuaca relatif terkendali.';
-  return 'Variabel tersedia untuk eksplorasi detail.';
-}
-function drawChart(){
-  const v=variable(); const pts=pointsForDay(); const vals=pts.map(p=>n(p[v.field]));
-  const valid=vals.filter(x=>x!==null); const el=document.getElementById('chart');
-  if(!el || !v || !valid.length){ if(el) el.innerHTML='<div class="empty">Data belum tersedia.</div>'; return; }
-  const min=Math.min(...valid), max=Math.max(...valid); const range=max-min || 1; const W=360,H=150,P=20;
-  const coords=pts.map((p,i)=>{ const val=n(p[v.field]); const x=P+(i/(Math.max(1,pts.length-1)))*(W-P*2); const y=val===null?null:H-P-((val-min)/range)*(H-P*2); return {x,y,p,val}; });
-  let path=''; coords.forEach((c)=>{ if(c.y===null) return; path += (path?' L':'M')+c.x.toFixed(1)+' '+c.y.toFixed(1); });
-  const bars = v.chart.includes('bar') ? coords.map(c=>c.y===null?'':`<rect x="${c.x-7}" y="${c.y}" width="14" height="${H-P-c.y}" rx="4" fill="rgba(76,201,240,.38)"/>`).join('') : '';
-  const dots=coords.map(c=>c.y===null?'':`<circle cx="${c.x}" cy="${c.y}" r="3.5" fill="#f4f7fb"><title>${c.p.hour} - ${fmt(c.val,v.unit).replace(/<[^>]+>/g,'')}</title></circle>`).join('');
-  const labels=coords.filter((_,i)=>i%2===0).map(c=>`<text x="${c.x}" y="${H-2}" text-anchor="middle" fill="#8f9aaa" font-size="10">${c.p.hour.slice(0,2)}</text>`).join('');
-  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="rgba(255,255,255,.12)"/>${bars}<path d="${path}" fill="none" stroke="#4cc9f0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${dots}${labels}</svg>`;
-  const latest=pts.find(p=>n(p[v.field])!==null) || pts[0];
-  const maxPt=pts.find(p=>n(p[v.field])===Math.max(...valid)) || latest;
-  document.getElementById('varValue').innerHTML=fmt(maxPt[v.field],v.unit);
-  document.getElementById('varLabel').textContent=`Puncak ${v.label.toLowerCase()} - ${maxPt.hour} WIB`;
-  document.getElementById('insight').innerHTML=insight(v,pts);
-}
-function renderTimeline(){
-  const pts=pointsForDay(); const wrap=document.getElementById('timelineGrid'); if(!wrap) return;
-  wrap.innerHTML=pts.map(p=>{ const rain=n(p.rainProbability)||0; const h=Math.max(8,Math.round(rain)); return `<div class="timebar"><div class="bar" style="height:${h}px;background:${rain>=55?'linear-gradient(180deg,#ef4f5f,rgba(239,79,95,.16))':'linear-gradient(180deg,#4cc9f0,rgba(76,201,240,.12))'}"></div><b>${p.hour}</b><span>${Math.round(rain)}%</span></div>`}).join('');
-}
-function switchMapLayer(key){
-  const layer=mapLayerFor[key] || 'risiko'; const frame=document.querySelector('.mapbox iframe');
-  if(frame && frame.contentWindow) frame.contentWindow.postMessage({type:'switchLayer',layer},'*');
-}
-function bind(){
-  document.querySelectorAll('[data-var]').forEach(btn=>btn.addEventListener('click',()=>{ if(btn.disabled) return; activeVar=btn.dataset.var; document.querySelectorAll('[data-var]').forEach(b=>b.classList.toggle('active',b.dataset.var===activeVar)); drawChart(); switchMapLayer(activeVar); }));
-  document.querySelectorAll('[data-day]').forEach(btn=>btn.addEventListener('click',()=>{ activeDay=Number(btn.dataset.day)||0; document.querySelectorAll('[data-day]').forEach(b=>b.classList.toggle('active',Number(b.dataset.day)===activeDay)); renderTimeline(); drawChart(); }));
-  drawChart(); renderTimeline(); switchMapLayer(activeVar);
-}
-document.addEventListener('DOMContentLoaded', bind);
+(function(){
+  'use strict';
+
+  // Retrieve dynamic configuration injected from backend engine
+  const config = window.LANGIT_CONFIG || {};
+
+  // Safe SessionStorage wrapper to prevent incognito/private mode crashes
+  const safeStorage = {
+    getItem(key) {
+      try { return sessionStorage.getItem(key); } catch (e) { return null; }
+    },
+    setItem(key, value) {
+      try { sessionStorage.setItem(key, value); } catch (e) {}
+    }
+  };
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let initialLayer = 'rain';
+  const cond = (config.condition || '').toLowerCase();
+  if (cond.includes('hujan') || cond.includes('gerimis') || cond.includes('rain') || cond.includes('drizzle')) {
+    initialLayer = 'rain';
+  } else if (cond.includes('panas') || cond.includes('cerah') || cond.includes('clear') || cond.includes('hot') || cond.includes('sunny')) {
+    initialLayer = 'temp';
+  } else if (cond.includes('angin') || cond.includes('wind') || cond.includes('storm')) {
+    initialLayer = 'wind';
+  } else if (cond.includes('awan') || cond.includes('mendung') || cond.includes('cloudy') || cond.includes('overcast')) {
+    initialLayer = 'cloud';
+  } else if (cond.includes('lembap') || cond.includes('kabut') || cond.includes('fog') || cond.includes('mist') || cond.includes('humidity')) {
+    initialLayer = 'humidity';
+  }
+
+  // State Management
+  const state = {
+    activeDayIndex: 0,
+    activeLayer: initialLayer,
+    hourlyData: null
+  };
+
+  // --- Scroll & Reveal System ---
+  const revealEls = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          obs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+    revealEls.forEach(function(el) { obs.observe(el); });
+  } else {
+    revealEls.forEach(function(el) { el.classList.add('visible'); });
+  }
+
+  // --- Smooth Numerical Counting Transition ---
+  function animateValue(obj, start, end, duration, suffix = '', decimals = 0) {
+    if (!obj) return;
+    if (obj._animId) {
+      window.cancelAnimationFrame(obj._animId);
+    }
+    let startTimestamp = null;
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      const val = progress * (end - start) + start;
+      obj.innerHTML = val.toFixed(decimals) + suffix;
+      if (progress < 1) {
+        obj._animId = window.requestAnimationFrame(step);
+      } else {
+        obj._animId = null;
+      }
+    };
+    obj._animId = window.requestAnimationFrame(step);
+  }
+
+  // Parses value from element content to animate
+  function triggerCounters(panel) {
+    if (!panel) return;
+    panel.querySelectorAll('[data-animate-value]').forEach(el => {
+      const targetVal = parseFloat(el.dataset.animateValue);
+      const suffix = el.dataset.animateSuffix || '';
+      const decimals = parseInt(el.dataset.animateDecimals || '0');
+      if (isNaN(targetVal)) return;
+      
+      const currentVal = parseFloat(el.textContent) || 0;
+      animateValue(el, currentVal, targetVal, 800, suffix, decimals);
+    });
+  }
+
+  // --- Volumetric Canvas Atmospheric Particle System ---
+  const atmoCanvas = document.getElementById('atmo-canvas');
+  let atmoCtx = null;
+  let particles = [];
+  let atmoWidth = 0, atmoHeight = 0;
+  let animId = null;
+
+  let isAtmoVisible = true;
+  if (atmoCanvas && !prefersReducedMotion) {
+    atmoCtx = atmoCanvas.getContext('2d');
+    resizeAtmo();
+    initParticles();
+    
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          isAtmoVisible = entry.isIntersecting;
+          if (isAtmoVisible && !animId) {
+            animLoop();
+          } else if (!isAtmoVisible && animId) {
+            cancelAnimationFrame(animId);
+            animId = null;
+          }
+        });
+      }, { threshold: 0.01 });
+      observer.observe(atmoCanvas);
+    } else {
+      animLoop();
+    }
+  }
+
+  function resizeAtmo() {
+    atmoWidth = atmoCanvas.width = window.innerWidth;
+    atmoHeight = atmoCanvas.height = window.innerHeight;
+  }
+
+  // Viewport-aware particle count for performance
+  function getParticleCount(layer) {
+    const baseCounts = { rain: 80, cloud: 15, wind: 40, temp: 40, humidity: 30 };
+    const base = baseCounts[layer] || 40;
+    const w = window.innerWidth;
+    if (w <= 479) return Math.round(base * 0.2);
+    if (w <= 767) return Math.round(base * 0.35);
+    if (w <= 1023) return Math.round(base * 0.6);
+    return base;
+  }
+
+  function initParticles() {
+    particles = [];
+    const count = getParticleCount(state.activeLayer);
+
+    for (let i = 0; i < count; i++) {
+      particles.push(createParticle());
+    }
+  }
+
+  function createParticle(initBottom = false) {
+    const p = {
+      x: Math.random() * atmoWidth,
+      y: initBottom ? (atmoHeight + 50) : (Math.random() * (atmoHeight + 100) - 50),
+      size: 0,
+      vx: 0,
+      vy: 0,
+      alpha: Math.random() * 0.4 + 0.1,
+      color: '#ffffff'
+    };
+
+    if (state.activeLayer === 'rain') {
+      p.size = Math.random() * 1.5 + 0.5;
+      p.vy = Math.random() * 12 + 10;
+      p.vx = -1.5 - Math.random() * 1;
+      p.color = '100, 182, 212';
+    } else if (state.activeLayer === 'wind') {
+      p.size = Math.random() * 1.2 + 0.5;
+      p.vx = Math.random() * 4 + 2;
+      p.vy = Math.sin(p.x * 0.005) * 0.5;
+      p.color = '168, 196, 224';
+      p.trail = [];
+    } else if (state.activeLayer === 'cloud') {
+      p.size = Math.random() * 80 + 50;
+      p.vx = Math.random() * 0.2 + 0.05;
+      p.vy = 0;
+      p.color = '148, 190, 235';
+      p.alpha = Math.random() * 0.08 + 0.02;
+    } else if (state.activeLayer === 'temp') {
+      p.size = Math.random() * 15 + 5;
+      p.vy = -(Math.random() * 1.5 + 0.5);
+      p.vx = (Math.random() - 0.5) * 0.5;
+      p.color = '249, 115, 22';
+      p.alpha = Math.random() * 0.15 + 0.05;
+    } else if (state.activeLayer === 'humidity') {
+      p.size = Math.random() * 40 + 20;
+      p.vy = -(Math.random() * 0.8 + 0.2);
+      p.vx = (Math.random() - 0.5) * 0.2;
+      p.color = '99, 102, 241';
+      p.alpha = Math.random() * 0.1 + 0.02;
+    }
+    return p;
+  }
+
+  function animLoop() {
+    if (!atmoCtx || !isAtmoVisible) {
+      animId = null;
+      return;
+    }
+    atmoCtx.clearRect(0, 0, atmoWidth, atmoHeight);
+
+    particles.forEach(p => {
+      // Move particle
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (state.activeLayer === 'wind') {
+        p.vy = Math.sin(p.x * 0.005) * 0.4;
+        p.trail.push({ x: p.x, y: p.y });
+        if (p.trail.length > 15) p.trail.shift();
+      }
+
+      // Draw particle
+      atmoCtx.beginPath();
+      if (state.activeLayer === 'rain') {
+        atmoCtx.strokeStyle = 'rgba(' + p.color + ',' + p.alpha + ')';
+        atmoCtx.lineWidth = p.size;
+        atmoCtx.moveTo(p.x, p.y);
+        atmoCtx.lineTo(p.x + p.vx * 1.5, p.y + p.vy * 1.5);
+        atmoCtx.stroke();
+      } else if (state.activeLayer === 'wind') {
+        if (p.trail.length > 1) {
+          atmoCtx.beginPath();
+          atmoCtx.moveTo(p.trail[0].x, p.trail[0].y);
+          for (let k = 1; k < p.trail.length; k++) {
+            atmoCtx.lineTo(p.trail[k].x, p.trail[k].y);
+          }
+          atmoCtx.strokeStyle = 'rgba(' + p.color + ',' + p.alpha + ')';
+          atmoCtx.lineWidth = p.size;
+          atmoCtx.stroke();
+        }
+      } else if (state.activeLayer === 'cloud' || state.activeLayer === 'temp' || state.activeLayer === 'humidity') {
+        const rad = atmoCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+        rad.addColorStop(0, 'rgba(' + p.color + ',' + p.alpha + ')');
+        rad.addColorStop(1, 'rgba(' + p.color + ',0)');
+        atmoCtx.fillStyle = rad;
+        atmoCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        atmoCtx.fill();
+      }
+
+      // Boundary wraps
+      if (state.activeLayer === 'rain') {
+        if (p.y > atmoHeight + 20 || p.x < -20) {
+          Object.assign(p, createParticle());
+          p.y = -20;
+        }
+      } else if (state.activeLayer === 'wind' || state.activeLayer === 'cloud') {
+        if (p.x > atmoWidth + p.size) {
+          Object.assign(p, createParticle());
+          p.x = -p.size;
+        }
+      } else if (state.activeLayer === 'temp' || state.activeLayer === 'humidity') {
+        if (p.y < -p.size || p.x < -p.size || p.x > atmoWidth + p.size) {
+          Object.assign(p, createParticle(true));
+        }
+      }
+    });
+
+    animId = window.requestAnimationFrame(animLoop);
+  }
+
+  // --- Dynamic Color Shifting Body Themes ---
+  function shiftAtmosphereTheme(relativeDay) {
+    document.body.className = '';
+    const day = relativeDay.toLowerCase();
+    
+    // Choose theme based on time of day context or weather risk
+    if (day.includes('hari') || day.includes('today')) {
+      document.body.classList.add('theme-noon'); // Noon cyan for today
+    } else if (day.includes('besok') || day.includes('tomorrow')) {
+      document.body.classList.add('theme-dusk'); // Violet dusk for tomorrow
+    } else {
+      document.body.classList.add('theme-dawn'); // Orange dawn for lusa
+    }
+  }
+
+  // --- Interactive Curved SVG Bezier Chart Switcher ---
+  const chartContainers = document.querySelectorAll('.chart-wrapper');
+  chartContainers.forEach(container => {
+    const svgCont = container.querySelector('.chart-svg-container');
+    if (!svgCont) return;
+    const rawData = svgCont.dataset.points;
+    if (!rawData) return;
+    let hours = [];
+    try {
+      hours = JSON.parse(rawData);
+    } catch(err) {
+      return;
+    }
+    
+    let activeVar = 'rain'; // rain, temp, humidity, wind
+    const chips = container.querySelectorAll('.chart-chip');
+    const svg = container.querySelector('.rain-curve');
+    const tooltip = container.querySelector('.chart-tooltip');
+    
+    function drawChart() {
+      if (!svg || !hours.length) return;
+      const w = svg.clientWidth || 900;
+      const h = svg.clientHeight || 200;
+      const padX = w < 400 ? 25 : w < 700 ? 35 : 50;
+      const padTop = w < 400 ? 20 : 30;
+      const padBot = w < 400 ? 30 : 40;
+      const innerW = w - 2 * padX;
+      const innerH = h - padTop - padBot;
+      const n = hours.length;
+
+      // Determine Variable Metadata
+      let getter = x => 0;
+      let unit = '';
+      let strokeColor = '#06b6d4';
+      let fillGradientId = 'noonChartGrad';
+      let title = '';
+
+      if (activeVar === 'rain') {
+        getter = x => parseFloat(x.rain_probability || 0);
+        unit = '%';
+        strokeColor = '#06b6d4'; // Cyan
+        fillGradientId = 'rainChartGrad';
+      } else if (activeVar === 'temp') {
+        getter = x => parseFloat(x.temp_c || 0);
+        unit = '°C';
+        strokeColor = '#f97316'; // Orange
+        fillGradientId = 'tempChartGrad';
+      } else if (activeVar === 'humidity') {
+        getter = x => parseFloat(x.humidity_pct || 0);
+        unit = '%';
+        strokeColor = '#6366f1'; // Indigo
+        fillGradientId = 'humidityChartGrad';
+      } else if (activeVar === 'wind') {
+        getter = x => parseFloat(x.wind_kmh || 0);
+        unit = ' km/j';
+        strokeColor = '#10b981'; // Green
+        fillGradientId = 'windChartGrad';
+      }
+
+      const vals = hours.map(getter);
+      const minVal = activeVar === 'temp' ? Math.min(...vals, 15) - 2 : 0;
+      const maxVal = Math.max(...vals, activeVar === 'temp' ? 30 : 100) || 1;
+      const valRange = maxVal - minVal;
+
+      const points = hours.map((hr, i) => {
+        const x = padX + (i / Math.max(1, n - 1)) * innerW;
+        const y = padTop + innerH - ((getter(hr) - minVal) / valRange) * innerH;
+        return { x, y, hr, val: getter(hr) };
+      });
+
+      // SVG path helpers
+      function bezierPath(pts) {
+        if (pts.length < 2) return '';
+        let d = 'M ' + pts[0].x.toFixed(1) + ',' + pts[0].y.toFixed(1);
+        if (pts.length === 2) {
+          d += ' L ' + pts[1].x.toFixed(1) + ',' + pts[1].y.toFixed(1);
+          return d;
+        }
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p0 = pts[Math.max(0, i - 1)];
+          const p1 = pts[i];
+          const p2 = pts[Math.min(pts.length - 1, i + 1)];
+          const p3 = pts[Math.min(pts.length - 1, i + 2)];
+          
+          const cp1x = p1.x + (p2.x - p0.x) / 6;
+          const cp1y = p1.y + (p2.y - p0.y) / 6;
+          const cp2x = p2.x - (p3.x - p1.x) / 6;
+          const cp2y = p2.y - (p3.y - p1.y) / 6;
+          
+          d += ' C ' + cp1x.toFixed(1) + ',' + cp1y.toFixed(1) + ' ' +
+               cp2x.toFixed(1) + ',' + cp2y.toFixed(1) + ' ' +
+               p2.x.toFixed(1) + ',' + p2.y.toFixed(1);
+        }
+        return d;
+      }
+
+      const linePathD = bezierPath(points);
+      const fillPathD = linePathD + ' L ' + points[points.length-1].x.toFixed(1) + ',' + (h - padBot).toFixed(1) + ' L ' + points[0].x.toFixed(1) + ',' + (h - padBot).toFixed(1) + ' Z';
+
+      // Draw SVG Elements
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="rainChartGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="tempChartGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f97316" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="humidityChartGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="windChartGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        
+        <!-- Y Grid Lines -->
+        <line x1="${padX}" y1="${padTop}" x2="${w - padX}" y2="${padTop}" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+        <line x1="${padX}" y1="${padTop + innerH/2}" x2="${w - padX}" y2="${padTop + innerH/2}" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+        <line x1="${padX}" y1="${h - padBot}" x2="${w - padX}" y2="${h - padBot}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+        
+        <!-- Main Area Grads & Line -->
+        <path class="curve-fill" d="${fillPathD}" fill="url(#${fillGradientId})"/>
+        <path class="curve-line" d="${linePathD}" stroke="${strokeColor}"/>
+      `;
+
+      // Draw interactive dots and text labels
+      points.forEach(p => {
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('class', 'curve-dot');
+        dot.setAttribute('cx', p.x.toFixed(1));
+        dot.setAttribute('cy', p.y.toFixed(1));
+        dot.setAttribute('r', '5');
+        dot.setAttribute('fill', strokeColor);
+        dot.addEventListener('mouseenter', (ev) => showTooltip(ev, p, unit));
+        dot.addEventListener('mouseleave', hideTooltip);
+        svg.appendChild(dot);
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('class', 'curve-label');
+        label.setAttribute('x', p.x.toFixed(1));
+        label.setAttribute('y', (h - 8).toString());
+        label.textContent = p.hr.hour;
+        svg.appendChild(label);
+
+        // Conditional numeric displays
+        if (p.val > 0 || activeVar === 'temp') {
+          const valTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          valTxt.setAttribute('class', 'curve-value');
+          valTxt.setAttribute('x', p.x.toFixed(1));
+          valTxt.setAttribute('y', Math.max(15, p.y - 12).toFixed(1));
+          valTxt.textContent = Math.round(p.val) + unit;
+          svg.appendChild(valTxt);
+        }
+      });
+    }
+
+    function showTooltip(ev, p, unit) {
+      if (!tooltip) return;
+      const x = p.x;
+      const y = p.y;
+      
+      tooltip.querySelector('.chart-tooltip-time').textContent = 'Pukul ' + p.hr.hour + ' WIB';
+      tooltip.querySelector('.chart-tooltip-value').textContent = p.val.toFixed(decimalsForVar()) + unit + ' · ' + (p.hr.condition || '-');
+      
+      tooltip.style.opacity = '1';
+      tooltip.style.transform = 'translate(' + (x - 70) + 'px, ' + (y - 75) + 'px)';
+    }
+
+    function hideTooltip() {
+      if (tooltip) tooltip.style.opacity = '0';
+    }
+
+    function decimalsForVar() {
+      return activeVar === 'temp' ? 1 : 0;
+    }
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        chips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeVar = chip.dataset.var;
+        
+        // Sync particle engine state to the matching visualization
+        if (activeVar === 'rain') state.activeLayer = 'rain';
+        else if (activeVar === 'temp') state.activeLayer = 'temp';
+        else if (activeVar === 'humidity') state.activeLayer = 'humidity';
+        else if (activeVar === 'wind') state.activeLayer = 'wind';
+        initParticles();
+
+        // Sync active class on layer control buttons
+        document.querySelectorAll('.layer-btn').forEach(b => {
+          if (b.dataset.layer === state.activeLayer) {
+            b.classList.add('active');
+          } else {
+            b.classList.remove('active');
+          }
+        });
+
+        drawChart();
+      });
+    });
+
+    drawChart();
+    let chartResizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(chartResizeTimeout);
+      chartResizeTimeout = setTimeout(drawChart, 100);
+    }, { passive: true });
+  });
+
+  // --- Dynamic Weather Stepper Timeline Navigation ---
+  const timelineNodes = document.querySelectorAll('.timeline-node');
+  const fillBar = document.querySelector('.timeline-progress-fill');
+  
+  function updateTimelineProgress() {
+    if (!timelineNodes.length || !fillBar) return;
+    let activeIdx = 0;
+    timelineNodes.forEach((node, idx) => {
+      if (node.classList.contains('active')) {
+        activeIdx = idx;
+      }
+    });
+    
+    const pct = (activeIdx / (timelineNodes.length - 1)) * 100;
+    fillBar.style.width = pct + '%';
+  }
+
+  timelineNodes.forEach((node, index) => {
+    node.addEventListener('click', () => {
+      var container = node.closest('.day-tabs-container');
+      if (!container) return;
+      
+      container.querySelectorAll('.timeline-node').forEach(t => t.classList.remove('active'));
+      node.classList.add('active');
+      
+      // Update color scheme of the body gradient
+      const relLabel = node.querySelector('.timeline-node-label').textContent;
+      shiftAtmosphereTheme(relLabel);
+      
+      // Hide and show day panels
+      const targetId = node.dataset.target;
+      const targetPanel = document.getElementById(targetId);
+      if (targetPanel) {
+        document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+        targetPanel.classList.add('active');
+        triggerCounters(targetPanel);
+      }
+      
+      // Notify map frames to update layout when tabs change
+      document.querySelectorAll('.map-frame').forEach(iframe => {
+        if (iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ type: 'invalidateSize' }, '*');
+        }
+      });
+      
+      updateTimelineProgress();
+    });
+  });
+
+  updateTimelineProgress();
+
+  // --- Dynamic Particle Layer Switchers ---
+  document.querySelectorAll('.layer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.activeLayer = btn.dataset.layer;
+      initParticles();
+
+      // Sync active chart parameter chip
+      document.querySelectorAll('.chart-wrapper').forEach(wrapper => {
+        const chips = wrapper.querySelectorAll('.chart-chip');
+        chips.forEach(chip => {
+          if (chip.dataset.var === state.activeLayer) {
+            if (!chip.classList.contains('active')) {
+              chip.click();
+            }
+          }
+        });
+      });
+
+      // Sync the embedded map iframe layer
+      const mapFrame = document.querySelector('.map-frame');
+      if (mapFrame && mapFrame.contentWindow) {
+        mapFrame.contentWindow.postMessage({ type: 'switchLayer', layer: state.activeLayer }, '*');
+      }
+    });
+  });
+
+  // Align active classes on DOM Load
+  document.addEventListener('DOMContentLoaded', () => {
+    // Update active class on layer buttons
+    document.querySelectorAll('.layer-btn').forEach(btn => {
+      if (btn.dataset.layer === state.activeLayer) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // Update active class on chart chips
+    document.querySelectorAll('.chart-wrapper').forEach(wrapper => {
+      const chips = wrapper.querySelectorAll('.chart-chip');
+      chips.forEach(chip => {
+        if (chip.dataset.var === state.activeLayer) {
+          chip.classList.add('active');
+        } else {
+          chip.classList.remove('active');
+        }
+      });
+    });
+  });
+
+  // --- Mobile Bottom Sheet Modal ---
+  document.querySelectorAll('.day-panel').forEach((panel) => {
+    const sheet = panel.querySelector('.mobile-bottom-sheet');
+    const sheetTrigger = panel.querySelector('.hourly-toggle');
+    
+    if (sheet && sheetTrigger) {
+      sheetTrigger.addEventListener('click', (ev) => {
+        // If mobile, prevent default details collapse and show sliding bottom sheet instead
+        if (window.innerWidth < 768) {
+          ev.preventDefault();
+          sheet.classList.add('open');
+        }
+      });
+      
+      const handle = sheet.querySelector('.mobile-bottom-sheet-handle');
+      if (handle) {
+        handle.addEventListener('click', () => {
+          sheet.classList.remove('open');
+        });
+      }
+    }
+  });
+
+  // --- Apple Vision Pro Spatial Coordinates Zoom Scanner ---
+  function runSpatialZoomScanner() {
+    const isMainPage = document.querySelector('.hero') !== null;
+    const sessionKey = 'langit_v65_spatial_scanner_run';
+    
+    if (!isMainPage || safeStorage.getItem(sessionKey) || prefersReducedMotion) {
+      // Clean up scanner markup and display page immediately if already run or reduced motion
+      const overlay = document.getElementById('spatial-overlay');
+      if (overlay) overlay.remove();
+      return;
+    }
+
+    // Insert overlay markup dynamically if not in HTML
+    let overlay = document.getElementById('spatial-overlay');
+    if (!overlay) {
+      const activeLocName = config.location_name || 'ITB Bandung';
+      overlay = document.createElement('div');
+      overlay.id = 'spatial-overlay';
+      overlay.innerHTML = `
+        <canvas id="spatial-canvas"></canvas>
+        <div class="spatial-hud">
+          <div class="spatial-title">MENYIAPKAN DATA CUACA</div>
+          <div class="spatial-status" id="spatial-status">MEMUAT DATA PRAKIRAAN...</div>
+        </div>
+        <button class="spatial-skip">Lewati</button>
+      `;
+      document.body.appendChild(overlay);
+    }
+
+    const canvas = document.getElementById('spatial-canvas');
+    const statusText = document.getElementById('spatial-status');
+    const skipBtn = overlay.querySelector('.spatial-skip');
+    
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }, { passive: true });
+
+    let scanProgress = 0;
+    let frame = 0;
+    
+    const telemetrySteps = [
+      { p: 0.0, txt: 'Menghubungkan ke satelit cuaca...' },
+      { p: 0.2, txt: 'Telemetri aman. Memetakan orbit...' },
+      { p: 0.45, txt: 'Menginisialisasi pencarian koordinat wilayah Indonesia...' },
+      { p: 0.7, txt: 'Memindai wilayah: ' + (config.location_name || 'ITB').toUpperCase() },
+      { p: 0.9, txt: 'Koordinat terkunci: Kampus ' + (config.location_name || 'ITB').toUpperCase() }
+    ];
+
+    let requestID = null;
+
+    function drawScanner() {
+      frame++;
+      scanProgress += 0.014;
+      if (scanProgress >= 1.0) scanProgress = 1.0;
+
+      // Draw High Tech background grid
+      ctx.fillStyle = '#030712';
+      ctx.fillRect(0, 0, width, height);
+
+      // Star particles
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      for (let i = 0; i < 50; i++) {
+        const sx = (Math.sin(i * 123.4) * 0.5 + 0.5) * width;
+        const sy = (Math.cos(i * 567.8) * 0.5 + 0.5) * height;
+        ctx.fillRect(sx, sy, 1.5, 1.5);
+      }
+
+      // Globe Grid sequence
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const radiusBase = Math.min(width, height) * 0.35;
+      
+      // Zoom factor increases over time
+      const zoom = 1 + Math.pow(scanProgress, 2.5) * 8;
+      const currentRadius = radiusBase * zoom;
+
+      // Update HUD telemetry
+      const step = telemetrySteps.find((s, idx) => {
+        const next = telemetrySteps[idx + 1];
+        return scanProgress >= s.p && (!next || scanProgress < next.p);
+      });
+      if (step) {
+        statusText.textContent = step.txt;
+      }
+
+      ctx.strokeStyle = 'rgba(6, 182, 212, ' + (1 - scanProgress * 0.8) + ')';
+      ctx.lineWidth = 1;
+
+      if (scanProgress < 0.7) {
+        // Draw rotating sphere wireframe (Globe Search)
+        const rotY = frame * 0.012;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, currentRadius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Latitude / Longitude lines
+        const lines = 8;
+        for (let j = 0; j < lines; j++) {
+          // Horizontal slices
+          const yOffset = Math.sin((j / lines - 0.5) * Math.PI) * currentRadius;
+          const sliceRad = Math.cos((j / lines - 0.5) * Math.PI) * currentRadius;
+          ctx.beginPath();
+          ctx.ellipse(centerX, centerY + yOffset, sliceRad, sliceRad * 0.25, 0, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Vertical slices
+          ctx.beginPath();
+          ctx.ellipse(centerX, centerY, currentRadius * 0.25, currentRadius, rotY + (j / lines) * Math.PI, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Radar target sweeps
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, currentRadius, rotY, rotY + 0.5);
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.03)';
+        ctx.fill();
+      } else {
+        // Spatial coordinates mapping focus
+        ctx.lineWidth = 1.5;
+        const opacity = 1 - (scanProgress - 0.7) / 0.3;
+        ctx.strokeStyle = 'rgba(16, 185, 129, ' + opacity + ')'; // green lock-on color
+
+        // Focused radar rings
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 150 + Math.sin(frame * 0.1) * 8, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Crosshairs
+        ctx.beginPath();
+        ctx.moveTo(centerX - 250, centerY);
+        ctx.lineTo(centerX - 30, centerY);
+        ctx.moveTo(centerX + 30, centerY);
+        ctx.lineTo(centerX + 250, centerY);
+        ctx.moveTo(centerX, centerY - 200);
+        ctx.lineTo(centerX, centerY - 30);
+        ctx.moveTo(centerX, centerY + 30);
+        ctx.lineTo(centerX, centerY + 200);
+        ctx.stroke();
+
+        // Retrieve coordinates from window config
+        const lat = config.latitude !== undefined && config.latitude !== null ? config.latitude : -6.8830;
+        const lon = config.longitude !== undefined && config.longitude !== null ? config.longitude : 107.6130;
+        
+        const alt = config.altitude !== undefined && config.altitude !== null ? config.altitude : '832';
+
+        const latSign = lat < 0 ? 'S' : 'N';
+        const lonSign = lon < 0 ? 'W' : 'E';
+
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + opacity * 0.8 + ')';
+        ctx.font = '10px monospace';
+        ctx.fillText('LAT: ' + Math.abs(lat).toFixed(4) + '° ' + latSign, centerX + 60, centerY - 40);
+        ctx.fillText('LON: ' + Math.abs(lon).toFixed(4) + '° ' + lonSign, centerX + 60, centerY - 20);
+        ctx.fillText('ALT: ' + alt + 'm [MSL]', centerX + 60, centerY);
+        ctx.fillText('BEARING: 122.4° SE', centerX + 60, centerY + 20);
+      }
+
+      if (scanProgress < 1.0) {
+        requestID = window.requestAnimationFrame(drawScanner);
+      } else {
+        closeScanner();
+      }
+    }
+
+    function closeScanner() {
+      if (requestID) window.cancelAnimationFrame(requestID);
+      safeStorage.setItem(sessionKey, 'true');
+      overlay.style.opacity = '0';
+      overlay.style.transform = 'scale(1.05)';
+      setTimeout(() => {
+        overlay.remove();
+        // Trigger page counter reveals
+        const activePanel = document.querySelector('.day-panel.active');
+        if (activePanel) triggerCounters(activePanel);
+      }, 800);
+    }
+
+    skipBtn.addEventListener('click', closeScanner);
+    drawScanner();
+  }
+
+  // Auto-run Spatial Scan overlay sequence on launch
+  runSpatialZoomScanner();
+
+  // --- Hamburger Menu Toggle ---
+  const navToggle = document.querySelector('.nav-toggle');
+  const navLinks = document.querySelector('.nav-links');
+  if (navToggle && navLinks) {
+    navToggle.addEventListener('click', () => {
+      const isOpen = navLinks.classList.toggle('open');
+      navToggle.setAttribute('aria-expanded', isOpen.toString());
+    });
+    // Close menu when clicking a nav link
+    navLinks.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        navToggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!navToggle.contains(e.target) && !navLinks.contains(e.target)) {
+        navLinks.classList.remove('open');
+        navToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  // --- Debounced Resize Handler ---
+  let resizeTimer;
+  function handleResize() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      // Recalculate atmospheric canvas
+      if (atmoCanvas && atmoCtx) {
+        resizeAtmo();
+        initParticles();
+      }
+      // Redraw all charts
+      document.querySelectorAll('.chart-wrapper').forEach(wrapper => {
+        const chips = wrapper.querySelectorAll('.chart-chip');
+        const activeChip = wrapper.querySelector('.chart-chip.active');
+        if (activeChip) activeChip.click();
+      });
+      // Close mobile nav if viewport expanded
+      if (window.innerWidth >= 768 && navLinks) {
+        navLinks.classList.remove('open');
+        if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+      }
+    }, 150);
+  }
+  window.addEventListener('resize', handleResize, { passive: true });
+
+  // --- Orientation Change Handler ---
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      if (atmoCanvas && atmoCtx) {
+        resizeAtmo();
+        initParticles();
+      }
+      // Notify embedded map iframe to invalidate size
+      const mapFrame = document.querySelector('.map-frame');
+      if (mapFrame && mapFrame.contentWindow) {
+        mapFrame.contentWindow.postMessage({ type: 'invalidateSize' }, '*');
+      }
+    }, 300);
+  });
+
+})();
 </script>
 </body></html>

@@ -4656,13 +4656,13 @@ def v65_data_page(api: Dict[str, Any]) -> str:
 def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
     day = api["today"]
     summary: Dict[str, Any] = {}
-    for name in ["sentinel_x_accuracy_summary.json", "verification_summary.json", "accuracy_summary.json", "sentinel_verification_summary.json"]:
+    for name in ["sentinel_x_verification_summary.json", "sentinel_x_accuracy_summary.json", "verification_summary.json", "accuracy_summary.json", "sentinel_verification_summary.json"]:
         obj = read_json(directory / name, {})
         if isinstance(obj, dict) and obj:
             summary = obj
             break
     matched = int(num(pick(summary, "matched_cases", "pairs", "n", default=0), 0) or 0)
-    target = int(num(pick(summary, "target_cases", "minimum_cases", default=30), 30) or 30)
+    target = int(num(pick(summary, "verification_min_cases", "target_cases", "minimum_cases", default=30), 30) or 30)
     pct_done = clamp(matched / max(1, target) * 100)
 
     body = v65_hero(api, "Akurasi", f"{day['date_label']}. Skor muncul setelah data cukup.", day, show_metrics=False)
@@ -4677,16 +4677,87 @@ def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
       <div class="trust-bar"><div class="trust-fill" data-width="{pct_done:.0f}%" style="width:0"></div></div>
     </div>
   </div></section>'''
+
     if matched >= target:
+        # Format the values nicely
+        mae_val = num(pick(summary, "temperature_mae_c", "mae_temp", "temperature_mae"))
+        mae_str = f"{mae_val:.1f}°C" if mae_val is not None else "—"
+
+        brier_val = num(pick(summary, "rain_brier_score", "brier_score", "rain_score"))
+        brier_str = f"{brier_val:.3f}" if brier_val is not None else "—"
+
+        pod_val = num(pick(summary, "rain_pod", "pod"))
+        pod_str = f"{pod_val * 100.0:.1f}%" if pod_val is not None else "—"
+
+        far_val = num(pick(summary, "rain_far", "far"))
+        far_str = f"{far_val * 100.0:.1f}%" if far_val is not None else "—"
+
+        csi_val = num(pick(summary, "rain_csi", "csi"))
+        csi_str = f"{csi_val * 100.0:.1f}%" if csi_val is not None else "—"
+
+        cat_val = num(pick(summary, "category_accuracy", "accuracy_cat"))
+        cat_str = f"{cat_val * 100.0:.1f}%" if cat_val is not None else "—"
+
         body += f'''<section class="section-compact"><div class="container">
       <div class="day-card-grid reveal">
-        <div class="glass glass-static"><div class="kpi-label">Error suhu</div><div class="kpi-value" style="margin-top:8px">{esc(pick(summary,"mae_temp","temperature_mae",default="—"))}</div></div>
-        <div class="glass glass-static"><div class="kpi-label">Skor hujan</div><div class="kpi-value" style="margin-top:8px">{esc(pick(summary,"rain_score","brier_score",default="—"))}</div></div>
-        <div class="glass glass-static"><div class="kpi-label">Alarm keliru</div><div class="kpi-value" style="margin-top:8px">{esc(pick(summary,"false_alarm_rate",default="—"))}</div></div>
+        <div class="glass glass-static"><div class="kpi-label">Error Suhu (MAE)</div><div class="kpi-value" style="margin-top:8px;font-size:28px">{esc(mae_str)}</div><div class="kpi-label" style="font-size:10px;text-transform:none;color:var(--mist);margin-top:4px">Lebih kecil lebih baik</div></div>
+        <div class="glass glass-static"><div class="kpi-label">Brier Peluang Hujan</div><div class="kpi-value" style="margin-top:8px;font-size:28px">{esc(brier_str)}</div><div class="kpi-label" style="font-size:10px;text-transform:none;color:var(--mist);margin-top:4px">Lebih kecil lebih baik</div></div>
+        <div class="glass glass-static"><div class="kpi-label">Hujan Terdeteksi (POD)</div><div class="kpi-value" style="margin-top:8px;font-size:28px">{esc(pod_str)}</div><div class="kpi-label" style="font-size:10px;text-transform:none;color:var(--mist);margin-top:4px">Kerap hujan tertangkap</div></div>
+        <div class="glass glass-static"><div class="kpi-label">Alarm Keliru (FAR)</div><div class="kpi-value" style="margin-top:8px;font-size:28px">{esc(far_str)}</div><div class="kpi-label" style="font-size:10px;text-transform:none;color:var(--mist);margin-top:4px">Alarm palsu hujan</div></div>
+        <div class="glass glass-static"><div class="kpi-label">Skor Deteksi Hujan (CSI)</div><div class="kpi-value" style="margin-top:8px;font-size:28px">{esc(csi_str)}</div><div class="kpi-label" style="font-size:10px;text-transform:none;color:var(--mist);margin-top:4px">Critical success index</div></div>
+        <div class="glass glass-static"><div class="kpi-label">Kecocokan Kategori</div><div class="kpi-value" style="margin-top:8px;font-size:28px">{esc(cat_str)}</div><div class="kpi-label" style="font-size:10px;text-transform:none;color:var(--mist);margin-top:4px">Akurasi kategori cuaca</div></div>
+      </div>
+    </div></section>'''
+
+        # Parse reliability bins
+        rel_rows = ""
+        reliability = summary.get("reliability_bins") or []
+        for r in reliability:
+            bin_label = r.get("probability_bin") or r.get("bin") or ""
+            n_cases = r.get("n", 0)
+            mean_forecast = r.get("mean_forecast_probability") or r.get("mean_forecast_pct")
+            obs_freq = r.get("observed_rain_frequency") or r.get("observed_frequency_pct")
+            
+            mean_str = f"{float(mean_forecast):.1f}%" if mean_forecast not in (None, "", "—") else "—"
+            obs_str = f"{float(obs_freq):.1f}%" if obs_freq not in (None, "", "—") else "—"
+            
+            rel_rows += f'''<tr>
+              <td><span style="font-weight:700">{esc(bin_label)}</span></td>
+              <td>{esc(n_cases)}</td>
+              <td>{esc(mean_str)}</td>
+              <td>{esc(obs_str)}</td>
+            </tr>'''
+
+        if not rel_rows:
+            rel_rows = "<tr><td colspan='4' style='text-align:center;color:var(--mist)'>Belum ada data observasi yang cocok.</td></tr>"
+
+        body += f'''<section class="section"><div class="container">
+      <div class="glass glass-static reveal">
+        <div class="section-header">
+          <div class="section-overline">Kalibrasi</div>
+          <h2 class="section-title">Bukti Peluang Hujan (Reliability)</h2>
+          <p class="section-desc">Bandingkan seberapa sering prakiraan peluang hujan Sentinel X terbukti di dunia nyata.</p>
+        </div>
+        <div style="overflow-x:auto;margin-top:20px">
+          <table class="source-table">
+            <thead>
+              <tr>
+                <th>Kelompok Peluang</th>
+                <th>Jumlah Kasus</th>
+                <th>Rata-rata Prediksi</th>
+                <th>Hujan yang Terjadi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rel_rows}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div></section>'''
     else:
         body += '''<section class="section-compact"><div class="container"><div class="glass glass-static reveal"><p style="color:var(--mist);font-size:14px;line-height:1.7">Halaman ini sengaja tidak mengklaim akurasi sebelum data cukup. Begitu observasi terkumpul, metrik akan muncul otomatis.</p></div></div></section>'''
+
     return v65_document(api, "accuracy", f"LANGIT Akurasi — {api['location_name']}", body)
 
 
@@ -4840,7 +4911,9 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
         write_text(d / "langit_3day.html", v65_three_day_page(api))
         write_text(d / "langit_activity.html", v65_activity_page(api))
         write_text(d / "keandalan_data.html", v65_data_page(api))
-        write_text(d / "akurasi_data.html", v65_accuracy_page(api, d))
+        acc_html = v65_accuracy_page(api, d)
+        write_text(d / "akurasi_data.html", acc_html)
+        write_text(d / "sentinel_x_accuracy_public.html", acc_html)
         map_html = v65_map_page(f"LANGIT Map — {api['location_name']}", gj, "langit_app.html")
         write_text(d / "langit_map_room.html", map_html)
         # Overwrite legacy pages/utilities
