@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-06-20T14:45:00.886738+07:00",
+  "generated_at": "2026-06-20T17:28:24.968359+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "bmkg_point_name": "Dago",
@@ -14,7 +14,7 @@
   "target_date": "2026-06-20",
   "sources_total": 9,
   "sources_success": 9,
-  "points_total": 192,
+  "points_total": 186,
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -60,7 +60,7 @@
   "run_status": "ok",
   "sentinel_x": {
     "version": "ANEMOS Public Weather v11",
-    "run_id": "dago_20260620_20260620144500",
+    "run_id": "dago_20260620_20260620172824",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/command_center_sentinel_x.html",
@@ -68,6 +68,6 @@
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_ledger.sqlite",
     "daily_operational_status": "GREEN",
-    "autopilot_summary": "Sentinel membaca hari ini sebagai HUMID_STABLE_MORNING untuk Dago, Bandung. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 26.6/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: urban_highland_local_rain; Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
+    "autopilot_summary": "Sentinel membaca hari ini sebagai HUMID_STABLE_MORNING untuk Dago, Bandung. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 29.2/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: urban_highland_local_rain; Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
   }
 }
