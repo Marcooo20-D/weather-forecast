@@ -1,7 +1,7 @@
 {
   "brand": "LANGIT",
   "version": "LANGIT v65.1",
-  "generated_at": "Diperbarui 20/06/2026, 20:50 WIB",
+  "generated_at": "Diperbarui 20 Juni, 20:00 WIB",
   "location_name": "Arjawinangun, Cirebon",
   "location_slug": "arjawinangun",
   "latitude": -6.6453,
@@ -727,8 +727,8 @@
           "risk_label": "Aman",
           "condition": "Lembap malam",
           "valid": true,
-          "wind_dir": 181.0,
-          "cloud_pct": 62.0
+          "wind_dir": 0.0,
+          "cloud_pct": 15.0
         },
         {
           "date_iso": "2026-06-22",
@@ -746,8 +746,8 @@
           "risk_label": "Aman",
           "condition": "Lembap pagi",
           "valid": true,
-          "wind_dir": 160.0,
-          "cloud_pct": 58.0
+          "wind_dir": 0.0,
+          "cloud_pct": 15.0
         },
         {
           "date_iso": "2026-06-22",
@@ -765,8 +765,8 @@
           "risk_label": "Aman",
           "condition": "Lembap pagi",
           "valid": true,
-          "wind_dir": 164.0,
-          "cloud_pct": 38.0
+          "wind_dir": 0.0,
+          "cloud_pct": 15.0
         },
         {
           "date_iso": "2026-06-22",
@@ -784,8 +784,8 @@
           "risk_label": "Aman",
           "condition": "Berawan dipantau",
           "valid": true,
-          "wind_dir": 88.0,
-          "cloud_pct": 20.0
+          "wind_dir": 0.0,
+          "cloud_pct": 70.0
         },
         {
           "date_iso": "2026-06-22",
@@ -803,8 +803,8 @@
           "risk_label": "Perlu diperhatikan",
           "condition": "Awan tumbuh",
           "valid": true,
-          "wind_dir": 75.0,
-          "cloud_pct": 31.0
+          "wind_dir": 0.0,
+          "cloud_pct": 15.0
         },
         {
           "date_iso": "2026-06-22",
@@ -822,8 +822,8 @@
           "risk_label": "Perlu diperhatikan",
           "condition": "Awan tumbuh",
           "valid": true,
-          "wind_dir": 71.0,
-          "cloud_pct": 29.0
+          "wind_dir": 0.0,
+          "cloud_pct": 15.0
         },
         {
           "date_iso": "2026-06-22",
@@ -841,8 +841,8 @@
           "risk_label": "Waspada",
           "condition": "Hujan lokal",
           "valid": true,
-          "wind_dir": 70.0,
-          "cloud_pct": 52.0
+          "wind_dir": 0.0,
+          "cloud_pct": 85.0
         },
         {
           "date_iso": "2026-06-22",
@@ -860,8 +860,8 @@
           "risk_label": "Perlu diperhatikan",
           "condition": "Awan tumbuh",
           "valid": true,
-          "wind_dir": 98.0,
-          "cloud_pct": 46.0
+          "wind_dir": 0.0,
+          "cloud_pct": 15.0
         },
         {
           "date_iso": "2026-06-22",
@@ -879,8 +879,8 @@
           "risk_label": "Aman",
           "condition": "Berawan dipantau",
           "valid": true,
-          "wind_dir": 157.0,
-          "cloud_pct": 60.0
+          "wind_dir": 0.0,
+          "cloud_pct": 70.0
         }
       ],
       "periods": [
@@ -940,24 +940,24 @@
   ],
   "sources": [
     {
-      "tanggal": "22-06-2026",
+      "tanggal": "23-06-2026",
       "source_id": "BMKG",
       "provider": "BMKG",
       "success": "yes",
       "base_weight": "1.7644",
-      "health_factor": "0.9668",
-      "effective_base_weight": "1.7058",
+      "health_factor": "0.9809",
+      "effective_base_weight": "1.7307",
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "20",
+      "duration_ms": "38",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
       "error": ""
     },
     {
-      "tanggal": "22-06-2026",
+      "tanggal": "23-06-2026",
       "source_id": "CMA",
       "provider": "Open-Meteo / CMA GRAPES",
       "success": "yes",
@@ -967,14 +967,14 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "413",
+      "duration_ms": "412",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
       "error": ""
     },
     {
-      "tanggal": "22-06-2026",
+      "tanggal": "23-06-2026",
       "source_id": "ECMWF",
       "provider": "Open-Meteo / ECMWF",
       "success": "yes",
@@ -984,14 +984,14 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "413",
+      "duration_ms": "411",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
       "error": ""
     },
     {
-      "tanggal": "22-06-2026",
+      "tanggal": "23-06-2026",
       "source_id": "GFS",
       "provider": "Open-Meteo / NOAA GFS",
       "success": "yes",
@@ -1001,14 +1001,14 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "428",
+      "duration_ms": "414",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
       "error": ""
     },
     {
-      "tanggal": "22-06-2026",
+      "tanggal": "23-06-2026",
       "source_id": "ICON",
       "provider": "Open-Meteo / DWD ICON",
       "success": "yes",
@@ -1025,7 +1025,7 @@
       "error": ""
     },
     {
-      "tanggal": "22-06-2026",
+      "tanggal": "23-06-2026",
       "source_id": "KMA",
       "provider": "Open-Meteo / KMA",
       "success": "yes",
@@ -1035,14 +1035,14 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "415",
+      "duration_ms": "412",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
       "error": ""
     },
     {
-      "tanggal": "22-06-2026",
+      "tanggal": "23-06-2026",
       "source_id": "METEOFRANCE",
       "provider": "Open-Meteo / Meteo-France",
       "success": "yes",
@@ -1052,31 +1052,31 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "417",
+      "duration_ms": "413",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
       "error": ""
     },
     {
-      "tanggal": "22-06-2026",
+      "tanggal": "23-06-2026",
       "source_id": "METNO",
       "provider": "MET Norway",
       "success": "yes",
       "base_weight": "1.3947",
-      "health_factor": "0.967",
-      "effective_base_weight": "1.3487",
+      "health_factor": "0.981",
+      "effective_base_weight": "1.3682",
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "473",
+      "duration_ms": "467",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
       "error": ""
     },
     {
-      "tanggal": "22-06-2026",
+      "tanggal": "23-06-2026",
       "source_id": "UKMO",
       "provider": "Open-Meteo / UK Met Office",
       "success": "yes",
@@ -1086,7 +1086,7 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "407",
+      "duration_ms": "413",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
