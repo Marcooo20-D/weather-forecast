@@ -1,16 +1,29 @@
 {
+<<<<<<< HEAD
   "generated_at": "2026-06-24T17:45:43.487512+07:00",
+=======
+  "generated_at": "2026-06-21T13:39:27.503134+07:00",
+>>>>>>> 6df7cf2 (Latest LANGIT updates)
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
   "dim_sources": {
     "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/dim_sources.csv",
     "rows": 9
   },
   "dim_locations": {
+<<<<<<< HEAD
     "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/dim_locations.csv",
     "rows": 3
   },
   "ensemble_fact": {
     "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_fact_all_locations.csv",
     "rows": 216
+=======
+    "path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dim_locations.csv",
+    "rows": 1
+  },
+  "ensemble_fact": {
+    "path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\ensemble_fact_all_locations.csv",
+    "rows": 72
+>>>>>>> 6df7cf2 (Latest LANGIT updates)
   }
 }

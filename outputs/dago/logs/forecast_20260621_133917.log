@@ -1,0 +1,40 @@
+2026-06-21 13:39:17,753 INFO Log file: C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago\logs\forecast_20260621_133917.log
+2026-06-21 13:39:17,753 INFO Output dir: C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago
+2026-06-21 13:39:17,753 INFO Metadata lokasi: slug=dago adm4=32.73.02.1004 bmkg_point=Dago area_level=kelurahan proxy_bmkg=False
+2026-06-21 13:39:17,753 INFO Koordinat: lat=-6.889 lon=107.61 timezone=Asia/Jakarta
+2026-06-21 13:39:17,753 INFO Catatan lokasi: BMKG point: Dago, Coblong, Kota Bandung
+2026-06-21 13:39:17,758 INFO Mulai proses untuk lokasi Dago, Bandung
+2026-06-21 13:39:17,758 INFO Target date: 2026-06-23
+2026-06-21 13:39:17,758 INFO Target hours: 00:00, 01:00, 02:00, 03:00, 04:00, 05:00, 06:00, 07:00, 08:00, 09:00, 10:00, 11:00, 12:00, 13:00, 14:00, 15:00, 16:00, 17:00, 18:00, 19:00, 20:00, 21:00, 22:00, 23:00
+2026-06-21 13:39:17,758 INFO Sumber aktif: BMKG, ECMWF, GFS, ICON, CMA, METEOFRANCE, KMA, UKMO, METNO
+2026-06-21 13:39:17,759 INFO Bobot aktif: BMKG=1.767, CMA=1.158, ECMWF=1.654, GFS=1.337, ICON=1.493, KMA=0.793, METEOFRANCE=1.475, METNO=1.366, UKMO=1.329
+2026-06-21 13:39:17,759 DEBUG BMKG HTTP attempt 1 https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=32.73.02.1004
+2026-06-21 13:39:17,760 DEBUG ECMWF HTTP attempt 1 https://api.open-meteo.com/v1/ecmwf?latitude=-6.889&longitude=107.61&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m%2Capparent_temperature%2Cdew_point_2m%2Cprecipitation_probability%2Crain%2Ccloud_cover%2Cpressure_msl%2Csurface_pressure%2Cwind_direction_10m%2Cwind_gusts_10m%2Cvisibility%2Ccape%2Cuv_index
+2026-06-21 13:39:17,760 DEBUG GFS HTTP attempt 1 https://api.open-meteo.com/v1/gfs?latitude=-6.889&longitude=107.61&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m%2Capparent_temperature%2Cdew_point_2m%2Cprecipitation_probability%2Crain%2Ccloud_cover%2Cpressure_msl%2Csurface_pressure%2Cwind_direction_10m%2Cwind_gusts_10m%2Cvisibility%2Ccape%2Cuv_index
+2026-06-21 13:39:17,763 DEBUG ICON HTTP attempt 1 https://api.open-meteo.com/v1/dwd-icon?latitude=-6.889&longitude=107.61&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m%2Capparent_temperature%2Cdew_point_2m%2Cprecipitation_probability%2Crain%2Ccloud_cover%2Cpressure_msl%2Csurface_pressure%2Cwind_direction_10m%2Cwind_gusts_10m%2Cvisibility%2Ccape%2Cuv_index
+2026-06-21 13:39:17,935 DEBUG METNO HTTP attempt 1 https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=-6.889&lon=107.61
+2026-06-21 13:39:18,555 DEBUG CMA HTTP attempt 1 https://api.open-meteo.com/v1/cma?latitude=-6.889&longitude=107.61&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m%2Capparent_temperature%2Cdew_point_2m%2Cprecipitation_probability%2Crain%2Ccloud_cover%2Cpressure_msl%2Csurface_pressure%2Cwind_direction_10m%2Cwind_gusts_10m%2Cvisibility%2Ccape%2Cuv_index
+2026-06-21 13:39:18,565 DEBUG METEOFRANCE HTTP attempt 1 https://api.open-meteo.com/v1/meteofrance?latitude=-6.889&longitude=107.61&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m%2Capparent_temperature%2Cdew_point_2m%2Cprecipitation_probability%2Crain%2Ccloud_cover%2Cpressure_msl%2Csurface_pressure%2Cwind_direction_10m%2Cwind_gusts_10m%2Cvisibility%2Ccape%2Cuv_index
+2026-06-21 13:39:18,567 DEBUG KMA HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.889&longitude=107.61&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m%2Capparent_temperature%2Cdew_point_2m%2Cprecipitation_probability%2Crain%2Ccloud_cover%2Cpressure_msl%2Csurface_pressure%2Cwind_direction_10m%2Cwind_gusts_10m%2Cvisibility%2Ccape%2Cuv_index&models=kma_seamless
+2026-06-21 13:39:19,351 DEBUG UKMO HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.889&longitude=107.61&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Cwind_speed_10m%2Capparent_temperature%2Cdew_point_2m%2Cprecipitation_probability%2Crain%2Ccloud_cover%2Cpressure_msl%2Csurface_pressure%2Cwind_direction_10m%2Cwind_gusts_10m%2Cvisibility%2Ccape%2Cuv_index&models=ukmo_seamless
+2026-06-21 13:39:20,239 DEBUG GRID_CENTER HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.889&longitude=107.61&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Ccloud_cover%2Cwind_speed_10m
+2026-06-21 13:39:20,991 DEBUG GRID_NORTH HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.86197&longitude=107.61&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Ccloud_cover%2Cwind_speed_10m
+2026-06-21 13:39:21,764 DEBUG GRID_SOUTH HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.91603&longitude=107.61&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Ccloud_cover%2Cwind_speed_10m
+2026-06-21 13:39:22,529 DEBUG GRID_EAST HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.889&longitude=107.63722&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Ccloud_cover%2Cwind_speed_10m
+2026-06-21 13:39:23,315 DEBUG GRID_WEST HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.889&longitude=107.58278&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Ccloud_cover%2Cwind_speed_10m
+2026-06-21 13:39:24,079 DEBUG GRID_NORTHEAST HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.86989&longitude=107.62925&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Ccloud_cover%2Cwind_speed_10m
+2026-06-21 13:39:24,844 DEBUG GRID_NORTHWEST HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.86989&longitude=107.59075&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Ccloud_cover%2Cwind_speed_10m
+2026-06-21 13:39:25,594 DEBUG GRID_SOUTHEAST HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.90811&longitude=107.62925&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Ccloud_cover%2Cwind_speed_10m
+2026-06-21 13:39:26,338 DEBUG GRID_SOUTHWEST HTTP attempt 1 https://api.open-meteo.com/v1/forecast?latitude=-6.90811&longitude=107.59075&timezone=Asia%2FJakarta&forecast_days=3&hourly=temperature_2m%2Crelative_humidity_2m%2Cprecipitation%2Cweather_code%2Ccloud_cover%2Cwind_speed_10m
+2026-06-21 13:39:27,306 INFO Selesai.
+2026-06-21 13:39:27,306 INFO Sumber sukses: 9/9
+2026-06-21 13:39:27,306 INFO Total forecast point: 216
+2026-06-21 13:39:27,306 INFO BMKG: OK (24/24 point) http=200 t=114ms 
+2026-06-21 13:39:27,306 INFO CMA: OK (24/24 point) http=200 t=735ms 
+2026-06-21 13:39:27,306 INFO ECMWF: OK (24/24 point) http=200 t=737ms 
+2026-06-21 13:39:27,306 INFO GFS: OK (24/24 point) http=200 t=741ms 
+2026-06-21 13:39:27,306 INFO ICON: OK (24/24 point) http=200 t=746ms 
+2026-06-21 13:39:27,307 INFO KMA: OK (24/24 point) http=200 t=732ms 
+2026-06-21 13:39:27,307 INFO METEOFRANCE: OK (24/24 point) http=200 t=732ms 
+2026-06-21 13:39:27,307 INFO METNO: OK (24/24 point) http=200 t=648ms 
+2026-06-21 13:39:27,307 INFO UKMO: OK (24/24 point) http=200 t=728ms 

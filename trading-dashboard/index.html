@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA AI Signal Terminal - Sistem Trading Otomatis</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN (For Equity Chart) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- TradingView Lightweight Charts Local -->
+    <script src="lightweight-charts.js?v=3"></script>
+    <link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body>
+    <!-- Toast notifications panel -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                    <polyline points="2 17 12 22 22 17"/>
+                    <polyline points="2 12 12 17 22 12"/>
+                </svg>
+                <div class="logo-text">
+                    <h1>AURA<span>AI</span> <mark class="terminal-badge">Signal Hub</mark></h1>
+                    <p class="subtitle">Sistem Trading Sederhana Untuk Pemula</p>
+                </div>
+            </div>
+            
+            <div class="header-controls">
+                <div class="live-toggle-container">
+                    <span class="live-label">LIVE STREAM</span>
+                    <label class="switch">
+                        <input type="checkbox" id="live-toggle">
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+                <div class="header-status">
+                    <span id="status-dot" class="status-indicator"></span>
+                    <span id="status-lbl" class="status-text">Engine Ready</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <div class="main-layout">
+            <!-- SIDEBAR: SIMPLE AI SIGNAL CENTER & PROFILE SELECTOR -->
+            <aside class="sidebar">
+                <!-- PANEL 1: SINYAL AKTIF SAAT INI (ACTIVE RECOMMENDATION) -->
+                <div class="card signal-card">
+                    <div class="card-header border-glow-green">
+                        <svg class="card-icon positive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        <h2>Instruksi Sinyal AI Aktif</h2>
+                    </div>
+                    <div class="signal-display-body">
+                        <!-- Current Recommendation Card -->
+                        <div class="signal-status-box" id="active-action-box">
+                            <span class="signal-sub-title" id="active-asset-lbl">BTC / USDT</span>
+                            <div class="signal-action-badge" id="active-action-text">ENTRY RECOMMENDED</div>
+                        </div>
+
+                        <!-- Entry & Exit Prices details -->
+                        <div class="price-targets-grid">
+                            <div class="target-card">
+                                <span class="target-title">HARGA BELI (ENTRY)</span>
+                                <span class="target-value text-primary" id="target-entry-price">$0.00</span>
+                            </div>
+                            <div class="target-card">
+                                <span class="target-title">HARGA JUAL (EXIT - UNTUNG)</span>
+                                <span class="target-value positive" id="target-tp-price">$0.00</span>
+                            </div>
+                            <div class="target-card">
+                                <span class="target-title">HARGA JUAL (EXIT - RUGI)</span>
+                                <span class="target-value negative" id="target-sl-price">$0.00</span>
+                            </div>
+                        </div>
+
+                        <button id="copy-signal-btn" class="btn btn-secondary btn-block" style="margin-top: 16px;">
+                            <span>Salin Instruksi Sinyal</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PANEL 2: PILIHAN GAYA TRADING & SIMULASI -->
+                <div class="card sidebar-card">
+                    <div class="card-header">
+                        <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        <h2>Pengaturan Sistem Sederhana</h2>
+                    </div>
+                    <div style="padding: 20px; display: flex; flex-direction: column; gap: 14px;">
+                        <div class="form-group">
+                            <label for="asset-select">Aset Kripto</label>
+                            <select id="asset-select" class="form-control">
+                                <option value="BTC">BTC / USDT (Bitcoin)</option>
+                                <option value="ETH">ETH / USDT (Ethereum)</option>
+                                <option value="SOL">SOL / USDT (Solana)</option>
+                                <option value="BNB">BNB / USDT (BNB)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="profile-select">Gaya & Ketahanan Sistem</label>
+                            <select id="profile-select" class="form-control">
+                                <option value="conserv">Gaya Konservatif (Aman & Santai)</option>
+                                <option value="moderate" selected>Gaya Moderat (Seimbang & Konsisten)</option>
+                                <option value="aggr">Gaya Agresif (Kejar Untung Maksimum)</option>
+                                <option value="custom">Gaya Kustom (Parameter Mandiri)</option>
+                            </select>
+                        </div>
+
+                        <!-- Collapsible custom parameters container -->
+                        <div id="custom-params-container" class="custom-params-card hidden" style="margin-top: 4px; margin-bottom: 4px; display: flex; flex-direction: column; gap: 10px;">
+                            <h3 style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--color-primary); margin: 0 0 4px 0;">Konfigurasi Parameter</h3>
+                            
+                            <div class="slider-group">
+                                <div class="slider-labels" style="display:flex; justify-content:space-between; font-size:11px;">
+                                    <span>EMA Cepat: <strong id="val-ema-fast">12</strong></span>
+                                </div>
+                                <input type="range" id="input-ema-fast" min="3" max="50" value="12" class="range-slider">
+                            </div>
+                            
+                            <div class="slider-group">
+                                <div class="slider-labels" style="display:flex; justify-content:space-between; font-size:11px;">
+                                    <span>EMA Lambat: <strong id="val-ema-slow">26</strong></span>
+                                </div>
+                                <input type="range" id="input-ema-slow" min="10" max="100" value="26" class="range-slider">
+                            </div>
+
+                            <div class="slider-group">
+                                <div class="slider-labels" style="display:flex; justify-content:space-between; font-size:11px;">
+                                    <span>RSI Length: <strong id="val-rsi-len">14</strong></span>
+                                </div>
+                                <input type="range" id="input-rsi-len" min="2" max="30" value="14" class="range-slider">
+                            </div>
+
+                            <div class="slider-group" style="display: flex; gap: 8px;">
+                                <div style="flex: 1;">
+                                    <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">RSI Oversold</label>
+                                    <input type="number" id="input-rsi-os" min="10" max="49" value="40" class="form-control" style="padding: 4px 8px; font-size: 11px; height: auto;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">RSI Overbought</label>
+                                    <input type="number" id="input-rsi-ob" min="50" max="90" value="70" class="form-control" style="padding: 4px 8px; font-size: 11px; height: auto;">
+                                </div>
+                            </div>
+
+                            <div class="slider-group" style="display: flex; gap: 8px;">
+                                <div style="flex: 1;">
+                                    <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Take Profit (%)</label>
+                                    <input type="number" id="input-tp" min="1" max="100" value="8" step="0.5" class="form-control" style="padding: 4px 8px; font-size: 11px; height: auto;">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 2px;">Trailing Stop (%)</label>
+                                    <input type="number" id="input-ts" min="0.5" max="30" value="2.5" step="0.1" class="form-control" style="padding: 4px 8px; font-size: 11px; height: auto;">
+                                </div>
+                            </div>
+
+                            <div class="slider-group">
+                                <div class="slider-labels" style="display:flex; justify-content:space-between; font-size:11px;">
+                                    <span>Alokasi Modal: <strong id="val-alloc">65</strong>%</span>
+                                </div>
+                                <input type="range" id="input-alloc" min="10" max="100" value="65" class="range-slider">
+                            </div>
+
+                            <button id="optimize-btn" class="btn btn-secondary btn-block" style="margin-top: 10px; border: 1px solid var(--color-primary); color: var(--color-primary); display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px; height:13px;">
+                                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                </svg>
+                                <span class="opt-btn-text">AUTO-OPTIMASI STRATEGI</span>
+                            </button>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="initial-capital">Modal Awal ($)</label>
+                            <input type="number" id="initial-capital" class="form-control" value="10000" min="100">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="timeframe-select">Skala Waktu (Timeframe)</label>
+                            <select id="timeframe-select" class="form-control">
+                                <option value="86400" selected>1 Hari (Jangka Menengah)</option>
+                                <option value="21600">6 Jam (Jangka Pendek)</option>
+                                <option value="3600">1 Jam (Sangat Agresif)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="order-size-input">Ukuran Transaksi per Sinyal ($)</label>
+                            <input type="number" id="order-size-input" class="form-control" value="1000" min="10" step="500">
+                            <span class="input-helper-desc">Berdampak pada simulasi Slippage & Kedalaman Pasar (Order Book).</span>
+                        </div>
+
+                        <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 4px;">
+                            <input type="checkbox" id="whipsaw-filter-toggle" checked style="width:16px; height:16px; accent-color:var(--color-primary); cursor:pointer;">
+                            <label for="whipsaw-filter-toggle" style="margin-bottom:0; font-size:12px; cursor:pointer; user-select:none;">Aktifkan Pelindung Sideways (ADX/ATR)</label>
+                        </div>
+
+                        <button id="run-btn" class="btn btn-primary btn-block" style="margin-top: 6px;">
+                            <span class="btn-text">UJI PERFORMA SISTEM</span>
+                            <span class="loader hidden"></span>
+                        </button>
+
+                        <div class="live-action-section hidden" id="live-demo-panel" style="margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 14px;">
+                            <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 8px; text-transform: uppercase;">Aksi Live Streaming</label>
+                            <button id="simulate-signal-btn" class="btn btn-accent btn-block">
+                                <span>Simulasikan Sinyal Baru</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- MAIN CONTENT AREA -->
+            <main class="main-content">
+                <!-- SIMPLE PERFORMANCE SUMMARY CARD -->
+                <section class="summary-report-card card" id="summary-card">
+                    <div class="card-body-summary">
+                        <div class="report-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="16" x2="12" y2="12"/>
+                                <line x1="12" y1="8" x2="12.01" y2="8"/>
+                            </svg>
+                        </div>
+                        <div class="report-text">
+                            <h3>Hasil Uji Sistem (1 Tahun Terakhir)</h3>
+                            <p id="summary-text-desc">Sistem kami berhasil meningkatkan modal Anda secara konsisten menggunakan algoritma canggih di belakang layar.</p>
+                        </div>
+                        <div class="report-stat">
+                            <span class="stat-label">TOTAL PROFIT (ROI)</span>
+                            <span class="stat-val positive" id="summary-profit-pct">+0.00%</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- METRICS CARDS -->
+                <section class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <span class="metric-title">Uang Akhir Anda</span>
+                            <h3 id="metric-balance" class="metric-value">$0.00</h3>
+                        </div>
+                        <div class="metric-sub" id="metric-initial-ref">Uang Awal: $10,000</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <span class="metric-title">Win Rate (Persen Untung)</span>
+                            <h3 id="metric-winrate" class="metric-value">0.00%</h3>
+                        </div>
+                        <div class="metric-sub" id="metric-trades-won-count">0 dari 0 transaksi untung</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <span class="metric-title">Tingkat Risiko Rugi</span>
+                            <h3 id="metric-drawdown" class="metric-value negative">0.00%</h3>
+                        </div>
+                        <div class="metric-sub" id="metric-drawdown-desc">Penurunan modal terbesar</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <span class="metric-title">Profit Factor</span>
+                            <h3 id="metric-profit-factor" class="metric-value">0.00</h3>
+                        </div>
+                        <div class="metric-sub" id="metric-pf-desc">Perbandingan Untung vs Rugi</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <span class="metric-title">Sharpe Ratio</span>
+                            <h3 id="metric-sharpe-ratio" class="metric-value">0.00</h3>
+                        </div>
+                        <div class="metric-sub" id="metric-sharpe-desc">Skor Kinerja Bebas Risiko</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info">
+                            <span class="metric-title">Peluang Bangkrut</span>
+                            <h3 id="metric-risk-of-ruin" class="metric-value">0.0%</h3>
+                        </div>
+                        <div class="metric-sub" id="metric-ror-desc">Estimasi Probabilitas Ruin</div>
+                    </div>
+                </section>
+
+                <!-- CHARTS AREA -->
+                <section class="charts-section-tv">
+                    <!-- Price Chart Card (TradingView Candlestick) -->
+                    <div class="card chart-card-tv">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <h3>Grafik Pergerakan & Sinyal Aset</h3>
+                                <p>Segitiga hijau menunjukkan titik <strong>Entry (Beli)</strong>, dan lingkaran merah menunjukkan titik <strong>Exit (Jual)</strong>.</p>
+                            </div>
+                        </div>
+                        <div id="priceChart" class="chart-container-tv" style="height: 310px; margin-bottom: 0;"></div>
+                        <div id="rsiChart" class="rsi-container-tv" style="height: 110px;"></div>
+                    </div>
+
+                    <!-- Equity Curve Card -->
+                    <div class="card chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <h3>Pertumbuhan Uang Anda</h3>
+                                <p>Garis hijau menunjukkan pertumbuhan uang Anda. Garis abu-abu menunjukkan jika Anda hanya mendiamkan aset saja.</p>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="equityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Returns Matrix (Heatmap) Card -->
+                    <div class="card heatmap-card">
+                        <div class="chart-header">
+                            <div class="chart-title">
+                                <h3>Matriks Imbal Hasil Bulanan (Heatmap)</h3>
+                                <p>Persentase keuntungan atau kerugian bersih strategi per bulan sepanjang tahun.</p>
+                            </div>
+                        </div>
+                        <div class="heatmap-table-container">
+                            <table class="heatmap-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tahun</th>
+                                        <th>Jan</th>
+                                        <th>Feb</th>
+                                        <th>Mar</th>
+                                        <th>Apr</th>
+                                        <th>Mei</th>
+                                        <th>Jun</th>
+                                        <th>Jul</th>
+                                        <th>Ags</th>
+                                        <th>Sep</th>
+                                        <th>Okt</th>
+                                        <th>Nov</th>
+                                        <th>Des</th>
+                                        <th class="ytd-hdr">YTD</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="heatmap-body">
+                                    <!-- Rendered dynamically by ui.js -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SIMPLE LOG TIMELINE -->
+                <section class="timeline-section">
+                    <div class="card timeline-card">
+                        <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 20px 24px 10px 24px;">
+                            <div>
+                                <h3 style="margin: 0;">Catatan Riwayat Sinyal & Transaksi</h3>
+                                <p style="margin: 4px 0 0 0; font-size: 11px; color: var(--text-muted);">Linimasa seluruh keputusan Beli (Entry) dan Jual (Exit) yang diambil oleh sistem.</p>
+                            </div>
+                            <button id="export-csv-btn" class="btn btn-secondary" style="padding: 6px 14px; font-size: 11px; border: 1px solid var(--color-success); color: var(--color-success); display: flex; align-items: center; gap: 5px; border-radius: 4px; height: auto;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px; filter: drop-shadow(0 0 3px var(--color-success-glow));">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                                </svg>
+                                <span>EKSPOR CSV</span>
+                            </button>
+                        </div>
+                        <div class="timeline-container" id="timeline-body">
+                            <!-- Populated dynamically by app.js -->
+                        </div>
+                    </div>
+                </section>
+                <!-- EDUCATIONAL DISCLAIMER & REALITY WARNING -->
+                <section class="disclaimer-section" style="margin-top: 10px;">
+                    <div class="card warning-card" style="border: 1px solid rgba(255, 59, 48, 0.2); background: rgba(255, 59, 48, 0.02); padding: 18px 22px; border-radius: var(--border-radius-lg);">
+                        <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px; color:var(--color-danger);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:20px; height:20px; filter:drop-shadow(0 0 4px var(--color-danger-glow));">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            <h4 style="font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">EDUKASI MANAJEMEN RISIKO (REALITY DISCLAIMER)</h4>
+                        </div>
+                        <p style="font-size:11px; line-height:1.45; color:var(--text-muted);">
+                            <strong>Peringatan Risiko Ruin:</strong> Hasil uji historis (*backtest*) di atas bersifat teoretis dan didasarkan pada harga pasar masa lalu. Di pasar nyata, kinerja sistem ini dipengaruhi oleh **Slippage eksekusi** (loncatan harga saat pasar panik/sideways), **biaya komisi & funding fee bursa**, serta **keterbatasan likuiditas order book**. Trading kripto memiliki risiko kerugian modal yang sangat tinggi. Selalu gunakan dana dingin dan batasi risiko per transaksi Anda secara disiplin.
+                        </p>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modular Scripts -->
+    <script src="config.js?v=3"></script>
+    <script src="IndicatorEngine.js?v=3"></script>
+    <script src="BacktestEngine.js?v=3"></script>
+    <script src="WebsocketClient.js?v=3"></script>
+    <script src="ChartManager.js?v=3"></script>
+    <script src="ui.js?v=3"></script>
+    <script src="app.js?v=3"></script>
+</body>
+</html>

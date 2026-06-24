@@ -1,6 +1,10 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
+<<<<<<< HEAD
   "generated_at": "2026-06-23T21:33:17.723864+07:00",
+=======
+  "generated_at": "2026-06-21T13:39:27.287304+07:00",
+>>>>>>> 6df7cf2 (Latest LANGIT updates)
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "bmkg_point_name": "Dago",
@@ -14,7 +18,11 @@
   "target_date": "2026-06-23",
   "sources_total": 9,
   "sources_success": 9,
+<<<<<<< HEAD
   "points_total": 178,
+=======
+  "points_total": 216,
+>>>>>>> 6df7cf2 (Latest LANGIT updates)
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -52,14 +60,21 @@
     "22:00",
     "23:00"
   ],
+<<<<<<< HEAD
   "weights_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/source_weights.json",
   "health_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/source_health.json",
   "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago",
+=======
+  "weights_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\source_weights.json",
+  "health_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\source_health.json",
+  "output_dir": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago",
+>>>>>>> 6df7cf2 (Latest LANGIT updates)
   "retention_days": 30,
   "low_coverage_slots": [],
   "run_status": "ok",
   "sentinel_x": {
     "version": "ANEMOS Public Weather v11",
+<<<<<<< HEAD
     "run_id": "dago_20260623_20260623213317",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.json",
@@ -69,5 +84,16 @@
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_ledger.sqlite",
     "daily_operational_status": "YELLOW",
     "autopilot_summary": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Dago, Bandung. Status operasional harian YELLOW. Risk window utama: 16:00–16:00. Failure risk tertinggi 33.4/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: urban_highland_local_rain; Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
+=======
+    "run_id": "dago_20260623_20260621133927",
+    "csv": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x.csv",
+    "json": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x.json",
+    "dashboard": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\command_center_sentinel_x.html",
+    "report": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_report.md",
+    "contract": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_forecast_contract.json",
+    "ledger": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_ledger.sqlite",
+    "daily_operational_status": "GREEN",
+    "autopilot_summary": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Dago, Bandung. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 39.9/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: urban_highland_local_rain; Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
+>>>>>>> 6df7cf2 (Latest LANGIT updates)
   }
 }

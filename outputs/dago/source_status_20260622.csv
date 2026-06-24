@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
 22-06-2026,BMKG,BMKG,yes,1.7511,0.9838,1.7227,4,24,200,1001,,,,
 22-06-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1499,1.0,1.1499,24,24,200,441,,,,
@@ -8,3 +9,15 @@ tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weig
 22-06-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.4601,1.0,1.4601,24,24,200,424,,,,
 22-06-2026,METNO,MET Norway,yes,1.3624,0.9835,1.3399,4,24,200,662,,,,
 22-06-2026,UKMO,Open-Meteo / UK Met Office,yes,1.308,0.9994,1.3072,24,24,200,473,,,,
+=======
+tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
+22-06-2026,BMKG,BMKG,yes,1.7674,0.9641,1.704,24,24,200,136,,,C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago\raw_payloads\bmkg_20260622_20260621_133907.json.gz,
+22-06-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1584,1.0,1.1584,24,24,200,780,,,C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago\raw_payloads\cma_20260622_20260621_133908.json.gz,
+22-06-2026,ECMWF,Open-Meteo / ECMWF,yes,1.6543,1.0,1.6543,24,24,200,731,,,C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago\raw_payloads\ecmwf_20260622_20260621_133907.json.gz,
+22-06-2026,GFS,Open-Meteo / NOAA GFS,yes,1.3365,1.0,1.3365,24,24,200,732,,,C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago\raw_payloads\gfs_20260622_20260621_133907.json.gz,
+22-06-2026,ICON,Open-Meteo / DWD ICON,yes,1.4931,1.0,1.4931,24,24,200,720,,,C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago\raw_payloads\icon_20260622_20260621_133907.json.gz,
+22-06-2026,KMA,Open-Meteo / KMA,yes,0.7931,1.0,0.7931,24,24,200,774,,,C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago\raw_payloads\kma_20260622_20260621_133908.json.gz,
+22-06-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.4753,1.0,1.4753,24,24,200,765,,,C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago\raw_payloads\meteofrance_20260622_20260621_133908.json.gz,
+22-06-2026,METNO,MET Norway,yes,1.3658,0.9641,1.3168,24,24,200,645,,,C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago\raw_payloads\metno_20260622_20260621_133907.json.gz,
+22-06-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3285,1.0,1.3285,24,24,200,749,,,C:\Users\itsme\Documents\Projects\weather-forecast\outputs\dago\raw_payloads\ukmo_20260622_20260621_133909.json.gz,
+>>>>>>> 6df7cf2 (Latest LANGIT updates)

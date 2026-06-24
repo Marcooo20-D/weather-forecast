@@ -5,16 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>LANGIT Portal Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <style>*,*:before,*:after{box-sizing:border-box}
-html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
-.hud::-webkit-scrollbar{width:4px}
-.hud::-webkit-scrollbar-track{background:transparent}
-.hud::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
-.canvas-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:430}
-.wind-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:440}
+  <style>html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
+#particle-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800}
 .hud{position:absolute;z-index:1000;left:24px;top:24px;width:min(340px,calc(100% - 48px));padding:24px;border-radius:24px;background:rgba(7,14,30,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);box-shadow:0 24px 80px rgba(0,0,0,0.5),inset 0 1px 1px rgba(255,255,255,0.1);animation:slideIn 0.6s cubic-bezier(0.16,1,0.3,1) both}
-.hud-collapse-toggle{display:none}
-.legend-toggle{display:none}
 .hud-brand{font-family:'Outfit',sans-serif;font-weight:800;font-size:10px;letter-spacing:0.1em;color:#32b7ff;text-transform:uppercase}
 .hud-version{font-family:'Outfit',sans-serif;font-weight:600;font-size:10px;color:rgba(255,255,255,0.3)}
 .hud h1{font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.02em;line-height:1.2;margin:12px 0 4px;color:#fff}
@@ -62,60 +55,17 @@ html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family
 .cloud-glow{border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center}
 @keyframes slideIn{from{transform:translateX(-20px);opacity:0}to{transform:translateX(0);opacity:1}}
 @keyframes slideUp{from{transform:translate(-50%,20px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
-@media(max-width:1279px){
-  .hud{width:min(300px,calc(100% - 48px))}
-}
-@media(min-width:768px) and (max-width:1023px){
-  .hud{width:260px;padding:18px}
-  .hud h1{font-size:20px}
-  .legend{width:130px;padding:12px}
-  .timeline-container{width:calc(100% - 32px);padding:10px 14px}
-}
-@media(max-width:767px){
-  .hud{left:0;top:auto;bottom:0;width:100%;max-height:42vh;overflow-y:auto;padding:16px 16px 20px;border-radius:24px 24px 0 0;
-    box-shadow:0 -12px 40px rgba(0,0,0,0.5);animation:slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
-    -webkit-overflow-scrolling:touch;transition:max-height 0.35s ease}
-  .hud.collapsed{max-height:60px;overflow:hidden}
-  .hud-collapse-toggle{display:flex;align-items:center;justify-content:center;width:100%;height:44px;margin:-12px auto 0;cursor:pointer;background:none;border:none;padding:0}
-  .hud-collapse-bar{width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.2);transition:background 0.3s ease}
-  .hud-collapse-toggle:hover .hud-collapse-bar{background:rgba(255,255,255,0.4)}
-  .hud h1{font-size:18px;margin:8px 0 4px}
-  .hud-stats-grid{grid-template-columns:1fr 1fr;gap:8px}
-  .hud-stat-val{font-size:15px}
-  .hud-stat-lbl{font-size:9px}
-  .parameter-tabs{margin-top:12px}
-  .param-tab{padding:10px 0;font-size:11px;min-height:40px}
-  .timeline-container{bottom:0;left:0;width:100%;border-radius:0;padding:8px 12px;
-    transform:translateX(0);animation:none}
-  .time-scrubber{scroll-snap-type:x mandatory}
-  .time-pill{scroll-snap-align:center;min-width:80px;padding:10px 14px}
-  .play-btn{width:44px;height:44px}
-  .legend.collapsed{max-height:30px;overflow:hidden;padding:8px 10px}
-  .legend.collapsed > :not(.legend-toggle){display:none!important}
-  .legend-toggle{display:block;cursor:pointer;background:none;border:none;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:0;font-family:inherit}
-  .btn{min-height:44px;padding:12px 20px}
-}
-@media(max-width:479px){
-  .hud{padding:12px 12px 16px;max-height:38vh}
-  .hud h1{font-size:16px}
-  .hud-stats-grid{gap:6px}
-  .hud-stat-box{padding:8px 10px}
-  .hud-stat-val{font-size:14px}
-  .time-pill{min-width:70px;padding:8px 10px;font-size:12px}
-  .legend{font-size:9px;min-width:90px}
-}
-@media(prefers-reduced-motion:reduce){
-  .pulse-ring,.radar-ping{display:none}
-  *{animation-duration:0.01ms !important;transition-duration:0.01ms !important}
+@media(max-width:768px){
+  .hud{left:12px;top:12px;width:calc(100% - 24px);padding:16px;border-radius:20px}
+  .timeline-container{bottom:16px;width:calc(100% - 24px);padding:10px;border-radius:20px}
+  .legend{right:12px;bottom:96px;width:120px;padding:12px;border-radius:16px}
 }
 </style>
 </head>
 <body>
   <div id="map"></div>
-  <canvas id="fieldCanvas" class="canvas-layer"></canvas>
-  <canvas id="windCanvas" class="wind-layer"></canvas>
+  <canvas id="particle-canvas"></canvas>
     <section class="hud">
-    <button class="hud-collapse-toggle" aria-label="Toggle HUD"><span class="hud-collapse-bar"></span></button>
     <div style="display:flex; justify-content:space-between; align-items:center">
       <span class="hud-brand">LANGIT Cuaca</span>
       <span class="hud-version">Peta Prakiraan</span>
@@ -166,13 +116,15 @@ html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family
   <div class="legend" id="map-legend"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-const geojson = __DATA__;
+const geojson = {"type": "FeatureCollection", "features": [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "00:00", "rain_probability": 15.0, "risk_score": 15, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 25.9, "humidity_pct": 84.0, "heat_index_c": 25.9, "wind_kmh": 5.5, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "03:00", "rain_probability": 33.0, "risk_score": 33, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 25.4, "humidity_pct": 84.0, "heat_index_c": 25.4, "wind_kmh": 3.9, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "06:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 26.2, "humidity_pct": 84.0, "heat_index_c": 26.2, "wind_kmh": 2.9, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "09:00", "rain_probability": 0, "risk_score": 3, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 28.2, "humidity_pct": 75.0, "heat_index_c": 31.8, "wind_kmh": 6.5, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "12:00", "rain_probability": 0, "risk_score": 38, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 30.7, "humidity_pct": 61.0, "heat_index_c": 34.0, "wind_kmh": 12.7, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "15:00", "rain_probability": 18.0, "risk_score": 24, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 29.6, "humidity_pct": 65.0, "heat_index_c": 33.8, "wind_kmh": 10.9, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "18:00", "rain_probability": 0, "risk_score": 2, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan sore", "temp_c": 28.1, "humidity_pct": 75.0, "heat_index_c": 31.6, "wind_kmh": 9.0, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "21:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 26.9, "humidity_pct": 83.0, "heat_index_c": 29.7, "wind_kmh": 7.6, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "23:00", "rain_probability": 50.0, "risk_score": 50, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 26.3, "humidity_pct": 86.0, "heat_index_c": 26.3, "wind_kmh": 7.6, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "00:00", "rain_probability": 46.0, "risk_score": 46, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 26.1, "humidity_pct": 86.0, "heat_index_c": 26.1, "wind_kmh": 6.3, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "03:00", "rain_probability": 13.0, "risk_score": 13, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap malam", "temp_c": 25.5, "humidity_pct": 89.0, "heat_index_c": 25.5, "wind_kmh": 4.0, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "06:00", "rain_probability": 0, "risk_score": 2, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 26.0, "humidity_pct": 89.0, "heat_index_c": 26.0, "wind_kmh": 3.1, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "09:00", "rain_probability": 0, "risk_score": 38, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 29.5, "humidity_pct": 71.0, "heat_index_c": 34.1, "wind_kmh": 7.4, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "12:00", "rain_probability": 12.0, "risk_score": 52, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Cerah berawan", "temp_c": 31.6, "humidity_pct": 63.0, "heat_index_c": 36.5, "wind_kmh": 12.8, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "14:00", "rain_probability": 20.0, "risk_score": 38, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Awan tumbuh", "temp_c": 31.0, "humidity_pct": 63.0, "heat_index_c": 35.5, "wind_kmh": 13.1, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "15:00", "rain_probability": 20.0, "risk_score": 38, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Awan tumbuh", "temp_c": 30.9, "humidity_pct": 65.0, "heat_index_c": 34.9, "wind_kmh": 13.1, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "18:00", "rain_probability": 0, "risk_score": 24, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan sore", "temp_c": 28.3, "humidity_pct": 79.0, "heat_index_c": 32.6, "wind_kmh": 7.8, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "21:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 27.0, "humidity_pct": 84.0, "heat_index_c": 30.1, "wind_kmh": 6.0, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "00:00", "rain_probability": 12.0, "risk_score": 12, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap malam", "temp_c": 25.7, "humidity_pct": 88.0, "heat_index_c": 25.7, "wind_kmh": 4.0, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "03:00", "rain_probability": 12.0, "risk_score": 13, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 24.7, "humidity_pct": 93.0, "heat_index_c": 24.7, "wind_kmh": 3.6, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "06:00", "rain_probability": 12.0, "risk_score": 13, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 25.0, "humidity_pct": 94.0, "heat_index_c": 25.0, "wind_kmh": 3.0, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "09:00", "rain_probability": 0, "risk_score": 24, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 29.0, "humidity_pct": 72.0, "heat_index_c": 33.1, "wind_kmh": 4.5, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "12:00", "rain_probability": 22.0, "risk_score": 52, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Awan tumbuh", "temp_c": 31.6, "humidity_pct": 61.0, "heat_index_c": 36.8, "wind_kmh": 8.3, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "13:00", "rain_probability": 23.0, "risk_score": 52, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Awan tumbuh", "temp_c": 32.0, "humidity_pct": 60.0, "heat_index_c": 37.3, "wind_kmh": 9.5, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "15:00", "rain_probability": 60.0, "risk_score": 73, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "temp_c": 30.9, "humidity_pct": 67.0, "heat_index_c": 36.1, "wind_kmh": 11.3, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "18:00", "rain_probability": 32.0, "risk_score": 32, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Awan tumbuh", "temp_c": 28.2, "humidity_pct": 79.0, "heat_index_c": 32.2, "wind_kmh": 8.6, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [108.4103, -6.6453]}, "properties": {"location_name": "Arjawinangun, Cirebon", "slug": "arjawinangun", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "21:00", "rain_probability": 12.0, "risk_score": 12, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 26.5, "humidity_pct": 87.0, "heat_index_c": 26.5, "wind_kmh": 5.7, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "00:00", "rain_probability": 0, "risk_score": 2, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap malam", "temp_c": 21.0, "humidity_pct": 89.0, "heat_index_c": 21.0, "wind_kmh": 2.5, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "06:00", "rain_probability": 14.0, "risk_score": 14, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 20.4, "humidity_pct": 88.0, "heat_index_c": 20.4, "wind_kmh": 3.3, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "09:00", "rain_probability": 18.0, "risk_score": 18, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 24.1, "humidity_pct": 74.0, "heat_index_c": 24.1, "wind_kmh": 4.7, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "12:00", "rain_probability": 15.0, "risk_score": 15, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 25.7, "humidity_pct": 67.0, "heat_index_c": 25.7, "wind_kmh": 5.0, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "14:00", "rain_probability": 59.0, "risk_score": 59, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 26.5, "humidity_pct": 70.0, "heat_index_c": 26.5, "wind_kmh": 5.6, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "15:00", "rain_probability": 45.0, "risk_score": 45, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 26.0, "humidity_pct": 71.0, "heat_index_c": 26.0, "wind_kmh": 5.1, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "17:00", "rain_probability": 75.0, "risk_score": 75, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "temp_c": 25.1, "humidity_pct": 77.0, "heat_index_c": 25.1, "wind_kmh": 4.2, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "18:00", "rain_probability": 52.0, "risk_score": 52, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 23.6, "humidity_pct": 86.0, "heat_index_c": 23.6, "wind_kmh": 4.3, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "21:00", "rain_probability": 11.0, "risk_score": 11, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 21.8, "humidity_pct": 87.0, "heat_index_c": 21.8, "wind_kmh": 2.7, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "00:00", "rain_probability": 11.0, "risk_score": 11, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap malam", "temp_c": 20.8, "humidity_pct": 88.0, "heat_index_c": 20.8, "wind_kmh": 4.0, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "06:00", "rain_probability": 10.0, "risk_score": 10, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 20.0, "humidity_pct": 88.0, "heat_index_c": 20.0, "wind_kmh": 5.2, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "09:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 24.0, "humidity_pct": 74.0, "heat_index_c": 24.0, "wind_kmh": 4.7, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "12:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 27.4, "humidity_pct": 60.0, "heat_index_c": 28.7, "wind_kmh": 7.7, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "14:00", "rain_probability": 21.0, "risk_score": 21, "risk_class": "safe", "risk_label": "Aman", "condition": "Awan tumbuh", "temp_c": 28.6, "humidity_pct": 56.0, "heat_index_c": 29.7, "wind_kmh": 8.3, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "15:00", "rain_probability": 33.0, "risk_score": 33, "risk_class": "safe", "risk_label": "Aman", "condition": "Awan tumbuh", "temp_c": 28.7, "humidity_pct": 63.0, "heat_index_c": 29.3, "wind_kmh": 8.2, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "18:00", "rain_probability": 33.0, "risk_score": 33, "risk_class": "safe", "risk_label": "Aman", "condition": "Awan tumbuh", "temp_c": 25.0, "humidity_pct": 88.0, "heat_index_c": 25.0, "wind_kmh": 4.0, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "20:00", "rain_probability": 45.0, "risk_score": 45, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 23.3, "humidity_pct": 92.0, "heat_index_c": 23.3, "wind_kmh": 3.2, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "21:00", "rain_probability": 43.0, "risk_score": 43, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 22.8, "humidity_pct": 92.0, "heat_index_c": 22.8, "wind_kmh": 3.0, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "00:00", "rain_probability": 0, "risk_score": 4, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 21.8, "humidity_pct": 94.0, "heat_index_c": 21.8, "wind_kmh": 4.1, "wind_dir": 126.0, "cloud_pct": 59.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "03:00", "rain_probability": 0, "risk_score": 5, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 21.1, "humidity_pct": 96.0, "heat_index_c": 21.1, "wind_kmh": 2.8, "wind_dir": 129.0, "cloud_pct": 37.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "06:00", "rain_probability": 0, "risk_score": 4, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 20.0, "humidity_pct": 93.0, "heat_index_c": 20.0, "wind_kmh": 3.7, "wind_dir": 119.0, "cloud_pct": 49.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "09:00", "rain_probability": 11.0, "risk_score": 11, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 24.7, "humidity_pct": 74.0, "heat_index_c": 24.7, "wind_kmh": 3.6, "wind_dir": 102.0, "cloud_pct": 6.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "12:00", "rain_probability": 47.0, "risk_score": 47, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 27.8, "humidity_pct": 64.0, "heat_index_c": 29.1, "wind_kmh": 7.2, "wind_dir": 102.0, "cloud_pct": 39.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "15:00", "rain_probability": 71.0, "risk_score": 71, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "temp_c": 26.0, "humidity_pct": 75.0, "heat_index_c": 26.0, "wind_kmh": 5.9, "wind_dir": 209.0, "cloud_pct": 37.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "16:00", "rain_probability": 82.0, "risk_score": 82, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "temp_c": 26.0, "humidity_pct": 76.0, "heat_index_c": 26.0, "wind_kmh": 4.3, "wind_dir": 197.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "18:00", "rain_probability": 33.0, "risk_score": 33, "risk_class": "safe", "risk_label": "Aman", "condition": "Awan tumbuh", "temp_c": 24.0, "humidity_pct": 85.0, "heat_index_c": 24.0, "wind_kmh": 2.2, "wind_dir": 133.0, "cloud_pct": 34.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.61, -6.889]}, "properties": {"location_name": "Dago, Bandung", "slug": "dago", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "21:00", "rain_probability": 46.0, "risk_score": 46, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 22.5, "humidity_pct": 89.0, "heat_index_c": 22.5, "wind_kmh": 3.1, "wind_dir": 144.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "00:00", "rain_probability": 0, "risk_score": 5, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 20.4, "humidity_pct": 96.0, "heat_index_c": 20.4, "wind_kmh": 3.9, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "03:00", "rain_probability": 0, "risk_score": 4, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 19.9, "humidity_pct": 94.0, "heat_index_c": 19.9, "wind_kmh": 3.2, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "06:00", "rain_probability": 33.0, "risk_score": 33, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Lembap pagi", "temp_c": 20.8, "humidity_pct": 93.0, "heat_index_c": 20.8, "wind_kmh": 3.2, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "09:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 24.5, "humidity_pct": 77.0, "heat_index_c": 24.5, "wind_kmh": 5.8, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "12:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 27.1, "humidity_pct": 69.0, "heat_index_c": 28.8, "wind_kmh": 8.0, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "14:00", "rain_probability": 61.0, "risk_score": 61, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "temp_c": 26.9, "humidity_pct": 74.0, "heat_index_c": 28.4, "wind_kmh": 8.7, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "15:00", "rain_probability": 61.0, "risk_score": 61, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "temp_c": 25.4, "humidity_pct": 79.0, "heat_index_c": 25.4, "wind_kmh": 8.8, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "18:00", "rain_probability": 22.0, "risk_score": 22, "risk_class": "safe", "risk_label": "Aman", "condition": "Awan tumbuh", "temp_c": 22.7, "humidity_pct": 88.0, "heat_index_c": 22.7, "wind_kmh": 5.5, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Minggu, 21 Juni 2026", "date_iso": "2026-06-21", "relative": "Hari ini", "hour": "21:00", "rain_probability": 0, "risk_score": 4, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap malam", "temp_c": 21.4, "humidity_pct": 93.0, "heat_index_c": 21.4, "wind_kmh": 3.7, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "00:00", "rain_probability": 0, "risk_score": 4, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 20.2, "humidity_pct": 93.0, "heat_index_c": 20.2, "wind_kmh": 4.0, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "06:00", "rain_probability": 0, "risk_score": 3, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 20.3, "humidity_pct": 92.0, "heat_index_c": 20.3, "wind_kmh": 4.6, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "09:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 24.9, "humidity_pct": 75.0, "heat_index_c": 24.9, "wind_kmh": 5.6, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "12:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 28.0, "humidity_pct": 60.0, "heat_index_c": 29.4, "wind_kmh": 8.0, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "14:00", "rain_probability": 10.0, "risk_score": 10, "risk_class": "safe", "risk_label": "Aman", "condition": "Cerah berawan", "temp_c": 29.0, "humidity_pct": 63.0, "heat_index_c": 31.7, "wind_kmh": 8.8, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "15:00", "rain_probability": 20.0, "risk_score": 20, "risk_class": "safe", "risk_label": "Aman", "condition": "Awan tumbuh", "temp_c": 28.1, "humidity_pct": 67.0, "heat_index_c": 29.7, "wind_kmh": 9.2, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "18:00", "rain_probability": 11.0, "risk_score": 11, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan sore", "temp_c": 24.6, "humidity_pct": 89.0, "heat_index_c": 24.6, "wind_kmh": 5.0, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "20:00", "rain_probability": 47.0, "risk_score": 47, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 22.4, "humidity_pct": 95.0, "heat_index_c": 22.4, "wind_kmh": 3.8, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Senin, 22 Juni 2026", "date_iso": "2026-06-22", "relative": "Besok", "hour": "21:00", "rain_probability": 33.0, "risk_score": 33, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Lembap malam", "temp_c": 21.8, "humidity_pct": 96.0, "heat_index_c": 21.8, "wind_kmh": 3.8, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "00:00", "rain_probability": 13.0, "risk_score": 16, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 20.6, "humidity_pct": 98.0, "heat_index_c": 20.6, "wind_kmh": 2.5, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "03:00", "rain_probability": 0, "risk_score": 6, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 19.5, "humidity_pct": 99.0, "heat_index_c": 19.5, "wind_kmh": 4.3, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "06:00", "rain_probability": 0, "risk_score": 6, "risk_class": "safe", "risk_label": "Aman", "condition": "Lembap pagi", "temp_c": 20.0, "humidity_pct": 97.0, "heat_index_c": 20.0, "wind_kmh": 4.0, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "09:00", "rain_probability": 0, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman", "condition": "Berawan dipantau", "temp_c": 25.0, "humidity_pct": 76.0, "heat_index_c": 25.0, "wind_kmh": 4.0, "wind_dir": 0.0, "cloud_pct": 70.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "12:00", "rain_probability": 57.0, "risk_score": 57, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Hujan lokal", "temp_c": 27.7, "humidity_pct": 74.0, "heat_index_c": 29.5, "wind_kmh": 6.7, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "14:00", "rain_probability": 71.0, "risk_score": 71, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "temp_c": 27.3, "humidity_pct": 69.0, "heat_index_c": 29.1, "wind_kmh": 6.5, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "15:00", "rain_probability": 60.0, "risk_score": 60, "risk_class": "rain", "risk_label": "Waspada", "condition": "Hujan lokal", "temp_c": 26.1, "humidity_pct": 78.0, "heat_index_c": 26.1, "wind_kmh": 7.1, "wind_dir": 0.0, "cloud_pct": 85.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "18:00", "rain_probability": 32.0, "risk_score": 32, "risk_class": "safe", "risk_label": "Aman", "condition": "Awan tumbuh", "temp_c": 23.7, "humidity_pct": 92.0, "heat_index_c": 23.7, "wind_kmh": 4.2, "wind_dir": 0.0, "cloud_pct": 15.0}}, {"type": "Feature", "geometry": {"type": "Point", "coordinates": [107.7556, -6.938]}, "properties": {"location_name": "Jatinangor, Sumedang", "slug": "jatinangor", "date": "Selasa, 23 Juni 2026", "date_iso": "2026-06-23", "relative": "Lusa", "hour": "21:00", "rain_probability": 32.0, "risk_score": 32, "risk_class": "watch", "risk_label": "Perlu diperhatikan", "condition": "Lembap malam", "temp_c": 21.6, "humidity_pct": 95.0, "heat_index_c": 21.6, "wind_kmh": 4.7, "wind_dir": 0.0, "cloud_pct": 15.0}}]};
 const colors = {safe:'#10b981', watch:'#f59e0b', rain:'#ff9d42', danger:'#ef4444', limited:'#94a3b8'};
 const features = (geojson && geojson.features) ? geojson.features : [];
 
+// Find first coordinate center
 const first = features[0] || {geometry:{coordinates:[106.8,-6.2]}, properties:{location_name:'Lokasi'}};
 const center = first.geometry && first.geometry.coordinates ? [first.geometry.coordinates[1], first.geometry.coordinates[0]] : [-6.2,106.8];
 
+// Particle Engine live states
 const state = {
   windSpeed: 2.0,
   cloudPct: 40.0,
@@ -181,39 +133,6 @@ const state = {
   rainProb: 0.0,
   activeLayer: 'risiko'
 };
-
-let currentSelectedFeatures = [];
-let activeLocSlug = (first.properties && first.properties.slug) || '';
-
-const layerDefs = {
-  risiko: { key: 'risiko', label: 'Risiko', field: 'risk_score', unit: '/100', min: 0, max: 100, palette: 'risk' },
-  temp: { key: 'temp', label: 'Suhu', field: 'temp_c', unit: '°C', min: 18, max: 38, palette: 'temp' },
-  rain: { key: 'rain', label: 'Hujan', field: 'rain_probability', unit: '%', min: 0, max: 100, palette: 'rain' },
-  wind: { key: 'wind', label: 'Angin', field: 'wind_kmh', unit: ' km/jam', min: 0, max: 45, palette: 'wind' },
-  humidity: { key: 'humidity', label: 'Lembap', field: 'humidity_pct', unit: '%', min: 35, max: 100, palette: 'humidity' },
-  cloud: { key: 'cloud', label: 'Awan', field: 'cloud_pct', unit: '%', min: 0, max: 100, palette: 'cloud' }
-};
-
-const palettes = {
-  risk: ['#2ee6c9','#f4cd4c','#f06b3a','#ff486b'],
-  rain: ['#35d9ff','#2f8dff','#8554ff','#ff4f8b'],
-  temp: ['#1a7cff','#27e2d1','#f6cf48','#ff6c3e'],
-  humidity: ['#26dfc7','#377cff','#7b5cff'],
-  cloud: ['#0fa7ff','#9aa7b7','#f0f5ff'],
-  wind: ['#21d8d0','#f0ca45','#ff5b45']
-};
-
-function scrollPillIntoView(idx) {
-  const container = document.getElementById('time-scrubber');
-  const pills = document.querySelectorAll('.time-pill');
-  if (container && pills && pills[idx]) {
-    const pill = pills[idx];
-    container.scrollTo({
-      left: pill.offsetLeft - (container.clientWidth / 2) + (pill.clientWidth / 2),
-      behavior: 'smooth'
-    });
-  }
-}
 
 function getTempColor(t) {
   if (t <= 18) return '#3b82f6';
@@ -244,7 +163,6 @@ function getWindColor(w) {
 }
 
 function updateHUDValues(p) {
-  if (typeof mapTimeout !== 'undefined') clearTimeout(mapTimeout);
   document.getElementById('hud-location-name').textContent = p.location_name || 'Lokasi';
   document.getElementById('hud-time-label').textContent = `${p.relative || 'Prakiraan'} · ${p.hour || ''}`;
   document.getElementById('val-temp').textContent = p.temp_c != null ? `${Math.round(p.temp_c)}°C` : '—';
@@ -291,16 +209,6 @@ function makeSparkline(locationSlug, dateIso, activeHour) {
   `;
 }
 
-function escHtml(str) {
-  if (str === null || str === undefined) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 function ptxt(p) {
   if (!p) return '';
   const sparklineHtml = makeSparkline(p.slug, p.date_iso, p.hour);
@@ -308,30 +216,30 @@ function ptxt(p) {
   return `
     <div class="popup-card">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
-        <b style="font-family:'Outfit'; font-size:14px; color:#fff">${escHtml(p.location_name)}</b>
-        <span class="popup-badge" style="background:${riskColor}20; color:${riskColor}; border:1px solid ${riskColor}30">${escHtml(p.risk_label || '—')}</span>
+        <b style="font-family:'Outfit'; font-size:14px; color:#fff">${p.location_name}</b>
+        <span class="popup-badge" style="background:${riskColor}20; color:${riskColor}; border:1px solid ${riskColor}30">${p.risk_label || '—'}</span>
       </div>
-      <div style="font-size:11px; color:#6b8ab5; margin-bottom:10px">${escHtml(p.date)} · ${escHtml(p.hour)} WIB</div>
+      <div style="font-size:11px; color:#6b8ab5; margin-bottom:10px">${p.date} · ${p.hour} WIB</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:11px">
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">SUHU</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.temp_c != null ? p.temp_c + '°C' : '—')}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.temp_c != null ? p.temp_c + '°C' : '—'}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">HUJAN</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.rain_probability != null ? p.rain_probability + '%' : '—')}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.rain_probability != null ? p.rain_probability + '%' : '—'}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">LEMBAP</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.humidity_pct != null ? p.humidity_pct + '%' : '—')}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.humidity_pct != null ? p.humidity_pct + '%' : '—'}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
           <div style="color:#64748b; font-size:9px">ANGIN</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${escHtml(p.wind_kmh != null ? p.wind_kmh + ' km/jam' : '—')}</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.wind_kmh != null ? p.wind_kmh + ' km/jam' : '—'}</div>
         </div>
       </div>
       <div style="margin-top:10px; font-size:11px; color:#a8c4e0; font-style:italic; line-height:1.4">
-        ${escHtml(p.condition)}
+        ${p.condition}
       </div>
       ${sparklineHtml}
     </div>
@@ -389,146 +297,17 @@ function updateLegend() {
       <div><i class="dot" style="background:#f1f5f9"></i>Mendung (&gt; 60%)</div>
     `;
   }
-  const isCollapsed = legendEl.classList.contains('collapsed');
-  legendEl.innerHTML = `<button class="legend-toggle" aria-label="Toggle Legend">Legenda ${isCollapsed ? '▴' : '▾'}</button>` + legendHtml;
+  legendEl.innerHTML = legendHtml;
 }
 
 let activeTimeIndex = 0;
 
-function num(v){ const n = Number(v); return Number.isFinite(n) ? n : null; }
-function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-function norm(v, min, max){ const n=num(v); if(n===null) return null; return clamp((n-min)/(max-min),0,1); }
-function hexToRgb(hex){ const h=hex.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }
-function mix(a,b,t){return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)];}
-
-function colorFor(layerKey, value){
-  const layer=layerDefs[layerKey]; const t=norm(value, layer.min, layer.max); if(t===null) return null;
-  const pal=(palettes[layer.palette]||palettes.risk).map(hexToRgb);
-  const x=t*(pal.length-1); const i=Math.min(pal.length-2, Math.floor(x)); const f=x-i;
-  const c=mix(pal[i],pal[i+1],f); return `rgb(${c[0]},${c[1]},${c[2]})`;
-}
-
-function valueLabel(layerKey,value){
-  const layer=layerDefs[layerKey]; const n=num(value);
-  if(n===null) return 'Data belum tersedia';
-  const rounded = Math.abs(n)>=100 ? Math.round(n) : (Math.round(n*10)/10);
-  return `${rounded}${layer.unit||''}`;
-}
-
-function fieldValueAtPoint(layerKey, x, y){
-  const layer = layerDefs[layerKey]; 
-  if(!layer) return {value:null, alpha:0, windDir:null, windSpeed:null};
-  let total=0, wsum=0, nearestKm=Infinity, windX=0, windY=0, windW=0;
-  const ll = map.containerPointToLatLng([x,y]);
-  const isPortal = new Set(features.map(f => f.properties.slug)).size > 1;
-  for(const f of currentSelectedFeatures){
-    const p = f.properties;
-    const value = num(p[layer.field]); 
-    if(value===null) continue;
-    const coords = f.geometry.coordinates;
-    const d = map.distance(ll, [coords[1], coords[0]]) / 1000;
-    nearestKm = Math.min(nearestKm, d);
-    let w;
-    if(isPortal){ 
-      w = 1 / Math.pow(d + 12, 2.15); 
-    } else { 
-      const radius=72; 
-      if(d>radius) continue; 
-      w = Math.pow(1 - d/radius, 2.2); 
-    }
-    total += value*w; wsum += w;
-
-    const ws = num(p.wind_kmh) / 3.6; // m/s
-    const wd = num(p.wind_dir);
-    if(ws!==null && wd!==null){
-      const rad = (wd + 180) * Math.PI / 180;
-      windX += Math.sin(rad)*ws*w; 
-      windY += -Math.cos(rad)*ws*w; 
-      windW += w;
-    }
-  }
-  if(wsum<=0) return {value:null, alpha:0, windDir:null, windSpeed:null};
-  let alpha = isPortal ? 0.55 : clamp(1 - nearestKm/72, 0, .62);
-  if(state.activeLayer==='wind') alpha += .08;
-  const wx = windW>0 ? windX/windW : null, wy = windW>0 ? windY/windW : null;
-  const speed = wx===null ? null : Math.sqrt(wx*wx + wy*wy);
-  const dir = wx===null ? null : (Math.atan2(wx, -wy)*180/Math.PI + 360) % 360;
-  return {value:total/wsum, alpha, windDir:dir, windSpeed:speed};
-}
-
-const fieldCanvas = document.getElementById('fieldCanvas');
-const windCanvas = document.getElementById('windCanvas');
-const fctx = fieldCanvas.getContext('2d');
-const wctx = windCanvas.getContext('2d');
-
-function resizeCanvas(){
-  const s = map.getSize();
-  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-  for (const c of [fieldCanvas, windCanvas]) {
-    if (!c) continue;
-    c.style.width = s.x + 'px'; c.style.height = s.y + 'px';
-    c.width = Math.round(s.x*dpr); c.height = Math.round(s.y*dpr);
-    const ctx = c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
-  }
-}
-
-function drawField(){
-  resizeCanvas();
-  const s=map.getSize(); fctx.clearRect(0,0,s.x,s.y);
-  const layer=layerDefs[state.activeLayer]; if(!layer) return;
-  const step = map.getZoom() >= 10 ? 7 : 9;
-  for(let y=0;y<s.y;y+=step){
-    for(let x=0;x<s.x;x+=step){
-      const fv=fieldValueAtPoint(state.activeLayer,x+step/2,y+step/2);
-      if(fv.value===null || fv.alpha<=.02) continue;
-      fctx.fillStyle=colorFor(state.activeLayer,fv.value);
-      fctx.globalAlpha=fv.alpha;
-      fctx.fillRect(x,y,step+1,step+1);
-    }
-  }
-  fctx.globalAlpha=1;
-}
-
-let particles=[];
-function resetParticles(){
-  const s=map.getSize(); particles=[];
-  const count = Math.round(clamp((s.x*s.y)/14500, 55, 160));
-  for(let i=0;i<count;i++) particles.push({x:Math.random()*s.x,y:Math.random()*s.y,age:Math.random()*90});
-}
-
-function drawWind(){
-  if (!document.getElementById('windCanvas')) return;
-  const s=map.getSize();
-  wctx.clearRect(0,0,s.x,s.y);
-  const anyWind = currentSelectedFeatures.some(f => f.properties.wind_kmh > 0);
-  if(!anyWind){ requestAnimationFrame(drawWind); return; }
-  wctx.lineWidth = 1.1; wctx.strokeStyle='rgba(188,230,255,.26)';
-  for(const p of particles){
-    const fv=fieldValueAtPoint('wind',p.x,p.y); const sp=num(fv.windSpeed), dir=num(fv.windDir);
-    if(sp===null || dir===null || fv.alpha<=.02){ p.x=Math.random()*s.x; p.y=Math.random()*s.y; p.age=0; continue; }
-    const rad=dir*Math.PI/180; const scale=0.22+Math.min(1.5,sp)*0.05;
-    const vx=Math.sin(rad)*(1.8+sp)*scale, vy=-Math.cos(rad)*(1.8+sp)*scale;
-    const px=p.x-vx*5, py=p.y-vy*5;
-    wctx.globalAlpha=clamp(.08+fv.alpha*.35,0,.44);
-    wctx.beginPath(); wctx.moveTo(px,py); wctx.lineTo(p.x,p.y); wctx.stroke();
-    p.x+=vx; p.y+=vy; p.age++;
-    if(p.x<0||p.y<0||p.x>s.x||p.y>s.y||p.age>180){p.x=Math.random()*s.x;p.y=Math.random()*s.y;p.age=0;}
-  }
-  wctx.globalAlpha=1;
-  requestAnimationFrame(drawWind);
-}
-
 function drawForTime(dateIso, activeHour) {
   layer.clearLayers();
-  currentSelectedFeatures = features.filter(f => f.properties.date_iso === dateIso && f.properties.hour === activeHour);
-  if (!currentSelectedFeatures.length) return;
+  const selected = features.filter(f => f.properties.date_iso === dateIso && f.properties.hour === activeHour);
+  if (!selected.length) return;
 
-  let activeLocFeature = currentSelectedFeatures.find(f => f.properties.slug === activeLocSlug);
-  if (!activeLocFeature) {
-    activeLocFeature = currentSelectedFeatures[0];
-    activeLocSlug = activeLocFeature.properties.slug;
-  }
-  const activeLoc = activeLocFeature.properties;
+  const activeLoc = selected[0].properties;
   state.windSpeed = activeLoc.wind_kmh || 2.0;
   state.cloudPct = activeLoc.cloud_pct || 40.0;
   state.tempC = activeLoc.temp_c || 24.0;
@@ -537,11 +316,10 @@ function drawForTime(dateIso, activeHour) {
 
   updateHUDValues(activeLoc);
 
-  currentSelectedFeatures.forEach(f => {
+  selected.forEach(f => {
     const p = f.properties;
     const coords = f.geometry.coordinates;
     const latlng = [coords[1], coords[0]];
-    let marker = null;
 
     if (state.activeLayer === 'risiko') {
       const cls = p.risk_class || 'limited';
@@ -553,14 +331,14 @@ function drawForTime(dateIso, activeHour) {
           <div class="pulse-ring"></div>
         </div>
       `;
-      marker = L.marker(latlng, {
+      L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [size * 3, size * 3],
           iconAnchor: [size * 1.5, size * 1.5]
         })
-      });
+      }).bindPopup(ptxt(p)).addTo(layer);
 
     } else if (state.activeLayer === 'temp') {
       const temp = p.temp_c || 24;
@@ -570,14 +348,14 @@ function drawForTime(dateIso, activeHour) {
           ${Math.round(temp)}°C
         </div>
       `;
-      marker = L.marker(latlng, {
+      L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [45, 24],
           iconAnchor: [22, 12]
         })
-      });
+      }).bindPopup(ptxt(p)).addTo(layer);
 
     } else if (state.activeLayer === 'rain') {
       const rain = p.rain_probability || 0;
@@ -588,14 +366,14 @@ function drawForTime(dateIso, activeHour) {
           <div class="radar-core"></div>
         </div>
       `;
-      marker = L.marker(latlng, {
+      L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [60, 60],
           iconAnchor: [30, 30]
         })
-      });
+      }).bindPopup(ptxt(p)).addTo(layer);
 
     } else if (state.activeLayer === 'wind') {
       const wind = p.wind_kmh || 0;
@@ -607,14 +385,14 @@ function drawForTime(dateIso, activeHour) {
           ${wind.toFixed(1)} km/jam
         </div>
       `;
-      marker = L.marker(latlng, {
+      L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [80, 24],
           iconAnchor: [40, 12]
         })
-      });
+      }).bindPopup(ptxt(p)).addTo(layer);
 
     } else if (state.activeLayer === 'humidity') {
       const hum = p.humidity_pct || 70;
@@ -625,14 +403,14 @@ function drawForTime(dateIso, activeHour) {
           <div style="width:6px; height:6px; background:#fff; border-radius:50%; margin:auto; position:absolute; inset:0"></div>
         </div>
       `;
-      marker = L.marker(latlng, {
+      L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [size, size],
           iconAnchor: [size/2, size/2]
         })
-      });
+      }).bindPopup(ptxt(p)).addTo(layer);
 
     } else if (state.activeLayer === 'cloud') {
       const cld = p.cloud_pct || 40;
@@ -643,26 +421,16 @@ function drawForTime(dateIso, activeHour) {
           <div style="width:4px; height:4px; background:#fff; border-radius:50%; margin:auto; position:absolute; inset:0"></div>
         </div>
       `;
-      marker = L.marker(latlng, {
+      L.marker(latlng, {
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         })
-      });
-    }
-
-    if (marker) {
-      marker.on('click', () => {
-        activeLocSlug = p.slug;
-        updateHUDValues(p);
-      });
-      marker.bindPopup(ptxt(p)).addTo(layer);
+      }).bindPopup(ptxt(p)).addTo(layer);
     }
   });
-
-  drawField();
 }
 
 function switchLayer(layerName) {
@@ -699,22 +467,12 @@ function togglePlay() {
     playInterval = setInterval(() => {
       activeTimeIndex = (activeTimeIndex + 1) % pills.length;
       pills[activeTimeIndex].click();
-      scrollPillIntoView(activeTimeIndex);
+      pills[activeTimeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }, 2500);
   }
 }
 
 let map;
-var mapTimeout = setTimeout(() => {
-  const locTitle = document.getElementById('hud-location-name');
-  if (locTitle && locTitle.textContent === 'Memuat...') {
-    locTitle.textContent = 'LANGIT Cuaca';
-    const locMeta = document.getElementById('hud-time-label');
-    if (locMeta) locMeta.textContent = 'Peta dasar lambat dimuat. Data cuaca tetap tersedia secara luring.';
-    console.warn("Map loading timed out. Showing fallback metadata.");
-  }
-}, 5000);
-
 try {
   map = L.map('map',{
     scrollWheelZoom:true,
@@ -746,6 +504,7 @@ try {
   
   var layer = L.layerGroup().addTo(map);
   
+  // Sort and build timeline
   features.sort((a,b) => {
     const da = (a.properties && a.properties.date_iso) || '';
     const db = (b.properties && b.properties.date_iso) || '';
@@ -757,6 +516,7 @@ try {
     return ha.localeCompare(hb);
   });
   
+  // Filter to get a single unique location's time slots
   const firstLocSlug = (first.properties && first.properties.slug) || '';
   const locTimeline = features.filter(f => f.properties && f.properties.slug === firstLocSlug);
   const scrubber = document.getElementById('time-scrubber');
@@ -792,6 +552,7 @@ try {
     document.getElementById('val-humidity').textContent = '—';
   }
 
+  // Fit map bounds to show all markers automatically
   if (features.length) {
     const coordsList = features.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0]]);
     const bounds = L.latLngBounds(coordsList);
@@ -800,17 +561,18 @@ try {
     map.setView(center, 12);
   }
 
+  // Keyboard controls
   document.addEventListener('keydown', (e) => {
     const pills = document.querySelectorAll('.time-pill');
     if (!pills.length) return;
     if (e.key === 'ArrowRight') {
       activeTimeIndex = (activeTimeIndex + 1) % pills.length;
       pills[activeTimeIndex].click();
-      scrollPillIntoView(activeTimeIndex);
+      pills[activeTimeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     } else if (e.key === 'ArrowLeft') {
       activeTimeIndex = (activeTimeIndex - 1 + pills.length) % pills.length;
       pills[activeTimeIndex].click();
-      scrollPillIntoView(activeTimeIndex);
+      pills[activeTimeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
   });
 
@@ -819,50 +581,18 @@ try {
   document.body.insertAdjacentHTML('beforeend','<div style="position:absolute;inset:0;display:grid;place-items:center;color:#6b8ab5;background:#030712;z-index:9999;font-family:sans-serif;padding:20px;text-align:center;">Peta dasar belum dapat dimuat. Data lokasi tetap tersedia.</div>');
 }
 
+// Sync with postMessage from parent dashboard window
 window.addEventListener('message', (e) => {
   if (e.data && e.data.type === 'switchLayer') {
     switchLayer(e.data.layer);
-  } else if (e.data && e.data.type === 'invalidateSize') {
-    if (map) map.invalidateSize();
   }
 });
 
+// Hide the back button if embedded inside an iframe
 if (window.self !== window.top) {
   const backBtn = document.getElementById('hud-back-btn');
   if (backBtn) backBtn.style.display = 'none';
 }
-
-const hudEl = document.querySelector('.hud');
-const hudToggle = document.querySelector('.hud-collapse-toggle');
-if (hudEl && hudToggle) {
-  hudToggle.addEventListener('click', () => {
-    hudEl.classList.toggle('collapsed');
-  });
-}
-
-const legendEl = document.getElementById('map-legend');
-if (legendEl) {
-  legendEl.addEventListener('click', (e) => {
-    const btn = e.target.closest('.legend-toggle');
-    if (btn) {
-      legendEl.classList.toggle('collapsed');
-      const isCollapsed = legendEl.classList.contains('collapsed');
-      btn.textContent = `Legenda ${isCollapsed ? '▴' : '▾'}`;
-    }
-  });
-}
-
-let resizeTimeout;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(() => {
-    if (map) map.invalidateSize();
-  }, 150);
-});
 </script>
-  <script>
-    resetParticles();
-    drawWind();
-  </script>
 </body>
 </html>

@@ -3,15 +3,15 @@
 ## DATA ATLAS
 | Data Source | Files | Potential Use | Risk |
 |---|---:|---|---|
-| Advanced/Sentinel | 90 | advanced panel, risk/confidence, exploration |  |
-| Ensemble | 24 | confidence, spread, dominant weather |  |
-| Forecast per provider | 21 | advanced comparison, source transparency |  |
+| Advanced/Sentinel | 96 | advanced panel, risk/confidence, exploration |  |
+| Ensemble | 30 | confidence, spread, dominant weather |  |
+| Forecast per provider | 25 | advanced comparison, source transparency |  |
 | Generated HTML | 52 |  |  |
 | Map | 23 | map layer and marker/timeline |  |
-| Other | 173 |  |  |
+| Other | 182 |  |  |
 | Public API | 9 | primary UI contract |  |
 | Raw payload | 27 | debug/archive only | do not expose raw public payload |
-| Source status | 30 | data status bar and reliability |  |
+| Source status | 34 | data status bar and reliability |  |
 
 ## VARIABLE INVENTORY
 | Variable | Available | Unit | Missing Rate | Recommended UI Usage | Priority |
@@ -24,12 +24,12 @@
 | Kelembapan | true | % | 0% | compact | P1 |
 | Awan | true | % | 0% | detail | P2 |
 | Curah hujan | true | mm | 67% | detail | P2 |
-| Dew point | false | C | 100% | disabled | P5 |
-| Gust | false | km/jam | 100% | disabled | P5 |
-| Jarak pandang | false | m | 100% | disabled | P5 |
-| Keandalan | false | % | 100% | disabled | P5 |
-| Tekanan | false | hPa | 100% | disabled | P5 |
-| UV | false | index | 100% | disabled | P5 |
+| Dew point | true | C | 67% | disabled | P5 |
+| Gust | true | km/jam | 67% | disabled | P5 |
+| Jarak pandang | true | m | 67% | disabled | P5 |
+| Keandalan | true | % | 67% | disabled | P5 |
+| Tekanan | true | hPa | 67% | disabled | P5 |
+| UV | true | index | 67% | disabled | P5 |
 
 ## DATA HIERARCHY
 - P0: condition, temperature, rainProbability, riskScore, windSpeed, updateTime, locationName
