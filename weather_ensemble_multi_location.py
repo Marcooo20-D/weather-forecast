@@ -453,13 +453,86 @@ def write_json_gz(path, payload):
 
 
 def read_json(path, default=None):
-    if not os.path.exists(path):
+    """Read JSON file safely with retry logic for corrupted/gzip files.
+    
+    Handles:
+    - Missing files → returns default
+    - Corrupted JSON → retries with raw content recovery, falls back to default
+    - Corrupted gzip → falls back to plain text read
+    - Permission/IO errors → returns default
+    - Race conditions (file deleted between exists and open) → returns default
+    """
+    # Resolve path first to handle race conditions
+    resolved_path = path
+    if not os.path.exists(resolved_path):
         return default
-    if path.lower().endswith(".gz"):
-        with gzip.open(path, "rt", encoding="utf-8") as f:
-            return json.load(f)
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+
+    for attempt in range(2):
+        try:
+            if resolved_path.lower().endswith(".gz"):
+                try:
+                    with gzip.open(resolved_path, "rt", encoding="utf-8") as f:
+                        return json.load(f)
+                except (gzip.BadGzipFile, zlib.error, EOFError) as gz_err:
+                    # gzip is corrupted — try reading as plain text
+                    print(f"[WARN] Corrupted gzip {resolved_path} -> {gz_err}, trying plain text")
+                    try:
+                        with open(resolved_path, "rb") as f_raw:
+                            raw_data = f_raw.read()
+                        # If it contains readable JSON after the gzip header, try extracting
+                        import re as _re
+                        json_match = _re.search(rb'\{.*\}', raw_data, _re.DOTALL)
+                        if json_match:
+                            return json.loads(json_match.group(0).decode("utf-8", errors="replace"))
+                    except Exception:
+                        pass
+                    return default
+
+            with open(resolved_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            # Try standard parse
+            try:
+                return json.loads(content)
+            except json.JSONDecodeError:
+                # If it's a simple unquoted key issue, try recovery
+                if attempt == 0:
+                    import re as _re
+                    # Fix single-quoted keys/values to double-quoted
+                    fixed = _re.sub(r"(?<![\\])'", '"', content)
+                    # Fix trailing commas
+                    fixed = _re.sub(r",\s*([}\]])", r"\1", fixed)
+                    # Fix unquoted property names
+                    fixed = _re.sub(r"([{,])\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:", r'\1"\2":', fixed)
+                    try:
+                        return json.loads(fixed)
+                    except json.JSONDecodeError:
+                        # If recovered content is same as original, don't retry
+                        if fixed == content:
+                            print(f"[WARN] Invalid JSON: {resolved_path} -> parse error (unrecoverable)")
+                            return default
+                        # Otherwise try one more pass
+                        continue
+                print(f"[WARN] Invalid JSON: {resolved_path} -> unrecoverable parse error")
+                return default
+
+        except (FileNotFoundError, PermissionError) as e:
+            # Race condition: file was deleted between exists() and open()
+            if attempt == 0:
+                time.sleep(0.05)  # Brief backoff
+                if os.path.exists(resolved_path):
+                    continue
+            print(f"[WARN] Cannot read {resolved_path} -> {e}")
+            return default
+
+        except json.JSONDecodeError as e:
+            print(f"[WARN] Invalid JSON: {resolved_path} -> {e}")
+            return default
+
+        except Exception as e:
+            print(f"[WARN] Failed reading JSON: {resolved_path} -> {e}")
+            return default
+
+    return default
 
 
 def read_dict_csv(path):
@@ -9375,14 +9448,13 @@ def _lg_activity_matrix(day):
 
 
 def _lg_build_api(args, forecast_dates=None):
-    try:
-        raw = _anemos21_build_multiday_api(args, forecast_dates)
-    except Exception:
-        raw = read_json(path_output("anemos_api_v1.json"), default={}) or read_json(path_output("langit_api_v1.json"), default={}) or {}
-    try:
-        raw = _v23_enhance_api(dict(raw or {}), args)
-    except Exception:
-        raw = dict(raw or {})
+    # _anemos21_build_multiday_api and _v23_enhance_api were removed during
+    # the ANEMOS→LANGIT migration. Reading the cached API JSON directly.
+    raw = (
+        read_json(path_output("langit_api_v1.json"), default={})
+        or read_json(path_output("anemos_api_v1.json"), default={})
+        or {}
+    )
     loc = _lg_text(raw.get("location_name"), getattr(args, "location_name", "Lokasi"))
     days = [_lg_norm_day(d, i, loc, args) for i, d in enumerate(_lg_raw_days(raw))]
     try:
@@ -9614,10 +9686,9 @@ def _lg_planner(api, args):
 
 
 def _lg_write_dict_csv(path, fieldnames, rows):
-    try:
-        _v23_write_dict_csv_safe(path, fieldnames, rows)
-    except Exception:
-        write_dict_csv(path, fieldnames, rows)
+    # _v23_write_dict_csv_safe was removed during ANEMOS→LANGIT migration.
+    # Using the standard write_dict_csv directly.
+    write_dict_csv(path, fieldnames, rows)
 
 
 def _lg_quality_gate(api):

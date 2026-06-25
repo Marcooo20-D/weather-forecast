@@ -1,0 +1,492 @@
+264:def log_info(*args):
+271:def log_debug(*args):
+279:def log_warning(*args):
+286:def batch_info(*args):
+290:def batch_warning(*args):
+294:def ensure_directory(path):
+298:def sanitize_filename(text):
+305:def root_output_dir():
+311:def root_output_path(filename):
+315:def path_config(filename):
+319:def set_active_output_dir(location_slug):
+325:def path_output(filename):
+330:def atomic_write_bytes(path, writer_fn):
+351:def atomic_write_text(path, writer_fn, newline=None):
+372:def write_csv(path, headers, rows):
+381:def write_dict_csv(path, fieldnames=None, rows=None):
+440:def write_json(path, payload):
+447:def write_json_gz(path, payload):
+455:def read_json(path, default=None):
+476:def read_dict_csv(path):
+491:def build_location_config(slug, payload):
+506:def embedded_location_presets():
+516:def resolve_locations_file_path(locations_file=None):
+524:def load_location_presets(locations_file=None):
+558:def refresh_location_presets(locations_file=None):
+565:def safe_float(value):
+574:def round_or_blank(value, digits=2):
+580:def setup_logging(args):
+599:def now_local(tz_name):
+603:def parse_local_hour_string(target_date, jam, tz_name):
+609:def parse_naive_local_datetime(text, tz_name):
+615:def parse_open_meteo_time(text, tz_name):
+622:def parse_utc_iso_to_local(text, tz_name):
+628:def parse_iso_date(text):
+632:def parse_display_date(text):
+636:def build_hourly_targets(step_minutes: int = 60) -> list[str]:
+647:def iter_dates(start_date, end_date):
+654:def build_url(base_url, params):
+658:def build_ssl_context():
+672:def _looks_like_html(text: str) -> bool:
+677:def _decode_http_bytes(raw_bytes, encoding_header):
+698:def http_get_json(url, headers=None, timeout=HTTP_TIMEOUT_SECONDS):
+743:def _parse_retry_after_seconds(exc):
+758:def fetch_json_with_retry(url, headers=None, source_id="UNKNOWN", timeout=HTTP_TIMEOUT_SECONDS, max_retry=None):
+807:def nearest_candidate(candidates, target_dt, max_gap_hours=4):
+820:def weighted_mean_std(weighted_pairs):
+841:def clamp(value, minimum, maximum):
+845:def source_base_weight(source_id):
+849:def source_active_weight(source_id):
+853:def hour_bucket_for_time(jam_text: str) -> str:
+869:def hour_bucket_factor(jam_text: str) -> float:
+876:def load_weight_config():
+896:def save_weight_config(weights, metadata):
+905:def load_health_config():
+911:def save_health_config(results, args, target_date=None):
+957:def source_health_factor(source_id):
+977:def point_weight(point):
+995:def confidence_label(score):
+1003:def expected_total_weight():
+1009:def compute_confidence(bucket, total_weight, dominant_weight, temp_std, rh_std, rain_std):
+1044:def median(values):
+1054:def robust_outlier_bounds(values, threshold=OUTLIER_Z_THRESHOLD):
+1069:def filter_weighted_pairs(weighted_pairs):
+1082:def heat_index(temp_c, rh):
+1113:def kategori_hujan(mm):
+1123:def bmkg_to_kategori(cuaca):
+1138:def bmkg_rain_proxy_mm(cuaca):
+1149:def infer_kategori_non_hujan(temp_c, rh):
+1159:def category_from_wmo_code(weather_code, rain_mm, rh):
+1187:def category_from_metno_symbol(symbol_code, rain_mm, rh):
+1204:def validate_point_values(temp_c, rh_pct, rain_mm, wind_kmh):
+1233:def extract_bmkg_points(target_date, payload, args):
+1294:def extract_open_meteo_points(target_date, payload, config, args):
+1410:def extract_met_no_points(target_date, payload, config, args):
+1475:def load_cached_source_payload(target_date, source_id, extractor_fn, args):
+1537:def _raw_payload_ext(args):
+1541:def load_cached_bmkg_payload(target_date, args):
+1649:def fetch_bmkg_forecast(target_date, config, args):
+1679:def fetch_open_meteo_forecast(target_date, config, args):
+1742:def metno_precipitation_amount(data):
+1764:def metno_symbol_code(data):
+1774:def fetch_met_no_forecast(target_date, config, args):
+1821:def preview_request_url(config, args):
+1849:def save_raw_payload_snapshot(target_date, result, tz_name, args):
+1898:def _circuit_state(host: str) -> dict:
+1906:def _circuit_is_open(host: str) -> tuple[bool, float]:
+1913:def _circuit_note_failure(host: str, error_text: str, status: Optional[int], args):
+1926:def _circuit_note_success(host: str):
+1934:def _get_host_semaphore(url, max_inflight_per_host):
+1946:def fetch_source(target_date, config, args):
+2035:def observation_dir():
+2041:def report_dir():
+2047:def observation_file_for_date(target_date):
+2051:def observation_master_file():
+2055:def normalize_observation_row(row):
+2092:def load_external_observation_rows(path):
+2101:def extract_archive_observations(target_date, payload, tz_name):
+2174:def fetch_archive_observations(target_date, args):
+2189:def write_observation_rows(target_date, rows):
+2216:def import_external_observations(args):
+2263:def sync_observations(args):
+2303:def forecast_file_for_date(target_date):
+2307:def load_observation_index():
+2318:def cleanup_old_files_in_directory(directory_path, retention_days):
+2335:def cleanup_to_max_size_mb(directory_path, max_mb):
+2376:def cleanup_old_outputs(args):
+2394:def category_match_score(predicted, observed):
+2405:def metric_score(error_value, scale):
+2411:def absolute_error(left, right):
+2417:def evaluate_historical_performance(args):
+2623:def collect_all_sources(target_date, args):
+2641:def flatten_points(results):
+2651:def build_source_rows(points, target_date):
+2676:def build_status_rows(results, target_date):
+2703:def build_bmkg_rows(results, target_date):
+2727:def build_ensemble_rows(points):
+2828:def build_canva_row(ensemble_rows, target_date, args):
+2855:def save_outputs(target_date, results, args):
+3070:def seconds_until_run(run_time_text, tz_name):
+3079:def validate_common_args(args):
+3097:def validate_location_config(location):
+3108:def clone_args_for_location(args, location):
+3123:def is_default_single_location_args(args):
+3133:def resolve_requested_locations(args):
+3169:def print_available_locations():
+3193:def prepare_location_context(args):
+3220:def run_once(args):
+3289:def run_self_tests(args):
+3390:def execute_mode_for_location(base_args, location, runner):
+3398:def write_batch_summary(mode, rows, extra_payload=None):
+3412:def combined_location_fieldnames():
+3428:def combined_location_metadata(location_args, target_date):
+3444:def combined_ensemble_fieldnames():
+3471:def combined_ensemble_long_fieldnames():
+3511:def collect_combined_ensemble_long_rows(location_args, target_date, output_dir):
+3554:def combined_forecast_fieldnames():
+3572:def combined_source_status_fieldnames():
+3592:def collect_combined_ensemble_rows(location_args, target_date, output_dir):
+3627:def collect_combined_forecast_rows(location_args, target_date, output_dir):
+3653:def collect_combined_source_status_rows(location_args, target_date, output_dir):
+3681:def write_combined_csv(base_filename, fieldnames, rows):
+3707:def run_forecast_for_locations(base_args, locations):
+3868:def write_dim_locations(locations: list[LocationConfig], base_args):
+3906:def write_dim_sources():
+3929:def write_ensemble_fact_from_long(long_rows: list[dict]):
+3975:def sync_observations_for_locations(base_args, locations):
+4012:def evaluate_for_locations(base_args, locations):
+4051:def self_test_for_locations(base_args, locations):
+4088:def import_observations_for_location(base_args, location):
+4108:def loop_daily(base_args, locations):
+4179:def aether_open_meteo_variables(args=None, include_extra=None):
+4190:def aether_db_path():
+4194:def aether_connect_db():
+4203:def aether_value(value):
+4212:def aether_round(value, digits=2):
+4221:def aether_weighted_quantile(weighted_pairs, q):
+4238:def aether_weighted_mean(weighted_pairs):
+4248:def aether_get_weighted_attr(bucket, attr):
+4257:def aether_category_cloud_proxy(category):
+4268:def aether_microclimate_profile(args):
+4284:def aether_microclimate_adjustment(profile, hour, temp_c, rh_pct):
+4313:def aether_target_datetime(target_date, jam, tz_name):
+4317:def aether_lead_hours(target_date, jam, args):
+4326:def aether_lead_bucket(lead_hours):
+4342:def aether_analog_probability(target_date, jam, args, temp_p50, rh_p50, model_prob_rain):
+4385:def aether_risk_label(score):
+4397:def aether_trust_level(sources_used, confidence_score, uncertainty_score, coverage_fraction, source_health_mean):
+4416:def aether_operational_status(trust, rain_risk, uncertainty, sources_used):
+4426:def aether_source_state_rows(results):
+4456:def aether_feedback_for_location(args):
+4504:def sentinel_grade(score, invert=False):
+4522:def sentinel_predictability(forecast_stress, uncertainty, displacement):
+4533:def sentinel_location_personality(args):
+4573:def sentinel_atmospheric_mode(hour, prob_rain, prob_heavy, rh_p50, cloud_p50, uncertainty, cape_p50):
+4597:def sentinel_failure_mode(mode, prob_rain, uncertainty, displacement, rain_p90, category_disagreement):
+4616:def sentinel_multi_reality(prob_rain, prob_heavy, displacement, uncertainty, rain_p90):
+4637:def sentinel_threat_level(score):
+4647:def sentinel_activity_score(base, penalty):
+4651:def sentinel_decision(row, args):
+4683:def sentinel_expert_council(row, args):
+4712:def sentinel_counterfactual(row):
+4727:def sentinel_forecast_contract_summary(row):
+4738:def sentinel_build_explanation(row):
+4757:def aether_build_rows(points, ensemble_rows, target_date, args):
+4940:def sentinel_daily_status(statuses):
+4950:def aether_daily_summary(aether_rows, args):
+4992:def sentinel_risk_window(rows, field, threshold):
+4999:def sentinel_best_window(rows):
+5012:def sentinel_daily_narrative(rows, daily, args):
+5026:def sentinel_bar(value):
+5034:def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+5092:def aether_write_report(aether_rows, daily, args):
+5125:def aether_write_contract(daily, args):
+5149:def aether_init_db(conn):
+5224:def aether_store_ledger(run_id, target_date, results, source_rows, aether_rows, daily, args):
+5251:def sentinel_x_save_artifacts(target_date, results, args, source_rows, status_rows, ensemble_rows):
+5277:def aether_regenerate_dashboard_for_location(args):
+5288:def aether_doctor_for_location(args):
+5317:def sentinel_write_constitution(args):
+5325:def sentinel_red_team_for_location(args):
+5340:def sentinel_autopsy_for_location(args):
+5377:def sentinel_skill_league_for_location(args):
+5397:def aether_local_server(args):
+5433:def aether_self_test():
+5455:def sentinel_public_disclaimer(args=None):
+5460:def sentinel_obs_date_to_iso(text):
+5472:def sentinel_observed_rain_event(row):
+5480:def sentinel_load_observations_by_key(args=None):
+5500:def sentinel_compute_verification(rows, args):
+5573:def sentinel_write_verification_artifacts(rows, args):
+5601:def sentinel_grid_offsets(radius_km):
+5611:def sentinel_fetch_grid_summary(target_date, args):
+5676:def sentinel_apply_grid_to_rows(rows, grid):
+5695:def sentinel_apply_operational_hardening(rows, target_date, args):
+5715:def sentinel_write_publish_manifest(args):
+5740:def sentinel_status_badge(status):
+5745:def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+5800:def aether_write_contract(daily, args):
+5818:def aether_write_report(aether_rows, daily, args):
+5834:def aether_doctor_for_location(args):
+5856:def sentinel_verify_public_for_location(args):
+5862:def sentinel_location_public_card(args):
+5868:def sentinel_write_root_public_index(locations, run_rows, args):
+5885:def sentinel_red_team_for_location(args):
+5901:def sentinel_autopsy_for_location(args):
+5922:def sentinel_skill_league_for_location(args):
+5935:def build_arg_parser():
+6097:def main():
+6270:def _sx_fmt(value, suffix="", blank="—"):
+6282:def _sx_status_color(status):
+6286:def _sx_status_class(status):
+6290:def _sx_metric_card(title, value, note="", tone="neutral"):
+6294:def _sx_empty(value, fallback="Belum tersedia"):
+6298:def sentinel_write_verification_artifacts(rows, args):
+6337:def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+6421:def aether_write_report(aether_rows, daily, args):
+6450:def sentinel_write_root_public_index(locations, run_rows, args):
+6469:def sentinel_write_publish_manifest(args):
+6500:def _v4_esc(x):
+6504:def _v4_num(x, suffix="", fallback="—"):
+6516:def _v4_status_label(status):
+6526:def _v4_css():
+6538:def _v4_badge(status):
+6542:def _v4_bar(value):
+6550:def sentinel_write_verification_artifacts(rows, args):
+6568:def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+6592:def aether_write_report(aether_rows, daily, args):
+6608:def sentinel_write_root_public_index(locations, run_rows, args):
+6631:def _v5_esc(value):
+6635:def _v5_num(value, suffix="", digits=0, fallback="—", blank=None):
+6649:def _v5_slug_text(text):
+6654:def _v5_status_public(status):
+6667:def _v5_badge(status):
+6672:def _v5_weather_icon(category):
+6689:def _v5_risk_word(score):
+6698:def _v5_day_part(hour_text):
+6712:def _v5_safe_summary(daily, rows, args):
+6732:def _v5_recommendation(daily, rows, args):
+6745:def _v5_best_time(rows):
+6761:def _v5_risky_time(rows):
+6773:def _v5_group_rows(rows):
+6780:def _v5_period_card(name, rows):
+6803:def _v5_hour_list(rows):
+6829:def _v5_css():
+6840:def sentinel_write_verification_artifacts(rows, args):
+6863:def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+6896:def aether_write_report(aether_rows, daily, args):
+6910:def sentinel_write_root_public_index(locations, run_rows, args):
+6936:def _v6_esc(value):
+6940:def _v6_num(value, suffix="", digits=0, blank="—"):
+6944:def _v6_timezone_label(tz_name):
+6954:def _v6_format_date_id(date_obj):
+6963:def _v6_target_date(rows, args):
+6981:def _v6_time_context(rows, args):
+6996:def _v6_status_public(daily):
+7000:def _v6_level_word(score):
+7009:def _v6_readable_weather(cat):
+7022:def _v6_peak(rows, field):
+7029:def _v6_lowest(rows, field):
+7040:def _v6_practical_decision(daily, rows, args):
+7059:def _v6_time_window_text(rows):
+7065:def _v6_summary_text(daily, rows, args):
+7078:def _v6_period_card(name, rows):
+7103:def _v6_hour_cards(rows):
+7127:def _v6_scenario_list(peak):
+7143:def _v6_source_details(source_state_rows):
+7152:def _v6_css():
+7158:def aether_write_public_accuracy_page(args):
+7181:def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+7207:def aether_write_report(aether_rows, daily, args):
+7221:def sentinel_write_root_public_index(locations, run_rows, args):
+7248:def _v8_num(value, suffix="", digits=0, fallback="—"):
+7257:def _v8_pick(rows, field, reverse=True):
+7264:def _v8_comfort_label(hi):
+7277:def _v8_visibility_label(value):
+7290:def _v8_cloud_label(value):
+7303:def _v8_variable_cards(rows):
+7332:def _v8_hour_row(row):
+7356:def _v8_hour_detail_cards(rows):
+7360:def _v8_period_card(name, rows):
+7384:def _v8_write_variables_csv(rows):
+7418:def _v8_css_extra():
+7424:def _v8_css():
+7429:def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+7456:def aether_write_report(aether_rows, daily, args):
+7471:def sentinel_write_root_public_index(locations, run_rows, args):
+7491:def _v8_weighted_attr(points, attr):
+7500:def _v8_enrich_rows_with_source_variables(points, rows):
+7518:def sentinel_x_save_artifacts(target_date, results, args, source_rows, status_rows, ensemble_rows):
+7554:def sentinel_public_disclaimer(args=None):
+7558:def _v9_css():
+7570:def _v9_num(value, suffix="", digits=0, fallback="—"):
+7579:def _v9_risk(score):
+7590:def _v9_icon(category):
+7601:def _v9_peak(rows, key):
+7612:def _v9_avg(rows, key):
+7617:def _v9_clean_summary(rows, args):
+7634:def _v9_decision(rows, args):
+7653:def _v9_time_windows(rows):
+7663:def _v9_variable_cards(rows):
+7692:def _v9_period_card(name, rows):
+7714:def _v9_hour_row(row):
+7732:def _v9_hour_rows(rows):
+7736:def _v9_scenarios(peak):
+7761:def _v9_accuracy_status_text(summary):
+7768:def sentinel_write_verification_artifacts(rows, args):
+7799:def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+7822:def aether_write_report(aether_rows, daily, args):
+7838:def sentinel_write_root_public_index(locations, run_rows, args):
+7874:def sentinel_public_disclaimer(args=None):
+7878:def _anemos_css():
+7890:def _anemos_num(value, suffix="", digits=0, fallback="—"):
+7901:def _anemos_icon(category):
+7914:def _anemos_risk_level(score):
+7925:def _anemos_peak(rows, key):
+7936:def _anemos_avg(rows, key):
+7945:def _anemos_main_decision(rows, args):
+7965:def _anemos_summary(rows, args):
+7974:def _anemos_group_rows(rows):
+7978:def _anemos_safe_hour(row):
+7982:def _anemos_time_windows(rows):
+7992:def _anemos_variable_items(rows):
+8023:def _anemos_variable_html(rows):
+8031:def _anemos_period_card(name, rows):
+8053:def _anemos_select_important_hours(rows):
+8071:def _anemos_hour_card(row):
+8088:def _anemos_hour_html(rows, compact=True):
+8093:def _anemos_rain_chart(rows):
+8106:def _anemos_temp_svg(rows):
+8131:def _anemos_scenarios(rows):
+8144:def _anemos_page_nav(title, subtitle, ctx, args, extra_links=None):
+8150:def _anemos_dashboard_doc(rows, source_state_rows, daily, args, report=False):
+8167:def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
+8179:def aether_write_report(aether_rows, daily, args):
+8189:def _anemos_accuracy_status(summary):
+8196:def sentinel_write_verification_artifacts(rows, args):
+8215:def _anemos_read_location_payload(slug):
+8220:def _anemos_location_card(loc, base_url=""):
+8243:def sentinel_write_root_public_index(locations, run_rows, args):
+8273:def build_arg_parser():
+8292:def sentinel_public_disclaimer(args=None):
+8296:def _anemos11_css():
+8308:def _anemos11_num(value, suffix="", digits=0, fallback="—"):
+8312:def _anemos11_today(args):
+8316:def _anemos11_forecast_dates(args):
+8329:def _anemos11_day_label(date_obj, args):
+8342:def _anemos11_payload_for_date(date_obj):
+8348:def _anemos11_all_day_payloads(args, forecast_dates=None):
+8358:def _anemos11_day_summary(day, args):
+8375:def _anemos11_top_summary(days, args):
+8387:def _anemos11_day_cards(days, args):
+8405:def _anemos11_current_day(days, args):
+8413:def _anemos11_day_detail(day, args):
+8434:def _anemos11_header(args, active='prakiraan'):
+8447:def _anemos11_dashboard_html(days, source_state_rows, args, report=False):
+8484:def anemos_write_multiday_public_pages(args, forecast_dates=None, source_state_rows=None):
+8513:def _anemos11_accuracy_html(rows, args):
+8555:def sentinel_write_verification_artifacts(rows, args):
+8588:def _anemos11_location_payload(loc):
+8593:def _anemos11_location_card(loc, base_url=''):
+8616:def sentinel_write_root_public_index(locations, run_rows, args):
+8627:def anemos_run_once_for_date(args, target_date):
+8636:def run_forecast_for_locations(base_args, locations):
+8719:def _lg_float(x, default=None):
+8735:def _lg_prob(x, default=0.0):
+8744:def _lg_text(x, default=""):
+8753:def _lg_esc(x, default=""):
+8757:def _lg_num(x, suffix="", digits=1, default="—"):
+8766:def _lg_pct(x, default="—"):
+8772:def _lg_hour(x, default="—"):
+8785:def _lg_hour_int(hour, default=0):
+8793:def _lg_clean_join(value, sep=" · ", default="—"):
+8805:def _lg_slug_from_args(args):
+8815:def _lg_location_traits(args):
+8886:def _lg_period_label(hour):
+8897:def _lg_diurnal_rain_bias(hour, traits, day_index=0):
+8913:def _lg_extract_rain(row):
+8930:def _lg_condition_from_vars(raw_condition, hour, rain, temp, heat, rh, cloud, wind, traits):
+8985:def _lg_icon(condition):
+9004:def _lg_risk_score(prob=None, heat=None, rh=None, wind=None, condition=None, confidence_penalty=0, cloud=None):
+9028:def _lg_class(score):
+9039:def _lg_label(score):
+9043:def _lg_hour_note(prob, score, condition=None):
+9060:def _lg_raw_days(api):
+9074:def _lg_raw_hours(day):
+9092:def _lg_sort_hours(hours):
+9103:def _lg_average(values):
+9109:def _lg_norm_hour(row, args=None, day_index=0):
+9159:def _lg_best_window(hours):
+9180:def _lg_period_summary(hours, label, start, end):
+9197:def _lg_decision_sentence(day, loc):
+9214:def _lg_nowcast(day, args=None):
+9244:def _lg_microclimate(args):
+9249:def _lg_cloud_proxy(day):
+9264:def _lg_source_court():
+9294:def _lg_norm_day(raw, idx, loc, args):
+9351:def _lg_activity_matrix(day):
+9388:def _lg_build_api(args, forecast_dates=None):
+9430:def _lg_today(api):
+9435:def _lg_css():
+9441:def _lg_kpi(label, value, note=""):
+9445:def _lg_topbar(api, args, active="today"):
+9452:def _lg_hero(api, args, page="today"):
+9468:def _lg_day_cards(days):
+9476:def _lg_decision(api):
+9482:def _lg_metric_strip(day):
+9486:def _lg_periods(day):
+9494:def _lg_activity_section(day):
+9502:def _lg_hours_section(day, title="Jam penting", risky_only=False):
+9519:def _lg_rain_chart(day):
+9529:def _lg_share_text(api):
+9534:def _lg_share(api):
+9538:def _lg_intel_sections(api):
+9550:def _lg_geojson_center_feature(api, args):
+9557:def _lg_geojson_feature(api, args):
+9561:def _lg_geojson_layers(api, args):
+9580:def _lg_leaflet_html(title, features_or_geojson, back="anemos_app.html"):
+9589:def _lg_write_maps(api, args):
+9598:def _lg_map_section():
+9602:def _lg_doc(api, args, active, page, body):
+9606:def _lg_page(api, args, page="today"):
+9627:def _lg_planner(api, args):
+9633:def _lg_write_dict_csv(path, fieldnames, rows):
+9640:def _lg_quality_gate(api):
+9667:def _lg_write_outputs(args, forecast_dates=None):
+9708:def anemos_write_multiday_public_pages(args, forecast_dates=None, source_state_rows=None):
+9712:def _lg_accuracy_html(rows, args):
+9732:def aether_write_public_accuracy_page(args):
+9743:def _lg_portal_card(loc, base_url=""):
+9753:def sentinel_write_root_public_index(locations, run_rows, args):
+9817:def _lg_safe_join_hours(values):
+9826:def _lg_best_window_text(values):
+9831:def _lg_condition_smart(row, hour, temp, rh, rain, wind):
+9915:def _lg_icon(condition):
+9932:def _lg_norm_hour(row, args=None, day_index=0):
+9970:def _lg_best_window(hours):
+9988:def _lg_decision_sentence(day, loc):
+10003:def _lg_kpi(label, value, note="", cls=""):
+10014:def _lg_css():
+10035:def _lg_topbar(api, args, active="today"):
+10054:def _lg_hero(api, args, page="today"):
+10096:def _lg_decision(api):
+10118:def _lg_day_cards(days):
+10130:def _lg_metric_strip(day):
+10137:def _lg_period_summary(hours, label, start, end):
+10156:def _lg_periods(day):
+10168:def _lg_activity_matrix(day):
+10201:def _lg_activity_section(day):
+10212:def _lg_hours_section(day, title="Jam penting", risky_only=False):
+10232:def _lg_rain_chart(day):
+10241:def _lg_share_text(api):
+10246:def _lg_share(api):
+10255:def _lg_intel_sections(api):
+10270:def _lg_geojson_center_feature(api, args):
+10292:def _lg_geojson_layers(api, args):
+10327:def _lg_leaflet_html(title, features_or_geojson, back="langit_app.html"):
+10386:def _lg_write_maps(api, args):
+10394:def _lg_map_section():
+10402:def _lg_doc(api, args, active, page, body):
+10410:def _lg_page(api, args, page="today"):
+10431:def _lg_planner(api, args):
+10436:def _lg_write_outputs(args, forecast_dates=None):
+10484:def anemos_write_multiday_public_pages(args, forecast_dates=None, source_state_rows=None):
+10488:def _lg_accuracy_html(rows, args):
+10513:def aether_write_public_accuracy_page(args):
+10533:def _lg_portal_card(loc, base_url=""):
+10552:def sentinel_write_root_public_index(locations, run_rows, args):
+10592:def _lg_activity_row(item, fallback_priority=""):
+10620:def _lg_activity_rows(items, fallback_priority=""):
+10625:def _lg_activity_matrix(day):
+10665:def _lg_activity_section(day):
+10680:def _lg_write_outputs(args, forecast_dates=None):
