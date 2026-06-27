@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-26T21:11:01.986669+07:00",
+  "generated_at": "2026-06-27T09:39:25.182605+07:00",
   "mode": "forecast",
   "locations_file": "",
   "default_multi_locations": [
@@ -15,7 +15,7 @@
       "bmkg_point_name": "Dago",
       "area_level": "kelurahan",
       "is_proxy_bmkg": false,
-      "target_date": "2026-06-26,2026-06-27,2026-06-28",
+      "target_date": "2026-06-27,2026-06-28,2026-06-29",
       "run_status": "ok",
       "quality_status": "ok",
       "days_ok": 3,
@@ -23,20 +23,12 @@
       "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago",
       "daily_runs": [
         {
-          "target_date": "2026-06-26",
-          "run_status": "ok",
-          "sources_success": 9,
-          "sources_total": 9,
-          "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260626_210826.log"
-        },
-        {
           "target_date": "2026-06-27",
           "run_status": "ok",
           "sources_success": 9,
           "sources_total": 9,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260626_210842.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260627_093225.log"
         },
         {
           "target_date": "2026-06-28",
@@ -44,7 +36,15 @@
           "sources_success": 9,
           "sources_total": 9,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260626_210858.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260627_093259.log"
+        },
+        {
+          "target_date": "2026-06-29",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260627_093345.log"
         }
       ],
       "error": ""
@@ -55,7 +55,7 @@
       "bmkg_point_name": "Hegarmanah",
       "area_level": "kecamatan",
       "is_proxy_bmkg": true,
-      "target_date": "2026-06-26,2026-06-27,2026-06-28",
+      "target_date": "2026-06-27,2026-06-28,2026-06-29",
       "run_status": "ok",
       "quality_status": "ok",
       "days_ok": 3,
@@ -63,20 +63,12 @@
       "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor",
       "daily_runs": [
         {
-          "target_date": "2026-06-26",
-          "run_status": "ok",
-          "sources_success": 9,
-          "sources_total": 9,
-          "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260626_210914.log"
-        },
-        {
           "target_date": "2026-06-27",
           "run_status": "ok",
-          "sources_success": 9,
+          "sources_success": 8,
           "sources_total": 9,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260626_210930.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260627_093435.log"
         },
         {
           "target_date": "2026-06-28",
@@ -84,7 +76,15 @@
           "sources_success": 9,
           "sources_total": 9,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260626_210954.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260627_093534.log"
+        },
+        {
+          "target_date": "2026-06-29",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260627_093554.log"
         }
       ],
       "error": ""
@@ -95,7 +95,7 @@
       "bmkg_point_name": "Arjawinangun",
       "area_level": "kecamatan",
       "is_proxy_bmkg": false,
-      "target_date": "2026-06-26,2026-06-27,2026-06-28",
+      "target_date": "2026-06-27,2026-06-28,2026-06-29",
       "run_status": "ok",
       "quality_status": "ok",
       "days_ok": 3,
@@ -103,20 +103,12 @@
       "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun",
       "daily_runs": [
         {
-          "target_date": "2026-06-26",
-          "run_status": "ok",
-          "sources_success": 9,
-          "sources_total": 9,
-          "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260626_211013.log"
-        },
-        {
           "target_date": "2026-06-27",
           "run_status": "ok",
           "sources_success": 9,
           "sources_total": 9,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260626_211029.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260627_093654.log"
         },
         {
           "target_date": "2026-06-28",
@@ -124,7 +116,15 @@
           "sources_success": 9,
           "sources_total": 9,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260626_211045.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260627_093732.log"
+        },
+        {
+          "target_date": "2026-06-29",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260627_093836.log"
         }
       ],
       "error": ""
@@ -133,30 +133,30 @@
   "brand": "ANEMOS",
   "forecast_range_days": 3,
   "forecast_dates": [
-    "2026-06-26",
     "2026-06-27",
-    "2026-06-28"
+    "2026-06-28",
+    "2026-06-29"
   ],
   "locations_ok": 3,
   "combined_outputs": {
     "ensemble_all_locations": {
       "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_all_locations_20260626_211101.csv",
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_all_locations_20260627_093925.csv",
       "rows": 216
     },
     "ensemble_long_all_locations": {
       "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_long_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_long_all_locations_20260626_211101.csv",
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_long_all_locations_20260627_093925.csv",
       "rows": 216
     },
     "forecast_all_locations": {
       "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/forecast_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/forecast_all_locations_20260626_211101.csv",
-      "rows": 1830
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/forecast_all_locations_20260627_093925.csv",
+      "rows": 1878
     },
     "source_status_all_locations": {
       "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/source_status_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/source_status_all_locations_20260626_211101.csv",
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/source_status_all_locations_20260627_093925.csv",
       "rows": 81
     }
   }
