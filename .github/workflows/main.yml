@@ -65,12 +65,12 @@ jobs:
           pwd
           ls -la
           test -f weather_ensemble_multi_location.py
-          test -f langit_omega_product_rebuild.py
+          test -f langit_v65_cinematic_rebuild.py
 
       - name: Syntax check scripts
         run: |
           python -m py_compile weather_ensemble_multi_location.py
-          python -m py_compile langit_omega_product_rebuild.py
+          python -m py_compile langit_v65_cinematic_rebuild.py
 
       - name: LANGIT generator doctor
         run: |
@@ -130,29 +130,34 @@ jobs:
             ${{ steps.vars.outputs.debug_flag }} \
             --no-save-raw-payloads
 
-      - name: Rebuild LANGIT Omega product layer
+      - name: Rebuild LANGIT v65.0 cinematic product layer
         run: |
-          python langit_omega_product_rebuild.py \
+          python langit_v65_cinematic_rebuild.py \
             --root outputs \
             --public-base-url "$PUBLIC_BASE_URL"
 
       - name: Verify public output
         run: |
-          python langit_omega_product_rebuild.py --root outputs --verify-only
+          python langit_v65_cinematic_rebuild.py --root outputs --verify-only
           test -f outputs/index.html
           test -f outputs/langit_portal_map.html
-          test -f outputs/langit_portal_manifest.json
-          test -f outputs/langit_data_atlas.json
-          test -f outputs/langit_omega_report.md
-          test -f outputs/langit_semantic_portal_v1.json
           for d in outputs/*; do
             if [ -d "$d" ]; then
               test -f "$d/langit_app.html"
+              test -f "$d/langit_3day.html"
+              test -f "$d/langit_activity.html"
               test -f "$d/langit_map_room.html"
-              test -f "$d/langit_semantic_v1.json"
+              test -f "$d/langit_map.html"
+              test -f "$d/keandalan_data.html"
+              test -f "$d/akurasi_data.html"
+              test -f "$d/langit_api_v1.json"
               test -f "$d/langit_location.geojson"
             fi
           done
+          if grep -ER "visual-first|Data confidence|ANEMOS sedang|AETHER Sentinel|\[\.new Set|const hours=\[\.new" outputs/ 2>/dev/null; then
+            echo "Public output masih mengandung teks/JS lama."
+            exit 1
+          fi
 
       - name: Harden public output
         run: |
