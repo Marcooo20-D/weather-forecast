@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-06-29T16:17:03.412206+07:00",
+  "generated_at": "2026-06-29T17:23:14.666448+07:00",
   "location_slug": "arjawinangun",
   "location_name": "Arjawinangun, Cirebon",
   "bmkg_point_name": "Arjawinangun",
@@ -52,22 +52,22 @@
     "22:00",
     "23:00"
   ],
-  "weights_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\source_weights.json",
-  "health_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\source_health.json",
-  "output_dir": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun",
+  "weights_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/source_weights.json",
+  "health_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/source_health.json",
+  "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun",
   "retention_days": 30,
   "low_coverage_slots": [],
   "run_status": "ok",
   "sentinel_x": {
     "version": "ANEMOS Public Weather v11",
-    "run_id": "arjawinangun_20260630_20260629161703",
-    "csv": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\sentinel_x.csv",
-    "json": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\sentinel_x.json",
-    "dashboard": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\command_center_sentinel_x.html",
-    "report": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\sentinel_x_report.md",
-    "contract": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\sentinel_x_forecast_contract.json",
-    "ledger": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\sentinel_x_ledger.sqlite",
+    "run_id": "arjawinangun_20260630_20260629172314",
+    "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.csv",
+    "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.json",
+    "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/command_center_sentinel_x.html",
+    "report": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_report.md",
+    "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_forecast_contract.json",
+    "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_ledger.sqlite",
     "daily_operational_status": "GREEN",
-    "autopilot_summary": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 17.1/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
+    "autopilot_summary": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 17.0/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
   }
 }

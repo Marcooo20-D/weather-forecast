@@ -3,15 +3,14 @@
 ## DATA ATLAS
 | Data Source | Files | Potential Use | Risk |
 |---|---:|---|---|
-| Advanced/Sentinel | 152 | advanced panel, risk/confidence, exploration |  |
-| Ensemble | 118 | confidence, spread, dominant weather |  |
-| Forecast per provider | 73 | advanced comparison, source transparency |  |
+| Advanced/Sentinel | 164 | advanced panel, risk/confidence, exploration |  |
+| Ensemble | 181 | confidence, spread, dominant weather |  |
+| Forecast per provider | 98 | advanced comparison, source transparency |  |
 | Generated HTML | 52 |  |  |
 | Map | 23 | map layer and marker/timeline |  |
-| Other | 283 |  |  |
+| Other | 316 |  |  |
 | Public API | 9 | primary UI contract |  |
-| Raw payload | 54 | debug/archive only | do not expose raw public payload |
-| Source status | 82 | data status bar and reliability |  |
+| Source status | 107 | data status bar and reliability |  |
 
 ## VARIABLE INVENTORY
 | Variable | Available | Unit | Missing Rate | Recommended UI Usage | Priority |
