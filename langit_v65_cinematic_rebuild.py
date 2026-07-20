@@ -638,9 +638,9 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
         json_path = safe_find_file(directory, f"sentinel_x_{stamp}.json")
         if json_path.exists():
             payload = read_json(json_path, {}) or {}
-            # Track latest generated_at from sentinel_x files
+            # Track latest generated_at from sentinel_x files (nested in 'daily' object)
             if not latest_generated_at:
-                latest_generated_at = payload.get("generated_at") or payload.get("daily", {}).get("generated_at")
+                latest_generated_at = payload.get("daily", {}).get("generated_at") or payload.get("generated_at")
             hourly_data = payload.get("hourly")
             if isinstance(hourly_data, list) and hourly_data:
                 has_ensembled = True
