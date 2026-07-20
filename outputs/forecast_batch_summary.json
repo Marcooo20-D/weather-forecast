@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-29T17:23:37.432117+07:00",
+  "generated_at": "2026-07-20T19:00:22.587708+07:00",
   "mode": "forecast",
   "locations_file": "",
   "default_multi_locations": [
@@ -7,7 +7,7 @@
     "jatinangor",
     "arjawinangun"
   ],
-  "locations_total": 3,
+  "locations_total": 1,
   "locations": [
     {
       "location_slug": "dago",
@@ -15,116 +15,61 @@
       "bmkg_point_name": "Dago",
       "area_level": "kelurahan",
       "is_proxy_bmkg": false,
-      "target_date": "2026-06-29,2026-06-30,2026-07-01",
+      "target_date": "2026-07-20,2026-07-21,2026-07-22",
       "run_status": "ok",
-      "quality_status": "ok",
+      "quality_status": "limited_coverage_possible",
       "days_ok": 3,
       "days_total": 3,
-      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago",
+      "output_dir": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago",
       "daily_runs": [
         {
-          "target_date": "2026-06-29",
+          "target_date": "2026-07-20",
           "run_status": "ok",
           "sources_success": 9,
           "sources_total": 9,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260629_172125.log"
+          "log_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\logs\\forecast_20260720_185926.log"
         },
         {
-          "target_date": "2026-06-30",
+          "target_date": "2026-07-21",
           "run_status": "ok",
           "sources_success": 9,
           "sources_total": 9,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260629_172140.log"
+          "log_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\logs\\forecast_20260720_185947.log"
         },
         {
-          "target_date": "2026-07-01",
-          "run_status": "ok",
-          "sources_success": 9,
+          "target_date": "2026-07-22",
+          "run_status": "warning",
+          "sources_success": 4,
           "sources_total": 9,
-          "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260629_172154.log"
-        }
-      ],
-      "error": ""
-    },
-    {
-      "location_slug": "jatinangor",
-      "location_name": "Jatinangor, Sumedang",
-      "bmkg_point_name": "Hegarmanah",
-      "area_level": "kecamatan",
-      "is_proxy_bmkg": true,
-      "target_date": "2026-06-29,2026-06-30,2026-07-01",
-      "run_status": "ok",
-      "quality_status": "ok",
-      "days_ok": 3,
-      "days_total": 3,
-      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor",
-      "daily_runs": [
-        {
-          "target_date": "2026-06-29",
-          "run_status": "ok",
-          "sources_success": 9,
-          "sources_total": 9,
-          "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260629_172209.log"
-        },
-        {
-          "target_date": "2026-06-30",
-          "run_status": "ok",
-          "sources_success": 9,
-          "sources_total": 9,
-          "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260629_172224.log"
-        },
-        {
-          "target_date": "2026-07-01",
-          "run_status": "ok",
-          "sources_success": 9,
-          "sources_total": 9,
-          "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260629_172238.log"
-        }
-      ],
-      "error": ""
-    },
-    {
-      "location_slug": "arjawinangun",
-      "location_name": "Arjawinangun, Cirebon",
-      "bmkg_point_name": "Arjawinangun",
-      "area_level": "kecamatan",
-      "is_proxy_bmkg": false,
-      "target_date": "2026-06-29,2026-06-30,2026-07-01",
-      "run_status": "ok",
-      "quality_status": "ok",
-      "days_ok": 3,
-      "days_total": 3,
-      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun",
-      "daily_runs": [
-        {
-          "target_date": "2026-06-29",
-          "run_status": "ok",
-          "sources_success": 9,
-          "sources_total": 9,
-          "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260629_172253.log"
-        },
-        {
-          "target_date": "2026-06-30",
-          "run_status": "ok",
-          "sources_success": 9,
-          "sources_total": 9,
-          "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260629_172307.log"
-        },
-        {
-          "target_date": "2026-07-01",
-          "run_status": "ok",
-          "sources_success": 9,
-          "sources_total": 9,
-          "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260629_172314.log"
+          "low_coverage_slots": [
+            "00:00",
+            "01:00",
+            "02:00",
+            "03:00",
+            "04:00",
+            "05:00",
+            "06:00",
+            "07:00",
+            "08:00",
+            "09:00",
+            "10:00",
+            "11:00",
+            "12:00",
+            "13:00",
+            "14:00",
+            "15:00",
+            "16:00",
+            "17:00",
+            "18:00",
+            "19:00",
+            "20:00",
+            "21:00",
+            "22:00",
+            "23:00"
+          ],
+          "log_file": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\logs\\forecast_20260720_190001.log"
         }
       ],
       "error": ""
@@ -133,31 +78,31 @@
   "brand": "ANEMOS",
   "forecast_range_days": 3,
   "forecast_dates": [
-    "2026-06-29",
-    "2026-06-30",
-    "2026-07-01"
+    "2026-07-20",
+    "2026-07-21",
+    "2026-07-22"
   ],
-  "locations_ok": 3,
+  "locations_ok": 1,
   "combined_outputs": {
     "ensemble_all_locations": {
-      "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_all_locations_20260629_172337.csv",
-      "rows": 216
+      "latest_path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\ensemble_all_locations.csv",
+      "versioned_path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\ensemble_all_locations_20260720_190022.csv",
+      "rows": 72
     },
     "ensemble_long_all_locations": {
-      "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_long_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_long_all_locations_20260629_172337.csv",
-      "rows": 216
+      "latest_path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\ensemble_long_all_locations.csv",
+      "versioned_path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\ensemble_long_all_locations_20260720_190022.csv",
+      "rows": 72
     },
     "forecast_all_locations": {
-      "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/forecast_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/forecast_all_locations_20260629_172337.csv",
-      "rows": 1854
+      "latest_path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\forecast_all_locations.csv",
+      "versioned_path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\forecast_all_locations_20260720_190022.csv",
+      "rows": 496
     },
     "source_status_all_locations": {
-      "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/source_status_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/source_status_all_locations_20260629_172337.csv",
-      "rows": 81
+      "latest_path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\source_status_all_locations.csv",
+      "versioned_path": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\source_status_all_locations_20260720_190022.csv",
+      "rows": 27
     }
   }
 }

@@ -1,0 +1,10 @@
+tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
+22-07-2026,BMKG,BMKG,yes,1.7182,0.9686,1.6642,24,24,200,96,,,,
+22-07-2026,CMA,Open-Meteo / CMA GRAPES,no,1.1362,1.0,1.1362,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=19s
+22-07-2026,ECMWF,Open-Meteo / ECMWF,no,1.6388,1.0,1.6388,0,24,503,1654,,,,HTTP Error 503: Service Unavailable
+22-07-2026,GFS,Open-Meteo / NOAA GFS,yes,1.3258,1.0,1.3258,24,24,200,1704,,,,
+22-07-2026,ICON,Open-Meteo / DWD ICON,yes,1.4556,1.0,1.4556,24,24,200,1070,,,,
+22-07-2026,KMA,Open-Meteo / KMA,no,0.754,1.0,0.754,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=19s
+22-07-2026,METEOFRANCE,Open-Meteo / Meteo-France,no,1.4367,1.0,1.4367,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=19s
+22-07-2026,METNO,MET Norway,yes,1.3509,0.9686,1.3085,24,24,200,628,,,,
+22-07-2026,UKMO,Open-Meteo / UK Met Office,no,1.2976,1.0,1.2976,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=19s
