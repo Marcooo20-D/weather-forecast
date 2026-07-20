@@ -1,12 +1,20 @@
 {
   "brand": "LANGIT",
-  "version": "LANGIT v60.4",
-  "generated_at": "Monday, 20 July 2026, 19:00 WIB",
+  "version": "LANGIT v65.1",
+  "generated_at": "Diperbarui 21/07/2026, 06:39 WIB",
+  "public_base_url": "https://marcooo20-d.github.io/weather-forecast",
   "locations": [
-    "dago"
-  ],
-  "index": "index.html",
-  "map": "langit_portal_map.html",
-  "geojson": "langit_all_locations.geojson",
-  "disclaimer": "Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat."
+    {
+      "slug": "arjawinangun",
+      "name": "Arjawinangun"
+    },
+    {
+      "slug": "dago",
+      "name": "Dago, Bandung"
+    },
+    {
+      "slug": "jatinangor",
+      "name": "Jatinangor, Sumedang"
+    }
+  ]
 }

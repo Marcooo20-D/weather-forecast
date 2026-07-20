@@ -621,16 +621,79 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
                 lon = num(coords[0], lon)
                 lat = num(coords[1], lat)
     rows: List[Dict[str, Any]] = []
-    for fname in ["langit_hourly_intelligence.csv", "anemos_hourly_compact.csv", "anemos_risk_timeline.csv", "forecast.csv", "forecast_all_locations.csv"]:
-        rows = read_csv(safe_find_file(directory, fname))
-        if rows:
-            break
-    if not rows and raw_api:
-        rows = rows_from_api(raw_api)
     base_date = local_now().date()
     d0 = parse_date(raw_api.get("target_date") or raw_api.get("date") or raw_api.get("generated_at") or raw_api.get("updated_at"))
     if d0:
         base_date = d0
+
+    ensembled_rows = []
+    has_ensembled = False
+    latest_generated_at = None  # Track latest timestamp from sentinel_x files
+
+    for i in range(3):
+        date_obj = base_date + dt.timedelta(days=i)
+        stamp = date_obj.strftime("%Y%m%d")
+
+        # 1. Try JSON first
+        json_path = safe_find_file(directory, f"sentinel_x_{stamp}.json")
+        if json_path.exists():
+            payload = read_json(json_path, {}) or {}
+            # Track latest generated_at from sentinel_x files
+            if not latest_generated_at:
+                latest_generated_at = payload.get("generated_at") or payload.get("daily", {}).get("generated_at")
+            hourly_data = payload.get("hourly")
+            if isinstance(hourly_data, list) and hourly_data:
+                has_ensembled = True
+                for r in hourly_data:
+                    mapped = {
+                        "date": r.get("target_date") or date_obj.isoformat(),
+                        "hour": r.get("jam") or r.get("hour"),
+                        "temp_c": r.get("temp_p50") or r.get("temp_c"),
+                        "humidity_pct": r.get("rh_p50") or r.get("humidity_pct"),
+                        "heat_index_c": r.get("heat_index_p50") or r.get("heat_index_c"),
+                        "rain_probability": r.get("prob_rain") or r.get("rain_probability"),
+                        "wind_kmh": r.get("wind_p50") or r.get("wind_kmh"),
+                        "risk_score": r.get("rain_threat_score") or r.get("risk_score"),
+                        "condition": r.get("dominant_category") or r.get("condition"),
+                        "wind_direction_deg": r.get("wind_direction_deg"),
+                        "cloud_cover_pct": r.get("cloud_p50"),
+                    }
+                    ensembled_rows.append(mapped)
+                continue
+
+        # 2. Try CSV next
+        csv_path = safe_find_file(directory, f"sentinel_x_{stamp}.csv")
+        if csv_path.exists():
+            csv_data = read_csv(csv_path)
+            if csv_data:
+                has_ensembled = True
+                for r in csv_data:
+                    mapped = {
+                        "date": r.get("target_date") or date_obj.isoformat(),
+                        "hour": r.get("jam") or r.get("hour"),
+                        "temp_c": r.get("temp_p50") or r.get("temp_c"),
+                        "humidity_pct": r.get("rh_p50") or r.get("humidity_pct"),
+                        "heat_index_c": r.get("heat_index_p50") or r.get("heat_index_c"),
+                        "rain_probability": r.get("prob_rain") or r.get("rain_probability"),
+                        "wind_kmh": r.get("wind_p50") or r.get("wind_kmh"),
+                        "risk_score": r.get("rain_threat_score") or r.get("risk_score"),
+                        "condition": r.get("dominant_category") or r.get("condition"),
+                        "wind_direction_deg": r.get("wind_direction_deg"),
+                        "cloud_cover_pct": r.get("cloud_p50"),
+                    }
+                    ensembled_rows.append(mapped)
+                continue
+
+    if has_ensembled:
+        rows = ensembled_rows
+    else:
+        for fname in ["langit_hourly_intelligence.csv", "anemos_hourly_compact.csv", "anemos_risk_timeline.csv", "forecast.csv", "forecast_all_locations.csv"]:
+            rows = read_csv(safe_find_file(directory, fname))
+            if rows:
+                break
+        if not rows and raw_api:
+            rows = rows_from_api(raw_api)
+
     chunks = split_rows_into_days(rows, base_date)
     relatives = ["Hari ini", "Besok", "Lusa"]
     days = []
@@ -694,7 +757,7 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
             break
     return {
         "brand": BRAND, "version": VERSION,
-        "generated_at": fmt_update(raw_api.get("generated_at") or raw_api.get("updated_at")),
+        "generated_at": fmt_update(latest_generated_at or raw_api.get("generated_at") or raw_api.get("updated_at")),
         "location_name": loc_name, "location_slug": slug, "latitude": lat, "longitude": lon,
         "today": days[0], "days": days, "sources": sources, "raw_version": raw_api.get("version"),
     }

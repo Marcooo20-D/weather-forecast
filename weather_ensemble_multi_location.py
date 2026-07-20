@@ -9448,15 +9448,69 @@ def _lg_activity_matrix(day):
 
 
 def _lg_build_api(args, forecast_dates=None):
-    # _anemos21_build_multiday_api and _v23_enhance_api were removed during
-    # the ANEMOS→LANGIT migration. Reading the cached API JSON directly.
+    if not forecast_dates:
+        forecast_dates = _anemos11_forecast_dates(args)
+    
     raw = (
         read_json(path_output("langit_api_v1.json"), default={})
         or read_json(path_output("anemos_api_v1.json"), default={})
         or {}
     )
     loc = _lg_text(raw.get("location_name"), getattr(args, "location_name", "Lokasi"))
-    days = [_lg_norm_day(d, i, loc, args) for i, d in enumerate(_lg_raw_days(raw))]
+    
+    # Try to load ensembled raw days from sentinel_x_{stamp}.json files
+    raw_days = []
+    has_ensembled = False
+    relatives = ["Hari ini", "Besok", "Lusa"]
+    for i, date_obj in enumerate(forecast_dates):
+        stamp = date_obj.strftime("%Y%m%d")
+        json_path = path_output(f"sentinel_x_{stamp}.json")
+        if os.path.exists(json_path):
+            payload = read_json(json_path, {}) or {}
+            hourly_data = payload.get("hourly")
+            if isinstance(hourly_data, list) and hourly_data:
+                has_ensembled = True
+                day_hours = []
+                for r in hourly_data:
+                    mapped = {
+                        "date": r.get("target_date") or date_obj.isoformat(),
+                        "hour": r.get("jam") or r.get("hour"),
+                        "temp_c": r.get("temp_p50") or r.get("temp_c"),
+                        "humidity_pct": r.get("rh_p50") or r.get("humidity_pct"),
+                        "heat_index_c": r.get("heat_index_p50") or r.get("heat_index_c"),
+                        "rain_probability": r.get("prob_rain") or r.get("rain_probability"),
+                        "wind_kmh": r.get("wind_p50") or r.get("wind_kmh"),
+                        "risk_score": r.get("rain_threat_score") or r.get("risk_score"),
+                        "condition": r.get("dominant_category") or r.get("condition"),
+                        "wind_direction_deg": r.get("wind_direction_deg"),
+                        "cloud_cover_pct": r.get("cloud_p50"),
+                    }
+                    day_hours.append(mapped)
+                
+                # Format date label
+                weekday_names = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
+                month_names = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+                date_label = f"{weekday_names[date_obj.weekday()]}, {date_obj.day} {month_names[date_obj.month-1]} {date_obj.year}"
+                
+                daily_stats = payload.get("daily") or {}
+                
+                day_obj = {
+                    "date": date_obj.isoformat(),
+                    "day_tag": relatives[i] if i < len(relatives) else relatives[-1],
+                    "date_label": date_label,
+                    "hours": day_hours,
+                    "peak_rain_probability": daily_stats.get("peak_rain_threat_score") or daily_stats.get("peak_rain_probability"),
+                    "peak_rain_hour": daily_stats.get("peak_rain_threat_hour") or daily_stats.get("peak_rain_hour"),
+                    "avg_temperature_c": daily_stats.get("avg_temperature_c"),
+                    "avg_humidity_pct": daily_stats.get("avg_humidity_pct"),
+                }
+                raw_days.append(day_obj)
+                
+    if has_ensembled:
+        days = [_lg_norm_day(d, i, loc, args) for i, d in enumerate(raw_days)]
+    else:
+        days = [_lg_norm_day(d, i, loc, args) for i, d in enumerate(_lg_raw_days(raw))]
+
     try:
         now = now_local(getattr(args, "timezone", DEFAULT_TIMEZONE))
         updated = f"{_v6_format_date_id(now.date())}, {now.strftime('%H:%M')} {_v6_timezone_label(getattr(args,'timezone',DEFAULT_TIMEZONE))}"
