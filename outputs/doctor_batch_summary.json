@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-20T18:59:23.486406+07:00",
+  "generated_at": "2026-07-21T08:57:26.859091+07:00",
   "mode": "doctor",
   "locations_file": "",
   "default_multi_locations": [
@@ -7,14 +7,28 @@
     "jatinangor",
     "arjawinangun"
   ],
-  "locations_total": 1,
+  "locations_total": 3,
   "locations": [
     {
       "location_slug": "dago",
       "location_name": "Dago, Bandung",
       "checks_ok": 9,
       "checks_total": 9,
-      "output_dir": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago"
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago"
+    },
+    {
+      "location_slug": "jatinangor",
+      "location_name": "Jatinangor, Sumedang",
+      "checks_ok": 9,
+      "checks_total": 9,
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor"
+    },
+    {
+      "location_slug": "arjawinangun",
+      "location_name": "Arjawinangun, Cirebon",
+      "checks_ok": 9,
+      "checks_total": 9,
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun"
     }
   ]
 }

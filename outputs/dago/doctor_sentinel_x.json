@@ -3,12 +3,12 @@
     {
       "check": "output_dir_writable",
       "ok": "yes",
-      "detail": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago"
+      "detail": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago"
     },
     {
       "check": "sqlite_sentinel_ledger",
       "ok": "yes",
-      "detail": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_ledger.sqlite"
+      "detail": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_ledger.sqlite"
     },
     {
       "check": "constitution_rules",
@@ -23,22 +23,22 @@
     {
       "check": "dashboard_exists",
       "ok": "yes",
-      "detail": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\command_center_sentinel_x.html"
+      "detail": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/command_center_sentinel_x.html"
     },
     {
       "check": "verification_summary_exists",
       "ok": "yes",
-      "detail": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_verification_summary.json"
+      "detail": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_verification_summary.json"
     },
     {
       "check": "accuracy_public_page_exists",
       "ok": "yes",
-      "detail": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_accuracy_public.html"
+      "detail": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_accuracy_public.html"
     },
     {
       "check": "grid_status_exists",
       "ok": "yes",
-      "detail": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_grid_status.json"
+      "detail": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_grid_status.json"
     },
     {
       "check": "no_public_sqlite_recommended",
@@ -46,6 +46,6 @@
       "detail": "*.sqlite should be kept internal; see sentinel_x_publish_manifest.json"
     }
   ],
-  "generated_at": "2026-07-20T18:59:23.484407+07:00",
+  "generated_at": "2026-07-21T08:57:26.846003+07:00",
   "public_version": "sentinel-x-public-operational-v2"
 }
