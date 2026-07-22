@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-07-22T18:45:18.624477+07:00",
+  "generated_at": "2026-07-22T20:29:03.381305+07:00",
   "location": "Arjawinangun, Cirebon",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,7 +25,7 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-07-22T18:45:18.612913+07:00",
+    "generated_at": "2026-07-22T20:29:03.369607+07:00",
     "aether_version": "ANEMOS Public Weather v11",
     "location": "Arjawinangun, Cirebon",
     "mission": "safety_first",
@@ -42,16 +42,16 @@
     "risk_window": "Tidak ada risk window kuat",
     "best_general_activity_window": "07:00",
     "peak_rain_threat_hour": "04:00",
-    "peak_rain_threat_score": 17.0,
+    "peak_rain_threat_score": 16.3,
     "peak_heavy_rain_threat_hour": "20:00",
     "peak_heavy_rain_threat_score": 2.2,
     "peak_failure_risk_hour": "20:00",
-    "peak_failure_risk_score": 21.2,
+    "peak_failure_risk_score": 20.9,
     "peak_forecast_stress_hour": "20:00",
-    "peak_forecast_stress_score": 26.7,
+    "peak_forecast_stress_score": 26.3,
     "peak_self_doubt_hour": "20:00",
-    "peak_self_doubt_score": 26.0,
-    "summary_text": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 21.2/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
+    "peak_self_doubt_score": 25.8,
+    "summary_text": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 20.9/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
