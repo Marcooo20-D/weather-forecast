@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-25T20:13:00.429028+07:00",
+  "generated_at": "2026-07-26T09:09:47.825241+07:00",
   "mode": "evaluate",
   "locations_file": "",
   "default_multi_locations": [
@@ -16,10 +16,10 @@
       "area_level": "kelurahan",
       "is_proxy_bmkg": false,
       "evaluated_sources": 9,
-      "evaluated_rows": 184,
+      "evaluated_rows": 364,
       "weights_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/source_weights.json",
       "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago",
-      "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/evaluate_20260725_201300.log"
+      "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/evaluate_20260726_090947.log"
     },
     {
       "location_slug": "jatinangor",
@@ -27,11 +27,11 @@
       "bmkg_point_name": "Hegarmanah",
       "area_level": "kecamatan",
       "is_proxy_bmkg": true,
-      "evaluated_sources": 0,
-      "evaluated_rows": 0,
+      "evaluated_sources": 9,
+      "evaluated_rows": 180,
       "weights_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/source_weights.json",
       "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor",
-      "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/evaluate_20260725_201300.log"
+      "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/evaluate_20260726_090947.log"
     },
     {
       "location_slug": "arjawinangun",
@@ -39,11 +39,11 @@
       "bmkg_point_name": "Arjawinangun",
       "area_level": "kecamatan",
       "is_proxy_bmkg": false,
-      "evaluated_sources": 0,
-      "evaluated_rows": 0,
+      "evaluated_sources": 9,
+      "evaluated_rows": 180,
       "weights_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/source_weights.json",
       "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun",
-      "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/evaluate_20260725_201300.log"
+      "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/evaluate_20260726_090947.log"
     }
   ]
 }
