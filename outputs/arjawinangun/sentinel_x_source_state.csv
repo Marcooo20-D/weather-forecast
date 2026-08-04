@@ -1,10 +1,10 @@
 source_id,provider,state,success,points,ema_success,ema_completeness,consecutive_failures,http_status,duration_ms,error
-BMKG,BMKG,ACTIVE,True,24,1.0,0.8794,0,200,25,
-CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.9999,0.9999,0,200,607,
-ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9999,0.9999,0,200,614,
-GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9999,0.9999,0,200,605,
-ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.9999,0.9999,0,200,605,
-KMA,Open-Meteo / KMA,ACTIVE,True,24,0.9995,0.9995,0,200,605,
-METEOFRANCE,Open-Meteo / Meteo-France,ACTIVE,True,24,0.9995,0.9995,0,200,616,
-METNO,MET Norway,ACTIVE,True,24,1.0,0.8793,0,200,495,
-UKMO,Open-Meteo / UK Met Office,ACTIVE,True,24,0.9995,0.9995,0,200,606,
+BMKG,BMKG,ACTIVE,True,24,1.0,0.8816,0,200,20,
+CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.9999,0.9999,0,200,814,
+ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9999,0.9999,0,200,605,
+GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9999,0.9999,0,200,1075,
+ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.9999,0.9999,0,200,628,
+KMA,Open-Meteo / KMA,DEGRADED,False,0,0.9999,0.9999,0,,0,circuit_open host=api.open-meteo.com wait=21s
+METEOFRANCE,Open-Meteo / Meteo-France,DEGRADED,False,0,0.9999,0.9999,0,503,1287,HTTP Error 503: Service Unavailable
+METNO,MET Norway,ACTIVE,True,24,1.0,0.8815,0,200,459,
+UKMO,Open-Meteo / UK Met Office,DEGRADED,False,0,0.9999,0.9999,0,,0,circuit_open host=api.open-meteo.com wait=21s

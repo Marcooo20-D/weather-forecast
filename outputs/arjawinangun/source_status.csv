@@ -1,10 +1,10 @@
 tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
-06-08-2026,BMKG,BMKG,yes,1.8511,0.9819,1.8176,24,24,200,25,,,,
-06-08-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1723,1.0,1.1723,24,24,200,607,,,,
-06-08-2026,ECMWF,Open-Meteo / ECMWF,yes,1.7057,1.0,1.7057,24,24,200,614,,,,
-06-08-2026,GFS,Open-Meteo / NOAA GFS,yes,1.408,1.0,1.408,24,24,200,605,,,,
-06-08-2026,ICON,Open-Meteo / DWD ICON,yes,1.4884,1.0,1.4884,24,24,200,605,,,,
-06-08-2026,KMA,Open-Meteo / KMA,yes,0.7819,0.9998,0.7817,24,24,200,605,,,,
-06-08-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.5427,0.9998,1.5424,24,24,200,616,,,,
-06-08-2026,METNO,MET Norway,yes,1.4155,0.9819,1.3899,24,24,200,495,,,,
-06-08-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3349,0.9998,1.3346,24,24,200,606,,,,
+06-08-2026,BMKG,BMKG,yes,1.8496,0.9822,1.8167,24,24,200,20,,,,
+06-08-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1726,1.0,1.1726,24,24,200,814,,,,
+06-08-2026,ECMWF,Open-Meteo / ECMWF,yes,1.704,1.0,1.704,24,24,200,605,,,,
+06-08-2026,GFS,Open-Meteo / NOAA GFS,yes,1.4058,1.0,1.4058,24,24,200,1075,,,,
+06-08-2026,ICON,Open-Meteo / DWD ICON,yes,1.4867,1.0,1.4867,24,24,200,628,,,,
+06-08-2026,KMA,Open-Meteo / KMA,no,0.7791,1.0,0.7791,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=21s
+06-08-2026,METEOFRANCE,Open-Meteo / Meteo-France,no,1.5429,1.0,1.5429,0,24,503,1287,,,,HTTP Error 503: Service Unavailable
+06-08-2026,METNO,MET Norway,yes,1.4159,0.9822,1.3907,24,24,200,459,,,,
+06-08-2026,UKMO,Open-Meteo / UK Met Office,no,1.3283,1.0,1.3283,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=21s
