@@ -4,9 +4,9 @@
   "nowcast": {
     "window": "0–6 jam",
     "status": "Dipantau",
-    "summary": "Masih cukup aman, namun perubahan awan perlu dipantau sekitar 16:00.",
-    "peak_hour": "16:00",
-    "peak_probability": 42.8,
+    "summary": "Masih cukup aman, namun perubahan awan perlu dipantau sekitar 20:00.",
+    "peak_hour": "20:00",
+    "peak_probability": 36.4,
     "best_window": [
       "08:00",
       "09:00",
@@ -30,63 +30,63 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "24"
+        "latency_ms": "21"
       },
       {
         "source_id": "CMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "380"
+        "latency_ms": "403"
       },
       {
         "source_id": "ECMWF",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "381"
+        "latency_ms": "411"
       },
       {
         "source_id": "GFS",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "393"
+        "latency_ms": "414"
       },
       {
         "source_id": "ICON",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "394"
+        "latency_ms": "414"
       },
       {
         "source_id": "KMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "383"
+        "latency_ms": "409"
       },
       {
         "source_id": "METEOFRANCE",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "393"
+        "latency_ms": "413"
       },
       {
         "source_id": "METNO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "521"
+        "latency_ms": "673"
       },
       {
         "source_id": "UKMO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "393"
+        "latency_ms": "415"
       }
     ]
   },

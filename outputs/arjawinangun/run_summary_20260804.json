@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-08-04T15:26:49.593553+07:00",
+  "generated_at": "2026-08-04T18:59:53.364150+07:00",
   "location_slug": "arjawinangun",
   "location_name": "Arjawinangun, Cirebon",
   "bmkg_point_name": "Arjawinangun",
@@ -14,7 +14,7 @@
   "target_date": "2026-08-04",
   "sources_total": 9,
   "sources_success": 9,
-  "points_total": 190,
+  "points_total": 184,
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -60,7 +60,7 @@
   "run_status": "ok",
   "sentinel_x": {
     "version": "ANEMOS Public Weather v11",
-    "run_id": "arjawinangun_20260804_20260804152649",
+    "run_id": "arjawinangun_20260804_20260804185953",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/command_center_sentinel_x.html",
@@ -68,6 +68,6 @@
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_ledger.sqlite",
     "daily_operational_status": "GREEN",
-    "autopilot_summary": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 25.8/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
+    "autopilot_summary": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 28.5/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
   }
 }
