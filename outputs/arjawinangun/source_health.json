@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-09T12:00:27.129026+07:00",
+  "generated_at": "2026-08-09T13:44:41.845676+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 1.0,
-      "ema_completeness": 0.9253,
+      "ema_completeness": 0.9117,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-08-11"
@@ -37,10 +37,10 @@
       "last_run_date": "2026-08-11"
     },
     "KMA": {
-      "ema_success": 0.6499,
-      "ema_completeness": 0.6499,
-      "consecutive_failures": 1,
-      "last_error": "HTTP Error 503: Service Unavailable",
+      "ema_success": 0.9039,
+      "ema_completeness": 0.9039,
+      "consecutive_failures": 0,
+      "last_error": "",
       "last_run_date": "2026-08-11"
     },
     "METEOFRANCE": {
@@ -52,16 +52,16 @@
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.9232,
+      "ema_completeness": 0.9111,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-08-11"
     },
     "UKMO": {
-      "ema_success": 0.6499,
-      "ema_completeness": 0.6499,
-      "consecutive_failures": 1,
-      "last_error": "circuit_open host=api.open-meteo.com wait=26s",
+      "ema_success": 0.9039,
+      "ema_completeness": 0.9039,
+      "consecutive_failures": 0,
+      "last_error": "",
       "last_run_date": "2026-08-11"
     }
   }
