@@ -1,10 +1,10 @@
 tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
-09-08-2026,BMKG,BMKG,yes,1.8165,0.9868,1.7925,11,24,200,1681,,,,
-09-08-2026,CMA,Open-Meteo / CMA GRAPES,no,1.1754,1.0,1.1754,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=20s
-09-08-2026,ECMWF,Open-Meteo / ECMWF,no,1.7089,1.0,1.7089,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=20s
-09-08-2026,GFS,Open-Meteo / NOAA GFS,no,1.3953,1.0,1.3953,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=20s
-09-08-2026,ICON,Open-Meteo / DWD ICON,no,1.479,1.0,1.479,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=20s
-09-08-2026,KMA,Open-Meteo / KMA,no,0.7792,0.9568,0.7455,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=20s
-09-08-2026,METEOFRANCE,Open-Meteo / Meteo-France,no,1.5499,1.0,1.5499,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=20s
-09-08-2026,METNO,MET Norway,yes,1.4242,0.9867,1.4053,11,24,200,621,,,,
-09-08-2026,UKMO,Open-Meteo / UK Met Office,no,1.3147,0.9568,1.2579,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=20s
+09-08-2026,BMKG,BMKG,yes,1.8165,0.9844,1.7882,9,24,200,680,,,,
+09-08-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1754,0.5119,0.6017,24,24,200,611,,,,
+09-08-2026,ECMWF,Open-Meteo / ECMWF,yes,1.7089,0.5119,0.8748,24,24,200,628,,,,
+09-08-2026,GFS,Open-Meteo / NOAA GFS,yes,1.3953,0.5119,0.7143,24,24,200,607,,,,
+09-08-2026,ICON,Open-Meteo / DWD ICON,yes,1.479,0.5119,0.7571,24,24,200,605,,,,
+09-08-2026,KMA,Open-Meteo / KMA,yes,0.7792,0.5029,0.3919,24,24,200,618,,,,
+09-08-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.5499,0.5119,0.7934,24,24,200,625,,,,
+09-08-2026,METNO,MET Norway,yes,1.4242,0.9843,1.4018,9,24,200,662,,,,
+09-08-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3147,0.5029,0.6612,24,24,200,626,,,,
