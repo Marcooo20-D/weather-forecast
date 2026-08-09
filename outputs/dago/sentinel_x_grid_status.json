@@ -1,12 +1,44 @@
 {
-  "status": "ok",
+  "status": "no_grid_data",
   "errors": [
     {
+      "point": "center",
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "point": "north",
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "point": "south",
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "point": "east",
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "point": "west",
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "point": "northeast",
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
       "point": "northwest",
-      "error": "<urlopen error _ssl.c:993: The handshake operation timed out>"
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "point": "southeast",
+      "error": "HTTP Error 429: Too Many Requests"
+    },
+    {
+      "point": "southwest",
+      "error": "HTTP Error 429: Too Many Requests"
     }
   ],
   "points_requested": 9,
   "radius_km": 3.0,
-  "generated_at": "2026-08-09T13:42:39.868360+07:00"
+  "generated_at": "2026-08-09T15:33:19.681379+07:00"
 }
