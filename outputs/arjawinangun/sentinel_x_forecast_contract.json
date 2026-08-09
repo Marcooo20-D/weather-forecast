@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-08-08T19:34:39.920867+07:00",
+  "generated_at": "2026-08-09T08:08:56.445867+07:00",
   "location": "Arjawinangun, Cirebon",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,12 +25,12 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-08-08T19:34:39.907067+07:00",
+    "generated_at": "2026-08-09T08:08:56.432393+07:00",
     "aether_version": "ANEMOS Public Weather v11",
     "location": "Arjawinangun, Cirebon",
     "mission": "safety_first",
     "daily_operational_status": "GREEN",
-    "dominant_atmospheric_mode": "MIXED_LOCAL_ATMOSPHERE",
+    "dominant_atmospheric_mode": "STABLE_LOW_RAIN",
     "location_personality": {
       "personality": "lowland_heat_humidity",
       "convective_sensitivity": "medium",
@@ -42,16 +42,16 @@
     "risk_window": "Tidak ada risk window kuat",
     "best_general_activity_window": "09:00",
     "peak_rain_threat_hour": "04:00",
-    "peak_rain_threat_score": 19.5,
+    "peak_rain_threat_score": 20.0,
     "peak_heavy_rain_threat_hour": "04:00",
-    "peak_heavy_rain_threat_score": 2.6,
+    "peak_heavy_rain_threat_score": 2.8,
     "peak_failure_risk_hour": "04:00",
-    "peak_failure_risk_score": 22.8,
+    "peak_failure_risk_score": 25.1,
     "peak_forecast_stress_hour": "22:00",
-    "peak_forecast_stress_score": 28.3,
+    "peak_forecast_stress_score": 31.3,
     "peak_self_doubt_hour": "04:00",
-    "peak_self_doubt_score": 31.3,
-    "summary_text": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 22.8/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
+    "peak_self_doubt_score": 33.9,
+    "summary_text": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 25.1/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
