@@ -5,8 +5,8 @@
     "window": "0–6 jam",
     "status": "Aman",
     "summary": "Window dekat relatif aman; tetap pantau perubahan lokal.",
-    "peak_hour": "14:00",
-    "peak_probability": 11.0,
+    "peak_hour": "16:00",
+    "peak_probability": 9.0,
     "best_window": [
       "06:00",
       "08:00",
@@ -30,21 +30,21 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "90"
+        "latency_ms": "72"
       },
       {
         "source_id": "CMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "552"
+        "latency_ms": "556"
       },
       {
         "source_id": "ECMWF",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "585"
+        "latency_ms": "591"
       },
       {
         "source_id": "GFS",
@@ -58,35 +58,35 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "561"
+        "latency_ms": "547"
       },
       {
         "source_id": "KMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "693"
+        "latency_ms": "555"
       },
       {
         "source_id": "METEOFRANCE",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "648"
+        "latency_ms": "567"
       },
       {
         "source_id": "METNO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "539"
+        "latency_ms": "595"
       },
       {
         "source_id": "UKMO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "553"
+        "latency_ms": "574"
       }
     ]
   },
