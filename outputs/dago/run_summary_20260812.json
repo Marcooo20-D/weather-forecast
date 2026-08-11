@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-08-11T08:08:09.245918+07:00",
+  "generated_at": "2026-08-11T10:30:33.450408+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "bmkg_point_name": "Dago",
@@ -60,7 +60,7 @@
   "run_status": "ok",
   "sentinel_x": {
     "version": "ANEMOS Public Weather v11",
-    "run_id": "dago_20260812_20260811080809",
+    "run_id": "dago_20260812_20260811103033",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/command_center_sentinel_x.html",
@@ -68,6 +68,6 @@
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_ledger.sqlite",
     "daily_operational_status": "GREEN",
-    "autopilot_summary": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Dago, Bandung. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 25.9/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: urban_highland_local_rain; Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
+    "autopilot_summary": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Dago, Bandung. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 24.6/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: urban_highland_local_rain; Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
   }
 }
