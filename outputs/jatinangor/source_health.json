@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-12T14:14:53.717123+07:00",
+  "generated_at": "2026-08-12T16:06:02.015381+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 1.0,
-      "ema_completeness": 0.9039,
+      "ema_completeness": 0.8874,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-08-14"
@@ -52,16 +52,16 @@
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.9039,
+      "ema_completeness": 0.8874,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-08-14"
     },
     "UKMO": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.6499,
+      "ema_completeness": 0.6499,
+      "consecutive_failures": 1,
+      "last_error": "<urlopen error _ssl.c:993: The handshake operation timed out>",
       "last_run_date": "2026-08-14"
     }
   }
