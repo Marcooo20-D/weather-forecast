@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-08-13T14:16:49.483111+07:00",
+  "generated_at": "2026-08-13T16:05:48.126072+07:00",
   "location": "Dago, Bandung",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,7 +25,7 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-08-13T14:16:49.471509+07:00",
+    "generated_at": "2026-08-13T16:05:48.111612+07:00",
     "aether_version": "ANEMOS Public Weather v11",
     "location": "Dago, Bandung",
     "mission": "safety_first",
@@ -40,18 +40,18 @@
       "notes": "Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
     },
     "risk_window": "Tidak ada risk window kuat",
-    "best_general_activity_window": "07:00",
+    "best_general_activity_window": "08:00",
     "peak_rain_threat_hour": "20:00",
-    "peak_rain_threat_score": 28.6,
-    "peak_heavy_rain_threat_hour": "19:00",
-    "peak_heavy_rain_threat_score": 4.2,
-    "peak_failure_risk_hour": "19:00",
-    "peak_failure_risk_score": 31.2,
-    "peak_forecast_stress_hour": "19:00",
-    "peak_forecast_stress_score": 36.2,
+    "peak_rain_threat_score": 29.2,
+    "peak_heavy_rain_threat_hour": "18:00",
+    "peak_heavy_rain_threat_score": 4.5,
+    "peak_failure_risk_hour": "17:00",
+    "peak_failure_risk_score": 29.2,
+    "peak_forecast_stress_hour": "21:00",
+    "peak_forecast_stress_score": 34.0,
     "peak_self_doubt_hour": "17:00",
-    "peak_self_doubt_score": 38.3,
-    "summary_text": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Dago, Bandung. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 31.2/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: urban_highland_local_rain; Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
+    "peak_self_doubt_score": 35.3,
+    "summary_text": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Dago, Bandung. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 29.2/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: urban_highland_local_rain; Urban-highland mix; hujan lokal dapat bergeser beberapa kilometer dari titik utama."
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
