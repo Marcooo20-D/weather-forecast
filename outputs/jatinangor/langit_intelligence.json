@@ -3,10 +3,10 @@
   "version": "LANGIT v60.4",
   "nowcast": {
     "window": "0–6 jam",
-    "status": "Dipantau",
-    "summary": "Masih cukup aman, namun perubahan awan perlu dipantau sekitar 15:00.",
+    "status": "Aman",
+    "summary": "Window dekat relatif aman; tetap pantau perubahan lokal.",
     "peak_hour": "15:00",
-    "peak_probability": 30.6,
+    "peak_probability": 25.4,
     "best_window": [
       "08:00",
       "09:00",
@@ -37,56 +37,56 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "455"
+        "latency_ms": "470"
       },
       {
         "source_id": "ECMWF",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "459"
+        "latency_ms": "480"
       },
       {
         "source_id": "GFS",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "897"
+        "latency_ms": "469"
       },
       {
         "source_id": "ICON",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "710"
+        "latency_ms": "467"
       },
       {
         "source_id": "KMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "488"
+        "latency_ms": "443"
       },
       {
         "source_id": "METEOFRANCE",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "456"
+        "latency_ms": "578"
       },
       {
         "source_id": "METNO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "323"
+        "latency_ms": "316"
       },
       {
         "source_id": "UKMO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "540"
+        "latency_ms": "507"
       }
     ]
   },
