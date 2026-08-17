@@ -6,12 +6,12 @@
     "status": "Dipantau",
     "summary": "Masih cukup aman, namun perubahan awan perlu dipantau sekitar 16:00.",
     "peak_hour": "16:00",
-    "peak_probability": 29.4,
+    "peak_probability": 29.1,
     "best_window": [
-      "12:00",
       "11:00",
       "09:00",
-      "10:00"
+      "10:00",
+      "08:00"
     ]
   },
   "microclimate": {
@@ -30,63 +30,63 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "20"
+        "latency_ms": "16"
       },
       {
         "source_id": "CMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "403"
+        "latency_ms": "394"
       },
       {
         "source_id": "ECMWF",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "394"
+        "latency_ms": "396"
       },
       {
         "source_id": "GFS",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "388"
+        "latency_ms": "391"
       },
       {
         "source_id": "ICON",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "403"
+        "latency_ms": "478"
       },
       {
         "source_id": "KMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "405"
+        "latency_ms": "394"
       },
       {
         "source_id": "METEOFRANCE",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "396"
+        "latency_ms": "390"
       },
       {
         "source_id": "METNO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "389"
+        "latency_ms": "492"
       },
       {
         "source_id": "UKMO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "393"
+        "latency_ms": "389"
       }
     ]
   },
