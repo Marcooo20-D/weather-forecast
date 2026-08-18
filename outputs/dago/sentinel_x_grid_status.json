@@ -1,7 +1,12 @@
 {
   "status": "ok",
-  "errors": [],
+  "errors": [
+    {
+      "point": "northwest",
+      "error": "<urlopen error _ssl.c:993: The handshake operation timed out>"
+    }
+  ],
   "points_requested": 9,
   "radius_km": 3.0,
-  "generated_at": "2026-08-18T09:50:06.188510+07:00"
+  "generated_at": "2026-08-18T11:28:38.116203+07:00"
 }
