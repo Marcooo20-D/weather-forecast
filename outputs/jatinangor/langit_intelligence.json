@@ -5,13 +5,13 @@
     "window": "0–6 jam",
     "status": "Aman",
     "summary": "Window dekat relatif aman; tetap pantau perubahan lokal.",
-    "peak_hour": "19:00",
-    "peak_probability": 16.3,
+    "peak_hour": "15:00",
+    "peak_probability": 14.0,
     "best_window": [
       "08:00",
       "09:00",
       "10:00",
-      "12:00"
+      "13:00"
     ]
   },
   "microclimate": {
@@ -22,71 +22,71 @@
   },
   "source_court": {
     "status": "Aktif",
-    "agreement": "Tinggi",
-    "summary": "9/9 sumber aktif. Agreement operasional: Tinggi.",
+    "agreement": "Sedang",
+    "summary": "6/9 sumber aktif. Agreement operasional: Sedang.",
     "sources": [
       {
         "source_id": "BMKG",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "73"
+        "latency_ms": "42"
       },
       {
         "source_id": "CMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "436"
+        "latency_ms": "593"
       },
       {
         "source_id": "ECMWF",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "467"
+        "latency_ms": "582"
       },
       {
         "source_id": "GFS",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "467"
+        "latency_ms": "583"
       },
       {
         "source_id": "ICON",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "458"
+        "latency_ms": "591"
       },
       {
         "source_id": "KMA",
-        "verdict": "Aktif",
-        "points": "24",
-        "http_status": "200",
-        "latency_ms": "454"
+        "verdict": "Dipantau",
+        "points": "0",
+        "http_status": "",
+        "latency_ms": "0"
       },
       {
         "source_id": "METEOFRANCE",
-        "verdict": "Aktif",
-        "points": "24",
-        "http_status": "200",
-        "latency_ms": "481"
+        "verdict": "Dipantau",
+        "points": "0",
+        "http_status": "",
+        "latency_ms": "16353"
       },
       {
         "source_id": "METNO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "425"
+        "latency_ms": "599"
       },
       {
         "source_id": "UKMO",
-        "verdict": "Aktif",
-        "points": "24",
-        "http_status": "200",
-        "latency_ms": "467"
+        "verdict": "Dipantau",
+        "points": "0",
+        "http_status": "",
+        "latency_ms": "0"
       }
     ]
   },

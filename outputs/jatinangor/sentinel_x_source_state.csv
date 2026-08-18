@@ -1,10 +1,10 @@
 source_id,provider,state,success,points,ema_success,ema_completeness,consecutive_failures,http_status,duration_ms,error
-BMKG,BMKG,ACTIVE,True,24,1.0,0.8651,0,200,73,
-CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.9999,0.9999,0,200,436,
-ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9999,0.9999,0,200,467,
-GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9992,0.9992,0,200,467,
-ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.9999,0.9999,0,200,458,
-KMA,Open-Meteo / KMA,ACTIVE,True,24,0.9999,0.9999,0,200,454,
-METEOFRANCE,Open-Meteo / Meteo-France,ACTIVE,True,24,0.9999,0.9999,0,200,481,
-METNO,MET Norway,ACTIVE,True,24,1.0,0.8641,0,200,425,
-UKMO,Open-Meteo / UK Met Office,ACTIVE,True,24,0.9999,0.9999,0,200,467,
+BMKG,BMKG,ACTIVE,True,24,1.0,0.8397,0,200,42,
+CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.9999,0.9999,0,200,593,
+ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9999,0.9999,0,200,582,
+GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9998,0.9998,0,200,583,
+ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.9999,0.9999,0,200,591,
+KMA,Open-Meteo / KMA,DEGRADED,False,0,0.9999,0.9999,0,,0,circuit_open host=api.open-meteo.com wait=23s
+METEOFRANCE,Open-Meteo / Meteo-France,DEGRADED,False,0,0.9999,0.9999,0,,16353,<urlopen error _ssl.c:993: The handshake operation timed out>
+METNO,MET Norway,ACTIVE,True,24,1.0,0.8395,0,200,599,
+UKMO,Open-Meteo / UK Met Office,DEGRADED,False,0,0.9999,0.9999,0,,0,circuit_open host=api.open-meteo.com wait=23s
