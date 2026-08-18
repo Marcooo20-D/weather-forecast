@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-08-18T15:28:21.049042+07:00",
+  "generated_at": "2026-08-18T17:22:01.187369+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 1.0,
-      "ema_completeness": 0.8958,
+      "ema_completeness": 0.879,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-08-20"
@@ -37,31 +37,31 @@
       "last_run_date": "2026-08-20"
     },
     "KMA": {
-      "ema_success": 0.6499,
-      "ema_completeness": 0.6499,
-      "consecutive_failures": 1,
-      "last_error": "circuit_open host=api.open-meteo.com wait=23s",
+      "ema_success": 0.9039,
+      "ema_completeness": 0.9039,
+      "consecutive_failures": 0,
+      "last_error": "",
       "last_run_date": "2026-08-20"
     },
     "METEOFRANCE": {
-      "ema_success": 0.6499,
-      "ema_completeness": 0.6499,
-      "consecutive_failures": 1,
-      "last_error": "<urlopen error _ssl.c:993: The handshake operation timed out>",
+      "ema_success": 0.9039,
+      "ema_completeness": 0.9039,
+      "consecutive_failures": 0,
+      "last_error": "",
       "last_run_date": "2026-08-20"
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.8957,
+      "ema_completeness": 0.879,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-08-20"
     },
     "UKMO": {
-      "ema_success": 0.6499,
-      "ema_completeness": 0.6499,
-      "consecutive_failures": 1,
-      "last_error": "circuit_open host=api.open-meteo.com wait=23s",
+      "ema_success": 0.9039,
+      "ema_completeness": 0.9039,
+      "consecutive_failures": 0,
+      "last_error": "",
       "last_run_date": "2026-08-20"
     }
   }
