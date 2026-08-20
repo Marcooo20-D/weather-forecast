@@ -1,10 +1,10 @@
 tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
-21-08-2026,BMKG,BMKG,yes,1.6718,0.9743,1.6288,24,24,200,74,,,,
-21-08-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1344,0.9949,1.1286,24,24,200,579,,,,
-21-08-2026,ECMWF,Open-Meteo / ECMWF,yes,1.6645,0.9949,1.656,24,24,200,562,,,,
-21-08-2026,GFS,Open-Meteo / NOAA GFS,yes,1.37,1.0,1.37,24,24,200,803,,,,
-21-08-2026,ICON,Open-Meteo / DWD ICON,no,1.4752,1.0,1.4752,0,24,503,4904,,,,HTTP Error 503: Service Unavailable
-21-08-2026,KMA,Open-Meteo / KMA,yes,0.7804,0.9949,0.7764,24,24,200,591,,,,
-21-08-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.4977,0.9949,1.4901,24,24,200,564,,,,
-21-08-2026,METNO,MET Norway,yes,1.3732,0.9735,1.3368,24,24,200,656,,,,
-21-08-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3232,0.9949,1.3165,24,24,200,573,,,,
+21-08-2026,BMKG,BMKG,no,1.6718,0.7686,1.2849,0,24,,0,,,,circuit_open host=api.bmkg.go.id wait=7s
+21-08-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1344,0.8962,1.0166,24,24,200,410,,,,
+21-08-2026,ECMWF,Open-Meteo / ECMWF,yes,1.6645,0.8962,1.4917,24,24,200,533,,,,
+21-08-2026,GFS,Open-Meteo / NOAA GFS,yes,1.37,0.8976,1.2297,24,24,200,436,,,,
+21-08-2026,ICON,Open-Meteo / DWD ICON,yes,1.4752,0.8311,1.226,24,24,200,444,,,,
+21-08-2026,KMA,Open-Meteo / KMA,yes,0.7804,0.8962,0.6994,24,24,200,402,,,,
+21-08-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.4977,0.8962,1.3422,24,24,200,407,,,,
+21-08-2026,METNO,MET Norway,yes,1.3732,0.9687,1.3302,24,24,200,468,,,,
+21-08-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3232,0.8962,1.1859,24,24,200,411,,,,
