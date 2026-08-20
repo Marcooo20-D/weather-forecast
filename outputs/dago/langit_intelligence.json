@@ -6,11 +6,11 @@
     "status": "Dipantau",
     "summary": "Masih cukup aman, namun perubahan awan perlu dipantau sekitar 16:00.",
     "peak_hour": "16:00",
-    "peak_probability": 46.1,
+    "peak_probability": 42.4,
     "best_window": [
+      "08:00",
       "09:00",
       "10:00",
-      "11:00",
       "07:00"
     ]
   },
@@ -30,63 +30,63 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "24"
+        "latency_ms": "23"
       },
       {
         "source_id": "CMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "418"
+        "latency_ms": "630"
       },
       {
         "source_id": "ECMWF",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "457"
+        "latency_ms": "647"
       },
       {
         "source_id": "GFS",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "415"
+        "latency_ms": "641"
       },
       {
         "source_id": "ICON",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "416"
+        "latency_ms": "646"
       },
       {
         "source_id": "KMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "408"
+        "latency_ms": "628"
       },
       {
         "source_id": "METEOFRANCE",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "404"
+        "latency_ms": "639"
       },
       {
         "source_id": "METNO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "381"
+        "latency_ms": "460"
       },
       {
         "source_id": "UKMO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "413"
+        "latency_ms": "628"
       }
     ]
   },
