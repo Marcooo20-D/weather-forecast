@@ -9,9 +9,9 @@
     "peak_probability": 50.0,
     "best_window": [
       "06:00",
-      "07:00",
       "08:00",
-      "09:00"
+      "09:00",
+      "18:00"
     ]
   },
   "microclimate": {
@@ -30,63 +30,63 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "79"
+        "latency_ms": "32"
       },
       {
         "source_id": "CMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "481"
+        "latency_ms": "637"
       },
       {
         "source_id": "ECMWF",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "490"
+        "latency_ms": "639"
       },
       {
         "source_id": "GFS",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "479"
+        "latency_ms": "647"
       },
       {
         "source_id": "ICON",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "464"
+        "latency_ms": "640"
       },
       {
         "source_id": "KMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "469"
+        "latency_ms": "638"
       },
       {
         "source_id": "METEOFRANCE",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "495"
+        "latency_ms": "628"
       },
       {
         "source_id": "METNO",
         "verdict": "Aktif",
-        "points": "22",
+        "points": "24",
         "http_status": "200",
-        "latency_ms": "501"
+        "latency_ms": "617"
       },
       {
         "source_id": "UKMO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "495"
+        "latency_ms": "623"
       }
     ]
   },
