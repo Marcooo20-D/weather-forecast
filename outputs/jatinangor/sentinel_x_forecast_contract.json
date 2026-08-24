@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-08-24T07:52:09.491103+07:00",
+  "generated_at": "2026-08-24T09:58:10.434620+07:00",
   "location": "Jatinangor, Sumedang",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,7 +25,7 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-08-24T07:52:09.353977+07:00",
+    "generated_at": "2026-08-24T09:58:10.417667+07:00",
     "aether_version": "ANEMOS Public Weather v11",
     "location": "Jatinangor, Sumedang",
     "mission": "safety_first",
@@ -41,17 +41,17 @@
     },
     "risk_window": "Tidak ada risk window kuat",
     "best_general_activity_window": "08:00",
-    "peak_rain_threat_hour": "17:00",
-    "peak_rain_threat_score": 36.7,
+    "peak_rain_threat_hour": "16:00",
+    "peak_rain_threat_score": 40.7,
     "peak_heavy_rain_threat_hour": "14:00",
     "peak_heavy_rain_threat_score": 5.3,
-    "peak_failure_risk_hour": "17:00",
-    "peak_failure_risk_score": 33.7,
+    "peak_failure_risk_hour": "15:00",
+    "peak_failure_risk_score": 33.4,
     "peak_forecast_stress_hour": "14:00",
-    "peak_forecast_stress_score": 37.0,
-    "peak_self_doubt_hour": "17:00",
-    "peak_self_doubt_score": 38.6,
-    "summary_text": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Jatinangor, Sumedang. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 33.7/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: valley_humid_convective; Lembah/dataran tinggi lokal; timing hujan dan kabut/kelembapan pagi perlu dibaca konservatif."
+    "peak_forecast_stress_score": 36.6,
+    "peak_self_doubt_hour": "15:00",
+    "peak_self_doubt_score": 38.4,
+    "summary_text": "Sentinel membaca hari ini sebagai MIXED_LOCAL_ATMOSPHERE untuk Jatinangor, Sumedang. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 33.4/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: valley_humid_convective; Lembah/dataran tinggi lokal; timing hujan dan kabut/kelembapan pagi perlu dibaca konservatif."
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
