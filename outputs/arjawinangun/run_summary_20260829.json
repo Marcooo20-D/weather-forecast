@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-08-28T01:43:40.844241+07:00",
+  "generated_at": "2026-08-28T15:21:43.046071+07:00",
   "location_slug": "arjawinangun",
   "location_name": "Arjawinangun, Cirebon",
   "bmkg_point_name": "Arjawinangun",
@@ -13,8 +13,8 @@
   "timezone": "Asia/Jakarta",
   "target_date": "2026-08-29",
   "sources_total": 9,
-  "sources_success": 9,
-  "points_total": 216,
+  "sources_success": 5,
+  "points_total": 120,
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -60,14 +60,14 @@
   "run_status": "ok",
   "sentinel_x": {
     "version": "ANEMOS Public Weather v11",
-    "run_id": "arjawinangun_20260829_20260828014340",
+    "run_id": "arjawinangun_20260829_20260828152143",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/command_center_sentinel_x.html",
     "report": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_report.md",
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_ledger.sqlite",
-    "daily_operational_status": "GREEN",
-    "autopilot_summary": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 22.5/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
+    "daily_operational_status": "YELLOW",
+    "autopilot_summary": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Arjawinangun, Cirebon. Status operasional harian YELLOW. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 26.7/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
   }
 }
