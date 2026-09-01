@@ -1,5 +1,5 @@
 date,day_tag,hour,condition,temp_c,humidity_pct,heat_index_c,rain_probability,wind_kmh,risk_score,risk_label,risk_class
-2026-09-01,Hari ini,00:00,Hujan lokal,22.5,87.0,22.5,50.0,1.5,46.3,Perlu diperhatikan,watch
+2026-09-01,Hari ini,00:00,"Awan tumbuh, potensi hujan",22.5,87.0,22.5,40.0,1.5,38.9,Perlu diperhatikan,watch
 2026-09-01,Hari ini,01:00,Hujan lokal kuat,22.1,88.0,22.1,100.0,3.1,90.7,Berpotensi signifikan,danger
 2026-09-01,Hari ini,02:00,Hujan lokal,21.4,91.0,21.4,50.0,3.8,47.9,Perlu diperhatikan,watch
 2026-09-01,Hari ini,03:00,Hujan lokal,20.7,91.0,20.7,50.0,4.0,47.9,Perlu diperhatikan,watch
@@ -12,62 +12,62 @@ date,day_tag,hour,condition,temp_c,humidity_pct,heat_index_c,rain_probability,wi
 2026-09-01,Hari ini,10:00,Cerah berawan,28.0,50.0,28.54,0.0,6.5,0,Aman,safe
 2026-09-01,Hari ini,11:00,Hujan lokal kuat,30.1,41.0,30.31,100.0,7.6,89.0,Berpotensi signifikan,danger
 2026-09-01,Hari ini,12:00,Cerah,31.7,33.0,31.7,1.5,7.6,3.9,Aman,safe
-2026-09-01,Hari ini,13:00,Cerah,32.8,30.0,32.8,3.5,8.0,9.8,Aman,safe
-2026-09-01,Hari ini,14:00,Cerah,32.3,33.0,32.3,5.0,8.3,8.9,Aman,safe
-2026-09-01,Hari ini,15:00,Cerah,32.6,34.0,32.6,7.0,9.4,11.6,Aman,safe
-2026-09-01,Hari ini,16:00,Cerah berawan,30.9,37.0,30.9,9.0,11.9,6.7,Aman,safe
-2026-09-01,Hari ini,17:00,Cerah berawan,28.0,49.0,28.61,12.9,12.1,9.5,Aman,safe
-2026-09-01,Hari ini,18:00,Cerah berawan,26.6,59.9,26.6,10.3,9.72,7.6,Aman,safe
-2026-09-01,Hari ini,19:00,Cerah berawan,25.1,71.0,25.1,10.1,6.9,7.5,Aman,safe
-2026-09-01,Hari ini,20:00,Cerah berawan,23.3,83.0,23.3,8.1,4.7,6.0,Aman,safe
-2026-09-01,Hari ini,21:00,Cerah berawan,23.2,84.8,23.2,3.8,4.68,3.1,Aman,safe
-2026-09-01,Hari ini,22:00,Hujan lokal kuat,22.4,87.0,22.4,100.0,2.4,90.3,Berpotensi signifikan,danger
-2026-09-01,Hari ini,23:00,Lembap malam,21.2,89.0,21.2,1.2,1.5,3.0,Aman,safe
-2026-09-02,Besok,00:00,Lembap pagi,20.4,90.0,20.4,1.3,2.7,3.5,Aman,safe
-2026-09-02,Besok,01:00,Hujan lokal kuat,20.1,91.0,20.1,80.0,2.5,77.1,Berpotensi signifikan,danger
-2026-09-02,Besok,02:00,Lembap pagi,19.5,90.0,19.5,11.8,2.6,11.3,Aman,safe
-2026-09-02,Besok,03:00,Lembap pagi,19.3,90.0,19.3,12.4,3.3,11.7,Aman,safe
-2026-09-02,Besok,04:00,Lembap pagi,19.0,90.0,19.0,12.4,4.6,11.7,Aman,safe
-2026-09-02,Besok,05:00,Hujan lokal kuat,18.7,89.3,18.7,90.0,4.6,83.8,Berpotensi signifikan,danger
-2026-09-02,Besok,06:00,"Awan tumbuh, potensi hujan",18.4,88.0,18.4,40.0,4.6,39.3,Perlu diperhatikan,watch
-2026-09-02,Besok,07:00,Berawan dipantau,20.2,80.0,20.2,0.0,5.0,0,Aman,safe
-2026-09-02,Besok,08:00,Cerah,22.3,68.0,22.3,0.0,5.04,0,Aman,safe
-2026-09-02,Besok,09:00,Cerah,24.8,57.0,24.8,0.0,5.1,0,Aman,safe
-2026-09-02,Besok,10:00,Cerah,27.0,43.0,27.6,0.0,5.0,0,Aman,safe
-2026-09-02,Besok,11:00,Hujan lokal kuat,29.0,39.0,29.0,100.0,5.0,89.0,Berpotensi signifikan,danger
-2026-09-02,Besok,12:00,Cerah,30.5,39.0,30.5,1.5,6.7,1.1,Aman,safe
-2026-09-02,Besok,13:00,Cerah,31.2,38.0,31.2,3.5,7.2,3.4,Aman,safe
-2026-09-02,Besok,14:00,Cerah,30.4,37.0,30.4,10.7,9.0,7.9,Aman,safe
-2026-09-02,Besok,15:00,Cerah,30.4,39.0,30.4,13.9,11.1,10.3,Aman,safe
-2026-09-02,Besok,16:00,Cerah berawan,29.5,41.6,29.5,9.3,11.52,6.9,Aman,safe
-2026-09-02,Besok,17:00,Cerah berawan,27.3,53.0,27.92,11.1,10.5,8.2,Aman,safe
-2026-09-02,Besok,18:00,Cerah berawan,26.7,49.0,27.09,6.8,9.3,5.0,Aman,safe
-2026-09-02,Besok,19:00,Cerah berawan,24.9,59.0,24.9,11.4,8.28,8.4,Aman,safe
-2026-09-02,Besok,20:00,Cerah berawan,23.0,74.0,23.0,16.3,5.0,12.1,Aman,safe
-2026-09-02,Besok,21:00,Cerah berawan,22.7,78.0,22.7,4.5,3.4,3.3,Aman,safe
-2026-09-02,Besok,22:00,Hujan lokal kuat,22.4,77.0,22.4,70.0,4.3,66.8,Waspada,rain
-2026-09-02,Besok,23:00,Hujan lokal,20.8,86.0,20.8,50.0,4.9,45.8,Perlu diperhatikan,watch
-2026-09-03,Lusa,00:00,Cerah berawan,21.0,85.0,21.0,0.0,3.8,0.4,Aman,safe
-2026-09-03,Lusa,01:00,Hujan lokal,20.2,88.0,20.2,50.0,4.6,46.7,Perlu diperhatikan,watch
-2026-09-03,Lusa,02:00,Lembap malam,19.4,89.0,19.4,0.0,5.1,2.1,Aman,safe
-2026-09-03,Lusa,03:00,Lembap malam,18.7,89.0,18.7,0.0,5.1,2.1,Aman,safe
-2026-09-03,Lusa,04:00,Cerah berawan,18.2,87.0,18.2,0.0,3.7,1.3,Aman,safe
-2026-09-03,Lusa,05:00,Cerah berawan,18.0,87.0,18.0,0.0,4.0,1.3,Aman,safe
-2026-09-03,Lusa,06:00,Cerah berawan,17.7,88.0,17.7,0.0,4.68,1.7,Aman,safe
-2026-09-03,Lusa,07:00,Cerah berawan,19.7,80.0,19.7,0.0,5.0,0,Aman,safe
-2026-09-03,Lusa,08:00,Cerah,22.3,66.0,22.3,0.0,3.7,0,Aman,safe
-2026-09-03,Lusa,09:00,Cerah,24.7,57.2,24.7,0.0,3.96,0,Aman,safe
-2026-09-03,Lusa,10:00,Cerah,27.3,48.0,27.57,0.0,4.7,0,Aman,safe
-2026-09-03,Lusa,11:00,Hujan lokal kuat,29.0,42.0,29.0,100.0,5.1,89.0,Berpotensi signifikan,danger
-2026-09-03,Lusa,12:00,Cerah,29.9,40.0,29.9,6.9,8.0,5.1,Aman,safe
-2026-09-03,Lusa,13:00,Cerah,29.9,40.0,29.9,10.4,11.2,7.7,Aman,safe
-2026-09-03,Lusa,14:00,Cerah,30.0,40.0,30.0,12.6,12.1,9.3,Aman,safe
-2026-09-03,Lusa,15:00,Cerah,29.6,41.0,29.6,16.6,11.6,12.3,Aman,safe
-2026-09-03,Lusa,16:00,Cerah berawan,28.8,44.0,28.8,18.1,10.6,13.4,Aman,safe
-2026-09-03,Lusa,17:00,Cerah berawan,27.5,50.0,27.85,12.9,9.7,9.5,Aman,safe
-2026-09-03,Lusa,18:00,Cerah berawan,26.2,58.0,26.2,8.7,9.1,6.4,Aman,safe
-2026-09-03,Lusa,19:00,Cerah berawan,25.0,66.0,25.0,7.8,7.2,5.8,Aman,safe
-2026-09-03,Lusa,20:00,Cerah berawan,23.0,76.0,23.0,9.6,5.4,7.1,Aman,safe
-2026-09-03,Lusa,21:00,Cerah berawan,23.0,77.0,23.0,3.9,4.3,2.9,Aman,safe
-2026-09-03,Lusa,22:00,Berawan dipantau,21.9,82.0,21.9,2.0,3.2,1.5,Aman,safe
-2026-09-03,Lusa,23:00,Berawan dipantau,21.1,87.0,21.1,8.0,3.6,7.2,Aman,safe
+2026-09-01,Hari ini,13:00,Cerah,32.5,38.0,32.5,3.5,7.1,8.6,Aman,safe
+2026-09-01,Hari ini,14:00,Cerah,33.2,34.0,33.2,5.0,6.8,12.5,Aman,safe
+2026-09-01,Hari ini,15:00,Cerah berawan,32.6,39.0,32.6,8.0,10.4,12.3,Aman,safe
+2026-09-01,Hari ini,16:00,Cerah berawan,30.9,42.0,30.9,9.0,10.1,6.7,Aman,safe
+2026-09-01,Hari ini,17:00,Cerah berawan,29.3,45.0,29.44,8.4,12.2,6.2,Aman,safe
+2026-09-01,Hari ini,18:00,Cerah berawan,26.9,61.0,28.02,5.4,9.3,4.0,Aman,safe
+2026-09-01,Hari ini,19:00,Cerah berawan,23.7,76.0,23.7,6.0,6.6,4.4,Aman,safe
+2026-09-01,Hari ini,20:00,Cerah berawan,23.3,79.0,23.3,7.5,4.5,5.5,Aman,safe
+2026-09-01,Hari ini,21:00,Cerah berawan,23.3,85.0,23.3,3.6,3.6,3.1,Aman,safe
+2026-09-01,Hari ini,22:00,Hujan lokal kuat,22.7,87.0,22.7,90.0,3.5,82.9,Berpotensi signifikan,danger
+2026-09-01,Hari ini,23:00,Lembap malam,21.9,88.0,21.9,5.5,2.4,5.8,Aman,safe
+2026-09-02,Besok,00:00,Lembap malam,21.1,88.0,21.1,5.1,2.1,5.5,Aman,safe
+2026-09-02,Besok,01:00,Lembap pagi,20.9,91.0,20.9,5.5,3.3,7.0,Aman,safe
+2026-09-02,Besok,02:00,Lembap pagi,20.7,90.0,20.7,7.5,3.1,8.1,Aman,safe
+2026-09-02,Besok,03:00,Lembap pagi,20.6,90.0,20.6,7.7,3.2,8.2,Aman,safe
+2026-09-02,Besok,04:00,Lembap malam,19.5,89.0,19.5,7.4,3.5,7.6,Aman,safe
+2026-09-02,Besok,05:00,Hujan lokal kuat,19.7,88.0,19.7,70.0,4.0,68.5,Waspada,rain
+2026-09-02,Besok,06:00,Cerah berawan,19.3,86.0,19.3,30.0,3.8,23.0,Aman,safe
+2026-09-02,Besok,07:00,Cerah berawan,20.6,81.0,20.6,0.0,3.8,0,Aman,safe
+2026-09-02,Besok,08:00,Cerah,22.2,68.0,22.2,0.0,4.1,0,Aman,safe
+2026-09-02,Besok,09:00,Cerah,24.7,57.0,24.7,0.0,4.8,0,Aman,safe
+2026-09-02,Besok,10:00,Cerah,27.2,47.0,27.44,0.0,4.3,0,Aman,safe
+2026-09-02,Besok,11:00,Hujan lokal kuat,28.8,42.0,29.1,100.0,4.3,89.0,Berpotensi signifikan,danger
+2026-09-02,Besok,12:00,Cerah,30.3,40.0,30.3,1.5,5.5,1.1,Aman,safe
+2026-09-02,Besok,13:00,Cerah,30.2,38.0,30.2,8.6,8.8,6.4,Aman,safe
+2026-09-02,Besok,14:00,Cerah,30.4,38.0,30.4,10.8,8.8,8.0,Aman,safe
+2026-09-02,Besok,15:00,Cerah,30.0,39.0,30.0,13.8,9.9,10.2,Aman,safe
+2026-09-02,Besok,16:00,Cerah berawan,29.5,40.0,29.5,9.0,10.9,6.7,Aman,safe
+2026-09-02,Besok,17:00,Cerah berawan,28.3,43.0,28.3,7.9,10.7,5.8,Aman,safe
+2026-09-02,Besok,18:00,Cerah berawan,26.6,51.4,26.6,10.5,9.1,7.8,Aman,safe
+2026-09-02,Besok,19:00,Cerah berawan,23.7,70.0,23.7,11.3,4.7,8.4,Aman,safe
+2026-09-02,Besok,20:00,Berawan dipantau,23.6,70.0,23.6,4.8,5.1,3.6,Aman,safe
+2026-09-02,Besok,21:00,Berawan dipantau,22.7,76.0,22.7,2.1,3.2,1.6,Aman,safe
+2026-09-02,Besok,22:00,Hujan lokal kuat,21.4,81.0,21.4,90.0,4.3,81.6,Berpotensi signifikan,danger
+2026-09-02,Besok,23:00,Hujan lokal,21.9,83.0,21.9,50.0,4.7,45.0,Perlu diperhatikan,watch
+2026-09-03,Lusa,00:00,Cerah berawan,21.2,85.0,21.2,0.0,6.2,0.4,Aman,safe
+2026-09-03,Lusa,01:00,Cerah berawan,20.4,87.0,20.4,0.0,6.6,1.3,Aman,safe
+2026-09-03,Lusa,02:00,Lembap malam,19.7,88.0,19.7,0.0,6.1,1.7,Aman,safe
+2026-09-03,Lusa,03:00,Lembap malam,18.8,89.0,18.8,0.0,4.7,2.1,Aman,safe
+2026-09-03,Lusa,04:00,Lembap malam,18.3,89.0,18.3,0.0,4.7,2.1,Aman,safe
+2026-09-03,Lusa,05:00,Lembap malam,18.0,88.1,18.0,0.0,4.7,1.7,Aman,safe
+2026-09-03,Lusa,06:00,Cerah berawan,18.3,86.0,18.3,0.0,4.1,0.8,Aman,safe
+2026-09-03,Lusa,07:00,Cerah berawan,19.8,80.0,19.8,0.0,4.3,0,Aman,safe
+2026-09-03,Lusa,08:00,Cerah,22.1,68.0,22.1,0.0,3.8,0,Aman,safe
+2026-09-03,Lusa,09:00,Cerah,24.8,55.7,24.8,0.0,5.04,0,Aman,safe
+2026-09-03,Lusa,10:00,Cerah berawan,27.5,46.7,27.67,0.0,4.7,0,Aman,safe
+2026-09-03,Lusa,11:00,Hujan lokal kuat,29.2,42.0,29.2,100.0,4.6,89.0,Berpotensi signifikan,danger
+2026-09-03,Lusa,12:00,Cerah,30.3,40.0,30.3,6.9,9.0,5.1,Aman,safe
+2026-09-03,Lusa,13:00,Cerah,30.2,41.0,30.2,10.2,11.1,7.5,Aman,safe
+2026-09-03,Lusa,14:00,Cerah,30.2,41.0,30.2,19.1,11.5,14.1,Aman,safe
+2026-09-03,Lusa,15:00,Awan tumbuh,29.8,40.0,29.8,21.9,12.6,16.2,Aman,safe
+2026-09-03,Lusa,16:00,Awan tumbuh,28.6,46.0,28.74,24.6,10.44,18.2,Aman,safe
+2026-09-03,Lusa,17:00,Cerah berawan,27.7,49.8,28.1,11.2,9.36,8.3,Aman,safe
+2026-09-03,Lusa,18:00,Cerah berawan,25.6,62.0,25.6,14.1,9.4,10.4,Aman,safe
+2026-09-03,Lusa,19:00,Cerah berawan,23.5,72.0,23.5,13.7,5.8,10.1,Aman,safe
+2026-09-03,Lusa,20:00,Cerah berawan,23.4,76.0,23.4,8.9,4.9,6.6,Aman,safe
+2026-09-03,Lusa,21:00,Cerah berawan,22.5,80.0,22.5,4.3,4.1,3.2,Aman,safe
+2026-09-03,Lusa,22:00,Cerah berawan,21.6,86.0,21.6,1.4,3.2,1.9,Aman,safe
+2026-09-03,Lusa,23:00,Lembap malam,21.1,88.0,21.1,8.0,3.6,7.6,Aman,safe
