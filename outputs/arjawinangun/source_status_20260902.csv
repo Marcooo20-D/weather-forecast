@@ -1,10 +1,10 @@
 tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
-02-09-2026,BMKG,BMKG,yes,1.858,0.947,1.7595,24,24,200,31,,,,
-02-09-2026,CMA,Open-Meteo / CMA GRAPES,no,1.1785,1.0,1.1785,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=23s
-02-09-2026,ECMWF,Open-Meteo / ECMWF,no,1.6936,1.0,1.6936,0,24,,16218,,,,<urlopen error _ssl.c:993: The handshake operation timed out>
-02-09-2026,GFS,Open-Meteo / NOAA GFS,yes,1.4204,1.0,1.4204,24,24,200,109,,,,
-02-09-2026,ICON,Open-Meteo / DWD ICON,yes,1.4891,1.0,1.4891,24,24,200,176,,,,
-02-09-2026,KMA,Open-Meteo / KMA,no,0.7761,1.0,0.7761,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=23s
-02-09-2026,METEOFRANCE,Open-Meteo / Meteo-France,no,1.5544,1.0,1.5544,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=23s
-02-09-2026,METNO,MET Norway,yes,1.4364,0.9483,1.3621,24,24,200,435,,,,
-02-09-2026,UKMO,Open-Meteo / UK Met Office,no,1.3376,1.0,1.3376,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=23s
+02-09-2026,BMKG,BMKG,yes,1.858,0.9776,1.8164,18,24,200,780,,,,
+02-09-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1785,0.8976,1.0578,24,24,200,802,,,,
+02-09-2026,ECMWF,Open-Meteo / ECMWF,yes,1.6936,0.8976,1.5202,24,24,200,655,,,,
+02-09-2026,GFS,Open-Meteo / NOAA GFS,yes,1.4204,1.0,1.4204,24,24,200,903,,,,
+02-09-2026,ICON,Open-Meteo / DWD ICON,yes,1.4891,1.0,1.4891,24,24,200,637,,,,
+02-09-2026,KMA,Open-Meteo / KMA,yes,0.7761,0.8976,0.6966,24,24,200,631,,,,
+02-09-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.5544,0.8976,1.3952,24,24,200,838,,,,
+02-09-2026,METNO,MET Norway,yes,1.4364,0.9782,1.4051,18,24,200,826,,,,
+02-09-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3376,0.8976,1.2006,24,24,200,1830,,,,
