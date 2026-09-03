@@ -1,44 +1,12 @@
 {
-  "status": "no_grid_data",
+  "status": "ok",
   "errors": [
     {
-      "point": "center",
-      "error": "JSON decode failed (status=200, content_type=application/json; charset=utf-8): Unexpected error while streaming data: allEndpointsUnavailable"
-    },
-    {
-      "point": "north",
-      "error": "JSON decode failed (status=200, content_type=application/json; charset=utf-8): Unexpected error while streaming data: allEndpointsUnavailable"
-    },
-    {
-      "point": "south",
-      "error": "JSON decode failed (status=200, content_type=application/json; charset=utf-8): Unexpected error while streaming data: allEndpointsUnavailable"
-    },
-    {
-      "point": "east",
-      "error": "JSON decode failed (status=200, content_type=application/json; charset=utf-8): Unexpected error while streaming data: allEndpointsUnavailable"
-    },
-    {
       "point": "west",
-      "error": "JSON decode failed (status=200, content_type=application/json; charset=utf-8): Unexpected error while streaming data: allEndpointsUnavailable"
-    },
-    {
-      "point": "northeast",
-      "error": "JSON decode failed (status=200, content_type=application/json; charset=utf-8): Unexpected error while streaming data: allEndpointsUnavailable"
-    },
-    {
-      "point": "northwest",
-      "error": "HTTP Error 500: Internal Server Error"
-    },
-    {
-      "point": "southeast",
-      "error": "HTTP Error 500: Internal Server Error"
-    },
-    {
-      "point": "southwest",
-      "error": "HTTP Error 500: Internal Server Error"
+      "error": "<urlopen error _ssl.c:993: The handshake operation timed out>"
     }
   ],
   "points_requested": 9,
   "radius_km": 3.0,
-  "generated_at": "2026-09-03T15:31:36.382212+07:00"
+  "generated_at": "2026-09-03T21:04:18.203533+07:00"
 }
