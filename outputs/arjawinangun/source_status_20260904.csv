@@ -1,10 +1,10 @@
 tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
-04-09-2026,BMKG,BMKG,yes,1.8505,0.9706,1.7961,24,24,200,44,,,,
-04-09-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1781,0.9996,1.1776,24,24,200,614,,,,
-04-09-2026,ECMWF,Open-Meteo / ECMWF,yes,1.6992,0.9996,1.6985,24,24,200,607,,,,
-04-09-2026,GFS,Open-Meteo / NOAA GFS,yes,1.421,1.0,1.421,24,24,200,613,,,,
-04-09-2026,ICON,Open-Meteo / DWD ICON,yes,1.4844,1.0,1.4844,24,24,200,608,,,,
-04-09-2026,KMA,Open-Meteo / KMA,yes,0.7772,0.9996,0.7769,24,24,200,629,,,,
-04-09-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.5507,0.9996,1.5501,24,24,200,607,,,,
-04-09-2026,METNO,MET Norway,yes,1.4361,0.9706,1.3939,24,24,200,463,,,,
-04-09-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3443,0.9996,1.3438,24,24,200,609,,,,
+04-09-2026,BMKG,BMKG,yes,1.8471,0.9635,1.7797,24,24,200,26,,,,
+04-09-2026,CMA,Open-Meteo / CMA GRAPES,no,1.1798,0.775,0.9143,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=33s
+04-09-2026,ECMWF,Open-Meteo / ECMWF,no,1.7016,0.775,1.3187,0,24,,16239,,,,The read operation timed out
+04-09-2026,GFS,Open-Meteo / NOAA GFS,no,1.4184,0.7751,1.0994,0,24,,32496,,,,<urlopen error _ssl.c:993: The handshake operation timed out>
+04-09-2026,ICON,Open-Meteo / DWD ICON,no,1.4843,0.7751,1.1505,0,24,200,33096,application/json; charset=utf-8,Unexpected error while streaming data: allEndpointsUnavailable,,"JSON decode failed (status=200, content_type=application/json; charset=utf-8): Unexpected error while streaming data: allEndpointsUnavailable"
+04-09-2026,KMA,Open-Meteo / KMA,no,0.7727,0.775,0.5988,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=33s
+04-09-2026,METEOFRANCE,Open-Meteo / Meteo-France,no,1.5517,0.775,1.2026,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=33s
+04-09-2026,METNO,MET Norway,yes,1.4347,0.9635,1.3823,24,24,200,470,,,,
+04-09-2026,UKMO,Open-Meteo / UK Met Office,no,1.3472,0.775,1.0441,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=33s

@@ -1,10 +1,10 @@
 source_id,provider,state,success,points,ema_success,ema_completeness,consecutive_failures,http_status,duration_ms,error
-BMKG,BMKG,ACTIVE,True,24,1.0,0.8754,0,200,42,
-CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.9999,0.9999,0,200,612,
-ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9999,0.9999,0,200,612,
-GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9999,0.9999,0,200,611,
-ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.9999,0.9999,0,200,614,
-KMA,Open-Meteo / KMA,ACTIVE,True,24,0.9999,0.9999,0,200,611,
-METEOFRANCE,Open-Meteo / Meteo-France,ACTIVE,True,24,0.9999,0.9999,0,200,616,
-METNO,MET Norway,ACTIVE,True,24,1.0,0.8752,0,200,673,
-UKMO,Open-Meteo / UK Met Office,ACTIVE,True,24,0.9999,0.9999,0,200,614,
+BMKG,BMKG,ACTIVE,True,24,1.0,0.8426,0,200,27,
+CMA,Open-Meteo / CMA GRAPES,DEGRADED,False,0,0.4224,0.4224,2,,0,circuit_open host=api.open-meteo.com wait=6s
+ECMWF,Open-Meteo / ECMWF,DEGRADED,False,0,0.4224,0.4224,2,,0,circuit_open host=api.open-meteo.com wait=6s
+GFS,Open-Meteo / NOAA GFS,DEGRADED,False,0,0.7724,0.7724,0,,0,circuit_open host=api.open-meteo.com wait=6s
+ICON,Open-Meteo / DWD ICON,DEGRADED,False,0,0.4224,0.4224,2,,0,circuit_open host=api.open-meteo.com wait=6s
+KMA,Open-Meteo / KMA,DEGRADED,False,0,0.4224,0.4224,2,,0,circuit_open host=api.open-meteo.com wait=6s
+METEOFRANCE,Open-Meteo / Meteo-France,DEGRADED,False,0,0.4224,0.4224,2,,0,circuit_open host=api.open-meteo.com wait=6s
+METNO,MET Norway,ACTIVE,True,24,1.0,0.8425,0,200,608,
+UKMO,Open-Meteo / UK Met Office,DEGRADED,False,0,0.4224,0.4224,2,,0,circuit_open host=api.open-meteo.com wait=6s
