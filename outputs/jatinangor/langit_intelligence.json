@@ -4,8 +4,8 @@
   "nowcast": {
     "window": "0–6 jam",
     "status": "Waspada hujan",
-    "summary": "Aktivitas masih bisa, tetapi payung/jas hujan sebaiknya siap sekitar 23:00.",
-    "peak_hour": "23:00",
+    "summary": "Aktivitas masih bisa, tetapi payung/jas hujan sebaiknya siap sekitar 10:00.",
+    "peak_hour": "10:00",
     "peak_probability": 50.0,
     "best_window": [
       "06:00",
@@ -30,63 +30,63 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "31"
+        "latency_ms": "42"
       },
       {
         "source_id": "CMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "122"
+        "latency_ms": "612"
       },
       {
         "source_id": "ECMWF",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "103"
+        "latency_ms": "612"
       },
       {
         "source_id": "GFS",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "108"
+        "latency_ms": "611"
       },
       {
         "source_id": "ICON",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "105"
+        "latency_ms": "614"
       },
       {
         "source_id": "KMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "128"
+        "latency_ms": "611"
       },
       {
         "source_id": "METEOFRANCE",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "107"
+        "latency_ms": "616"
       },
       {
         "source_id": "METNO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "363"
+        "latency_ms": "673"
       },
       {
         "source_id": "UKMO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "115"
+        "latency_ms": "614"
       }
     ]
   },
