@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-09-05T21:22:28.473048+07:00",
+  "generated_at": "2026-09-06T09:15:38.463882+07:00",
   "location_slug": "arjawinangun",
   "location_name": "Arjawinangun, Cirebon",
   "bmkg_point_name": "Arjawinangun",
@@ -60,7 +60,7 @@
   "run_status": "ok",
   "sentinel_x": {
     "version": "ANEMOS Public Weather v11",
-    "run_id": "arjawinangun_20260907_20260905212228",
+    "run_id": "arjawinangun_20260907_20260906091538",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/command_center_sentinel_x.html",
@@ -68,6 +68,6 @@
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_ledger.sqlite",
     "daily_operational_status": "GREEN",
-    "autopilot_summary": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 23.2/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
+    "autopilot_summary": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Arjawinangun, Cirebon. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 21.5/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: lowland_heat_humidity; Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
   }
 }
