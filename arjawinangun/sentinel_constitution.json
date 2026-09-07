@@ -1,0 +1,16 @@
+{
+  "version": "ANEMOS Public Weather v11",
+  "generated_at": "2026-09-07T09:13:05.568618+07:00",
+  "constitution": [
+    "Do not assign high trust when source coverage is weak.",
+    "Do not hide source disagreement; disagreement is a risk signal.",
+    "Do not treat rainfall mean as the only reality; always preserve P90/P95 worst-case signals.",
+    "Do not treat BMKG rain proxy as precise rain_mm observation.",
+    "For local convective rain, communicate timing and spatial displacement uncertainty.",
+    "If the forecast may fail, say how and why it may fail.",
+    "When decision cost is asymmetric, prefer safety-first interpretation.",
+    "If data quality is poor, use BLACK/RED status and avoid confident recommendations.",
+    "Every forecast must include reasoning, limitations, and a recommended action.",
+    "The system learns from observations and feedback, but never replaces official warnings."
+  ]
+}

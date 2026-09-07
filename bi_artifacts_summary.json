@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-09-07T09:13:05.681871+07:00",
+  "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
+  "dim_sources": {
+    "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/dim_sources.csv",
+    "rows": 9
+  },
+  "dim_locations": {
+    "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/dim_locations.csv",
+    "rows": 3
+  },
+  "ensemble_fact": {
+    "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_fact_all_locations.csv",
+    "rows": 216
+  }
+}

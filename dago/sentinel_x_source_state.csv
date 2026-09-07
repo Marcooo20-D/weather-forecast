@@ -1,0 +1,10 @@
+source_id,provider,state,success,points,ema_success,ema_completeness,consecutive_failures,http_status,duration_ms,error
+BMKG,BMKG,ACTIVE,True,24,0.9999,0.8748,0,200,41,
+CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.9999,0.9999,0,200,376,
+ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9999,0.9999,0,200,374,
+GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9999,0.9999,0,200,374,
+ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.9999,0.9999,0,200,373,
+KMA,Open-Meteo / KMA,ACTIVE,True,24,0.9999,0.9999,0,200,377,
+METEOFRANCE,Open-Meteo / Meteo-France,ACTIVE,True,24,0.9999,0.9999,0,200,385,
+METNO,MET Norway,ACTIVE,True,24,1.0,0.8748,0,200,490,
+UKMO,Open-Meteo / UK Met Office,ACTIVE,True,24,0.9999,0.9999,0,200,374,

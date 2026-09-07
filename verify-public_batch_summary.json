@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-06-19T18:13:29.200726+07:00",
+  "mode": "verify-public",
+  "locations_file": "",
+  "default_multi_locations": [
+    "dago",
+    "jatinangor",
+    "arjawinangun"
+  ],
+  "locations_total": 3,
+  "locations": [
+    {
+      "location_slug": "dago",
+      "location_name": "Dago, Bandung",
+      "verification_summary": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_verification_summary.json",
+      "accuracy_public": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\dago\\sentinel_x_accuracy_public.html",
+      "matched_cases": 72,
+      "calibration_status": "VERIFIED_ENOUGH_DATA"
+    },
+    {
+      "location_slug": "jatinangor",
+      "location_name": "Jatinangor, Sumedang",
+      "verification_summary": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\jatinangor\\sentinel_x_verification_summary.json",
+      "accuracy_public": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\jatinangor\\sentinel_x_accuracy_public.html",
+      "matched_cases": 72,
+      "calibration_status": "VERIFIED_ENOUGH_DATA"
+    },
+    {
+      "location_slug": "arjawinangun",
+      "location_name": "Arjawinangun, Cirebon",
+      "verification_summary": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\sentinel_x_verification_summary.json",
+      "accuracy_public": "C:\\Users\\itsme\\Documents\\Projects\\weather-forecast\\outputs\\arjawinangun\\sentinel_x_accuracy_public.html",
+      "matched_cases": 72,
+      "calibration_status": "VERIFIED_ENOUGH_DATA"
+    }
+  ]
+}

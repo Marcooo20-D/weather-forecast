@@ -1,0 +1,163 @@
+{
+  "generated_at": "2026-09-07T09:13:05.682129+07:00",
+  "mode": "forecast",
+  "locations_file": "",
+  "default_multi_locations": [
+    "dago",
+    "jatinangor",
+    "arjawinangun"
+  ],
+  "locations_total": 3,
+  "locations": [
+    {
+      "location_slug": "dago",
+      "location_name": "Dago, Bandung",
+      "bmkg_point_name": "Dago",
+      "area_level": "kelurahan",
+      "is_proxy_bmkg": false,
+      "target_date": "2026-09-07,2026-09-08,2026-09-09",
+      "run_status": "ok",
+      "quality_status": "ok",
+      "days_ok": 3,
+      "days_total": 3,
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago",
+      "daily_runs": [
+        {
+          "target_date": "2026-09-07",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260907_091051.log"
+        },
+        {
+          "target_date": "2026-09-08",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260907_091106.log"
+        },
+        {
+          "target_date": "2026-09-09",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20260907_091121.log"
+        }
+      ],
+      "error": ""
+    },
+    {
+      "location_slug": "jatinangor",
+      "location_name": "Jatinangor, Sumedang",
+      "bmkg_point_name": "Hegarmanah",
+      "area_level": "kecamatan",
+      "is_proxy_bmkg": true,
+      "target_date": "2026-09-07,2026-09-08,2026-09-09",
+      "run_status": "ok",
+      "quality_status": "ok",
+      "days_ok": 3,
+      "days_total": 3,
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor",
+      "daily_runs": [
+        {
+          "target_date": "2026-09-07",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260907_091135.log"
+        },
+        {
+          "target_date": "2026-09-08",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260907_091150.log"
+        },
+        {
+          "target_date": "2026-09-09",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20260907_091157.log"
+        }
+      ],
+      "error": ""
+    },
+    {
+      "location_slug": "arjawinangun",
+      "location_name": "Arjawinangun, Cirebon",
+      "bmkg_point_name": "Arjawinangun",
+      "area_level": "kecamatan",
+      "is_proxy_bmkg": false,
+      "target_date": "2026-09-07,2026-09-08,2026-09-09",
+      "run_status": "ok",
+      "quality_status": "ok",
+      "days_ok": 3,
+      "days_total": 3,
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun",
+      "daily_runs": [
+        {
+          "target_date": "2026-09-07",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260907_091220.log"
+        },
+        {
+          "target_date": "2026-09-08",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260907_091234.log"
+        },
+        {
+          "target_date": "2026-09-09",
+          "run_status": "ok",
+          "sources_success": 9,
+          "sources_total": 9,
+          "low_coverage_slots": [],
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20260907_091242.log"
+        }
+      ],
+      "error": ""
+    }
+  ],
+  "brand": "ANEMOS",
+  "forecast_range_days": 3,
+  "forecast_dates": [
+    "2026-09-07",
+    "2026-09-08",
+    "2026-09-09"
+  ],
+  "locations_ok": 3,
+  "combined_outputs": {
+    "ensemble_all_locations": {
+      "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_all_locations.csv",
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_all_locations_20260907_091305.csv",
+      "rows": 216
+    },
+    "ensemble_long_all_locations": {
+      "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_long_all_locations.csv",
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_long_all_locations_20260907_091305.csv",
+      "rows": 216
+    },
+    "forecast_all_locations": {
+      "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/forecast_all_locations.csv",
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/forecast_all_locations_20260907_091305.csv",
+      "rows": 1902
+    },
+    "source_status_all_locations": {
+      "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/source_status_all_locations.csv",
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/source_status_all_locations_20260907_091305.csv",
+      "rows": 81
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "brand": "LANGIT",
+  "version": "LANGIT v60.4",
+  "nowcast": {
+    "window": "0–6 jam",
+    "status": "Risiko tinggi",
+    "summary": "Window dekat perlu dikurangi untuk outdoor; sinyal hujan paling kuat sekitar 13:00.",
+    "peak_hour": "13:00",
+    "peak_probability": 100.0,
+    "best_window": [
+      "06:00",
+      "07:00",
+      "08:00",
+      "09:00"
+    ]
+  },
+  "microclimate": {
+    "profile": "Dataran rendah Pantura",
+    "note": "lebih panas dan cenderung kering; hujan sering lebih sporadis tapi heat stress lebih terasa",
+    "zone_count": 4,
+    "engine": "diurnal + terrain/personality adjustment"
+  },
+  "source_court": {
+    "status": "Aktif",
+    "agreement": "Tinggi",
+    "summary": "9/9 sumber aktif. Agreement operasional: Tinggi.",
+    "sources": [
+      {
+        "source_id": "BMKG",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "55"
+      },
+      {
+        "source_id": "CMA",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "382"
+      },
+      {
+        "source_id": "ECMWF",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "373"
+      },
+      {
+        "source_id": "GFS",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "380"
+      },
+      {
+        "source_id": "ICON",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "375"
+      },
+      {
+        "source_id": "KMA",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "606"
+      },
+      {
+        "source_id": "METEOFRANCE",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "399"
+      },
+      {
+        "source_id": "METNO",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "494"
+      },
+      {
+        "source_id": "UKMO",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "522"
+      }
+    ]
+  },
+  "map_layers": [
+    "Rain Risk",
+    "Activity Safety",
+    "Heat Stress",
+    "Source Confidence",
+    "Microclimate",
+    "Time Slider"
+  ]
+}
