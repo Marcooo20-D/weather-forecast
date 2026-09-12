@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-09-12T09:27:48.013865+07:00",
+  "generated_at": "2026-09-12T15:16:01.071932+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "bmkg_point_name": "Dago",
@@ -14,7 +14,7 @@
   "target_date": "2026-09-12",
   "sources_total": 9,
   "sources_success": 9,
-  "points_total": 202,
+  "points_total": 190,
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -60,7 +60,7 @@
   "run_status": "ok",
   "sentinel_x": {
     "version": "ANEMOS Public Weather v11",
-    "run_id": "dago_20260912_20260912092747",
+    "run_id": "dago_20260912_20260912151601",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/command_center_sentinel_x.html",
