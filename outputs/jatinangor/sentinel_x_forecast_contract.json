@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-09-18T15:44:29.386849+07:00",
+  "generated_at": "2026-09-18T21:02:10.008586+07:00",
   "location": "Jatinangor, Sumedang",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,11 +25,11 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-09-18T15:44:29.367174+07:00",
+    "generated_at": "2026-09-18T21:02:09.988179+07:00",
     "aether_version": "ANEMOS Public Weather v11",
     "location": "Jatinangor, Sumedang",
     "mission": "safety_first",
-    "daily_operational_status": "BLACK",
+    "daily_operational_status": "GREEN",
     "dominant_atmospheric_mode": "STABLE_LOW_RAIN",
     "location_personality": {
       "personality": "valley_humid_convective",
@@ -39,19 +39,19 @@
       "forecast_difficulty": "medium_high",
       "notes": "Lembah/dataran tinggi lokal; timing hujan dan kabut/kelembapan pagi perlu dibaca konservatif."
     },
-    "risk_window": "13:00–16:00",
-    "best_general_activity_window": "10:00",
-    "peak_rain_threat_hour": "16:00",
-    "peak_rain_threat_score": 67.8,
-    "peak_heavy_rain_threat_hour": "15:00",
-    "peak_heavy_rain_threat_score": 27.4,
-    "peak_failure_risk_hour": "15:00",
-    "peak_failure_risk_score": 46.5,
-    "peak_forecast_stress_hour": "17:00",
-    "peak_forecast_stress_score": 39.2,
-    "peak_self_doubt_hour": "14:00",
-    "peak_self_doubt_score": 41.5,
-    "summary_text": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Jatinangor, Sumedang. Status operasional harian BLACK. Risk window utama: 13:00–16:00. Failure risk tertinggi 46.5/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: valley_humid_convective; Lembah/dataran tinggi lokal; timing hujan dan kabut/kelembapan pagi perlu dibaca konservatif."
+    "risk_window": "Tidak ada risk window kuat",
+    "best_general_activity_window": "09:00",
+    "peak_rain_threat_hour": "17:00",
+    "peak_rain_threat_score": 43.3,
+    "peak_heavy_rain_threat_hour": "01:00",
+    "peak_heavy_rain_threat_score": 12.0,
+    "peak_failure_risk_hour": "02:00",
+    "peak_failure_risk_score": 34.1,
+    "peak_forecast_stress_hour": "02:00",
+    "peak_forecast_stress_score": 39.6,
+    "peak_self_doubt_hour": "02:00",
+    "peak_self_doubt_score": 42.1,
+    "summary_text": "Sentinel membaca hari ini sebagai STABLE_LOW_RAIN untuk Jatinangor, Sumedang. Status operasional harian GREEN. Risk window utama: Tidak ada risk window kuat. Failure risk tertinggi 34.1/100, sehingga bagian forecast yang perlu paling diragukan adalah timing/posisi hujan lokal. Personality lokasi: valley_humid_convective; Lembah/dataran tinggi lokal; timing hujan dan kabut/kelembapan pagi perlu dibaca konservatif."
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",

@@ -1,10 +1,10 @@
 source_id,provider,state,success,points,ema_success,ema_completeness,consecutive_failures,http_status,duration_ms,error
-BMKG,BMKG,ACTIVE,True,24,0.9999,0.8415,0,200,26,
-CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.7724,0.7724,0,200,64,
-ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9999,0.9999,0,200,65,
-GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9997,0.9997,0,200,7414,
-ICON,Open-Meteo / DWD ICON,DEGRADED,False,0,0.7724,0.7724,0,,48054,<urlopen error _ssl.c:993: The handshake operation timed out>
-KMA,Open-Meteo / KMA,DEGRADED,True,24,0.4222,0.4222,2,200,69,
-METEOFRANCE,Open-Meteo / Meteo-France,DEGRADED,True,24,0.4222,0.4222,2,200,67,
-METNO,MET Norway,ACTIVE,True,24,1.0,0.8415,0,200,504,
-UKMO,Open-Meteo / UK Met Office,DEGRADED,False,0,0.4222,0.4222,2,,16127,<urlopen error _ssl.c:993: The handshake operation timed out>
+BMKG,BMKG,ACTIVE,True,24,0.9999,0.7764,0,200,93,
+CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.9375,0.9375,0,200,549,
+ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9999,0.9999,0,200,542,
+GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9999,0.9999,0,200,558,
+ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.7897,0.7897,0,200,560,
+KMA,Open-Meteo / KMA,ACTIVE,True,24,0.8413,0.8413,0,200,524,
+METEOFRANCE,Open-Meteo / Meteo-France,ACTIVE,True,24,0.8413,0.8413,0,200,565,
+METNO,MET Norway,ACTIVE,True,24,1.0,0.7764,0,200,575,
+UKMO,Open-Meteo / UK Met Office,ACTIVE,True,24,0.6935,0.6935,0,200,577,
