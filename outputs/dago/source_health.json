@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-09-18T09:33:04.946006+07:00",
+  "generated_at": "2026-09-18T15:41:36.542890+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.9165,
+      "ema_completeness": 0.897,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-09-20"
     },
     "CMA": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.8521,
+      "ema_completeness": 0.8521,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-09-20"
@@ -23,45 +23,45 @@
       "last_run_date": "2026-09-20"
     },
     "GFS": {
-      "ema_success": 0.9992,
-      "ema_completeness": 0.9992,
+      "ema_success": 0.9998,
+      "ema_completeness": 0.9998,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-09-20"
     },
     "ICON": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.5021,
+      "ema_completeness": 0.5021,
+      "consecutive_failures": 1,
+      "last_error": "<urlopen error _ssl.c:993: The handshake operation timed out>",
       "last_run_date": "2026-09-20"
     },
     "KMA": {
-      "ema_success": 0.9992,
-      "ema_completeness": 0.9992,
+      "ema_success": 0.6244,
+      "ema_completeness": 0.6244,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-09-20"
     },
     "METEOFRANCE": {
-      "ema_success": 0.9992,
-      "ema_completeness": 0.9992,
+      "ema_success": 0.6244,
+      "ema_completeness": 0.6244,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-09-20"
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.9165,
+      "ema_completeness": 0.897,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-09-20"
     },
     "UKMO": {
-      "ema_success": 0.9992,
-      "ema_completeness": 0.9992,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.2744,
+      "ema_completeness": 0.2744,
+      "consecutive_failures": 3,
+      "last_error": "<urlopen error _ssl.c:993: The handshake operation timed out>",
       "last_run_date": "2026-09-20"
     }
   }

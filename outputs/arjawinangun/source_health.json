@@ -1,67 +1,67 @@
 {
-  "generated_at": "2026-09-18T09:35:22.560744+07:00",
+  "generated_at": "2026-09-18T15:44:48.732121+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.9165,
+      "ema_completeness": 0.897,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-09-20"
     },
     "CMA": {
-      "ema_success": 0.9992,
-      "ema_completeness": 0.9992,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.2744,
+      "ema_completeness": 0.2744,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.open-meteo.com wait=47s",
       "last_run_date": "2026-09-20"
     },
     "ECMWF": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.2746,
+      "ema_completeness": 0.2746,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.open-meteo.com wait=47s",
       "last_run_date": "2026-09-20"
     },
     "GFS": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.2746,
+      "ema_completeness": 0.2746,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.open-meteo.com wait=47s",
       "last_run_date": "2026-09-20"
     },
     "ICON": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.2746,
+      "ema_completeness": 0.2746,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.open-meteo.com wait=47s",
       "last_run_date": "2026-09-20"
     },
     "KMA": {
-      "ema_success": 0.9979,
-      "ema_completeness": 0.9979,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.274,
+      "ema_completeness": 0.274,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.open-meteo.com wait=47s",
       "last_run_date": "2026-09-20"
     },
     "METEOFRANCE": {
-      "ema_success": 0.9979,
-      "ema_completeness": 0.9979,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.274,
+      "ema_completeness": 0.274,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.open-meteo.com wait=47s",
       "last_run_date": "2026-09-20"
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.9165,
+      "ema_completeness": 0.897,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-09-20"
     },
     "UKMO": {
-      "ema_success": 0.9979,
-      "ema_completeness": 0.9979,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.274,
+      "ema_completeness": 0.274,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.open-meteo.com wait=47s",
       "last_run_date": "2026-09-20"
     }
   }
