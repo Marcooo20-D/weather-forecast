@@ -1,68 +1,68 @@
 {
-  "generated_at": "2026-09-25T21:55:40.661697+07:00",
+  "generated_at": "2026-09-26T09:53:17.344558+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.853,
+      "ema_completeness": 0.9165,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-09-27"
+      "last_run_date": "2026-09-28"
     },
     "CMA": {
       "ema_success": 0.9999,
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-09-27"
+      "last_run_date": "2026-09-28"
     },
     "ECMWF": {
       "ema_success": 0.9999,
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-09-27"
+      "last_run_date": "2026-09-28"
     },
     "GFS": {
       "ema_success": 0.9999,
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-09-27"
+      "last_run_date": "2026-09-28"
     },
     "ICON": {
       "ema_success": 0.9999,
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-09-27"
+      "last_run_date": "2026-09-28"
     },
     "KMA": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
-      "consecutive_failures": 0,
-      "last_error": "",
-      "last_run_date": "2026-09-27"
+      "ema_success": 0.6499,
+      "ema_completeness": 0.6499,
+      "consecutive_failures": 1,
+      "last_error": "circuit_open host=api.open-meteo.com wait=26s",
+      "last_run_date": "2026-09-28"
     },
     "METEOFRANCE": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
-      "consecutive_failures": 0,
-      "last_error": "",
-      "last_run_date": "2026-09-27"
+      "ema_success": 0.6499,
+      "ema_completeness": 0.6499,
+      "consecutive_failures": 1,
+      "last_error": "<urlopen error _ssl.c:993: The handshake operation timed out>",
+      "last_run_date": "2026-09-28"
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.853,
+      "ema_completeness": 0.9165,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-09-27"
+      "last_run_date": "2026-09-28"
     },
     "UKMO": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
-      "consecutive_failures": 0,
-      "last_error": "",
-      "last_run_date": "2026-09-27"
+      "ema_success": 0.6499,
+      "ema_completeness": 0.6499,
+      "consecutive_failures": 1,
+      "last_error": "circuit_open host=api.open-meteo.com wait=26s",
+      "last_run_date": "2026-09-28"
     }
   }
 }
