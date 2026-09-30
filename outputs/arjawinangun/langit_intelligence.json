@@ -4,13 +4,12 @@
   "nowcast": {
     "window": "0–6 jam",
     "status": "Risiko tinggi",
-    "summary": "Window dekat perlu dikurangi untuk outdoor; sinyal hujan paling kuat sekitar 22:00.",
-    "peak_hour": "22:00",
+    "summary": "Window dekat perlu dikurangi untuk outdoor; sinyal hujan paling kuat sekitar 00:00.",
+    "peak_hour": "00:00",
     "peak_probability": 100.0,
     "best_window": [
-      "06:00",
-      "07:00",
-      "08:00"
+      "08:00",
+      "18:00"
     ]
   },
   "microclimate": {
@@ -27,65 +26,65 @@
       {
         "source_id": "BMKG",
         "verdict": "Aktif",
-        "points": "24",
+        "points": "8",
         "http_status": "200",
-        "latency_ms": "119"
+        "latency_ms": "28"
       },
       {
         "source_id": "CMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "560"
+        "latency_ms": "614"
       },
       {
         "source_id": "ECMWF",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "566"
+        "latency_ms": "612"
       },
       {
         "source_id": "GFS",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "561"
+        "latency_ms": "608"
       },
       {
         "source_id": "ICON",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "571"
+        "latency_ms": "608"
       },
       {
         "source_id": "KMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "563"
+        "latency_ms": "605"
       },
       {
         "source_id": "METEOFRANCE",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "561"
+        "latency_ms": "625"
       },
       {
         "source_id": "METNO",
         "verdict": "Aktif",
-        "points": "24",
+        "points": "21",
         "http_status": "200",
-        "latency_ms": "638"
+        "latency_ms": "687"
       },
       {
         "source_id": "UKMO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "566"
+        "latency_ms": "611"
       }
     ]
   },
