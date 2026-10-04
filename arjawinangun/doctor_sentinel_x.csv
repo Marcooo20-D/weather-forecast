@@ -1,0 +1,10 @@
+check,ok,detail
+output_dir_writable,yes,/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun
+sqlite_sentinel_ledger,yes,/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_ledger.sqlite
+constitution_rules,yes,10
+public_disclaimer_configured,yes,"Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat."
+dashboard_exists,yes,/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/command_center_sentinel_x.html
+verification_summary_exists,yes,/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_verification_summary.json
+accuracy_public_page_exists,yes,/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_accuracy_public.html
+grid_status_exists,yes,/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_grid_status.json
+no_public_sqlite_recommended,yes,*.sqlite should be kept internal; see sentinel_x_publish_manifest.json

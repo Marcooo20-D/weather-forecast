@@ -1,0 +1,10 @@
+tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
+30-09-2026,BMKG,BMKG,yes,1.8144,0.9816,1.781,9,24,200,819,,,,
+30-09-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1517,1.0,1.1517,24,24,200,582,,,,
+30-09-2026,ECMWF,Open-Meteo / ECMWF,yes,1.7099,1.0,1.7099,24,24,200,623,,,,
+30-09-2026,GFS,Open-Meteo / NOAA GFS,no,1.3786,1.0,1.3786,0,24,,20039,,,,<urlopen error _ssl.c:993: The handshake operation timed out>
+30-09-2026,ICON,Open-Meteo / DWD ICON,yes,1.423,1.0,1.423,24,24,200,629,,,,
+30-09-2026,KMA,Open-Meteo / KMA,yes,0.7641,1.0,0.7641,24,24,200,573,,,,
+30-09-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.4348,1.0,1.4348,24,24,200,577,,,,
+30-09-2026,METNO,MET Norway,yes,1.4099,0.9895,1.3951,9,24,200,652,,,,
+30-09-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3214,1.0,1.3214,24,24,200,583,,,,
