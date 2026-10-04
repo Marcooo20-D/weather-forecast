@@ -1,65 +1,65 @@
 {
-  "generated_at": "2026-10-04T17:22:05.525432+07:00",
+  "generated_at": "2026-10-04T23:15:30.119995+07:00",
   "sources": {
     "BMKG": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.8829,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.2746,
+      "ema_completeness": 0.2424,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.bmkg.go.id wait=7s",
       "last_run_date": "2026-10-06"
     },
     "CMA": {
-      "ema_success": 0.8008,
-      "ema_completeness": 0.8008,
+      "ema_success": 0.9453,
+      "ema_completeness": 0.9453,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-06"
     },
     "ECMWF": {
-      "ema_success": 0.8008,
-      "ema_completeness": 0.8008,
+      "ema_success": 0.9453,
+      "ema_completeness": 0.9453,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-06"
     },
     "GFS": {
-      "ema_success": 0.8008,
-      "ema_completeness": 0.8008,
+      "ema_success": 0.9453,
+      "ema_completeness": 0.9453,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-06"
     },
     "ICON": {
-      "ema_success": 0.8008,
-      "ema_completeness": 0.8008,
+      "ema_success": 0.9453,
+      "ema_completeness": 0.9453,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-06"
     },
     "KMA": {
-      "ema_success": 0.8008,
-      "ema_completeness": 0.8008,
+      "ema_success": 0.9453,
+      "ema_completeness": 0.9453,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-06"
     },
     "METEOFRANCE": {
-      "ema_success": 0.8008,
-      "ema_completeness": 0.8008,
+      "ema_success": 0.9453,
+      "ema_completeness": 0.9453,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-06"
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.8831,
+      "ema_completeness": 0.8385,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-06"
     },
     "UKMO": {
-      "ema_success": 0.8008,
-      "ema_completeness": 0.8008,
+      "ema_success": 0.9453,
+      "ema_completeness": 0.9453,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-06"
