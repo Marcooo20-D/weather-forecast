@@ -1,10 +1,10 @@
 source_id,provider,state,success,points,ema_success,ema_completeness,consecutive_failures,http_status,duration_ms,error
-BMKG,BMKG,ACTIVE,True,24,0.9158,0.7396,0,200,18,
-CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.9936,0.9936,0,200,611,
-ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9949,0.9949,0,200,609,
-GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9936,0.9936,0,200,607,
-ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.9936,0.9936,0,200,617,
-KMA,Open-Meteo / KMA,ACTIVE,True,24,0.9936,0.9936,0,200,609,
-METEOFRANCE,Open-Meteo / Meteo-France,ACTIVE,True,24,0.9936,0.9936,0,200,609,
-METNO,MET Norway,ACTIVE,True,24,1.0,0.8088,0,200,626,
-UKMO,Open-Meteo / UK Met Office,ACTIVE,True,24,0.9936,0.9936,0,200,612,
+BMKG,BMKG,ACTIVE,True,8,0.9769,0.919,0,200,40,
+CMA,Open-Meteo / CMA GRAPES,DEGRADED,False,0,0.7707,0.7707,0,,0,circuit_open host=api.open-meteo.com wait=26s
+ECMWF,Open-Meteo / ECMWF,DEGRADED,False,0,0.9986,0.9986,0,,16143,The read operation timed out
+GFS,Open-Meteo / NOAA GFS,DEGRADED,False,0,0.9982,0.9982,0,503,16329,HTTP Error 503: Service Unavailable
+ICON,Open-Meteo / DWD ICON,DEGRADED,False,0,0.9982,0.9982,0,503,16434,HTTP Error 503: Service Unavailable
+KMA,Open-Meteo / KMA,DEGRADED,False,0,0.7707,0.7707,0,,0,circuit_open host=api.open-meteo.com wait=26s
+METEOFRANCE,Open-Meteo / Meteo-France,DEGRADED,False,0,0.7707,0.7707,0,,0,circuit_open host=api.open-meteo.com wait=26s
+METNO,MET Norway,ACTIVE,True,22,1.0,0.938,0,200,388,
+UKMO,Open-Meteo / UK Met Office,DEGRADED,False,0,0.7707,0.7707,0,,0,circuit_open host=api.open-meteo.com wait=26s
