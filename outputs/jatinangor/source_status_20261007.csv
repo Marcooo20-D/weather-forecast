@@ -1,10 +1,10 @@
 tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
-07-10-2026,BMKG,BMKG,yes,1.7339,0.9583,1.6616,24,24,200,78,,,,
-07-10-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1581,0.7875,0.912,24,24,200,551,,,,
-07-10-2026,ECMWF,Open-Meteo / ECMWF,yes,1.7106,0.7875,1.3471,24,24,200,550,,,,
-07-10-2026,GFS,Open-Meteo / NOAA GFS,yes,1.3701,0.7875,1.079,24,24,200,549,,,,
-07-10-2026,ICON,Open-Meteo / DWD ICON,yes,1.4079,0.7875,1.1087,24,24,200,650,,,,
-07-10-2026,KMA,Open-Meteo / KMA,yes,0.7569,0.7875,0.5961,24,24,200,550,,,,
-07-10-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.4325,0.7875,1.1281,24,24,200,553,,,,
-07-10-2026,METNO,MET Norway,yes,1.3803,0.9801,1.3528,24,24,200,514,,,,
-07-10-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3175,0.7875,1.0375,24,24,200,563,,,,
+07-10-2026,BMKG,BMKG,yes,1.7339,0.9689,1.68,24,24,200,31,,,,
+07-10-2026,CMA,Open-Meteo / CMA GRAPES,no,1.1581,0.7214,0.8355,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=2s
+07-10-2026,ECMWF,Open-Meteo / ECMWF,no,1.7106,0.7214,1.234,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=2s
+07-10-2026,GFS,Open-Meteo / NOAA GFS,no,1.3701,0.7214,0.9884,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=2s
+07-10-2026,ICON,Open-Meteo / DWD ICON,no,1.4079,0.7214,1.0157,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=2s
+07-10-2026,KMA,Open-Meteo / KMA,no,0.7569,0.7214,0.546,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=2s
+07-10-2026,METEOFRANCE,Open-Meteo / Meteo-France,no,1.4325,0.7214,1.0334,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=2s
+07-10-2026,METNO,MET Norway,yes,1.3803,0.9748,1.3455,24,24,200,658,,,,
+07-10-2026,UKMO,Open-Meteo / UK Met Office,no,1.3175,0.7214,0.9504,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=2s
