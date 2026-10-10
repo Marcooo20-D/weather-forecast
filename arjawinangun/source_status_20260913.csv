@@ -1,0 +1,10 @@
+tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
+13-09-2026,BMKG,BMKG,yes,1.8615,0.9878,1.8388,5,24,200,784,,,,
+13-09-2026,CMA,Open-Meteo / CMA GRAPES,no,1.1644,1.0,1.1644,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=18s
+13-09-2026,ECMWF,Open-Meteo / ECMWF,no,1.7102,1.0,1.7102,0,24,,16160,,,,<urlopen error _ssl.c:993: The handshake operation timed out>
+13-09-2026,GFS,Open-Meteo / NOAA GFS,yes,1.4133,1.0,1.4133,24,24,200,96,,,,
+13-09-2026,ICON,Open-Meteo / DWD ICON,yes,1.4848,1.0,1.4848,24,24,200,176,,,,
+13-09-2026,KMA,Open-Meteo / KMA,no,0.774,1.0,0.774,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=18s
+13-09-2026,METEOFRANCE,Open-Meteo / Meteo-France,no,1.554,1.0,1.554,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=18s
+13-09-2026,METNO,MET Norway,yes,1.446,0.9878,1.4284,5,24,200,551,,,,
+13-09-2026,UKMO,Open-Meteo / UK Met Office,no,1.3272,1.0,1.3272,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=18s

@@ -1,0 +1,68 @@
+{
+  "generated_at": "2026-10-10T23:43:21.525054+07:00",
+  "sources": {
+    "BMKG": {
+      "ema_success": 0.2746,
+      "ema_completeness": 0.24,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.bmkg.go.id wait=1s",
+      "last_run_date": "2026-10-12"
+    },
+    "CMA": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-12"
+    },
+    "ECMWF": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-12"
+    },
+    "GFS": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-12"
+    },
+    "ICON": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-12"
+    },
+    "KMA": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-12"
+    },
+    "METEOFRANCE": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-12"
+    },
+    "METNO": {
+      "ema_success": 1.0,
+      "ema_completeness": 0.8399,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-12"
+    },
+    "UKMO": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-12"
+    }
+  }
+}
