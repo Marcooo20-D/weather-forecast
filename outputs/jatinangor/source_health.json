@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-10-10T17:21:24.321210+07:00",
+  "generated_at": "2026-10-10T23:43:58.746523+07:00",
   "sources": {
     "BMKG": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.874,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.2746,
+      "ema_completeness": 0.24,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.bmkg.go.id wait=24s",
       "last_run_date": "2026-10-12"
     },
     "CMA": {
@@ -52,7 +52,7 @@
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.8883,
+      "ema_completeness": 0.8399,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-12"
