@@ -3,16 +3,11 @@
   "version": "LANGIT v60.4",
   "nowcast": {
     "window": "0–6 jam",
-    "status": "Aman",
-    "summary": "Window dekat relatif aman; tetap pantau perubahan lokal.",
-    "peak_hour": "15:00",
-    "peak_probability": 24.5,
-    "best_window": [
-      "08:00",
-      "09:00",
-      "11:00",
-      "07:00"
-    ]
+    "status": "Risiko relatif rendah",
+    "method": "model_forecast_subset",
+    "summary": "Ringkasan model enam jam berikutnya. Belum menggunakan radar atau pengamatan nowcast.",
+    "peak_hour": "16:00",
+    "peak_probability": 10.9
   },
   "microclimate": {
     "profile": "Urban highland / orografis",
@@ -21,81 +16,114 @@
     "engine": "diurnal + terrain/personality adjustment"
   },
   "source_court": {
-    "status": "Aktif",
-    "agreement": "Tinggi",
-    "summary": "9/9 sumber aktif. Agreement operasional: Tinggi.",
+    "status": "Data tersedia",
+    "agreement": "Belum diukur",
+    "summary": "8 sumber live; 0 sumber cache. Status ini menunjukkan ketersediaan, bukan akurasi atau kesepakatan model.",
     "sources": [
       {
         "source_id": "BMKG",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "66"
+        "latency_ms": "44",
+        "model_family": "BMKG",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-11T10:13:44.945950+07:00",
+        "cache_age_hours": 0.0
       },
       {
         "source_id": "CMA",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "480"
+        "latency_ms": "449",
+        "model_family": "CMA",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-11T10:13:45.844431+07:00",
+        "cache_age_hours": 0.0
       },
       {
         "source_id": "ECMWF",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "490"
+        "latency_ms": "453",
+        "model_family": "ECMWF",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-11T10:13:45.352863+07:00",
+        "cache_age_hours": 0.0
       },
       {
         "source_id": "GFS",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "493"
+        "latency_ms": "465",
+        "model_family": "GFS",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-11T10:13:47.894002+07:00",
+        "cache_age_hours": 0.0
       },
       {
         "source_id": "ICON",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "476"
+        "latency_ms": "468",
+        "model_family": "ICON",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-11T10:13:48.404428+07:00",
+        "cache_age_hours": 0.0
       },
       {
         "source_id": "KMA",
-        "verdict": "Aktif",
-        "points": "24",
+        "verdict": "Gagal / tidak tersedia",
+        "points": "0",
         "http_status": "200",
-        "latency_ms": "490"
+        "latency_ms": "469",
+        "model_family": "KMA",
+        "is_cached": false,
+        "original_fetched_at": "",
+        "cache_age_hours": 0.0
       },
       {
         "source_id": "METEOFRANCE",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "472"
+        "latency_ms": "460",
+        "model_family": "METEOFRANCE",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-11T10:13:46.347245+07:00",
+        "cache_age_hours": 0.0
       },
       {
         "source_id": "METNO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "499"
+        "latency_ms": "444",
+        "model_family": "ECMWF",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-11T10:13:47.880887+07:00",
+        "cache_age_hours": 0.0
       },
       {
         "source_id": "UKMO",
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "476"
+        "latency_ms": "458",
+        "model_family": "UKMO",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-11T10:13:47.359834+07:00",
+        "cache_age_hours": 0.0
       }
     ]
   },
   "map_layers": [
-    "Rain Risk",
-    "Activity Safety",
-    "Heat Stress",
-    "Source Confidence",
-    "Microclimate",
-    "Time Slider"
+    "Model risk estimates",
+    "Illustrative microclimate zones",
+    "Time selector"
   ]
 }
