@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-11T11:24:49.355983+07:00",
+  "generated_at": "2026-10-11T14:16:01.032874+07:00",
   "location_slug": "arjawinangun",
   "location_name": "Arjawinangun, Cirebon",
   "matched_cases": 0,
@@ -87,5 +87,78 @@
       "mean_forecast_probability": null,
       "observed_rain_frequency": null
     }
-  ]
+  ],
+  "probabilistic_verification": {
+    "schema": "langit-probabilistic-verification-1",
+    "generated_at": "2026-10-11T14:16:02.057154+07:00",
+    "status": "insufficient_matching_observations",
+    "nominal_interval_coverage": 0.8,
+    "calibration_status": "NOT_CERTIFIED",
+    "distribution": "raw_family_balanced_individual_members",
+    "issue_rule": "earliest pre-event issue per valid_time and lead bin, minimum one-hour lead",
+    "rain_interval_rule": "explicit matching per-variable start/end, exactly one hour",
+    "local_observation_radius_km": {
+      "rain_mm": 2,
+      "temp_c": 10,
+      "rh_pct": 10,
+      "wind_kmh": 5
+    },
+    "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
+    "rejected": {
+      "not_pre_event": 281,
+      "missing_qc_observation": 7,
+      "rain_interval_mismatch": 0,
+      "unknown_observation_location": 0,
+      "observation_outside_local_radius": 0
+    },
+    "variables": {}
+  },
+  "activity_verification": {
+    "activities": {
+      "motor": {
+        "recommended_windows": 0,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 0,
+        "disruption_rate": null
+      },
+      "walking": {
+        "recommended_windows": 0,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 0,
+        "disruption_rate": null
+      },
+      "sport": {
+        "recommended_windows": 0,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 0,
+        "disruption_rate": null
+      },
+      "drying": {
+        "recommended_windows": 0,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 0,
+        "disruption_rate": null
+      },
+      "outdoor_event": {
+        "recommended_windows": 0,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 0,
+        "disruption_rate": null
+      },
+      "photography": {
+        "recommended_windows": 0,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 0,
+        "disruption_rate": null
+      }
+    },
+    "gust_verification": "Unavailable unless observed gust data is supplied; rates do not certify gust safety.",
+    "policy": "Only complete QC-passed local observation windows scored. Unknown is not counted as success."
+  }
 }

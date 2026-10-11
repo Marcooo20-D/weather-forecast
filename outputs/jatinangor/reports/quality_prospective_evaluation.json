@@ -1,0 +1,71 @@
+{
+  "status": "awaiting_new_post_fit_forecasts_and_observations",
+  "fitted_at": null,
+  "samples": 0,
+  "days": 0,
+  "policy": "report only; no automatic weight changes based on this report",
+  "metrics": {
+    "temp_c": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "bias": null
+    },
+    "rh_pct": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "bias": null
+    },
+    "rain_mm": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "bias": null
+    },
+    "wind_kmh": {
+      "n": 0,
+      "mae": null,
+      "rmse": null,
+      "bias": null
+    },
+    "rain_probability": {
+      "n": 0,
+      "brier": null,
+      "wet_cases": 0,
+      "dry_cases": 0
+    },
+    "rain_two_stage": {
+      "n": 0,
+      "distinct_days": 0,
+      "n_wet": 0,
+      "n_dry": 0,
+      "brier": null,
+      "wet_mae": null,
+      "intensity_mae_by_bin": {
+        "dry": {
+          "n": 0,
+          "mae": null
+        },
+        "light": {
+          "n": 0,
+          "mae": null
+        },
+        "moderate": {
+          "n": 0,
+          "mae": null
+        },
+        "heavy": {
+          "n": 0,
+          "mae": null
+        },
+        "extreme": {
+          "n": 0,
+          "mae": null
+        }
+      },
+      "conditional_member_samples": 0
+    }
+  },
+  "by_lead": {}
+}
