@@ -438,18 +438,15 @@ def write_dict_csv(path, fieldnames=None, rows=None):
 
 
 def write_json(path, payload):
-    def writer_fn(f):
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-
-    atomic_write_text(path, writer_fn)
+    atomic_write_text(path, lambda f: json.dump(_quality_jsonable(payload), f, ensure_ascii=False, indent=2, allow_nan=False))
 
 
 def write_json_gz(path, payload):
-    def writer_fn(fb):
-        with gzip.GzipFile(fileobj=fb, mode="wb") as gz:
-            gz.write(json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"))
-
-    atomic_write_bytes(path, writer_fn)
+    encoded = json.dumps(_quality_jsonable(payload), ensure_ascii=False, indent=2, allow_nan=False).encode("utf-8")
+    def writer(f):
+        with gzip.GzipFile(fileobj=f, mode="wb") as compressed:
+            compressed.write(encoded)
+    atomic_write_bytes(path, writer)
 
 
 def read_json(path, default=None):
@@ -628,8 +625,9 @@ def safe_float(value):
     if value is None or value == "":
         return None
     try:
-        return float(value)
-    except (TypeError, ValueError):
+        result = float(value)
+        return result if math.isfinite(result) else None
+    except (TypeError, ValueError, OverflowError):
         return None
 
 
@@ -646,7 +644,9 @@ def setup_logging(args):
     mode_stub = sanitize_filename(args.mode)
     log_path = os.path.join(log_dir, f"{mode_stub}_{timestamp}.log")
 
-    LOGGER.handlers.clear()
+    for handler in list(LOGGER.handlers):
+        handler.close()
+        LOGGER.removeHandler(handler)
     LOGGER.setLevel(logging.DEBUG if args.debug else logging.INFO)
     LOGGER.propagate = False
 
@@ -973,46 +973,19 @@ def load_health_config():
 def save_health_config(results, args, target_date=None):
     if args.disable_health:
         return
-
-    previous = read_json(path_output(HEALTH_FILENAME), default={}) or {}
-    source_health = previous.get("sources", {})
-
+    doc = read_json(path_output(HEALTH_FILENAME), {}) or {}
+    sources = doc.get("sources") or {}
     for result in results:
-        current = source_health.get(
-            result.source_id,
-            {
-                "ema_success": 1.0,
-                "ema_completeness": 1.0,
-                "consecutive_failures": 0,
-                "last_error": "",
-                "last_run_date": "",
-            },
-        )
-        success_value = 1.0 if result.success else 0.0
-        completeness_value = len(result.points) / max(len(TARGET_TIMES), 1)
-        alpha = 0.35
-        current["ema_success"] = round(
-            current.get("ema_success", 1.0) * (1 - alpha) + success_value * alpha, 4
-        )
-        current["ema_completeness"] = round(
-            current.get("ema_completeness", 1.0) * (1 - alpha)
-            + completeness_value * alpha,
-            4,
-        )
-        current["consecutive_failures"] = (
-            0 if result.success else min(current.get("consecutive_failures", 0) + 1, 999)
-        )
-        current["last_error"] = result.error
-        current["last_run_date"] = (
-            target_date.isoformat() if target_date else now_local(args.timezone).date().isoformat()
-        )
-        source_health[result.source_id] = current
-
-    payload = {
-        "generated_at": now_local(args.timezone).isoformat(),
-        "sources": source_health,
-    }
-    write_json(path_output(HEALTH_FILENAME), payload)
+        _quality_result_metadata(result, args)
+        h = sources.get(result.source_id) or {"ema_success": 1, "ema_completeness": 1, "consecutive_failures": 0}
+        live = result.live_fetch_success
+        h["ema_success"] = round(0.65 * h.get("ema_success", 1) + 0.35 * int(live), 4)
+        completeness = sum(p.gap_minutes == 0 and any(getattr(p, k) is not None for k in ("temp_c", "rh_pct", "rain_mm", "wind_kmh")) for p in result.points.values()) / max(1, len(TARGET_TIMES))
+        h["ema_completeness"] = round(0.65 * h.get("ema_completeness", 1) + 0.35 * (completeness if live else 0), 4)
+        h["consecutive_failures"] = 0 if live else h.get("consecutive_failures", 0) + 1
+        h.update({"last_error": result.error, "last_run_date": target_date.isoformat() if target_date else now_local(args.timezone).date().isoformat(), "last_live_fetch_success": live, "last_served_from_cache": result.is_cached})
+        sources[result.source_id] = h
+    write_json(path_output(HEALTH_FILENAME), {"generated_at": now_local(args.timezone).isoformat(), "sources": sources})
     load_health_config()
 
 
@@ -1037,21 +1010,13 @@ def source_health_factor(source_id):
 
 
 def point_weight(point):
-    base = (
-        source_active_weight(point.source_id)
-        * source_health_factor(point.source_id)
-        * hour_bucket_factor(point.target_time)
-    )
-    gap_minutes = point.gap_minutes or 0.0
-    gap_factor = clamp(1 - (gap_minutes / 240.0), 0.55, 1.0)
-
-    present_fields = sum(
-        1
-        for value in (point.temp_c, point.rh_pct, point.rain_mm, point.wind_kmh)
-        if value is not None
-    )
-    completeness_factor = 0.70 + (present_fields / 4.0) * 0.30
-    return round(base * gap_factor * completeness_factor, 4)
+    base = source_active_weight(point.source_id) * source_health_factor(point.source_id)
+    base /= max(1, _QUALITY_FAMILY_COUNTS.get(_quality_family(point.source_id), 1))
+    gap = safe_float(point.gap_minutes) or 0
+    completeness = sum(getattr(point, k, None) is not None for k in ("temp_c", "rh_pct", "rain_mm", "wind_kmh")) / 4
+    age = safe_float(getattr(point, "cache_age_hours", 0)) or 0
+    cache_factor = max(0.1, math.exp(-age / 6)) if getattr(point, "is_cached", False) else 1
+    return round(base * clamp(1 - gap / 240, 0.55, 1) * (0.7 + 0.3 * completeness) * cache_factor, 6)
 
 
 def confidence_label(score):
@@ -1072,9 +1037,10 @@ def compute_confidence(bucket, total_weight, dominant_weight, temp_std, rh_std, 
     if not bucket:
         return 0.0, "Rendah"
 
-    expected_sources = max(len(ACTIVE_SOURCE_CONFIGS), 1)
+    family_count = len({_quality_family(p.source_id) for p in bucket})
+    expected_sources = max(len({_quality_family(c["source_id"]) for c in ACTIVE_SOURCE_CONFIGS}), 1)
     expected_weight = max(expected_total_weight(), 0.0001)
-    coverage_score = clamp((len(bucket) / expected_sources) * 100, 0, 100)
+    coverage_score = clamp((family_count / expected_sources) * 100, 0, 100)
     weight_score = clamp((total_weight / expected_weight) * 100, 0, 100)
     agreement_score = (
         clamp((dominant_weight / total_weight) * 100, 0, 100) if total_weight else 0
@@ -1096,7 +1062,7 @@ def compute_confidence(bucket, total_weight, dominant_weight, temp_std, rh_std, 
         + spread_score * 0.15
     )
 
-    if len(bucket) < MIN_SOURCES_FOR_HIGH_CONFIDENCE:
+    if family_count < MIN_SOURCES_FOR_HIGH_CONFIDENCE:
         score = min(score, 59.0)
 
     score = round(clamp(score, 0, 100), 1)
@@ -1264,398 +1230,178 @@ def category_from_metno_symbol(symbol_code, rain_mm, rh):
 
 
 def validate_point_values(temp_c, rh_pct, rain_mm, wind_kmh):
-    """
-    Light-weight sanitization (does not "fix" too much):
-    - RH clipped to 0..100
-    - rain clipped to >=0
-    - wind clipped to >=0
-    - temperature sanity: allow -30..60C otherwise None
-    """
+    values = [safe_float(v) for v in (temp_c, rh_pct, rain_mm, wind_kmh)]
     flags = []
-
-    if temp_c is not None and not (-30 <= temp_c <= 60):
-        flags.append("temp_out_of_range")
-        temp_c = None
-    if rh_pct is not None:
-        if rh_pct < 0 or rh_pct > 100:
-            flags.append("rh_clipped")
-        rh_pct = clamp(rh_pct, 0, 100)
-    if rain_mm is not None:
-        if rain_mm < 0:
-            flags.append("rain_clipped")
-            rain_mm = 0.0
-        # keep upper range; heavy rain possible
-    if wind_kmh is not None and wind_kmh < 0:
-        flags.append("wind_clipped")
-        wind_kmh = 0.0
-
-    return temp_c, rh_pct, rain_mm, wind_kmh, flags
+    for idx, (name, low, high) in enumerate((("temp", -80, 60), ("rh", 0, 100), ("rain", 0, 1000), ("wind", 0, 500))):
+        value = values[idx]
+        if value is not None and not low <= value <= high:
+            values[idx] = None
+            flags.append(name + "_out_of_range")
+    return *values, flags
 
 
 def extract_bmkg_points(target_date, payload, args):
-    data_items = payload.get("data") or []
-    if not data_items:
+    items = payload.get("data") or []
+    if not items:
         raise ValueError("BMKG response tidak memiliki data")
-
     candidates = []
-    for day_group in data_items[0].get("cuaca") or []:
-        for item in day_group:
-            local_datetime = item.get("local_datetime")
-            if not local_datetime:
+    for group in items[0].get("cuaca") or []:
+        for item in group:
+            if not item.get("local_datetime"):
                 continue
-            dt_local = parse_naive_local_datetime(local_datetime, args.timezone)
-            if dt_local.date() != target_date:
-                continue
-            temp_c, rh_pct, rain_mm, wind_kmh, flags = validate_point_values(
-                safe_float(item.get("t")),
-                safe_float(item.get("hu")),
-                bmkg_rain_proxy_mm(item.get("weather_desc")),
-                safe_float(item.get("ws")),
-            )
-            candidates.append(
-                {
-                    "dt": dt_local,
-                    "temp_c": temp_c,
-                    "rh_pct": rh_pct,
-                    "rain_mm": rain_mm,
-                    "wind_kmh": wind_kmh,
-                    "raw_condition": item.get("weather_desc") or "",
-                    "category": bmkg_to_kategori(item.get("weather_desc")),
-                    "flags": flags + (["rain_proxy"] if rain_mm is not None else []),
-                }
-            )
-
-    if not candidates:
-        raise ValueError("BMKG tidak mengembalikan kandidat untuk target date")
-
+            dt = parse_naive_local_datetime(item["local_datetime"], args.timezone)
+            temp, rh, _, wind, flags = validate_point_values(item.get("t"), item.get("hu"), None, item.get("ws"))
+            candidates.append({"dt": dt, "item": item, "temp": temp, "rh": rh, "wind": wind, "flags": flags})
     points = {}
     for jam in TARGET_TIMES:
-        target_dt = parse_local_hour_string(target_date, jam, args.timezone)
-        match = next((item for item in candidates if item["dt"] == target_dt), None)
-        if not match:
-            match = nearest_candidate(candidates, target_dt, max_gap_hours=3)
-        if not match:
+        valid = parse_local_hour_string(target_date, jam, args.timezone)
+        match = nearest_candidate(candidates, valid, 1.5)
+        if match is None:
             continue
-        gap_minutes = round(abs((match["dt"] - target_dt).total_seconds()) / 60, 2)
-        points[jam] = ForecastPoint(
-            source_id="BMKG",
-            provider="BMKG",
-            target_time=jam,
-            source_datetime=match["dt"],
-            temp_c=match["temp_c"],
-            rh_pct=match["rh_pct"],
-            rain_mm=match["rain_mm"],
-            wind_kmh=match["wind_kmh"],
-            category=match["category"],
-            raw_condition=match["raw_condition"],
-            gap_minutes=gap_minutes,
-        )
+        item = match["item"]
+        gap = abs((match["dt"] - valid).total_seconds()) / 60
+        points[jam] = ForecastPoint("BMKG", "BMKG", jam, match["dt"], match["temp"], match["rh"], None, match["wind"], bmkg_to_kategori(item.get("weather_desc")), item.get("weather_desc") or "", gap,
+            cloud_cover_pct=safe_float(item.get("tcc")), valid_time=valid,
+            native_resolution_minutes=180, alignment_method="exact" if gap == 0 else "nearest_category_and_instant",
+            quality_flags=tuple(match["flags"]), rain_proxy_mm=bmkg_rain_proxy_mm(item.get("weather_desc")),
+            rain_value_type="category_only", model_run_at=_quality_datetime(item.get("analysis_date"), args.timezone))
+    if not points:
+        raise ValueError("BMKG tidak mengembalikan kandidat target date")
     return points
 
 
 def extract_open_meteo_points(target_date, payload, config, args):
     hourly = payload.get("hourly") or {}
-
-    times = hourly.get("time") or []
+    times = [parse_open_meteo_time(t, args.timezone) for t in hourly.get("time") or []]
     if not times:
         raise ValueError("Open-Meteo response tidak memiliki hourly.time")
-
-    temperatures = hourly.get("temperature_2m") or []
-    humidities = hourly.get("relative_humidity_2m") or []
-    precipitations = hourly.get("precipitation") or []
-    weather_codes = hourly.get("weather_code") or []
-    wind_speeds = hourly.get("wind_speed_10m") or []
-    apparent_temperatures = hourly.get("apparent_temperature") or []
-    dew_points = hourly.get("dew_point_2m") or []
-    precipitation_probabilities = hourly.get("precipitation_probability") or []
-    cloud_covers = hourly.get("cloud_cover") or []
-    pressure_msl = hourly.get("pressure_msl") or []
-    surface_pressure = hourly.get("surface_pressure") or []
-    wind_directions = hourly.get("wind_direction_10m") or []
-    wind_gusts = hourly.get("wind_gusts_10m") or []
-    visibilities = hourly.get("visibility") or []
-    shortwave_radiation = hourly.get("shortwave_radiation") or []
-    direct_radiation = hourly.get("direct_radiation") or []
-    diffuse_radiation = hourly.get("diffuse_radiation") or []
-    direct_normal_irradiance = hourly.get("direct_normal_irradiance") or []
-    global_tilted_irradiance = hourly.get("global_tilted_irradiance") or []
-    cape = hourly.get("cape") or []
-    uv_index = hourly.get("uv_index") or []
-
-    candidates = []
-    for idx, time_text in enumerate(times):
-        dt_local = parse_open_meteo_time(time_text, args.timezone)
-        if dt_local.date() != target_date:
-            continue
-        temp_c, rh_pct, rain_mm, wind_kmh, _flags = validate_point_values(
-            safe_float(temperatures[idx] if idx < len(temperatures) else None),
-            safe_float(humidities[idx] if idx < len(humidities) else None),
-            safe_float(precipitations[idx] if idx < len(precipitations) else None),
-            safe_float(wind_speeds[idx] if idx < len(wind_speeds) else None),
-        )
-        candidates.append(
-            {
-                "dt": dt_local,
-                "temp_c": temp_c,
-                "rh_pct": rh_pct,
-                "rain_mm": rain_mm,
-                "wind_kmh": wind_kmh,
-                "weather_code": weather_codes[idx] if idx < len(weather_codes) else None,
-                "apparent_temp_c": safe_float(apparent_temperatures[idx] if idx < len(apparent_temperatures) else None),
-                "dew_point_c": safe_float(dew_points[idx] if idx < len(dew_points) else None),
-                "precip_prob_pct": safe_float(precipitation_probabilities[idx] if idx < len(precipitation_probabilities) else None),
-                "cloud_cover_pct": safe_float(cloud_covers[idx] if idx < len(cloud_covers) else None),
-                "pressure_msl_hpa": safe_float(pressure_msl[idx] if idx < len(pressure_msl) else None),
-                "surface_pressure_hpa": safe_float(surface_pressure[idx] if idx < len(surface_pressure) else None),
-                "wind_direction_deg": safe_float(wind_directions[idx] if idx < len(wind_directions) else None),
-                "wind_gusts_kmh": safe_float(wind_gusts[idx] if idx < len(wind_gusts) else None),
-                "visibility_m": safe_float(visibilities[idx] if idx < len(visibilities) else None),
-                "shortwave_radiation_wm2": safe_float(shortwave_radiation[idx] if idx < len(shortwave_radiation) else None),
-                "direct_radiation_wm2": safe_float(direct_radiation[idx] if idx < len(direct_radiation) else None),
-                "diffuse_radiation_wm2": safe_float(diffuse_radiation[idx] if idx < len(diffuse_radiation) else None),
-                "direct_normal_irradiance_wm2": safe_float(direct_normal_irradiance[idx] if idx < len(direct_normal_irradiance) else None),
-                "global_tilted_irradiance_wm2": safe_float(global_tilted_irradiance[idx] if idx < len(global_tilted_irradiance) else None),
-                "cape_jkg": safe_float(cape[idx] if idx < len(cape) else None),
-                "uv_index": safe_float(uv_index[idx] if idx < len(uv_index) else None),
-            }
-        )
-
-    if not candidates:
-        raise ValueError(f"{config['source_id']} tidak mengembalikan kandidat target date")
-
+    units = payload.get("hourly_units") or {}
+    if units.get("precipitation", "mm") != "mm" or units.get("temperature_2m", "°C") not in {"°C", "celsius"} or units.get("wind_speed_10m", "km/h") not in {"km/h", "kmh"}:
+        raise ValueError("Unsupported units in Open-Meteo payload")
+    candidates = [{"dt": dt, "index": i} for i, dt in enumerate(times)]
     points = {}
+    extra = {"apparent_temp_c": "apparent_temperature", "dew_point_c": "dew_point_2m", "precip_prob_pct": "precipitation_probability", "cloud_cover_pct": "cloud_cover", "pressure_msl_hpa": "pressure_msl", "surface_pressure_hpa": "surface_pressure", "wind_direction_deg": "wind_direction_10m", "wind_gusts_kmh": "wind_gusts_10m", "visibility_m": "visibility", "cape_jkg": "cape", "uv_index": "uv_index", "shortwave_radiation_wm2": "shortwave_radiation", "direct_radiation_wm2": "direct_radiation", "diffuse_radiation_wm2": "diffuse_radiation", "direct_normal_irradiance_wm2": "direct_normal_irradiance", "global_tilted_irradiance_wm2": "global_tilted_irradiance"}
     for jam in TARGET_TIMES:
-        target_dt = parse_local_hour_string(target_date, jam, args.timezone)
-        match = next((item for item in candidates if item["dt"] == target_dt), None)
-        if not match:
-            match = nearest_candidate(candidates, target_dt, max_gap_hours=2)
+        valid = parse_local_hour_string(target_date, jam, args.timezone)
+        match = nearest_candidate(candidates, valid, 1)
         if not match:
             continue
-        gap_minutes = round(abs((match["dt"] - target_dt).total_seconds()) / 60, 2)
-        category = category_from_wmo_code(
-            match.get("weather_code"),
-            match.get("rain_mm"),
-            match.get("rh_pct"),
-        )
-        points[jam] = ForecastPoint(
-            source_id=config["source_id"],
-            provider=config["provider"],
-            target_time=jam,
-            source_datetime=match["dt"],
-            temp_c=match["temp_c"],
-            rh_pct=match["rh_pct"],
-            rain_mm=match["rain_mm"],
-            wind_kmh=match["wind_kmh"],
-            category=category,
-            raw_condition=f"wmo:{match.get('weather_code')}",
-            gap_minutes=gap_minutes,
-            cloud_cover_pct=match.get("cloud_cover_pct"),
-            pressure_msl_hpa=match.get("pressure_msl_hpa"),
-            surface_pressure_hpa=match.get("surface_pressure_hpa"),
-            wind_gusts_kmh=match.get("wind_gusts_kmh"),
-            wind_direction_deg=match.get("wind_direction_deg"),
-            dew_point_c=match.get("dew_point_c"),
-            apparent_temp_c=match.get("apparent_temp_c"),
-            precip_prob_pct=match.get("precip_prob_pct"),
-            visibility_m=match.get("visibility_m"),
-            shortwave_radiation_wm2=match.get("shortwave_radiation_wm2"),
-            direct_radiation_wm2=match.get("direct_radiation_wm2"),
-            diffuse_radiation_wm2=match.get("diffuse_radiation_wm2"),
-            direct_normal_irradiance_wm2=match.get("direct_normal_irradiance_wm2"),
-            global_tilted_irradiance_wm2=match.get("global_tilted_irradiance_wm2"),
-            cape_jkg=match.get("cape_jkg"),
-            uv_index=match.get("uv_index"),
-        )
+        idx = match["index"]
+        exact = match["dt"] == valid
+        temp, rh, rain, wind, flags = validate_point_values(*(_quality_array_value(hourly, k, idx) for k in ("temperature_2m", "relative_humidity_2m", "precipitation", "wind_speed_10m")))
+        if not exact:
+            rain = None
+            flags.append("precipitation_interval_not_aligned")
+        codes = hourly.get("weather_code") or []
+        code = safe_float(codes[idx]) if idx < len(codes) else None
+        kwargs = {attr: _quality_array_value(hourly, field, idx) for attr, field in extra.items()}
+        kwargs["precip_prob_pct"] = _lg_prob(kwargs["precip_prob_pct"]) if exact else None
+        if kwargs["cloud_cover_pct"] is not None and not 0 <= kwargs["cloud_cover_pct"] <= 100:
+            kwargs["cloud_cover_pct"] = None
+            flags.append("cloud_out_of_range")
+        point = ForecastPoint(config["source_id"], config["provider"], jam, match["dt"], temp, rh, rain, wind,
+            category_from_wmo_code(code, rain, rh), f"wmo:{code}", abs((match["dt"] - valid).total_seconds()) / 60,
+            **kwargs, valid_time=valid, native_resolution_minutes=_quality_native_step(times),
+            alignment_method="exact" if exact else "nearest_instant_only", quality_flags=tuple(flags),
+            rain_interval_start=valid - timedelta(hours=1) if exact and rain is not None else None,
+            rain_interval_end=valid if exact and rain is not None else None, rain_value_type="model_amount" if exact and rain is not None else "missing")
+        points[jam] = point
+    if not points:
+        raise ValueError("Open-Meteo tidak mengembalikan kandidat target date")
     return points
 
 
 def extract_met_no_points(target_date, payload, config, args):
-    series = ((payload.get("properties") or {}).get("timeseries")) or []
-    if not series:
-        raise ValueError("MET Norway response tidak memiliki timeseries")
-
-    candidates = []
+    series = (payload.get("properties") or {}).get("timeseries") or []
+    candidates, rain_by_end, intervals = [], {}, []
     for entry in series:
-        dt_local = parse_utc_iso_to_local(entry.get("time"), args.timezone)
-        if dt_local.date() != target_date:
-            continue
+        dt = parse_utc_iso_to_local(entry["time"], args.timezone)
         data = entry.get("data") or {}
-        instant_details = (data.get("instant") or {}).get("details") or {}
-        wind_ms = safe_float(instant_details.get("wind_speed"))
-        rain_mm = metno_precipitation_amount(data)
-        symbol_code = metno_symbol_code(data)
-        temp_c, rh_pct, rain_mm, wind_kmh, _flags = validate_point_values(
-            safe_float(instant_details.get("air_temperature")),
-            safe_float(instant_details.get("relative_humidity")),
-            rain_mm,
-            round(wind_ms * 3.6, 2) if wind_ms is not None else None,
-        )
-        candidates.append(
-            {
-                "dt": dt_local,
-                "temp_c": temp_c,
-                "rh_pct": rh_pct,
-                "rain_mm": rain_mm,
-                "wind_kmh": wind_kmh,
-                "symbol_code": symbol_code,
-            }
-        )
-
+        details = (data.get("instant") or {}).get("details") or {}
+        candidates.append({"dt": dt, "details": details})
+        for name, hours in (("next_1_hours", 1), ("next_6_hours", 6), ("next_12_hours", 12)):
+            bucket = data.get(name) or {}
+            amount = safe_float((bucket.get("details") or {}).get("precipitation_amount"))
+            if amount is None or amount < 0:
+                continue
+            record = {"interval_start": dt.isoformat(), "interval_end": (dt + timedelta(hours=hours)).isoformat(), "amount_mm": amount, "duration_hours": hours, "symbol": (bucket.get("summary") or {}).get("symbol_code", "")}
+            intervals.append(record)
+            if hours == 1:
+                rain_by_end[dt + timedelta(hours=1)] = record
     if not candidates:
-        raise ValueError("MET Norway tidak mengembalikan kandidat target date")
-
+        raise ValueError("METNO tidak memiliki timeseries")
     points = {}
     for jam in TARGET_TIMES:
-        target_dt = parse_local_hour_string(target_date, jam, args.timezone)
-        match = next((item for item in candidates if item["dt"] == target_dt), None)
-        if not match:
-            match = nearest_candidate(candidates, target_dt, max_gap_hours=2)
+        valid = parse_local_hour_string(target_date, jam, args.timezone)
+        match = nearest_candidate(candidates, valid, 2)
         if not match:
             continue
-        gap_minutes = round(abs((match["dt"] - target_dt).total_seconds()) / 60, 2)
-        category = category_from_metno_symbol(
-            match.get("symbol_code"),
-            match.get("rain_mm"),
-            match.get("rh_pct"),
-        )
-        points[jam] = ForecastPoint(
-            source_id=config["source_id"],
-            provider=config["provider"],
-            target_time=jam,
-            source_datetime=match["dt"],
-            temp_c=match["temp_c"],
-            rh_pct=match["rh_pct"],
-            rain_mm=match["rain_mm"],
-            wind_kmh=match["wind_kmh"],
-            category=category,
-            raw_condition=match.get("symbol_code") or "",
-            gap_minutes=gap_minutes,
-        )
+        details = match["details"]
+        rain = rain_by_end.get(valid)
+        speed = safe_float(details.get("wind_speed"))
+        temp, rh, amount, wind, flags = validate_point_values(details.get("air_temperature"), details.get("relative_humidity"), rain.get("amount_mm") if rain else None, speed * 3.6 if speed is not None else None)
+        symbol = rain.get("symbol", "") if rain else ""
+        category = category_from_metno_symbol(symbol, amount, rh) if rain else ""
+        points[jam] = ForecastPoint(config["source_id"], config["provider"], jam, match["dt"], temp, rh, amount, wind, category, symbol, abs((match["dt"] - valid).total_seconds()) / 60,
+            valid_time=valid, cloud_cover_pct=safe_float(details.get("cloud_area_fraction")), wind_direction_deg=safe_float(details.get("wind_from_direction")),
+            pressure_msl_hpa=safe_float(details.get("air_pressure_at_sea_level")), dew_point_c=safe_float(details.get("dew_point_temperature")),
+            native_resolution_minutes=_quality_native_step([c["dt"] for c in candidates]), alignment_method="exact_instant_with_aligned_precipitation" if match["dt"] == valid else "nearest_instant_only",
+            quality_flags=tuple(flags), rain_interval_start=valid - timedelta(hours=1) if rain else None, rain_interval_end=valid if rain else None,
+            rain_value_type="model_amount" if rain else "missing", precipitation_intervals=tuple(i for i in intervals if _quality_datetime(i["interval_end"], args.timezone).date() == target_date))
+    if not points:
+        raise ValueError("METNO tidak mengembalikan kandidat target date")
     return points
 
 
 def load_cached_source_payload(target_date, source_id, extractor_fn, args):
-    """
-    Generic cache loader for any source stored in raw_payloads.
-    Prefers latest_success, then same-date successes, then other successes.
-    """
-    raw_dir = path_output(RAW_PAYLOAD_DIRNAME)
-    if not os.path.isdir(raw_dir):
+    directory = path_output(RAW_PAYLOAD_DIRNAME)
+    if not os.path.isdir(directory):
         return None
-
-    file_stub = sanitize_filename(source_id.lower())
-    stamp = target_date.strftime("%Y%m%d")
-    ext = _raw_payload_ext(args)
-
-    preferred_paths = [
-        os.path.join(raw_dir, f"{file_stub}_latest_success{ext}"),
-        os.path.join(raw_dir, f"{file_stub}_latest{ext}"),
-    ]
-
-    versioned_paths = []
-    ignored_names = {
-        f"{file_stub}_latest{ext}",
-        f"{file_stub}_latest_success{ext}",
-        f"{file_stub}_latest_failure{ext}",
-    }
-    for entry in os.scandir(raw_dir):
-        if not entry.is_file():
+    paths = [entry.path for entry in os.scandir(directory) if entry.is_file() and entry.name.lower().startswith(sanitize_filename(source_id.lower()) + "_") and entry.name.lower().endswith((".json", ".json.gz"))]
+    candidates = []
+    now = now_local(args.timezone)
+    max_age = safe_float(getattr(args, "cache_max_age_hours", 6))
+    if max_age is None or max_age <= 0:
+        return None
+    for path in paths:
+        doc = read_json(path, {}) or {}
+        if not isinstance(doc.get("payload"), dict) or not doc.get("success"):
             continue
-        lower_name = entry.name.lower()
-        if not lower_name.startswith(f"{file_stub}_") or not (
-            lower_name.endswith(".json") or lower_name.endswith(".json.gz")
-        ):
+        if "cached:" in str(doc.get("request_url", "")) and not doc.get("original_fetched_at"):
             continue
-        if entry.name in ignored_names:
+        original = _quality_datetime(doc.get("original_fetched_at") or doc.get("generated_at"), args.timezone)
+        run = _quality_datetime(doc.get("model_run_at"), args.timezone) or _quality_payload_run(doc["payload"], args)
+        if original is None:
             continue
-        versioned_paths.append(entry.path)
-
-    same_date = [p for p in versioned_paths if f"_{stamp}_" in os.path.basename(p)]
-    other_date = [p for p in versioned_paths if p not in same_date]
-    same_date.sort(key=lambda path: os.path.getmtime(path), reverse=True)
-    other_date.sort(key=lambda path: os.path.getmtime(path), reverse=True)
-
-    candidate_paths = [p for p in preferred_paths if os.path.exists(p)]
-    candidate_paths.extend(same_date)
-    candidate_paths.extend(other_date)
-
-    for path in candidate_paths:
-        document = read_json(path, default=None) or {}
-        payload = document.get("payload")
-        if not document.get("success") or not isinstance(payload, dict):
+        age = (now - original).total_seconds() / 3600
+        model_age = (now - run).total_seconds() / 3600 if run else age
+        if age < 0 or age > max_age or model_age < 0 or model_age > max_age:
+            continue
+        if doc.get("location_slug") and doc["location_slug"] != getattr(args, "location_slug", ""):
             continue
         try:
-            points = extractor_fn(target_date, payload)
-        except Exception:
+            points = extractor_fn(target_date, doc["payload"])
+        except (ValueError, TypeError, KeyError):
             continue
-        return {
-            "path": path,
-            "payload": payload,
-            "points": points,
-            "request_url": document.get("request_url") or "",
-        }
-    return None
+        if not points:
+            continue
+        candidates.append((original, path, doc, points, age, run))
+    if not candidates:
+        return None
+    original, path, doc, points, age, run = max(candidates, key=lambda item: item[0])
+    for point in points.values():
+        point.is_cached = True
+        point.original_fetched_at = original
+        point.cache_age_hours = age
+        point.model_run_at = run
+    return {"path": path, "payload": doc["payload"], "points": points, "request_url": doc.get("request_url", ""), "original_fetched_at": original.isoformat(), "cache_age_hours": age}
 
 def _raw_payload_ext(args):
     return ".json.gz" if args.compress_raw_payloads else ".json"
 
 
 def load_cached_bmkg_payload(target_date, args):
-    raw_dir = path_output(RAW_PAYLOAD_DIRNAME)
-    if not os.path.isdir(raw_dir):
-        return None
-
-    file_stub = sanitize_filename("bmkg")
-    stamp = target_date.strftime("%Y%m%d")
-    ext = _raw_payload_ext(args)
-
-    preferred_paths = [
-        os.path.join(raw_dir, f"{file_stub}_latest_success{ext}"),
-        os.path.join(raw_dir, f"{file_stub}_latest{ext}"),
-    ]
-
-    versioned_paths = []
-    ignored_names = {
-        f"{file_stub}_latest{ext}",
-        f"{file_stub}_latest_success{ext}",
-        f"{file_stub}_latest_failure{ext}",
-    }
-    for entry in os.scandir(raw_dir):
-        if not entry.is_file():
-            continue
-        lower_name = entry.name.lower()
-        if not lower_name.startswith(f"{file_stub}_") or not (lower_name.endswith(".json") or lower_name.endswith(".json.gz")):
-            continue
-        if entry.name in ignored_names:
-            continue
-        versioned_paths.append(entry.path)
-
-    # Prefer same-date successful payloads first.
-    same_date = [p for p in versioned_paths if f"_{stamp}_" in os.path.basename(p)]
-    other_date = [p for p in versioned_paths if p not in same_date]
-    same_date.sort(key=lambda path: os.path.getmtime(path), reverse=True)
-    other_date.sort(key=lambda path: os.path.getmtime(path), reverse=True)
-
-    candidate_paths = [p for p in preferred_paths if os.path.exists(p)]
-    candidate_paths.extend(same_date)
-    candidate_paths.extend(other_date)
-
-    for path in candidate_paths:
-        document = read_json(path, default=None) or {}
-        payload = document.get("payload")
-        if not document.get("success") or not isinstance(payload, dict):
-            continue
-        try:
-            points = extract_bmkg_points(target_date, payload, args)
-        except ValueError:
-            continue
-        return {
-            "path": path,
-            "payload": payload,
-            "points": points,
-            "request_url": document.get("request_url") or "",
-        }
-    return None
+    return load_cached_source_payload(target_date, "BMKG", lambda date, payload: extract_bmkg_points(date, payload, args), args)
 
 
 @dataclass
@@ -1689,6 +1435,19 @@ class ForecastPoint:
     global_tilted_irradiance_wm2: Optional[float] = None
     cape_jkg: Optional[float] = None
     uv_index: Optional[float] = None
+    valid_time: Optional[datetime] = None
+    native_resolution_minutes: Optional[float] = None
+    alignment_method: str = ""
+    quality_flags: tuple = ()
+    rain_proxy_mm: Optional[float] = None
+    rain_value_type: str = "model_amount"
+    rain_interval_start: Optional[datetime] = None
+    rain_interval_end: Optional[datetime] = None
+    model_run_at: Optional[datetime] = None
+    original_fetched_at: Optional[datetime] = None
+    is_cached: bool = False
+    cache_age_hours: float = 0.0
+    precipitation_intervals: tuple = ()
 
 
 @dataclass
@@ -1706,6 +1465,12 @@ class SourceResult:
     duration_ms: Optional[int] = None
     error_content_type: str = ""
     error_snippet: str = ""
+    is_cached: bool = False
+    live_fetch_success: bool = False
+    original_fetched_at: Optional[datetime] = None
+    model_run_at: Optional[datetime] = None
+    cache_age_hours: float = 0.0
+    model_family: str = ""
 
 
 def fetch_bmkg_forecast(target_date, config, args):
@@ -1721,7 +1486,7 @@ def fetch_bmkg_forecast(target_date, config, args):
         )
         points = extract_bmkg_points(target_date, payload, args)
         return {"points": points, "raw_payload": payload, "request_url": url, "http_status": status, "duration_ms": duration_ms}
-    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, json.JSONDecodeError) as exc:
+    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, json.JSONDecodeError, HttpPayloadError, ValueError) as exc:
         cached = load_cached_bmkg_payload(target_date, args)
         if not cached:
             raise exc
@@ -1743,7 +1508,8 @@ def fetch_open_meteo_forecast(target_date, config, args):
         "latitude": args.latitude,
         "longitude": args.longitude,
         "timezone": args.timezone,
-        "forecast_days": 3,
+        "forecast_days": max(3, min(5, (target_date - now_local(args.timezone).date()).days + 1)),
+        "temperature_unit": "celsius", "wind_speed_unit": "kmh", "precipitation_unit": "mm",
         "hourly": ",".join(aether_open_meteo_variables(args, include_extra=getattr(args, "aether_extra_vars", False))),
     }
     if config.get("models"):
@@ -1802,25 +1568,8 @@ def fetch_open_meteo_forecast(target_date, config, args):
 
 
 def metno_precipitation_amount(data):
-    """
-    MET.no precipitation_amount is aggregated over the bucket window.
-    Prefer next_1_hours (most precise). If missing, use next_6/12 divided to hourly rate.
-    """
-    preferred = [
-        ("next_1_hours", 1),
-        ("next_6_hours", 6),
-        ("next_12_hours", 12),
-    ]
-    for bucket_name, divisor in preferred:
-        bucket = data.get(bucket_name) or {}
-        details = bucket.get("details") or {}
-        value = safe_float(details.get("precipitation_amount"))
-        if value is None:
-            continue
-        if divisor <= 1:
-            return value
-        return round(value / divisor, 2)
-    return None
+    # Only a native one-hour amount can populate the hourly ensemble.
+    return safe_float(((data.get("next_1_hours") or {}).get("details") or {}).get("precipitation_amount"))
 
 
 def metno_symbol_code(data):
@@ -1909,45 +1658,29 @@ def preview_request_url(config, args):
 
 
 def save_raw_payload_snapshot(target_date, result, tz_name, args):
-    raw_dir = path_output(RAW_PAYLOAD_DIRNAME)
-    ensure_directory(raw_dir)
-    stamp = target_date.strftime("%Y%m%d")
-    created_stamp = now_local(tz_name).strftime("%Y%m%d_%H%M%S")
-    file_stub = sanitize_filename(result.source_id.lower())
+    _quality_result_metadata(result, args)
+    directory = path_output(RAW_PAYLOAD_DIRNAME)
+    ensure_directory(directory)
+    stub = sanitize_filename(result.source_id.lower())
     ext = _raw_payload_ext(args)
-    path_versioned = os.path.join(raw_dir, f"{file_stub}_{stamp}_{created_stamp}{ext}")
-    path_latest = os.path.join(raw_dir, f"{file_stub}_latest{ext}")
-    path_latest_success = os.path.join(raw_dir, f"{file_stub}_latest_success{ext}")
-    path_latest_failure = os.path.join(raw_dir, f"{file_stub}_latest_failure{ext}")
-    document = {
-        "generated_at": now_local(tz_name).isoformat(),
-        "target_date": target_date.isoformat(),
-        "source_id": result.source_id,
-        "provider": result.provider,
-        "success": result.success,
-        "base_weight": result.base_weight,
-        "request_url": result.request_url,
-        "http_status": result.http_status,
-        "duration_ms": result.duration_ms,
-        "points_collected": len(result.points),
-        "error": result.error,
-        "payload": result.raw_payload,
-    }
-    if args.compress_raw_payloads:
-        write_json_gz(path_versioned, document)
-        write_json_gz(path_latest, document)
-        if result.success and result.raw_payload is not None:
-            write_json_gz(path_latest_success, document)
-        else:
-            write_json_gz(path_latest_failure, document)
-    else:
-        write_json(path_versioned, document)
-        write_json(path_latest, document)
-        if result.success and result.raw_payload is not None:
-            write_json(path_latest_success, document)
-        else:
-            write_json(path_latest_failure, document)
-    return path_versioned
+    stamp = now_local(tz_name).strftime("%Y%m%d_%H%M%S_%f")
+    doc = {"generated_at": now_local(tz_name).isoformat(), "original_fetched_at": result.original_fetched_at,
+           "model_run_at": result.model_run_at, "is_cached": result.is_cached, "live_fetch_success": result.live_fetch_success,
+           "cache_age_hours": result.cache_age_hours, "location_slug": getattr(args, "location_slug", ""),
+           "target_date": target_date.isoformat(), "source_id": result.source_id, "provider": result.provider,
+           "model_family": result.model_family, "success": result.success, "request_url": result.request_url,
+           "http_status": result.http_status, "duration_ms": result.duration_ms, "points_collected": len(result.points),
+           "error": result.error, "payload": result.raw_payload}
+    writer = write_json_gz if args.compress_raw_payloads else write_json
+    path = os.path.join(directory, f"{stub}_{target_date:%Y%m%d}_{stamp}{ext}")
+    writer(path, doc)
+    writer(os.path.join(directory, f"{stub}_latest{ext}"), doc)
+    # A cache fallback must never move the original latest-live-success pointer.
+    if result.live_fetch_success:
+        writer(os.path.join(directory, f"{stub}_latest_success{ext}"), doc)
+    elif not result.success:
+        writer(os.path.join(directory, f"{stub}_latest_failure{ext}"), doc)
+    return path
 
 
 _HOST_SEMAPHORES_LOCK = threading.Lock()
@@ -2039,7 +1772,7 @@ def fetch_source(target_date, config, args):
             else:
                 raise ValueError(f"Unknown source kind: {kind}")
 
-            points = fetch_result["points"]
+            points = {k:p for k,p in fetch_result["points"].items() if any(getattr(p,field) is not None for field in ("temp_c","rh_pct","rain_mm","wind_kmh"))}
             success = len(points) > 0
             note = fetch_result.get("note", "")
             result = SourceResult(
@@ -2054,11 +1787,12 @@ def fetch_source(target_date, config, args):
                 http_status=fetch_result.get("http_status"),
                 duration_ms=fetch_result.get("duration_ms"),
             )
+            _quality_result_metadata(result, args)
             if args.save_raw_payloads:
                 result.payload_saved_path = save_raw_payload_snapshot(
                     target_date, result, args.timezone, args
                 )
-            if result.success:
+            if result.live_fetch_success:
                 _circuit_note_success(host)
             return result
         except Exception as exc:
@@ -2087,6 +1821,7 @@ def fetch_source(target_date, config, args):
                 error_content_type=error_content_type,
                 error_snippet=error_snippet,
             )
+            _quality_result_metadata(result, args)
             if args.save_raw_payloads:
                 result.payload_saved_path = save_raw_payload_snapshot(
                     target_date, result, args.timezone, args
@@ -2115,48 +1850,38 @@ def observation_master_file():
 
 
 def normalize_observation_row(row):
-    tanggal = row.get("tanggal") or row.get("date") or row.get("target_date")
-    jam = row.get("jam") or row.get("time")
-    if not tanggal or not jam:
+    row = dict(row or {})
+    date = sentinel_obs_date_to_iso(_quality_first(row, "tanggal", "date", "target_date", default=""))
+    jam = _lg_hour(_quality_first(row, "jam", "time"), "")
+    try:
+        parse_iso_date(date)
+        if len(jam) != 5 or not 0 <= int(jam[:2]) <= 23 or not 0 <= int(jam[3:]) <= 59:
+            return None
+    except (ValueError, TypeError):
         return None
-
-    if "-" in tanggal and len(tanggal) == 10 and tanggal[4] == "-":
-        tanggal = parse_iso_date(tanggal).strftime("%d-%m-%Y")
-
-    category = row.get("category")
-    if not category:
-        category = category_from_wmo_code(
-            safe_float(row.get("weather_code")),
-            safe_float(row.get("rain_mm")),
-            safe_float(row.get("rh_pct")),
-        )
-
-    temp_c, rh_pct, rain_mm, wind_kmh, _flags = validate_point_values(
-        safe_float(row.get("temp_c")),
-        safe_float(row.get("rh_pct")),
-        safe_float(row.get("rain_mm")),
-        safe_float(row.get("wind_kmh")),
-    )
-
-    return {
-        "tanggal": tanggal,
-        "jam": jam,
-        "observed_datetime": row.get("observed_datetime") or "",
-        "temp_c": round_or_blank(temp_c),
-        "rh_pct": round_or_blank(rh_pct),
-        "rain_mm": round_or_blank(rain_mm),
-        "wind_kmh": round_or_blank(wind_kmh),
-        "weather_code": row.get("weather_code") or "",
-        "category": category,
-    }
+    kind = row.get("observation_type") or "legacy_unclassified"
+    values = validate_point_values(*(_quality_first(row, field, "observed_" + field) for field in ("temp_c", "rh_pct", "rain_mm", "wind_kmh")))
+    normalized = {**row, "tanggal": parse_iso_date(date).strftime("%d-%m-%Y"), "target_date": date, "jam": jam,
+                  "observed_datetime": row.get("observed_datetime") or "", "observation_type": kind,
+                  "source_id": row.get("source_id") or kind, "qc": row.get("qc") or ("passed" if kind in _OBS_TYPES and not values[4] else "unverified"),
+                  "qc_flags": ";".join(values[4]), "available_at": row.get("available_at") or now_local(DEFAULT_TIMEZONE).isoformat()}
+    for field, value in zip(("temp_c", "rh_pct", "rain_mm", "wind_kmh"), values[:4]):
+        normalized[field] = value
+    normalized["category"] = _quality_first(row, "category", "observed_category", default="")
+    for field in _OBS_FIELDS:
+        if normalized.get(field) not in (None, ""):
+            for suffix, fallback in (("type", kind), ("qc", normalized["qc"]), ("available_at", normalized["available_at"]), ("source", normalized["source_id"])):
+                normalized[field + "_" + suffix] = row.get(field + "_" + suffix) or fallback
+    return normalized
 
 
 def load_external_observation_rows(path):
     rows = []
-    for row in read_dict_csv(path):
-        normalized = normalize_observation_row(row)
-        if normalized:
-            rows.append(normalized)
+    for raw in read_dict_csv(path):
+        raw.setdefault("observation_type", "external_observation")
+        row = normalize_observation_row(raw)
+        if row:
+            rows.append(row)
     return rows
 
 
@@ -2230,6 +1955,8 @@ def extract_archive_observations(target_date, payload, tz_name):
                 "category": category,
             }
         )
+    for row in rows:
+        row.update({"observation_type":"model_reference", "source_id":"open_meteo_archive", "qc":"reference_only", "available_at":now_local(tz_name).isoformat()})
     return rows
 
 
@@ -2249,76 +1976,39 @@ def fetch_archive_observations(target_date, args):
 
 
 def write_observation_rows(target_date, rows):
-    fieldnames = [
-        "tanggal",
-        "jam",
-        "observed_datetime",
-        "temp_c",
-        "rh_pct",
-        "rain_mm",
-        "wind_kmh",
-        "weather_code",
-        "category",
-    ]
-    write_dict_csv(observation_file_for_date(target_date), fieldnames, rows)
-
-    master_path = observation_master_file()
-    existing = {}
-    for row in read_dict_csv(master_path):
-        existing[(row.get("tanggal"), row.get("jam"))] = row
-    for row in rows:
-        existing[(row.get("tanggal"), row.get("jam"))] = row
-    merged = sorted(
-        existing.values(),
-        key=lambda item: (parse_display_date(item["tanggal"]), item["jam"]),
-    )
-    write_dict_csv(master_path, fieldnames, merged)
+    normalized = [r for row in rows if (r := normalize_observation_row(row))]
+    references = [r for r in normalized if r.get("observation_type") == "model_reference"]
+    actual = [r for r in normalized if r.get("observation_type") != "model_reference"]
+    if references:
+        write_dict_csv(os.path.join(observation_dir(), f"model_reference_{target_date:%Y%m%d}.csv"), rows=references)
+    if not actual:
+        return
+    daily_index = {}
+    for raw in read_dict_csv(observation_file_for_date(target_date)) + actual:
+        item = normalize_observation_row(raw)
+        if item:
+            key = (item["target_date"], item["jam"])
+            daily_index[key] = _quality_merge_observation(daily_index.get(key), item)
+    write_dict_csv(observation_file_for_date(target_date), rows=list(daily_index.values()))
+    index = {}
+    for raw in read_dict_csv(observation_master_file()) + actual:
+        row = normalize_observation_row(raw)
+        if row:
+            key = (row["target_date"], row["jam"])
+            index[key] = _quality_merge_observation(index.get(key), row)
+    write_dict_csv(observation_master_file(), rows=[index[key] for key in sorted(index)])
 
 
 def import_external_observations(args):
     if not args.observations_csv:
-        raise ValueError("Mode import-observations membutuhkan --observations-csv")
-    if not os.path.exists(args.observations_csv):
-        raise ValueError(f"File observasi tidak ditemukan: {args.observations_csv}")
-
+        raise ValueError("--observations-csv diperlukan")
     rows = load_external_observation_rows(args.observations_csv)
     if not rows:
-        raise ValueError("Tidak ada row observasi valid yang bisa diimpor")
-
-    fieldnames = [
-        "tanggal",
-        "jam",
-        "observed_datetime",
-        "temp_c",
-        "rh_pct",
-        "rain_mm",
-        "wind_kmh",
-        "weather_code",
-        "category",
-    ]
-    master_path = observation_master_file()
-    existing = {}
-    for row in read_dict_csv(master_path):
-        existing[(row.get("tanggal"), row.get("jam"))] = row
-    for row in rows:
-        existing[(row.get("tanggal"), row.get("jam"))] = row
-    merged = sorted(
-        existing.values(),
-        key=lambda item: (parse_display_date(item["tanggal"]), item["jam"]),
-    )
-    write_dict_csv(master_path, fieldnames, merged)
-    report_path = os.path.join(report_dir(), "import_observations_summary.json")
-    write_json(
-        report_path,
-        {
-            "generated_at": now_local(args.timezone).isoformat(),
-            "source_file": args.observations_csv,
-            "rows_imported": len(rows),
-            "master_file": master_path,
-            "location_slug": args.location_slug,
-            "location_name": args.location_name,
-        },
-    )
+        raise ValueError("Tidak ada observasi valid")
+    dates = sorted({r["target_date"] for r in rows})
+    for date in dates:
+        write_observation_rows(parse_iso_date(date), [r for r in rows if r["target_date"] == date])
+    write_json(os.path.join(report_dir(), "import_observations_summary.json"), {"source_file": args.observations_csv, "rows_imported": len(rows), "dates": dates, "observation_policy": "variable-level quality precedence; legacy rows remain unclassified"})
     return rows
 
 
@@ -2436,21 +2126,13 @@ def cleanup_to_max_size_mb(directory_path, max_mb):
 
 
 def cleanup_old_outputs(args):
-    total_deleted = 0
-    for folder_name in (
-        RAW_PAYLOAD_DIRNAME,
-        LOG_DIRNAME,
-        OBSERVATION_DIRNAME,
-        REPORT_DIRNAME,
-    ):
-        folder_path = path_output(folder_name)
-        total_deleted += cleanup_old_files_in_directory(
-            path_output(folder_name), args.retention_days
-        )
-        total_deleted += cleanup_to_max_size_mb(folder_path, args.retention_max_mb)
-    if total_deleted:
-        log_info("Cleanup menghapus", total_deleted, "file lama")
-    return total_deleted
+    # Forecast issues and observations are audit/training records, not cache.
+    deleted = 0
+    for folder in (RAW_PAYLOAD_DIRNAME, LOG_DIRNAME, REPORT_DIRNAME):
+        directory = path_output(folder)
+        deleted += cleanup_old_files_in_directory(directory, args.retention_days)
+        deleted += cleanup_to_max_size_mb(directory, args.retention_max_mb)
+    return deleted
 
 
 def category_match_score(predicted, observed):
@@ -2477,209 +2159,68 @@ def absolute_error(left, right):
 
 
 def evaluate_historical_performance(args):
-    observation_index = load_observation_index()
-    if not observation_index:
-        raise ValueError("observations.csv belum ada. Jalankan mode sync-observations dulu.")
-
-    if args.end_date:
-        end_date = parse_iso_date(args.end_date)
-    else:
-        end_date = now_local(args.timezone).date() - timedelta(days=1)
+    cases = _quality_training_cases(args)
     if args.start_date:
-        start_date = parse_iso_date(args.start_date)
-    else:
-        start_date = end_date - timedelta(days=args.lookback_days - 1)
-    if start_date > end_date:
-        raise ValueError("start_date tidak boleh lebih besar dari end_date")
-
-    detail_rows = []
-    per_source = {}
-
-    for target_date in iter_dates(start_date, end_date):
-        forecast_path = forecast_file_for_date(target_date)
-        if not os.path.exists(forecast_path):
-            continue
-        for row in read_dict_csv(forecast_path):
-            key = (target_date.isoformat(), row.get("target_jam"))
-            observed = observation_index.get(key)
-            if not observed:
-                continue
-
-            source_id = row.get("source_id")
-            temp_error = absolute_error(
-                safe_float(row.get("suhu_C")),
-                safe_float(observed.get("temp_c")),
-            )
-            rh_error = absolute_error(
-                safe_float(row.get("RH_%")),
-                safe_float(observed.get("rh_pct")),
-            )
-            # BMKG rain_mm is a proxy derived from category; do not penalize on rain magnitude.
-            if source_id == "BMKG":
-                rain_error = None
+        cases = [c for c in cases if c["date"] >= args.start_date]
+    if args.end_date:
+        cases = [c for c in cases if c["date"] <= args.end_date]
+    scopes = {"all": cases}
+    for c in cases:
+        context = _quality_context(c["valid"], c["issued"])
+        for key, value in context.items():
+            scopes.setdefault(key + ":" + value, []).append(c)
+    previous = read_json(path_output("quality_skill_config.json"), {}) or {}
+    if previous.get("location_slug") != args.location_slug:
+        previous = {}
+    variables = json.loads(json.dumps(previous.get("variables") or {}))
+    evaluation = {}
+    accepted_new = 0
+    for scope, subset in scopes.items():
+        sections, evidence = _quality_fit_scope(subset, args)
+        evaluation[scope] = evidence
+        for variable, section in sections.items():
+            incumbent = ((previous.get("variables") or {}).get(variable) or {}).get(scope)
+            holdout = [c for c in subset if c["date"] >= section.get("holdout_start", "9999")]
+            replace = True
+            if incumbent and incumbent.get("accepted"):
+                if variable in {"temp_c", "rh_pct", "rain_mm", "wind_kmh"}:
+                    old_error = _quality_mean_error(holdout, variable, incumbent.get("multipliers"))
+                    new_error = _quality_mean_error(holdout, variable, section.get("multipliers"))
+                elif variable in {"temp_bias", "rh_bias"}:
+                    field = "temp_c" if variable == "temp_bias" else "rh_pct"
+                    selected_weights = ((variables.get(field) or {}).get(scope) or {}).get("multipliers")
+                    old_error = _quality_mean_error(holdout, field, selected_weights, incumbent.get("bias", 0))
+                    new_error = _quality_mean_error(holdout, field, selected_weights, section.get("bias", 0))
+                else:
+                    old_errors, new_errors = [], []
+                    for case in holdout:
+                        probability = _lg_prob(case["row"].get("prob_rain_raw", case["row"].get("prob_rain")))
+                        event = sentinel_observed_rain_event(case["obs"])
+                        if probability is not None and event is not None:
+                            old_errors.append((_quality_map_probability(probability, incumbent.get("mapping", [])) / 100 - int(event)) ** 2)
+                            new_errors.append((_quality_map_probability(probability, section.get("mapping", [])) / 100 - int(event)) ** 2)
+                    old_error = sum(old_errors) / len(old_errors) if old_errors else None
+                    new_error = sum(new_errors) / len(new_errors) if new_errors else None
+                replace = old_error is not None and new_error is not None and new_error < old_error - 1e-9
+                section["incumbent_holdout_error"] = old_error
+                section["new_holdout_error"] = new_error
+            if replace:
+                variables.setdefault(variable, {})[scope] = section
+                accepted_new += 1
             else:
-                rain_error = absolute_error(
-                    safe_float(row.get("rain_mm")),
-                    safe_float(observed.get("rain_mm")),
-                )
-            category_score = category_match_score(row.get("kategori"), observed.get("category"))
-
-            temp_score = metric_score(temp_error, 8)
-            rh_score = metric_score(rh_error, 1.5)
-            rain_score = metric_score(rain_error, 20)
-            components = [
-                ("temp", temp_score, 0.35),
-                ("rh", rh_score, 0.20),
-                ("rain", rain_score, 0.20 if rain_error is not None else 0.0),
-                ("category", category_score, 0.25),
-            ]
-            total_w = sum(w for _name, _score, w in components if w > 0)
-            overall_score = (
-                round(sum(score * w for _name, score, w in components if w > 0) / total_w, 2)
-                if total_w > 0
-                else 0.0
-            )
-
-            detail_rows.append(
-                {
-                    "target_date": target_date.isoformat(),
-                    "source_id": source_id,
-                    "jam": row.get("target_jam"),
-                    "temp_error": round_or_blank(temp_error),
-                    "rh_error": round_or_blank(rh_error),
-                    "rain_error": round_or_blank(rain_error),
-                    "category_score": category_score,
-                    "overall_score": overall_score,
-                }
-            )
-
-            bucket = per_source.setdefault(
-                source_id,
-                {
-                    "scores": [],
-                    "temp_errors": [],
-                    "rh_errors": [],
-                    "rain_errors": [],
-                    "category_scores": [],
-                    "count": 0,
-                },
-            )
-            bucket["scores"].append(overall_score)
-            if temp_error is not None:
-                bucket["temp_errors"].append(temp_error)
-            if rh_error is not None:
-                bucket["rh_errors"].append(rh_error)
-            if rain_error is not None:
-                bucket["rain_errors"].append(rain_error)
-            bucket["category_scores"].append(category_score)
-            bucket["count"] += 1
-
-    source_score_rows = []
-    derived_weights = dict(SOURCE_BASE_WEIGHTS)
-    for source_id, metrics in sorted(per_source.items()):
-        avg_score = sum(metrics["scores"]) / len(metrics["scores"])
-        avg_temp_error = (
-            sum(metrics["temp_errors"]) / len(metrics["temp_errors"])
-            if metrics["temp_errors"]
-            else None
-        )
-        avg_rh_error = (
-            sum(metrics["rh_errors"]) / len(metrics["rh_errors"])
-            if metrics["rh_errors"]
-            else None
-        )
-        avg_rain_error = (
-            sum(metrics["rain_errors"]) / len(metrics["rain_errors"])
-            if metrics["rain_errors"]
-            else None
-        )
-        avg_category_score = sum(metrics["category_scores"]) / len(metrics["category_scores"])
-        multiplier = clamp(0.7 + (avg_score / 100.0) * 0.8, 0.7, 1.5)
-        derived_weights[source_id] = round(source_base_weight(source_id) * multiplier, 4)
-        source_score_rows.append(
-            {
-                "source_id": source_id,
-                "samples": metrics["count"],
-                "avg_overall_score": round(avg_score, 2),
-                "avg_temp_error": round_or_blank(avg_temp_error),
-                "avg_rh_error": round_or_blank(avg_rh_error),
-                "avg_rain_error": round_or_blank(avg_rain_error),
-                "avg_category_score": round(avg_category_score, 2),
-                "base_weight": source_base_weight(source_id),
-                "derived_weight": derived_weights[source_id],
-            }
-        )
-
-    source_scores_path = os.path.join(report_dir(), "source_scores.csv")
-    details_path = os.path.join(report_dir(), "evaluation_details.csv")
-    summary_path = os.path.join(report_dir(), "evaluation_summary.json")
-    write_dict_csv(
-        source_scores_path,
-        [
-            "source_id",
-            "samples",
-            "avg_overall_score",
-            "avg_temp_error",
-            "avg_rh_error",
-            "avg_rain_error",
-            "avg_category_score",
-            "base_weight",
-            "derived_weight",
-        ],
-        source_score_rows,
-    )
-    write_dict_csv(
-        details_path,
-        [
-            "target_date",
-            "source_id",
-            "jam",
-            "temp_error",
-            "rh_error",
-            "rain_error",
-            "category_score",
-            "overall_score",
-        ],
-        detail_rows,
-    )
-    summary_payload = {
-        "generated_at": now_local(args.timezone).isoformat(),
-        "location_slug": args.location_slug,
-        "location_name": args.location_name,
-        "date_range": {
-            "start_date": start_date.isoformat(),
-            "end_date": end_date.isoformat(),
-        },
-        "files": {
-            "source_scores": source_scores_path,
-            "details": details_path,
-        },
-        "evaluated_sources": len(source_score_rows),
-        "evaluated_rows": len(detail_rows),
-        "status": "ok" if detail_rows else "no_data",
-    }
-    write_json(summary_path, summary_payload)
-
-    if args.freeze_weights:
-        log_info("freeze-weights aktif: tidak menyimpan source_weights.json dari evaluasi.")
-    else:
-        save_weight_config(
-            derived_weights,
-            {
-                "date_range": summary_payload["date_range"],
-                "evaluated_sources": len(source_score_rows),
-                "evaluated_rows": len(detail_rows),
-            },
-        )
-    load_weight_config()
-    if not detail_rows:
-        log_warning("Tidak ada pasangan forecast-observasi yang bisa dievaluasi pada rentang ini.")
-    return {
-        "source_score_rows": source_score_rows,
-        "detail_rows": detail_rows,
-        "summary_path": summary_path,
-        "weights_path": path_output(WEIGHTS_FILENAME),
-    }
+                section["rejected_against_incumbent"] = True
+    config = {"schema_version": QUALITY_SCHEMA, "location_slug": args.location_slug, "fitted_at": now_local(args.timezone).isoformat(),
+              "variables": variables, "training_policy": "chronological 70/30 split by date; shrinkage; accepted only on holdout improvement", "model_families": _SOURCE_FAMILIES}
+    summary = {"samples": len(cases), "accepted_sections": accepted_new, "retained_sections": sum(len(v) for v in variables.values()), "scopes": evaluation,
+               "status": "accepted_improvements" if accepted_new else "insufficient_data_or_no_holdout_improvement"}
+    summary_path = os.path.join(report_dir(), "quality_learning_evaluation.json")
+    write_json(summary_path, summary)
+    config_path = path_output("quality_skill_config.json")
+    if accepted_new and not args.freeze_weights:
+        write_json(config_path, config)
+    # No reset to arbitrary weights when data is absent or a candidate is worse.
+    return {"source_score_rows": [{"variable": variable, "accepted_scopes": len(v)} for variable, v in variables.items()], "detail_rows": cases,
+            "summary_path": summary_path, "weights_path": config_path, "learning_status": summary["status"]}
 
 
 def collect_all_sources(target_date, args):
@@ -2787,6 +2328,7 @@ def build_bmkg_rows(results, target_date):
 
 
 def build_ensemble_rows(points):
+    _quality_set_families(points)
     grouped = {jam: [] for jam in TARGET_TIMES}
     for point in points:
         grouped.setdefault(point.target_time, []).append(point)
@@ -2808,18 +2350,18 @@ def build_ensemble_rows(points):
             category_weights[point.category] = category_weights.get(point.category, 0.0) + weight
             weighted_total += weight
             if point.temp_c is not None:
-                temp_values.append((point.temp_c, weight))
+                temp_values.append((point.temp_c, point_variable_weight(point,"temp_c")))
             if point.rh_pct is not None:
-                rh_values.append((point.rh_pct, weight))
+                rh_values.append((point.rh_pct, point_variable_weight(point,"rh_pct")))
             if point.rain_mm is not None:
-                rain_values.append((point.rain_mm, weight))
+                rain_values.append((point.rain_mm, point_variable_weight(point,"rain_mm")))
             hi = heat_index(point.temp_c, point.rh_pct)
             if hi is not None:
                 hi_values.append((hi, weight))
 
         temp_values = filter_weighted_pairs(temp_values)
         rh_values = filter_weighted_pairs(rh_values)
-        rain_values = filter_weighted_pairs(rain_values)
+        # Retain valid extreme rainfall; disagreement is uncertainty, not a reason to delete it.
         hi_values = filter_weighted_pairs(hi_values)
 
         probs = {
@@ -3121,7 +2663,7 @@ def save_outputs(target_date, results, args):
         "output_dir": ACTIVE_OUTPUT_DIR,
         "retention_days": args.retention_days,
         "low_coverage_slots": low_coverage_slots,
-        "run_status": "warning" if low_coverage_slots else "ok",
+        "run_status": "error" if not any(r.success for r in results) else "warning" if low_coverage_slots or any(r.is_cached for r in results) else "ok",
         "sentinel_x": sentinel_payload,
     }
     write_json(path_output("run_summary.json"), summary)
@@ -3280,6 +2822,8 @@ def prepare_location_context(args):
 
 
 def run_once(args):
+    global _RUN_ISSUED_AT
+    _RUN_ISSUED_AT = now_local(args.timezone)
     if args.target_date:
         target_date = parse_iso_date(args.target_date)
     else:
@@ -3302,6 +2846,7 @@ def run_once(args):
 
     load_weight_config()
     load_health_config()
+    _quality_load_skill(args)
     log_info("Mulai proses untuk lokasi", args.location_name)
     log_info("Target date:", target_date.isoformat())
     log_info("Target hours:", ", ".join(TARGET_TIMES))
@@ -4263,12 +3808,7 @@ def aether_connect_db():
 
 
 def aether_value(value):
-    if value in (None, ""):
-        return None
-    try:
-        return float(value)
-    except Exception:
-        return None
+    return safe_float(value)
 
 
 def aether_round(value, digits=2):
@@ -4308,12 +3848,7 @@ def aether_weighted_mean(weighted_pairs):
 
 
 def aether_get_weighted_attr(bucket, attr):
-    pairs = []
-    for point in bucket:
-        value = getattr(point, attr, None)
-        if value is not None:
-            pairs.append((value, point_weight(point)))
-    return pairs
+    return [(safe_float(getattr(p, attr, None)), point_variable_weight(p, attr)) for p in bucket if safe_float(getattr(p, attr, None)) is not None]
 
 
 def aether_category_cloud_proxy(category):
@@ -4344,32 +3879,13 @@ def aether_microclimate_profile(args):
 
 
 def aether_microclimate_adjustment(profile, hour, temp_c, rh_pct):
-    temp_adj = 0.0
-    rh_adj = 0.0
-    fog_bonus = 0.0
-    if profile == "valley_highland":
-        if 0 <= hour <= 7:
-            temp_adj -= 0.5
-            rh_adj += 4.0
-            fog_bonus += 8.0
-        elif 12 <= hour <= 16:
-            temp_adj += 0.2
-    elif profile == "urban_highland":
-        if 18 <= hour <= 23 or 0 <= hour <= 4:
-            temp_adj += 0.3
-        if 12 <= hour <= 17:
-            rh_adj -= 1.0
-    elif profile == "lowland_agriculture":
-        if 12 <= hour <= 16:
-            temp_adj += 0.4
-        if 4 <= hour <= 7:
-            rh_adj += 2.0
-    elif profile == "coastal":
-        if 10 <= hour <= 17:
-            rh_adj += 2.0
-    adjusted_temp = None if temp_c is None else round(float(temp_c) + temp_adj, 2)
-    adjusted_rh = None if rh_pct is None else round(clamp(float(rh_pct) + rh_adj, 0, 100), 2)
-    return adjusted_temp, adjusted_rh, round(fog_bonus, 2), round(temp_adj, 2), round(rh_adj, 2)
+    valid = _QUALITY_TARGET_DT
+    temp_bias = rh_bias = 0
+    if valid is not None:
+        temp_bias = safe_float(_quality_skill_section("temp_bias", valid, _RUN_ISSUED_AT).get("bias")) or 0
+        rh_bias = safe_float(_quality_skill_section("rh_bias", valid, _RUN_ISSUED_AT).get("bias")) or 0
+    return (temp_c + temp_bias if temp_c is not None else None,
+            clamp(rh_pct + rh_bias, 0, 100) if rh_pct is not None else None, 0, temp_bias, rh_bias)
 
 
 def aether_target_datetime(target_date, jam, tz_name):
@@ -4377,12 +3893,8 @@ def aether_target_datetime(target_date, jam, tz_name):
 
 
 def aether_lead_hours(target_date, jam, args):
-    try:
-        target_dt = aether_target_datetime(target_date, jam, args.timezone)
-        lead = (target_dt - now_local(args.timezone)).total_seconds() / 3600.0
-        return round(max(0.0, lead), 2)
-    except Exception:
-        return None
+    valid = aether_target_datetime(target_date, jam, args.timezone)
+    return round(max(0, (valid - _quality_issued(args)).total_seconds()/3600), 2)
 
 
 def aether_lead_bucket(lead_hours):
@@ -4402,46 +3914,9 @@ def aether_lead_bucket(lead_hours):
 
 
 def aether_analog_probability(target_date, jam, args, temp_p50, rh_p50, model_prob_rain):
-    candidates = []
-    observed_paths = [observation_master_file(), path_output(AETHER_FEEDBACK_FILENAME)]
-    target_month = target_date.month
-    target_hour = int(jam.split(":")[0]) if jam and ":" in jam else 0
-    for path in observed_paths:
-        if not os.path.exists(path):
-            continue
-        for row in read_dict_csv(path):
-            row_jam = row.get("jam") or row.get("time") or row.get("target_jam") or ""
-            if row_jam[:2] != f"{target_hour:02d}":
-                continue
-            tanggal = row.get("tanggal") or row.get("target_date") or row.get("date") or ""
-            try:
-                if "-" in tanggal and len(tanggal) == 10 and tanggal[4] == "-":
-                    row_month = parse_iso_date(tanggal).month
-                elif "-" in tanggal:
-                    row_month = parse_display_date(tanggal).month
-                else:
-                    row_month = target_month
-            except Exception:
-                row_month = target_month
-            temp = aether_value(row.get("temp_c") or row.get("observed_temp_c"))
-            rh = aether_value(row.get("rh_pct"))
-            rain = aether_value(row.get("rain_mm") or row.get("observed_rain_mm"))
-            cat = row.get("category") or row.get("observed_category") or ""
-            obs_rain = 1 if (rain is not None and rain > 0) or ("hujan" in cat.lower()) else 0
-            month_distance = min(abs(row_month - target_month), 12 - abs(row_month - target_month))
-            dist = month_distance * 2.5
-            if temp is not None and temp_p50 is not None:
-                dist += abs(temp - temp_p50) * 1.2
-            if rh is not None and rh_p50 is not None:
-                dist += abs(rh - rh_p50) * 0.25
-            candidates.append((dist, obs_rain))
-    if len(candidates) < 5:
-        return None, len(candidates)
-    candidates.sort(key=lambda item: item[0])
-    selected = candidates[: min(50, len(candidates))]
-    analog = sum(v for _, v in selected) / len(selected) * 100.0
-    blended = analog if model_prob_rain is None else 0.75 * float(model_prob_rain) + 0.25 * analog
-    return round(blended, 1), len(selected)
+    # Calibrators are trained from immutable pre-event predictions, not from
+    # observations selected using realised temperature/RH after the event.
+    return None, 0
 
 
 def aether_risk_label(score):
@@ -4516,29 +3991,14 @@ def aether_source_state_rows(results):
 
 
 def aether_feedback_for_location(args):
-    target_date = args.feedback_date or args.target_date or now_local(args.timezone).date().isoformat()
-    jam = args.feedback_time or ""
-    if not jam:
-        raise ValueError("Mode feedback membutuhkan --feedback-time HH:MM")
-    row = {
-        "created_at": now_local(args.timezone).isoformat(),
-        "location_slug": getattr(args, "location_slug", ""),
-        "target_date": target_date,
-        "jam": jam,
-        "observed_category": args.feedback_category or "",
-        "observed_rain_mm": args.feedback_rain_mm if args.feedback_rain_mm is not None else "",
-        "observed_temp_c": args.feedback_temp_c if args.feedback_temp_c is not None else "",
-        "note": args.feedback_note or "",
-    }
-    existing = read_dict_csv(path_output(AETHER_FEEDBACK_FILENAME)) if os.path.exists(path_output(AETHER_FEEDBACK_FILENAME)) else []
-    rows = existing + [row]
-    write_dict_csv(path_output(AETHER_FEEDBACK_FILENAME), list(row.keys()), rows)
-    try:
-        conn = aether_connect_db(); aether_init_db(conn)
-        conn.execute("INSERT INTO feedback(created_at,location_slug,target_date,jam,observed_category,observed_rain_mm,observed_temp_c,note) VALUES (?,?,?,?,?,?,?,?)", (row["created_at"], row["location_slug"], row["target_date"], row["jam"], row["observed_category"], aether_value(row["observed_rain_mm"]), aether_value(row["observed_temp_c"]), row["note"]))
-        conn.commit(); conn.close()
-    except Exception as exc:
-        log_warning("Gagal simpan feedback ke SQLite:", exc)
+    row = normalize_observation_row({"target_date": args.feedback_date or args.target_date or now_local(args.timezone).date().isoformat(), "jam": args.feedback_time,
+         "category": args.feedback_category or "", "rain_mm": args.feedback_rain_mm, "temp_c": args.feedback_temp_c,
+         "observation_type": "manual_observation", "source_id": "manual_feedback", "available_at": now_local(args.timezone).isoformat(), "note": args.feedback_note or ""})
+    if not row or all(row.get(field) in (None, "") for field in _OBS_FIELDS):
+        raise ValueError("Feedback membutuhkan tanggal, jam, dan minimal satu nilai observasi valid")
+    existing = read_dict_csv(path_output(AETHER_FEEDBACK_FILENAME))
+    write_dict_csv(path_output(AETHER_FEEDBACK_FILENAME), rows=existing + [row])
+    write_observation_rows(parse_iso_date(row["target_date"]), [row])
     return row
 
 # AETHER SENTINEL X — Risk, Scenario, Failure & Decision Intelligence Override
@@ -4817,6 +4277,7 @@ def sentinel_build_explanation(row):
 
 
 def aether_build_rows(points, ensemble_rows, target_date, args):
+    global _QUALITY_TARGET_DT
     grouped = {jam: [] for jam in TARGET_TIMES}
     for point in points:
         grouped.setdefault(point.target_time, []).append(point)
@@ -4825,6 +4286,7 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
     personality = sentinel_location_personality(args)
     rows = []
     for jam in TARGET_TIMES:
+        _QUALITY_TARGET_DT = parse_local_hour_string(target_date, jam, args.timezone)
         bucket = grouped.get(jam) or []
         ens = ensemble_by_jam.get(jam)
         hour = int(jam.split(":")[0]) if jam and ":" in jam else 0
@@ -4835,10 +4297,10 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
         expected_sources = max(len(ACTIVE_SOURCE_CONFIGS), 1)
         coverage_fraction = round(sources_used / expected_sources, 4) if expected_sources else 0
 
-        temp_pairs = [(p.temp_c, w) for p, w in weights if p.temp_c is not None]
-        rh_pairs = [(p.rh_pct, w) for p, w in weights if p.rh_pct is not None]
-        rain_pairs = [(p.rain_mm, w) for p, w in weights if p.rain_mm is not None]
-        wind_pairs = [(p.wind_kmh, w) for p, w in weights if p.wind_kmh is not None]
+        temp_pairs = [(p.temp_c, point_variable_weight(p, "temp_c")) for p, w in weights if p.temp_c is not None]
+        rh_pairs = [(p.rh_pct, point_variable_weight(p, "rh_pct")) for p, w in weights if p.rh_pct is not None]
+        rain_pairs = [(p.rain_mm, point_variable_weight(p, "rain_mm")) for p, w in weights if p.rain_mm is not None]
+        wind_pairs = [(p.wind_kmh, point_variable_weight(p, "wind_kmh")) for p, w in weights if p.wind_kmh is not None]
         gust_pairs = aether_get_weighted_attr(bucket, "wind_gusts_kmh")
         hi_pairs = [(heat_index(p.temp_c, p.rh_pct), w) for p, w in weights if heat_index(p.temp_c, p.rh_pct) is not None]
         cloud_pairs = aether_get_weighted_attr(bucket, "cloud_cover_pct")
@@ -4848,8 +4310,10 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
 
         category_weights = {}
         for p, w in weights:
-            category_weights[p.category] = category_weights.get(p.category, 0.0) + w
-        category_probs = {cat: (category_weights.get(cat, 0.0) / weight_total * 100.0 if weight_total else 0.0) for cat in CUACA_ORDER}
+            if p.category in CUACA_ORDER:
+                category_weights[p.category] = category_weights.get(p.category, 0.0) + w
+        category_total = sum(category_weights.values())
+        category_probs = {cat: (category_weights.get(cat, 0.0) / category_total * 100.0 if category_total else 0.0) for cat in CUACA_ORDER}
         dominant = max(category_weights, key=category_weights.get) if category_weights else ""
         dominant_prob = category_probs.get(dominant, 0.0) if dominant else 0.0
         category_disagreement = round(100.0 - dominant_prob, 2) if bucket else 100.0
@@ -4858,7 +4322,7 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
         prob_heavy_cat = category_probs.get("Hujan Lebat", 0.0)
         prob_mod_heavy_cat = sum(category_probs.get(cat, 0.0) for cat in ("Hujan Sedang", "Hujan Lebat"))
         precip_prob_mean = aether_weighted_mean(precip_prob_pairs)
-        prob_rain = prob_rain_cat if precip_prob_mean is None else 0.62 * prob_rain_cat + 0.38 * precip_prob_mean
+        prob_rain = (prob_rain_cat if category_total else None) if precip_prob_mean is None else (0.62 * prob_rain_cat + 0.38 * precip_prob_mean if category_total else precip_prob_mean)
         rain_heavy_signal = 0.0
         rain_mod_signal = 0.0
         if weight_total:
@@ -4883,8 +4347,11 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
         analog_prob, analog_n = aether_analog_probability(target_date, jam, args, temp_p50, rh_p50, prob_rain)
         if analog_prob is not None:
             prob_rain = analog_prob
+        prob_rain_raw = prob_rain
+        prob_rain = _quality_apply_probability(prob_rain, _QUALITY_TARGET_DT)
         temp_micro, rh_micro, fog_bonus, temp_adj, rh_adj = aether_microclimate_adjustment(micro_profile, hour, temp_p50, rh_p50)
 
+        hi_p50 = heat_index(temp_micro, rh_micro)
         confidence_score = aether_value(ens[6]) if ens else None
         source_health_values = [source_health_factor(p.source_id) for p in bucket]
         source_health_mean = round(sum(source_health_values) / len(source_health_values), 4) if source_health_values else None
@@ -4936,6 +4403,7 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
             route = "sentinel_probabilistic_risk_route"
 
         row = {
+            "prob_rain_raw": prob_rain_raw,
             "target_date": target_date.isoformat(),
             "jam": jam,
             "target_datetime": aether_target_datetime(target_date, jam, args.timezone).isoformat(),
@@ -5009,46 +4477,11 @@ def sentinel_daily_status(statuses):
     return "GREEN"
 
 
-def aether_daily_summary(aether_rows, args):
-    if not aether_rows:
-        return {"generated_at": now_local(args.timezone).isoformat(), "daily_operational_status": "BLACK", "summary_text": "Tidak ada forecast yang dapat diproses."}
-    def max_row(field):
-        return max(aether_rows, key=lambda r: aether_value(r.get(field)) or -1)
-    peak_rain = max_row("rain_threat_score")
-    peak_heavy = max_row("heavy_rain_threat_score")
-    peak_failure = max_row("forecast_failure_risk")
-    peak_stress = max_row("forecast_stress_index")
-    peak_doubt = max_row("self_doubt_score")
-    statuses = [r.get("operational_status", "") for r in aether_rows]
-    modes = {}
-    for r in aether_rows:
-        modes[r.get("atmospheric_mode", "UNKNOWN")] = modes.get(r.get("atmospheric_mode", "UNKNOWN"), 0) + 1
-    dominant_mode = max(modes, key=modes.get) if modes else "UNKNOWN"
-    risk_window = sentinel_risk_window(aether_rows, "rain_threat_score", 55)
-    best_window = sentinel_best_window(aether_rows)
-    daily = {
-        "generated_at": now_local(args.timezone).isoformat(),
-        "aether_version": AETHER_VERSION,
-        "location": getattr(args, "location_name", ""),
-        "mission": getattr(args, "mission", "safety_first"),
-        "daily_operational_status": sentinel_daily_status(statuses),
-        "dominant_atmospheric_mode": dominant_mode,
-        "location_personality": sentinel_location_personality(args),
-        "risk_window": risk_window,
-        "best_general_activity_window": best_window,
-        "peak_rain_threat_hour": peak_rain.get("jam"),
-        "peak_rain_threat_score": peak_rain.get("rain_threat_score"),
-        "peak_heavy_rain_threat_hour": peak_heavy.get("jam"),
-        "peak_heavy_rain_threat_score": peak_heavy.get("heavy_rain_threat_score"),
-        "peak_failure_risk_hour": peak_failure.get("jam"),
-        "peak_failure_risk_score": peak_failure.get("forecast_failure_risk"),
-        "peak_forecast_stress_hour": peak_stress.get("jam"),
-        "peak_forecast_stress_score": peak_stress.get("forecast_stress_index"),
-        "peak_self_doubt_hour": peak_doubt.get("jam"),
-        "peak_self_doubt_score": peak_doubt.get("self_doubt_score"),
-    }
-    daily["summary_text"] = sentinel_daily_narrative(aether_rows, daily, args)
-    return daily
+def aether_daily_summary(rows, args):
+    date = rows[0]['target_date'] if rows else now_local(args.timezone).date().isoformat()
+    day = _lg_norm_day({'date':date,'hours':[{**r, 'hour':r.get('jam'), 'rain_probability':r.get('prob_rain'),'temp_c':_quality_first(r,'temp_micro_p50','temp_p50'), 'humidity_pct':_quality_first(r,'rh_micro_p50','rh_p50'), 'heat_index_c':r.get('heat_index_p50'), 'wind_kmh':r.get('wind_p50'),'rain_risk_score':r.get('rain_threat_score')} for r in rows]},0,args.location_name,args)
+    peak = max((r for r in rows if r.get('data_quality') != 'unavailable'),key=lambda r:safe_float(r.get('rain_threat_score')) or 0,default={})
+    return {'generated_at':_quality_issued(args).isoformat(),'issued_at':_quality_issued(args).isoformat(),'aether_version':QUALITY_VERSION,'location':args.location_name,'mission':getattr(args,'mission','safety_first'),'daily_operational_status':sentinel_daily_status([r.get('operational_status','BLACK') for r in rows]) if rows else 'BLACK','data_quality':day['data_quality'],'best_general_activity_window':day['best_activity_window'],'peak_rain_threat_hour':peak.get('jam'),'peak_rain_threat_score':peak.get('rain_threat_score'),'peak_heavy_rain_threat_hour':peak.get('jam'),'peak_heavy_rain_threat_score':peak.get('heavy_rain_threat_score'),'summary_text':day['decision_sentence'],'risk_window':[], 'location_personality':sentinel_location_personality(args),'dominant_atmospheric_mode':'UNAVAILABLE' if day['data_quality']=='unavailable' else peak.get('atmospheric_mode','UNKNOWN')}
 
 
 def sentinel_risk_window(rows, field, threshold):
@@ -5059,16 +4492,8 @@ def sentinel_risk_window(rows, field, threshold):
 
 
 def sentinel_best_window(rows):
-    scored = []
-    for r in rows:
-        hour = int(str(r.get("jam", "00:00")).split(":")[0])
-        if 6 <= hour <= 18:
-            score = min(aether_value(r.get("walking_score")) or 0, aether_value(r.get("fieldwork_score")) or 0, aether_value(r.get("outdoor_event_score")) or 0)
-            scored.append((score, r.get("jam")))
-    if not scored:
-        return "Tidak cukup data"
-    scored.sort(reverse=True)
-    return scored[0][1]
+    normalized = [_lg_norm_hour({**r, 'hour':r.get('jam'), 'rain_probability':r.get('prob_rain'), 'temp_c':_quality_first(r,'temp_micro_p50','temp_p50'), 'humidity_pct':_quality_first(r,'rh_micro_p50','rh_p50'), 'heat_index_c':r.get('heat_index_p50'), 'wind_kmh':r.get('wind_p50'), 'rain_risk_score':r.get('rain_threat_score')}) for r in rows or []]
+    return _lg_best_window(normalized)
 
 
 def sentinel_daily_narrative(rows, daily, args):
@@ -5532,104 +4957,88 @@ def sentinel_obs_date_to_iso(text):
 
 
 def sentinel_observed_rain_event(row):
-    rain = aether_value(row.get("rain_mm") or row.get("observed_rain_mm"))
-    cat = (row.get("category") or row.get("observed_category") or "").lower()
+    rain = _quality_observed_value(row, "rain_mm")
     if rain is not None:
         return rain > 0.1
-    return "hujan" in cat
+    cat = str(_quality_observed_value(row, "category") or "").lower()
+    if "hujan" in cat or "gerimis" in cat:
+        return True
+    if cat in {"cerah", "cerah berawan", "berawan", "kabut", "udara kabur"}:
+        return False
+    return None
 
 
 def sentinel_load_observations_by_key(args=None):
-    obs = {}
-    paths = []
-    try:
-        paths.append(observation_master_file())
-        paths.append(path_output(AETHER_FEEDBACK_FILENAME))
-    except Exception:
-        pass
-    for path in paths:
-        if not path or not os.path.exists(path):
-            continue
-        for row in read_dict_csv(path):
-            date = sentinel_obs_date_to_iso(row.get("target_date") or row.get("date") or row.get("tanggal"))
-            jam = (row.get("jam") or row.get("time") or row.get("target_time") or "")[:5]
-            if not date or not jam:
-                continue
-            obs[(date, jam)] = row
-    return obs
+    index = {}
+    for path in (observation_master_file(), path_output(AETHER_FEEDBACK_FILENAME)):
+        for raw in read_dict_csv(path):
+            row = normalize_observation_row(raw)
+            if row:
+                key = (row["target_date"], row["jam"])
+                index[key] = _quality_merge_observation(index.get(key), row)
+    return index
 
 
 def sentinel_compute_verification(rows, args):
     observations = sentinel_load_observations_by_key(args)
+    selected = _quality_forecast_pairs(rows, observations, args)
     pairs = []
-    reliability_bins = {f"{i:02d}-{i+10:02d}": {"n": 0, "observed_rain": 0, "prob_sum": 0.0} for i in range(0, 100, 10)}
-    for row in rows or []:
-        key = (row.get("target_date"), (row.get("jam") or "")[:5])
-        obs = observations.get(key)
-        if not obs:
-            continue
-        pred_temp = aether_value(row.get("temp_micro_p50") or row.get("temp_p50"))
-        obs_temp = aether_value(obs.get("temp_c") or obs.get("observed_temp_c"))
-        prob_rain = aether_value(row.get("prob_rain"))
-        obs_rain = 1 if sentinel_observed_rain_event(obs) else 0
-        pred_cat = (row.get("dominant_category") or "").strip()
-        obs_cat = (obs.get("category") or obs.get("observed_category") or "").strip()
-        pred_event = 1 if (prob_rain is not None and prob_rain >= 50) or ("Hujan" in pred_cat) else 0
-        brier = None if prob_rain is None else ((prob_rain / 100.0) - obs_rain) ** 2
-        temp_abs = None if pred_temp is None or obs_temp is None else abs(pred_temp - obs_temp)
-        cat_match = None if not pred_cat or not obs_cat else int(pred_cat == obs_cat)
-        pairs.append({
-            "target_date": key[0], "jam": key[1], "pred_prob_rain": prob_rain if prob_rain is not None else "",
-            "observed_rain": obs_rain, "pred_rain_event": pred_event, "brier": brier,
-            "pred_temp": pred_temp if pred_temp is not None else "", "observed_temp": obs_temp if obs_temp is not None else "", "temp_abs_error": temp_abs,
-            "pred_category": pred_cat, "observed_category": obs_cat, "category_match": cat_match if cat_match is not None else "",
-        })
-        if prob_rain is not None:
-            b0 = int(min(90, max(0, math.floor(prob_rain / 10) * 10)))
-            label = f"{b0:02d}-{b0+10:02d}"
-            reliability_bins[label]["n"] += 1
-            reliability_bins[label]["observed_rain"] += obs_rain
-            reliability_bins[label]["prob_sum"] += prob_rain
-    n = len(pairs)
-    hits = sum(1 for p in pairs if p["pred_rain_event"] == 1 and p["observed_rain"] == 1)
-    false_alarms = sum(1 for p in pairs if p["pred_rain_event"] == 1 and p["observed_rain"] == 0)
-    misses = sum(1 for p in pairs if p["pred_rain_event"] == 0 and p["observed_rain"] == 1)
-    correct_negatives = sum(1 for p in pairs if p["pred_rain_event"] == 0 and p["observed_rain"] == 0)
-    briers = [p["brier"] for p in pairs if p.get("brier") is not None]
-    temps = [p["temp_abs_error"] for p in pairs if p.get("temp_abs_error") is not None]
-    cats = [p["category_match"] for p in pairs if p.get("category_match") != ""]
-    pod = None if hits + misses == 0 else hits / (hits + misses)
-    far = None if hits + false_alarms == 0 else false_alarms / (hits + false_alarms)
-    csi = None if hits + misses + false_alarms == 0 else hits / (hits + misses + false_alarms)
-    summary = {
-        "generated_at": now_local(getattr(args, "timezone", DEFAULT_TIMEZONE)).isoformat(),
-        "location_slug": getattr(args, "location_slug", ""),
-        "location_name": getattr(args, "location_name", ""),
-        "matched_cases": n,
-        "verification_min_cases": int(getattr(args, "verification_min_cases", 30) or 30),
-        "calibration_status": "VERIFIED_ENOUGH_DATA" if n >= int(getattr(args, "verification_min_cases", 30) or 30) else "INSUFFICIENT_DATA_HEURISTIC_MODE",
-        "rain_brier_score": round(sum(briers) / len(briers), 4) if briers else "",
-        "temperature_mae_c": round(sum(temps) / len(temps), 3) if temps else "",
-        "category_accuracy": round(sum(cats) / len(cats), 4) if cats else "",
-        "rain_hits": hits,
-        "rain_false_alarms": false_alarms,
-        "rain_misses": misses,
-        "rain_correct_negatives": correct_negatives,
-        "rain_pod": round(pod, 4) if pod is not None else "",
-        "rain_far": round(far, 4) if far is not None else "",
-        "rain_csi": round(csi, 4) if csi is not None else "",
-        "scientific_note": "Risk/trust scores are verified only when calibration_status is VERIFIED_ENOUGH_DATA; otherwise they are transparent heuristic decision-support signals.",
-    }
-    reliability_rows = []
-    for label, item in reliability_bins.items():
-        nbin = item["n"]
-        reliability_rows.append({
-            "probability_bin": label,
-            "n": nbin,
-            "mean_forecast_probability": round(item["prob_sum"] / nbin, 2) if nbin else "",
-            "observed_rain_frequency": round(item["observed_rain"] / nbin * 100, 2) if nbin else "",
-        })
-    return summary, pairs, reliability_rows
+    bins = {f"{i:02d}-{i + 10:02d}": [] for i in range(0, 100, 10)}
+    for issued, row, obs, lead in selected:
+        obs = dict(obs)
+        for field in _OBS_FIELDS:
+            if _quality_observation_available(obs, field, now_local(args.timezone)) is None:
+                obs[field] = None
+        event = sentinel_observed_rain_event(obs)
+        probability = _lg_prob(row.get("prob_rain"))
+        predicted_temp = safe_float(_quality_first(row, "temp_micro_p50", "temp_p50"))
+        temp = _quality_observed_value(obs, "temp_c")
+        pair = {"target_date": row["target_date"], "jam": row["jam"], "issued_at": issued.isoformat(), "run_id": row.get("run_id"), "lead_hours": lead, "lead_bucket": aether_lead_bucket(lead),
+                "pred_prob_rain": probability, "observed_rain": int(event) if event is not None else None,
+                "pred_rain_event": int(probability >= 50) if probability is not None else None,
+                "brier": (probability / 100 - int(event)) ** 2 if probability is not None and event is not None else None,
+                "pred_temp": predicted_temp, "observed_temp": temp, "temp_abs_error": abs(temp - predicted_temp) if temp is not None and predicted_temp is not None else None}
+        observed_cat = _quality_observed_value(obs, "category")
+        pair["category_match"] = int(row.get("dominant_category") == observed_cat) if observed_cat and row.get("dominant_category") else None
+        pairs.append(pair)
+        if pair["brier"] is not None:
+            lower = min(90, int(probability // 10) * 10)
+            bins[f"{lower:02d}-{lower + 10:02d}"].append(pair)
+    rain_pairs = [p for p in pairs if p["brier"] is not None]
+    temp_pairs = [p for p in pairs if p["temp_abs_error"] is not None]
+    cats = [p["category_match"] for p in pairs if p["category_match"] is not None]
+    hits = sum(p["observed_rain"] == 1 and p["pred_rain_event"] == 1 for p in rain_pairs)
+    misses = sum(p["observed_rain"] == 1 and p["pred_rain_event"] == 0 for p in rain_pairs)
+    false = sum(p["observed_rain"] == 0 and p["pred_rain_event"] == 1 for p in rain_pairs)
+    negatives = len(rain_pairs) - hits - misses - false
+    # Sequential climatology only uses earlier observed dates, avoiding lookahead.
+    baseline_errors = []
+    for p in rain_pairs:
+        earlier = [o for (d, _), o in observations.items() if d < p["target_date"] and sentinel_observed_rain_event(o) is not None and _quality_datetime(o.get("rain_mm_available_at") or o.get("category_available_at") or o.get("available_at"), args.timezone) and _quality_datetime(o.get("rain_mm_available_at") or o.get("category_available_at") or o.get("available_at"), args.timezone) <= _quality_datetime(p["issued_at"], args.timezone)]
+        if earlier:
+            climatology = sum(int(sentinel_observed_rain_event(o)) for o in earlier) / len(earlier)
+            baseline_errors.append(((p["pred_prob_rain"] / 100 - p["observed_rain"]) ** 2, (climatology - p["observed_rain"]) ** 2))
+    forecast_brier = sum(p["brier"] for p in rain_pairs) / len(rain_pairs) if rain_pairs else None
+    baseline = sum(b for _, b in baseline_errors) / len(baseline_errors) if baseline_errors else None
+    comparable = sum(f for f, _ in baseline_errors) / len(baseline_errors) if baseline_errors else None
+    skill = 1 - comparable / baseline if baseline is not None and baseline > 0 else None
+    days = len({p["target_date"] for p in rain_pairs})
+    enough = len(rain_pairs) >= int(getattr(args, "verification_min_cases", 30)) and days >= 10 and hits + misses >= 5 and negatives + false >= 5
+    reliability = [{"probability_bin": label, "n": len(values), "mean_forecast_probability": sum(p["pred_prob_rain"] for p in values) / len(values) if values else None, "observed_rain_frequency": sum(p["observed_rain"] for p in values) / len(values) * 100 if values else None} for label, values in bins.items()]
+    lead_metrics = {}
+    for bucket in sorted({p["lead_bucket"] for p in rain_pairs}):
+        subset = [p for p in rain_pairs if p["lead_bucket"] == bucket]
+        lead_metrics[bucket] = {"samples": len(subset), "brier": sum(p["brier"] for p in subset) / len(subset)}
+    summary = {"generated_at": now_local(args.timezone).isoformat(), "location_slug": args.location_slug, "location_name": args.location_name,
+         "matched_cases": len(pairs), "rain_valid_cases": len(rain_pairs), "temperature_valid_cases": len(temp_pairs), "independent_days": days,
+         "verification_min_cases": getattr(args, "verification_min_cases", 30), "sample_status": "ENOUGH_TO_EVALUATE" if enough else "INSUFFICIENT_DATA",
+         "calibration_status": "UNCALIBRATED", "skill_status": "POSITIVE_VS_BASELINE" if enough and skill is not None and skill > 0 else "NOT_DEMONSTRATED",
+         "rain_brier_score": forecast_brier, "baseline_brier_score": baseline, "baseline_comparable_cases": len(baseline_errors), "rain_brier_skill_score": skill,
+         "temperature_mae_c": sum(p["temp_abs_error"] for p in temp_pairs) / len(temp_pairs) if temp_pairs else None,
+         "category_accuracy": sum(cats) / len(cats) if cats else None, "rain_hits": hits, "rain_misses": misses, "rain_false_alarms": false, "rain_correct_negatives": negatives,
+         "rain_pod": hits / (hits + misses) if hits + misses else None, "rain_far": false / (hits + false) if hits + false else None, "rain_csi": hits / (hits + misses + false) if hits + misses + false else None,
+         "lead_time_metrics": lead_metrics, "scientific_note": "Risk/trust/scenario scores remain heuristic. Sample count is not evidence of calibration. Only dated pre-event forecasts and classified QC-passed observations are scored."}
+    return summary, pairs, reliability
 
 
 def sentinel_write_verification_artifacts(rows, args):
@@ -6143,7 +5552,7 @@ def build_arg_parser():
     parser.add_argument("--disable-sentinel-command-center", action="store_true", default=False, help="Matikan command center HTML jika hanya ingin CSV/JSON.")
     parser.add_argument("--disable-grid-sampling", action="store_true", default=False, help="Matikan sampling grid sekitar lokasi. Default aktif untuk direct-hit/nearby-rain risk yang lebih hyperlocal.")
     parser.add_argument("--grid-radius-km", type=float, default=3.0, help="Radius sampling grid Sentinel X dalam km untuk nearby-rain/displacement risk.")
-    parser.add_argument("--verification-min-cases", type=int, default=30, help="Minimal pasangan forecast-observasi sebelum skor risk/trust dianggap verified/calibrated.")
+    parser.add_argument("--verification-min-cases", type=int, default=30, help="Minimum awal sampel untuk evaluasi; jumlah sampel tidak membuktikan kalibrasi.")
     parser.add_argument("--public-base-url", default="", help="Base URL GitHub Pages, contoh: https://marcooo20-d.github.io/weather-forecast")
     parser.add_argument("--public-disclaimer", default="Ini bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi resmi BMKG.", help="Disclaimer publik yang ditampilkan di dashboard/report/contract.")
     parser.add_argument("--feedback-date", help="Tanggal feedback YYYY-MM-DD untuk --mode feedback.")
@@ -7578,30 +6987,42 @@ def _v8_enrich_rows_with_source_variables(points, rows):
 
 
 def sentinel_x_save_artifacts(target_date, results, args, source_rows, status_rows, ensemble_rows):
+    for result in results:
+        _quality_result_metadata(result, args)
     points = flatten_points(results)
-    sentinel_rows = aether_build_rows(points, ensemble_rows, target_date, args)
-    _v8_enrich_rows_with_source_variables(points, sentinel_rows)
-    sentinel_apply_operational_hardening(sentinel_rows, target_date, args)
-    if sentinel_rows:
-        write_dict_csv(path_output(AETHER_CSV_FILENAME), list(sentinel_rows[0].keys()), sentinel_rows)
-        write_dict_csv(path_output(f"sentinel_x_{target_date.strftime('%Y%m%d')}.csv"), list(sentinel_rows[0].keys()), sentinel_rows)
-    source_states = aether_source_state_rows(results)
-    if source_states:
-        write_dict_csv(path_output(AETHER_SOURCE_STATE_FILENAME), list(source_states[0].keys()), source_states)
-    daily = aether_daily_summary(sentinel_rows, args)
-    payload = {"daily": daily, "hourly": sentinel_rows, "source_states": source_states, "constitution": SENTINEL_CONSTITUTION}
+    _quality_set_families(points)
+    rows = aether_build_rows(points, ensemble_rows, target_date, args)
+    _v8_enrich_rows_with_source_variables(points, rows)
+    _quality_enrich_rows(rows, points, target_date, args)
+    run_id = f"{args.location_slug}_{target_date:%Y%m%d}_{uuid.uuid4().hex}"
+    for row in rows:
+        row["run_id"] = run_id
+    # Archive before verification: the current run is included without reading
+    # a stale per-date CSV, and cannot overwrite an earlier issue.
+    archive = _quality_archive_run(run_id, target_date, results, rows, args)
+    verification = sentinel_write_verification_artifacts(rows, args)
+    for row in rows:
+        row["calibration_status"] = verification["calibration_status"]
+        row["verification_cases"] = verification["rain_valid_cases"]
+        row["official_warning_disclaimer"] = sentinel_public_disclaimer(args)
+    write_dict_csv(path_output(AETHER_CSV_FILENAME), rows=rows)
+    write_dict_csv(path_output(f"sentinel_x_{target_date:%Y%m%d}.csv"), rows=rows)
+    states = aether_source_state_rows(results)
+    for state, result in zip(states, results):
+        _quality_result_metadata(result, args)
+        state.update({"is_cached": result.is_cached, "live_fetch_success": result.live_fetch_success, "original_fetched_at": _quality_jsonable(result.original_fetched_at), "cache_age_hours": result.cache_age_hours, "model_family": result.model_family})
+    write_dict_csv(path_output(AETHER_SOURCE_STATE_FILENAME), rows=states)
+    daily = aether_daily_summary(rows, args)
+    daily.update({"issued_at": _quality_issued(args).isoformat(), "peak_rain_probability": max((safe_float(r.get("prob_rain")) for r in rows if safe_float(r.get("prob_rain")) is not None), default=None)})
+    payload = {"schema_version": QUALITY_SCHEMA, "issued_at": _quality_issued(args).isoformat(), "daily": daily, "hourly": rows, "source_states": states}
     write_json(path_output(AETHER_JSON_FILENAME), payload)
-    write_json(path_output(f"sentinel_x_{target_date.strftime('%Y%m%d')}.json"), payload)
-    aether_write_dashboard(sentinel_rows, source_states, daily, args)
-    aether_write_report(sentinel_rows, daily, args)
+    write_json(path_output(f"sentinel_x_{target_date:%Y%m%d}.json"), payload)
+    aether_write_dashboard(rows, states, daily, args)
+    aether_write_report(rows, daily, args)
     aether_write_contract(daily, args)
     sentinel_write_constitution(args)
-    run_id = f"{getattr(args, 'location_slug', 'location')}_{target_date.strftime('%Y%m%d')}_{now_local(args.timezone).strftime('%Y%m%d%H%M%S')}"
-    try:
-        aether_store_ledger(run_id, target_date, results, source_rows, sentinel_rows, daily, args)
-    except Exception as exc:
-        log_warning("Sentinel ledger gagal ditulis:", exc)
-    return {"version": AETHER_VERSION, "run_id": run_id, "csv": path_output(AETHER_CSV_FILENAME), "json": path_output(AETHER_JSON_FILENAME), "dashboard": path_output(AETHER_DASHBOARD_FILENAME), "report": path_output(AETHER_REPORT_FILENAME), "contract": path_output(AETHER_CONTRACT_FILENAME), "ledger": aether_db_path(), "daily_operational_status": daily.get("daily_operational_status"), "autopilot_summary": daily.get("summary_text")}
+    sentinel_write_publish_manifest(args)
+    return {"version": QUALITY_VERSION, "run_id": run_id, "csv": path_output(AETHER_CSV_FILENAME), "json": path_output(AETHER_JSON_FILENAME), "dashboard": path_output(AETHER_DASHBOARD_FILENAME), "report": path_output(AETHER_REPORT_FILENAME), "contract": path_output(AETHER_CONTRACT_FILENAME), "ledger": aether_db_path(), "archive": archive, "daily_operational_status": daily.get("daily_operational_status")}
 
 
 # =============================================================================
@@ -8226,26 +7647,16 @@ def _anemos_dashboard_doc(rows, source_state_rows, daily, args, report=False):
     return f"""<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>ANEMOS — Prakiraan cuaca { _v6_esc(getattr(args,'location_name','')) }</title><style>{_anemos_css()}</style></head><body><main class='page'>{nav}<section class='hero compact'><div class='chips'><span class='chip'>{_v6_esc(ctx['valid_label'])}</span><span class='chip'>{_v6_esc(ctx['updated_label'])}</span><span class='chip'>ANEMOS</span></div><h1>{'Ringkasan Cuaca Hari Ini' if report else 'Prakiraan Cuaca Hari Ini'}</h1><p>{_v6_esc(summary)}</p></section><div class='notice'><b>{_v6_esc(sentinel_public_disclaimer(args))}</b></div><section class='meta-row'><article class='meta-card'><span class='label'>Berlaku untuk</span><b>{_v6_esc(ctx['target_label'])}</b><p class='muted'>00.00–23.59 {ctx['tz_label']}</p></article><article class='meta-card'><span class='label'>Terakhir diperbarui</span><b>{_v6_esc(ctx['updated_label'].replace('Diperbarui ',''))}</b></article><article class='meta-card'><span class='label'>Lokasi</span><b>{_v6_esc(getattr(args,'location_name',''))}</b></article></section><section class='lead-grid'><article class='decision'><span class='badge {risk_cls}'>{_v6_esc(badge)}</span><h2>{_v6_esc(title)}</h2><p>{_v6_esc(hint)} Jam yang perlu diperhatikan: <b>{_v6_esc(risky)}</b>. Waktu yang relatif lebih aman: <b>{_v6_esc(safe)}</b>.</p></article><div class='metrics'><article class='metric'><span>Peluang hujan tertinggi</span><strong>{_anemos_num(peak_prob.get('prob_rain'),'%')}</strong><small>sekitar {_v6_esc(_anemos_safe_hour(peak_prob))}</small></article><article class='metric'><span>Risiko hujan</span><strong>{_v6_esc(risk_word)}</strong><small>berdasarkan gabungan sumber prakiraan</small></article><article class='metric'><span>Kepercayaan prakiraan</span><strong>{_anemos_num(certainty,'%')}</strong><small>lebih rendah saat hujan lokal sulit dipastikan</small></article><article class='metric'><span>Data akurasi</span><strong>{_v6_esc(str(read_json(path_output('sentinel_x_verification_summary.json'), default={}).get('matched_cases',0)))}</strong><small>pasangan prakiraan-observasi</small></article></div></section><section class='overview-grid'><article class='chart-card'><div class='chart-title'><div><span class='label'>Peluang hujan</span><h2>Perubahan dalam sehari</h2></div><p class='muted'>Angka tinggi berarti peluang hujan lebih besar.</p></div>{_anemos_rain_chart(rows)}</article><article class='chart-card'><div class='chart-title'><div><span class='label'>Suhu</span><h2>Perkiraan suhu</h2></div><p class='muted'>Ditampilkan per beberapa jam.</p></div>{_anemos_temp_svg(rows)}</article></section><section class='panel'><div class='section-head'><h2>Variabel cuaca utama</h2><p>Variabel penting untuk aktivitas harian.</p></div>{variables}</section><section class='panel'><div class='section-head'><h2>Ringkasan pagi sampai malam</h2><p>Lihat bagian hari yang sesuai dengan rencana aktivitas.</p></div><div class='periods'>{periods}</div></section><section class='two'><section class='panel'><h2>Saran aktivitas</h2><p class='big'>{_v6_esc(title)}</p><p class='muted'>Jika langit cepat gelap, angin berubah, atau mulai gerimis, prioritaskan kondisi aktual di sekitar.</p></section><section class='panel'><h2>Kemungkinan kondisi</h2><ul class='scenario'>{scenarios}</ul></section></section><section class='panel'><div class='section-head'><h2>Jam penting</h2><p>Tidak semua jam ditampilkan; fokus pada jam utama dan jam rawan.</p></div><div class='hour-list'>{hours}</div><details class='more-hours'><summary><b>Butuh data lengkap?</b></summary><p class='muted'>Gunakan file CSV untuk melihat semua jam dan semua variabel.</p><div class='links'><a class='btn' href='sentinel_x_variables.csv'>CSV variabel</a><a class='btn' href='sentinel_x.csv'>CSV lengkap</a><a class='btn' href='sentinel_x.json'>JSON</a></div></details></section><details class='panel technical'><summary><b>Catatan data dan batas penggunaan</b></summary><ul class='plain-list'><li>Halaman ini adalah panduan aktivitas harian, bukan peringatan resmi cuaca ekstrem.</li><li>Untuk kondisi berbahaya, ikuti informasi BMKG dan kondisi setempat.</li><li>Hujan lokal dapat bergeser beberapa kilometer atau berubah beberapa jam.</li><li>Halaman akurasi akan lebih bermakna setelah data observasi terkumpul.</li></ul><div class='links'><a class='btn' href='sentinel_x_accuracy_public.html'>Status akurasi</a><a class='btn' href='sentinel_x_forecast_contract.json'>Batas penggunaan</a><a class='btn' href='../'>Pilih lokasi</a></div></details><p class='footer-note'>Didukung oleh ANEMOS · {ctx['valid_label']} · {ctx['updated_label']}</p></main></body></html>"""
 
 
-def aether_write_dashboard(aether_rows, source_state_rows, daily, args):
-    if getattr(args, "disable_sentinel_command_center", False):
-        return ""
-    rows = aether_rows or []
-    _v8_write_variables_csv(rows)
-    doc = _anemos_dashboard_doc(rows, source_state_rows, daily, args, report=False)
+def aether_write_dashboard(rows, states, daily, args):
+    api = _lg_build_api(args, [parse_iso_date(rows[0]['target_date'])] if rows else None)
+    doc = _lg_page(api, args, 'today')
     atomic_write_text(path_output(AETHER_DASHBOARD_FILENAME), lambda f: f.write(doc))
-    ctx = _v6_time_context(rows, args)
-    write_json(path_output("command_center_manifest_sentinel_x.json"), {"brand":"ANEMOS", "dashboard": path_output(AETHER_DASHBOARD_FILENAME), "accuracy": path_output("sentinel_x_accuracy_public.html"), "report_html": path_output(AETHER_REPORT_HTML_FILENAME), "variables_csv": path_output("sentinel_x_variables.csv"), "generated_at": now_local(args.timezone).isoformat(), "ui_version": SENTINEL_PUBLIC_UI_VERSION, "valid_date": ctx["target_label"]})
-    return path_output(AETHER_DASHBOARD_FILENAME)
 
 
-def aether_write_report(aether_rows, daily, args):
-    rows = aether_rows or []
-    _v8_write_variables_csv(rows)
-    ctx = _v6_time_context(rows, args)
-    atomic_write_text(path_output(AETHER_REPORT_FILENAME), lambda f: f.write(f"# Ringkasan cuaca ANEMOS\n\nBuka versi HTML: `sentinel_x_report.html`.\n\n{ctx['valid_label']}\n{ctx['updated_label']}\n"))
-    doc = _anemos_dashboard_doc(rows, [], daily, args, report=True)
-    atomic_write_text(path_output(AETHER_REPORT_HTML_FILENAME), lambda f: f.write(doc))
-    return path_output(AETHER_REPORT_HTML_FILENAME)
+def aether_write_report(rows, daily, args):
+    api = _lg_build_api(args, [parse_iso_date(rows[0]['target_date'])] if rows else None)
+    doc = _lg_page(api, args, 'today')
+    atomic_write_text(path_output(AETHER_REPORT_FILENAME), lambda f: f.write(doc))
 
 
 def _anemos_accuracy_status(summary):
@@ -8348,6 +7759,7 @@ def build_arg_parser():
             default=False,
             help='Hanya buat satu hari prakiraan publik, mengikuti --target-date atau default lama.',
         )
+    parser.add_argument("--cache-max-age-hours", type=float, default=6.0, help="Batas usia asli cache; usia tidak direset saat dipakai ulang.")
     return parser
 
 
@@ -8615,35 +8027,15 @@ def _anemos11_accuracy_html(rows, args):
 
 
 def sentinel_write_verification_artifacts(rows, args):
-    # Load all historical forecasts
-    all_rows = []
-    try:
-        import glob
-        import re
-        pattern = os.path.join(ACTIVE_OUTPUT_DIR, "sentinel_x_*.csv")
-        for filepath in glob.glob(pattern):
-            filename = os.path.basename(filepath)
-            if re.match(r"sentinel_x_\d{8}\.csv", filename):
-                all_rows.extend(read_dict_csv(filepath))
-    except Exception as exc:
-        log_warning("Gagal memuat histori sentinel_x_*.csv untuk akurasi:", exc)
-    
-    if not all_rows:
-        all_rows = list(rows or [])
-        
-    doc, summary = _anemos11_accuracy_html(all_rows, args)
-    atomic_write_text(path_output('akurasi_data.html'), lambda f: f.write(doc))
-    write_json(path_output('sentinel_x_verification_summary.json'), summary)
-    reliability = summary.get('reliability_bins') or []
-    if reliability:
-        write_dict_csv(path_output('sentinel_x_reliability.csv'), ['bin','n','mean_forecast_pct','observed_frequency_pct'], reliability)
-    else:
-        write_dict_csv(path_output('sentinel_x_reliability.csv'), ['bin','n','mean_forecast_pct','observed_frequency_pct'], [{'bin': f'{i*10:02d}-{(i+1)*10:02d}', 'n': 0, 'mean_forecast_pct': '', 'observed_frequency_pct': ''} for i in range(10)])
-    pairs = summary.get('matched_pairs') or []
-    if pairs:
-        write_dict_csv(path_output('sentinel_x_verification_pairs.csv'), list(pairs[0].keys()), pairs)
-    else:
-        write_dict_csv(path_output('sentinel_x_verification_pairs.csv'), ['target_date','jam','forecast_rain_prob','observed_rain','forecast_temp_c','observed_temp_c'], [])
+    summary, pairs, reliability = sentinel_compute_verification(_quality_historical_rows(), args)
+    summary["matched_pairs"] = pairs
+    summary["reliability_bins"] = reliability
+    write_json(path_output("sentinel_x_verification_summary.json"), summary)
+    write_dict_csv(path_output("sentinel_x_verification_pairs.csv"), rows=pairs)
+    write_dict_csv(path_output("sentinel_x_reliability.csv"), rows=reliability)
+    doc = _lg_accuracy_html(_quality_historical_rows(), args)
+    for name in ("akurasi_data.html", "sentinel_x_accuracy_public.html"):
+        atomic_write_text(path_output(name), lambda f: f.write(doc))
     return summary
 
 
@@ -8738,7 +8130,7 @@ def run_forecast_for_locations(base_args, locations):
             'area_level': location.area_level,
             'is_proxy_bmkg': location.is_proxy_bmkg,
             'target_date': ','.join(d.isoformat() for d in forecast_dates),
-            'run_status': 'error' if fatal_error else 'ok',
+            'run_status': 'error' if fatal_error or not ok_days else 'warning' if any(item.get('run_status') == 'warning' for item in location_outputs) else 'ok',
             'quality_status': 'limited_coverage_possible' if any((item.get('low_coverage_slots') for item in location_outputs if item.get('low_coverage_slots'))) else 'ok',
             'days_ok': ok_days,
             'days_total': len(forecast_dates),
@@ -8794,13 +8186,15 @@ def _lg_float(x, default=None):
         return default
 
 
-def _lg_prob(x, default=0.0):
-    value = _lg_float(x, default)
+def _lg_prob(x, default=None, *, unit="percent"):
+    value = _lg_float(x, None)
     if value is None:
         return default
-    if 0 <= value <= 1:
-        value *= 100.0
-    return round(clamp(value, 0.0, 100.0), 1)
+    if unit == "fraction":
+        value *= 100
+    elif unit != "percent":
+        raise ValueError("Probability unit must be percent or fraction")
+    return round(value, 4) if 0 <= value <= 100 else default
 
 
 def _lg_text(x, default=""):
@@ -8826,9 +8220,8 @@ def _lg_num(x, suffix="", digits=1, default="—"):
 
 
 def _lg_pct(x, default="—"):
-    if x is None:
-        return default
-    return f"{round(_lg_prob(x, 0))}%"
+    value = _lg_prob(x)
+    return default if value is None else f"{value:.0f}%"
 
 
 def _lg_hour(x, default="—"):
@@ -8973,20 +8366,7 @@ def _lg_diurnal_rain_bias(hour, traits, day_index=0):
 
 
 def _lg_extract_rain(row):
-    for key in ("rain_probability", "prob_rain", "precip_prob_pct", "rain_prob_pct", "precipitation_probability"):
-        if row.get(key) is not None:
-            return _lg_prob(row.get(key), 0)
-    mm = _lg_float(row.get("rain_mm") or row.get("precipitation_mm") or row.get("precipitation"), None)
-    if mm is not None:
-        return clamp(8 + mm * 22, 0, 100) if mm > 0 else 0
-    condition = _lg_text(row.get("condition") or row.get("category") or row.get("cuaca") or row.get("raw_condition"), "").lower()
-    if "lebat" in condition or "petir" in condition:
-        return 82
-    if "sedang" in condition:
-        return 65
-    if "hujan" in condition or "gerimis" in condition:
-        return 45
-    return 0
+    return _lg_prob(_quality_first(row, "rain_probability", "prob_rain", "precip_prob_pct", "rain_prob_pct", "precipitation_probability"))
 
 
 def _lg_condition_from_vars(raw_condition, hour, rain, temp, heat, rh, cloud, wind, traits):
@@ -9088,18 +8468,14 @@ def _lg_risk_score(prob=None, heat=None, rh=None, wind=None, condition=None, con
 
 
 def _lg_class(score):
-    value = _lg_float(score, 0) or 0
-    if value >= 75:
-        return "danger"
-    if value >= 52:
-        return "rain"
-    if value >= 28:
-        return "watch"
-    return "safe"
+    value = _lg_float(score)
+    if value is None:
+        return "unavailable"
+    return "danger" if value >= 75 else "rain" if value >= 52 else "watch" if value >= 28 else "safe"
 
 
 def _lg_label(score):
-    return {"safe": "Aman", "watch": "Perlu diperhatikan", "rain": "Waspada", "danger": "Berpotensi signifikan"}.get(_lg_class(score), "Perlu diperhatikan")
+    return {"unavailable": "Data belum memadai", "safe": "Risiko relatif rendah", "watch": "Perlu diperhatikan", "rain": "Waspada", "danger": "Berpotensi signifikan"}[_lg_class(score)]
 
 
 def _lg_hour_note(prob, score, condition=None):
@@ -9274,33 +8650,12 @@ def _lg_decision_sentence(day, loc):
 
 
 def _lg_nowcast(day, args=None):
-    hours = day.get("key_hours") or []
-    if not hours:
-        return {"window": "0–6 jam", "status": "Belum tersedia", "summary": "Nowcast akan tampil setelah data jam tersedia.", "peak_hour": "—", "peak_probability": None}
-    try:
-        now_h = now_local(getattr(args, "timezone", DEFAULT_TIMEZONE)).hour
-    except Exception:
-        now_h = 0
-    future = [h for h in hours if now_h <= _lg_hour_int(h.get("hour"), 0) <= min(23, now_h + 6)]
+    now = now_local(getattr(args, "timezone", DEFAULT_TIMEZONE))
+    future = [h for h in day.get("key_hours", []) if h.get("recommendation_eligible") and (dt := _quality_datetime(h.get("target_datetime"), str(now.tzinfo))) and now <= dt <= now + timedelta(hours=6)]
     if not future:
-        future = hours[:6]
-    peak = max(future, key=lambda r: _lg_float(r.get("risk_score"), 0) or 0)
-    p = _lg_prob(peak.get("rain_probability"), 0)
-    score = _lg_float(peak.get("risk_score"), p) or p
-    hour = _lg_hour(peak.get("hour"))
-    if score >= 75 or p >= 75:
-        status = "Risiko tinggi"
-        summary = f"Window dekat perlu dikurangi untuk outdoor; sinyal hujan paling kuat sekitar {hour}."
-    elif score >= 52 or p >= 50:
-        status = "Waspada hujan"
-        summary = f"Aktivitas masih bisa, tetapi payung/jas hujan sebaiknya siap sekitar {hour}."
-    elif score >= 28 or p >= 28:
-        status = "Dipantau"
-        summary = f"Masih cukup aman, namun perubahan awan perlu dipantau sekitar {hour}."
-    else:
-        status = "Aman"
-        summary = "Window dekat relatif aman; tetap pantau perubahan lokal."
-    return {"window": "0–6 jam", "status": status, "summary": summary, "peak_hour": hour, "peak_probability": p, "best_window": _lg_best_window(hours)}
+        return {"window": "0–6 jam", "status": "Belum tersedia", "method": "model_forecast_subset", "summary": "Prakiraan model untuk enam jam berikutnya belum tersedia.", "peak_hour": "—", "peak_probability": None}
+    peak = max(future, key=lambda h: h["rain_probability"])
+    return {"window": "0–6 jam", "status": peak["risk_label"], "method": "model_forecast_subset", "summary": "Ringkasan model enam jam berikutnya. Belum menggunakan radar atau pengamatan nowcast.", "peak_hour": peak["hour"], "peak_probability": peak["rain_probability"]}
 
 
 def _lg_microclimate(args):
@@ -9324,88 +8679,51 @@ def _lg_cloud_proxy(day):
 
 
 def _lg_source_court():
-    rows = []
-    for name in [AETHER_SOURCE_STATE_FILENAME, "source_status.csv", "source_status_all_locations.csv"]:
-        try:
-            path = path_output(name) if name != "source_status_all_locations.csv" else root_output_path(name)
-            if os.path.exists(path):
-                rows.extend(read_dict_csv(path))
-        except Exception:
-            pass
+    rows = read_dict_csv(path_output(AETHER_SOURCE_STATE_FILENAME))
     if not rows:
-        return {"status": "Belum tersedia", "agreement": "Belum bisa dinilai", "summary": "Source court akan tampil setelah run forecast menyimpan status sumber.", "sources": []}
-    out, seen = [], set()
-    for r in rows:
-        sid = _lg_text(r.get("source_id") or r.get("source") or r.get("provider"), "UNKNOWN")
-        if sid in seen:
-            continue
-        seen.add(sid)
-        state = _lg_text(r.get("success") or r.get("state") or r.get("status"), "")
-        http_status = _lg_text(r.get("http_status") or r.get("status_code"), "")
-        ok = state.lower() in {"1", "true", "ok", "success", "green", "usable", "trusted", "aktif"} or http_status == "200"
-        points = _lg_text(r.get("points") or r.get("points_collected") or r.get("point_count"), "")
-        latency = _lg_text(r.get("duration_ms") or r.get("latency_ms") or r.get("ms"), "")
-        verdict = "Aktif" if ok else "Dipantau"
-        out.append({"source_id": sid, "verdict": verdict, "points": points, "http_status": http_status, "latency_ms": latency})
-    active = sum(1 for s in out if s["verdict"] == "Aktif")
-    ratio = active / max(1, len(out))
-    agreement = "Tinggi" if ratio >= .78 else "Sedang" if ratio >= .50 else "Rendah"
-    return {"status": "Aktif" if active else "Belum cukup data", "agreement": agreement, "summary": f"{active}/{len(out)} sumber aktif. Agreement operasional: {agreement}.", "sources": out}
+        return {'status':'Belum tersedia','agreement':'Belum diukur','summary':'Status sumber belum tersedia. Ketersediaan API tidak membuktikan akurasi prakiraan.','sources':[]}
+    sources = []
+    for row in rows:
+        sid = row.get('source_id') or row.get('source') or 'UNKNOWN'
+        cached = str(row.get('is_cached')).lower() in {'true','1'}
+        live = str(row.get('live_fetch_success')).lower() in {'true','1'}
+        sources.append({'source_id':sid,'verdict':'Cache' if cached else 'Aktif' if live else 'Gagal / tidak tersedia','points':_quality_first(row,'points_collected','point_count','points',default=0),'http_status':row.get('http_status',''),'latency_ms':row.get('duration_ms',''),'model_family':_quality_family(sid),'is_cached':cached,'original_fetched_at':row.get('original_fetched_at'),'cache_age_hours':safe_float(row.get('cache_age_hours'))})
+    live = sum(s['verdict']=='Aktif' for s in sources)
+    cached = sum(s['is_cached'] for s in sources)
+    return {'status':'Data tersedia' if live or cached else 'Belum cukup data','agreement':'Belum diukur','summary':f'{live} sumber live; {cached} sumber cache. Status ini menunjukkan ketersediaan, bukan akurasi atau kesepakatan model.','sources':sources}
 
 
 def _lg_norm_day(raw, idx, loc, args):
     raw = dict(raw or {})
     hours = [_lg_norm_hour(h, args, idx) for h in _lg_sort_hours(_lg_raw_hours(raw))]
-    if not hours:
-        hours = []
-    peak_by_rain = max(hours, key=lambda h: _lg_prob(h.get("rain_probability"), 0), default={})
-    peak_by_risk = max(hours, key=lambda h: _lg_float(h.get("risk_score"), 0) or 0, default=peak_by_rain)
-    peak_p_raw = _lg_float(raw.get("peak_rain_probability"), None)
-    peak_p = _lg_prob(peak_p_raw, None) if peak_p_raw is not None else _lg_prob(peak_by_rain.get("rain_probability"), 0)
-    # Keep day-level p consistent with adjusted hourly p.
-    if hours:
-        peak_p = max(peak_p, max(_lg_prob(h.get("rain_probability"), 0) for h in hours))
-    peak_hour = _lg_hour(raw.get("peak_rain_hour"), "") or _lg_hour(peak_by_rain.get("hour"), "—")
-    avg_temp = _lg_float(raw.get("avg_temperature_c"), None)
-    if avg_temp is None:
-        avg_temp = _lg_average([h.get("temp_c") for h in hours])
-    avg_rh = _lg_float(raw.get("avg_humidity_pct"), None)
-    if avg_rh is None:
-        avg_rh = _lg_average([h.get("humidity_pct") for h in hours])
-    max_heat = _lg_float(raw.get("max_heat_index_c"), None)
-    if max_heat is None:
-        max_heat = max([_lg_float(h.get("heat_index_c"), -999) for h in hours] or [avg_temp or 0])
-    max_wind = _lg_float(raw.get("max_wind_kmh"), None)
-    if max_wind is None:
-        max_wind = max([_lg_float(h.get("wind_kmh"), 0) or 0 for h in hours] or [0])
-    score = max(_lg_risk_score(peak_p, max_heat, avg_rh, max_wind, peak_by_risk.get("condition")), _lg_float(peak_by_risk.get("risk_score"), 0) or 0)
-    best = _lg_best_window(hours)
-    day = {
-        **raw,
-        "day_tag": _lg_text(raw.get("day_tag"), ["Hari ini", "Besok", "Lusa"][idx] if idx < 3 else "Hari"),
-        "date_label": _lg_text(raw.get("date_label") or raw.get("label"), _lg_text(raw.get("date"), "")),
-        "condition": _lg_text(peak_by_risk.get("condition") or raw.get("condition"), "Cerah berawan"),
-        "avg_temperature_c": round(avg_temp, 1) if avg_temp is not None else None,
-        "avg_humidity_pct": round(avg_rh, 0) if avg_rh is not None else None,
-        "max_heat_index_c": round(max_heat, 1) if max_heat is not None else None,
-        "max_wind_kmh": round(max_wind, 1) if max_wind is not None else None,
-        "peak_rain_probability": round(peak_p, 1),
-        "peak_rain_hour": peak_hour,
-        "risk_score": round(score, 1),
-        "risk_class": _lg_class(score),
-        "risk_label": _lg_label(score),
-        "key_hours": hours,
-        "best_activity_window": best,
-    }
+    valid = [h for h in hours if h.get("recommendation_eligible")]
+    complete = len(valid) == len(hours) and bool(hours)
+    state = "usable" if complete and all(h.get("data_quality") == "usable" for h in hours) else "limited" if valid else "unavailable"
+    peak_rain = max(valid, key=lambda h: h["rain_probability"], default={})
+    peak_risk = max(valid, key=lambda h: h.get("risk_score") or 0, default={})
+    now = now_local(getattr(args, "timezone", DEFAULT_TIMEZONE))
+    date = raw.get("date")
+    try:
+        d = parse_iso_date(date)
+        delta = (d - now.date()).days
+        tag = {0: "Hari ini", 1: "Besok", 2: "Lusa"}.get(delta, _v6_format_date_id(d))
+    except (ValueError, TypeError):
+        tag = "Tanggal belum tersedia"
+    day = {**raw, "day_tag": tag, "date_label": raw.get("date_label") or date or "—", "key_hours": hours,
+           "condition": peak_risk.get("condition", "Data cuaca belum memadai"),
+           "avg_temperature_c": _lg_average([h.get("temp_c") for h in valid]),
+           "avg_humidity_pct": _lg_average([h.get("humidity_pct") for h in valid]),
+           "max_heat_index_c": max((h["heat_index_c"] for h in valid if h.get("heat_index_c") is not None), default=None),
+           "max_wind_kmh": max((h["wind_kmh"] for h in valid if h.get("wind_kmh") is not None), default=None),
+           "peak_rain_probability": peak_rain.get("rain_probability"), "peak_rain_hour": peak_rain.get("hour", "—"),
+           "rain_risk_score": peak_risk.get("risk_score"), "risk_score": peak_risk.get("risk_score"),
+           "risk_class": _lg_class(peak_risk.get("risk_score")), "risk_label": _lg_label(peak_risk.get("risk_score")),
+           "data_quality": state, "usable_hours": len(valid), "total_hours": len(hours),
+           "best_activity_window": _lg_best_window(hours, now=now)}
     day["decision_sentence"] = _lg_decision_sentence(day, loc)
     day["nowcast"] = _lg_nowcast(day, args)
     day["cloud_motion_proxy"] = _lg_cloud_proxy(day)
-    day["periods"] = [
-        _lg_period_summary(hours, "Pagi", 5, 10),
-        _lg_period_summary(hours, "Siang", 11, 14),
-        _lg_period_summary(hours, "Sore", 15, 18),
-        _lg_period_summary(hours, "Malam", 19, 4),
-    ]
+    day["periods"] = [_lg_period_summary(hours, name, start, end) for name, start, end in (("Pagi", 5, 10), ("Siang", 11, 14), ("Sore", 15, 18), ("Malam", 19, 4))]
     day["activity_matrix"] = _lg_activity_matrix(day)
     return day
 
@@ -9448,92 +8766,31 @@ def _lg_activity_matrix(day):
 
 
 def _lg_build_api(args, forecast_dates=None):
-    if not forecast_dates:
-        forecast_dates = _anemos11_forecast_dates(args)
-    
-    raw = (
-        read_json(path_output("langit_api_v1.json"), default={})
-        or read_json(path_output("anemos_api_v1.json"), default={})
-        or {}
-    )
-    loc = _lg_text(raw.get("location_name"), getattr(args, "location_name", "Lokasi"))
-    
-    # Try to load ensembled raw days from sentinel_x_{stamp}.json files
-    raw_days = []
-    has_ensembled = False
-    relatives = ["Hari ini", "Besok", "Lusa"]
-    for i, date_obj in enumerate(forecast_dates):
-        stamp = date_obj.strftime("%Y%m%d")
-        json_path = path_output(f"sentinel_x_{stamp}.json")
-        if os.path.exists(json_path):
-            payload = read_json(json_path, {}) or {}
-            hourly_data = payload.get("hourly")
-            if isinstance(hourly_data, list) and hourly_data:
-                has_ensembled = True
-                day_hours = []
-                for r in hourly_data:
-                    mapped = {
-                        "date": r.get("target_date") or date_obj.isoformat(),
-                        "hour": r.get("jam") or r.get("hour"),
-                        "temp_c": r.get("temp_p50") or r.get("temp_c"),
-                        "humidity_pct": r.get("rh_p50") or r.get("humidity_pct"),
-                        "heat_index_c": r.get("heat_index_p50") or r.get("heat_index_c"),
-                        "rain_probability": r.get("prob_rain") or r.get("rain_probability"),
-                        "wind_kmh": r.get("wind_p50") or r.get("wind_kmh"),
-                        "risk_score": r.get("rain_threat_score") or r.get("risk_score"),
-                        "condition": r.get("dominant_category") or r.get("condition"),
-                        "wind_direction_deg": r.get("wind_direction_deg"),
-                        "cloud_cover_pct": r.get("cloud_p50"),
-                    }
-                    day_hours.append(mapped)
-                
-                # Format date label
-                weekday_names = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
-                month_names = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
-                date_label = f"{weekday_names[date_obj.weekday()]}, {date_obj.day} {month_names[date_obj.month-1]} {date_obj.year}"
-                
-                daily_stats = payload.get("daily") or {}
-                
-                day_obj = {
-                    "date": date_obj.isoformat(),
-                    "day_tag": relatives[i] if i < len(relatives) else relatives[-1],
-                    "date_label": date_label,
-                    "hours": day_hours,
-                    "peak_rain_probability": daily_stats.get("peak_rain_threat_score") or daily_stats.get("peak_rain_probability"),
-                    "peak_rain_hour": daily_stats.get("peak_rain_threat_hour") or daily_stats.get("peak_rain_hour"),
-                    "avg_temperature_c": daily_stats.get("avg_temperature_c"),
-                    "avg_humidity_pct": daily_stats.get("avg_humidity_pct"),
-                }
-                raw_days.append(day_obj)
-                
-    if has_ensembled:
-        days = [_lg_norm_day(d, i, loc, args) for i, d in enumerate(raw_days)]
-    else:
-        days = [_lg_norm_day(d, i, loc, args) for i, d in enumerate(_lg_raw_days(raw))]
-
-    try:
-        now = now_local(getattr(args, "timezone", DEFAULT_TIMEZONE))
-        updated = f"{_v6_format_date_id(now.date())}, {now.strftime('%H:%M')} {_v6_timezone_label(getattr(args,'timezone',DEFAULT_TIMEZONE))}"
-        generated_at = now.isoformat()
-    except Exception:
-        generated_at = datetime.now().isoformat()
-        updated = generated_at
-    api = dict(raw)
-    api.update({
-        "brand": LANGIT_BRAND_NAME,
-        "product": LANGIT_PRODUCT_NAME,
-        "version": LANGIT_PUBLIC_VERSION,
-        "ui_version": LANGIT_UI_VERSION,
-        "location_name": loc,
-        "location_slug": _lg_slug_from_args(args),
-        "generated_at": raw.get("generated_at") or generated_at,
-        "updated_label": updated,
-        "days": days,
-        "microclimate": _lg_microclimate(args),
-        "source_court": _lg_source_court(),
-        "map_layers": ["Rain Risk", "Activity Safety", "Heat Stress", "Source Confidence", "Microclimate", "Time Slider"],
-    })
-    return api
+    dates = forecast_dates or _anemos11_forecast_dates(args)
+    days, states, issued = [], [], []
+    for date in dates:
+        payload = read_json(path_output(f"sentinel_x_{date:%Y%m%d}.json"), {}) or {}
+        daily = payload.get("daily") or {}
+        rows = []
+        for r in payload.get("hourly") or []:
+            rows.append({**r, "date": r.get("target_date") or date.isoformat(), "hour": r.get("jam"),
+                         "temp_c": _quality_first(r, "temp_micro_p50", "temp_p50"), "humidity_pct": _quality_first(r, "rh_micro_p50", "rh_p50"),
+                         "heat_index_c": r.get("heat_index_p50"), "rain_probability": r.get("prob_rain"),
+                         "wind_kmh": r.get("wind_p50"), "rain_risk_score": r.get("rain_threat_score"),
+                         "condition": r.get("dominant_category"), "cloud_cover_pct": r.get("cloud_p50")})
+        day = _lg_norm_day({"date": date.isoformat(), "date_label": _v6_format_date_id(date), "hours": rows, "issued_at": payload.get("issued_at") or daily.get("issued_at")}, len(days), args.location_name, args)
+        days.append(day)
+        states.extend(payload.get("source_states") or [])
+        dt = _quality_datetime(day.get("issued_at"), args.timezone)
+        if dt:
+            issued.append(dt)
+    stamp = max(issued).isoformat() if issued else None
+    return {"brand": LANGIT_BRAND_NAME, "product": LANGIT_PRODUCT_NAME, "version": QUALITY_VERSION, "ui_version": SENTINEL_PUBLIC_UI_VERSION,
+            "schema_version": QUALITY_SCHEMA, "location_name": args.location_name, "location_slug": _lg_slug_from_args(args),
+            "generated_at": stamp, "updated_label": stamp or "Waktu penerbitan belum tersedia", "rendered_at": now_local(args.timezone).isoformat(),
+            "days": days, "microclimate": _lg_microclimate(args), "source_court": _lg_source_court(),
+            "source_states": states, "map_layers": ["Model risk estimates", "Illustrative microclimate zones", "Time selector"],
+            "probability_unit": "percent"}
 
 
 def _lg_today(api):
@@ -10038,74 +9295,74 @@ def _lg_icon(condition):
 
 
 def _lg_norm_hour(row, args=None, day_index=0):
-    row = row if isinstance(row, dict) else {}
-    hour = _lg_hour(row.get("hour") or row.get("jam") or row.get("target_time"), "—")
-
-    temp = _lg_float(row.get("temp_c") or row.get("temperature_c") or row.get("temperature"), None)
-    rh = _lg_float(row.get("humidity_pct") or row.get("rh_pct") or row.get("relative_humidity"), None)
-    heat = _lg_float(row.get("heat_index_c") or row.get("apparent_temp_c") or row.get("apparent_temperature_c"), temp)
-
-    rain = row.get("rain_probability")
-    if rain is None:
-        rain = row.get("prob_rain")
-    if rain is None:
-        rain = row.get("precip_prob_pct")
-    if rain is None:
-        mm = _lg_float(row.get("rain_mm") or row.get("precipitation_mm"), 0)
-        # Amount -> probability proxy. Kept conservative, but no longer forces all rows to one condition.
-        rain = 0 if not mm else min(100, 18 + mm * 16)
-    rain = _lg_prob(rain, 0)
-
-    wind = _lg_float(row.get("wind_kmh") or row.get("wind_speed_kmh"), None)
-    cond = _lg_condition_smart(row, hour, temp, rh, rain, wind)
-    score = _lg_risk_score(rain, heat, rh, wind, cond)
-    return {
-        "hour": hour,
-        "condition": cond,
-        "icon": _lg_icon(cond),
-        "temp_c": temp,
-        "humidity_pct": rh,
-        "heat_index_c": heat,
-        "rain_probability": rain,
-        "wind_kmh": wind,
-        "risk_score": score,
-        "risk_class": _lg_class(score),
-        "risk_label": _lg_label(score),
-        "advice": _lg_hour_note(rain, score, cond),
-    }
+    row = dict(row) if isinstance(row, dict) else {}
+    hour = _lg_hour(_quality_first(row, "hour", "jam", "target_time"), "—")
+    temp = _lg_float(_quality_first(row, "temp_c", "temperature_c", "temperature"))
+    rh = _lg_float(_quality_first(row, "humidity_pct", "rh_pct", "relative_humidity"))
+    heat = _lg_float(_quality_first(row, "heat_index_c", "apparent_temp_c", "apparent_temperature_c"), temp)
+    wind = _lg_float(_quality_first(row, "wind_kmh", "wind_speed_kmh"))
+    rain = _lg_extract_rain(row)
+    sources = safe_float(row.get("sources_used"))
+    coverage = safe_float(row.get("coverage_fraction"))
+    state = row.get("data_quality") or "legacy_unclassified"
+    usable = (state in {"usable", "stale", "limited"} and sources is not None and sources >= 3
+              and coverage is not None and coverage >= 0.5 and rain is not None
+              and row.get("operational_status") != "BLACK")
+    if not usable:
+        state = "unavailable"
+        rain = None
+    raw = _quality_first(row, "condition", "category", "cuaca", "raw_condition", default="")
+    condition = _lg_condition_smart(row, hour, temp, rh, rain if rain is not None else 0, wind) if usable else "Data cuaca belum memadai"
+    score = _lg_float(row.get("rain_risk_score")) if usable else None
+    if score is None and usable:
+        score = _lg_risk_score(rain, heat, rh, wind, condition)
+    advice = _lg_hour_note(rain, score, condition) if usable else "Prakiraan belum layak untuk rekomendasi aktivitas; tunggu pembaruan data."
+    return {**row, "hour": hour, "raw_condition": raw, "condition": condition, "icon": _lg_icon(condition),
+            "temp_c": temp, "humidity_pct": rh, "heat_index_c": heat, "rain_probability": rain,
+            "probability_unit": "percent", "wind_kmh": wind, "risk_score": score,
+            "risk_class": _lg_class(score), "risk_label": _lg_label(score), "advice": advice,
+            "data_quality": state, "recommendation_eligible": usable}
 
 
-def _lg_best_window(hours):
-    candidates = []
-    for h in hours or []:
-        try:
-            hh = int(_lg_hour(h.get("hour"), "99:99")[:2])
-        except Exception:
+def _lg_best_window(hours, duration_hours=2, now=None):
+    now = now or now_local(DEFAULT_TIMEZONE)
+    eligible = []
+    for row in _lg_sort_hours(hours or []):
+        if row.get("data_quality") != "usable" or not row.get("recommendation_eligible"):
             continue
-        p = _lg_prob(h.get("rain_probability"), 0)
-        heat = _lg_float(h.get("heat_index_c"), _lg_float(h.get("temp_c"), 27)) or 27
-        score = p + max(0, heat - 30) * 5
-        # keep realistic daily activity windows, not midnight-heavy results
-        if 6 <= hh <= 18 and p <= 40 and heat <= 33:
-            candidates.append((score, h.get("hour")))
-    candidates.sort()
-    out = [h for _, h in candidates[:4]]
-    return out or ["06:00", "09:00"]
+        stamp = _quality_datetime(row.get("target_datetime"), str(now.tzinfo))
+        if stamp is None:
+            continue
+        p, heat = _lg_prob(row.get("rain_probability")), _lg_float(row.get("heat_index_c"))
+        risk, wind = _lg_float(row.get("risk_score")), _lg_float(row.get("wind_kmh"))
+        if stamp >= now and 6 <= stamp.hour <= 18 and p is not None and p <= 40 and heat is not None and heat <= 33 and risk is not None and risk <= 45 and wind is not None and wind <= 25:
+            eligible.append((stamp, row, p + max(0, heat - 30) * 5))
+    windows = []
+    duration = timedelta(hours=max(1, duration_hours))
+    for idx in range(len(eligible)):
+        chain = [eligible[idx]]
+        for candidate in eligible[idx + 1:]:
+            if candidate[0] - chain[-1][0] != timedelta(hours=1):
+                break
+            chain.append(candidate)
+            if chain[-1][0] - chain[0][0] >= duration:
+                break
+        if chain[-1][0] - chain[0][0] >= duration:
+            windows.append((max(item[2] for item in chain), [item[1]["hour"] for item in chain]))
+    return min(windows, key=lambda x: x[0])[1] if windows else []
 
 
 def _lg_decision_sentence(day, loc):
-    p = _lg_prob(day.get("peak_rain_probability"), 0)
-    peak = _lg_hour(day.get("peak_rain_hour"), "—")
+    if day.get("data_quality") != "usable":
+        return f"{loc}: data prakiraan belum lengkap atau sudah usang. Rekomendasi waktu aktivitas belum tersedia."
+    p = _lg_prob(day.get("peak_rain_probability"))
     best = _lg_best_window_text(day.get("best_activity_window"))
-    if not best or best == "" or best.strip() in {"", "—", "-"}:
-        best = "pagi hingga siang hari"
-    if p >= 70:
-        return f"{loc}: Disarankan untuk membatasi aktivitas luar ruang di sekitar pukul {peak} WIB (peluang {p}%). Periode nyaman terpantau pada: {best}."
-    if p >= 45:
-        return f"{loc}: Potensi hujan terpantau. Siapkan perlengkapan hujan di sekitar pukul {peak} WIB (peluang {p}%). Periode nyaman terpantau pada: {best}."
-    if p >= 25:
-        return f"{loc}: Kondisi cuaca secara umum kondusif, tetap pantau potensi hujan sekitar pukul {peak} WIB (peluang {p}%)."
-    return f"{loc}: Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: {best}."
+    peak = _lg_hour(day.get("peak_rain_hour"))
+    if p is None:
+        return f"{loc}: peluang hujan belum tersedia."
+    if not day.get("best_activity_window"):
+        return f"{loc}: belum ada rentang aktivitas yang memenuhi batas risiko; pantau pembaruan. Peluang hujan per jam tertinggi {p:g}% sekitar {peak}."
+    return f"{loc}: peluang hujan per jam tertinggi {p:g}% sekitar {peak}. Rentang dengan risiko relatif lebih rendah: {best}. Tetap pantau kondisi setempat."
 
 
 def _lg_kpi(label, value, note="", cls=""):
@@ -10243,22 +9500,11 @@ def _lg_metric_strip(day):
 
 
 def _lg_period_summary(hours, label, start, end):
-    selected = []
-    for h in hours or []:
-        try:
-            hh = int(_lg_hour(h.get("hour"), "00:00")[:2])
-        except Exception:
-            continue
-        ok = (start <= hh <= end) if start <= end else (hh >= start or hh <= end)
-        if ok:
-            selected.append(h)
+    selected = [h for h in hours or [] if h.get("recommendation_eligible") and ((start <= _lg_hour_int(h.get("hour")) <= end) if start <= end else (_lg_hour_int(h.get("hour")) >= start or _lg_hour_int(h.get("hour")) <= end))]
     if not selected:
-        return {"name": label, "condition": "Belum tersedia", "attention_hour": "—", "temp_c": None, "rain_probability": None, "risk_score": 0, "risk_class": "safe", "risk_label": "Aman"}
-    peak = max(selected, key=lambda x: max(_lg_float(x.get("risk_score"), 0) or 0, _lg_prob(x.get("rain_probability"), 0)))
-    temp = _lg_average([h.get("temp_c") for h in selected])
-    rain = max(_lg_prob(h.get("rain_probability"), 0) for h in selected)
-    score = max(_lg_float(h.get("risk_score"), 0) or 0 for h in selected)
-    return {"name": label, "condition": peak.get("condition") or "Cuaca lokal", "attention_hour": peak.get("hour"), "temp_c": temp, "rain_probability": rain, "risk_score": score, "risk_class": _lg_class(score), "risk_label": _lg_label(score)}
+        return {"name": label, "condition": "Data belum memadai", "attention_hour": "—", "temp_c": None, "rain_probability": None, "risk_score": None, "risk_class": "unavailable", "risk_label": "Data belum memadai"}
+    peak = max(selected, key=lambda h: h.get("risk_score") if h.get("risk_score") is not None else -1)
+    return {"name": label, "condition": peak["condition"], "attention_hour": peak["hour"], "temp_c": _lg_average([h.get("temp_c") for h in selected]), "rain_probability": max(h["rain_probability"] for h in selected), "risk_score": peak["risk_score"], "risk_class": peak["risk_class"], "risk_label": peak["risk_label"]}
 
 
 def _lg_periods(day):
@@ -10376,60 +9622,14 @@ def _lg_intel_sections(api):
 
 
 def _lg_geojson_center_feature(api, args):
-    d = _lg_today(api)
-    lon = _lg_float(getattr(args, "longitude", None), DEFAULT_LONGITUDE)
-    lat = _lg_float(getattr(args, "latitude", None), DEFAULT_LATITUDE)
-    return {
-        "type": "Feature",
-        "geometry": {"type": "Point", "coordinates": [lon, lat]},
-        "properties": {
-            "layer_type": "center",
-            "brand": LANGIT_BRAND_NAME,
-            "location_name": _lg_text(api.get("location_name"), getattr(args, "location_name", "Lokasi")),
-            "risk_score": _lg_float(d.get("risk_score"), 0),
-            "risk_class": _lg_text(d.get("risk_class"), "safe"),
-            "status": _lg_text(d.get("risk_label"), "Aman"),
-            "rain_probability": _lg_prob(d.get("peak_rain_probability"), 0),
-            "peak_hour": _lg_hour(d.get("peak_rain_hour")),
-            "temperature_c": _lg_float(d.get("avg_temperature_c"), None),
-            "decision": _lg_text(d.get("decision_sentence"), ""),
-        },
-    }
+    day = _lg_today(api)
+    return {'type':'Feature', 'geometry':{'type':'Point','coordinates':[args.longitude,args.latitude]}, 'properties':{'layer_type':'center','brand':LANGIT_BRAND_NAME,'location_name':args.location_name,'risk_score':day.get('risk_score'),'risk_class':day.get('risk_class','unavailable'),'status':day.get('risk_label','Data belum memadai'),'rain_probability':day.get('peak_rain_probability'),'peak_hour':day.get('peak_rain_hour'),'temperature_c':day.get('avg_temperature_c'),'decision':day.get('decision_sentence'),'data_quality':day.get('data_quality','unavailable')}}
 
 
 def _lg_geojson_layers(api, args):
-    features = [_lg_geojson_center_feature(api, args)]
-    lat = _lg_float(getattr(args, "latitude", None), DEFAULT_LATITUDE)
-    lon = _lg_float(getattr(args, "longitude", None), DEFAULT_LONGITUDE)
-    traits = _lg_location_traits(args)
-    today = _lg_today(api)
-    hours = today.get("key_hours") or []
-    if not hours:
-        hours = [{"hour": "12:00", "risk_score": today.get("risk_score", 0), "risk_class": today.get("risk_class", "safe"), "rain_probability": today.get("peak_rain_probability", 0), "condition": today.get("condition", "Kondisi lokal")}]
-    for h in hours:
-        hh = _lg_hour(h.get("hour"))
-        base_score = _lg_float(h.get("risk_score"), 0) or 0
-        p = _lg_prob(h.get("rain_probability"), 0)
-        for idx, (label, dy, dx, radius, kind) in enumerate(traits.get("micro_zones", [])):
-            zone_bias = {"orographic": 10, "heat": 6, "commute": 4, "humidity": 5, "activity": 1}.get(kind, 0)
-            score = clamp(base_score + zone_bias + (p - 40) * 0.08, 0, 100)
-            features.append({
-                "type": "Feature",
-                "geometry": {"type": "Point", "coordinates": [lon + dx, lat + dy]},
-                "properties": {
-                    "layer_type": "zone",
-                    "zone": label,
-                    "zone_kind": kind,
-                    "hour": hh,
-                    "radius_m": radius,
-                    "risk_score": round(score, 1),
-                    "risk_class": _lg_class(score),
-                    "rain_probability": p,
-                    "condition": _lg_text(h.get("condition"), ""),
-                    "activity_hint": _lg_hour_note(p, score, h.get("condition")),
-                },
-            })
-    return {"type": "FeatureCollection", "features": features}
+    # Only the location's model estimate is mapped. Unmeasured offsets cannot
+    # generate geographic risk or rain probabilities.
+    return {'type':'FeatureCollection','features':[_lg_geojson_center_feature(api,args)]}
 
 
 def _lg_leaflet_html(title, features_or_geojson, back="langit_app.html"):
@@ -10594,48 +9794,18 @@ def anemos_write_multiday_public_pages(args, forecast_dates=None, source_state_r
 
 
 def _lg_accuracy_html(rows, args):
-    try:
-        result = sentinel_compute_verification(rows or [], args)
-        summary = result[0] if isinstance(result, tuple) else (result or {})
-        reliability = result[2] if isinstance(result, tuple) and len(result) > 2 else summary.get("reliability_bins", [])
-    except Exception:
-        summary, reliability = {}, []
-    matched = int(_lg_float(summary.get("matched_cases"), 0) or 0)
-    target = max(1, int(getattr(args, "verification_min_cases", 30) or 30))
-    pct = min(100, round(matched / target * 100))
-    dummy = {"location_name": getattr(args, "location_name", "Lokasi"), "days": [], "updated_label": "baru diperbarui"}
-    if matched < target:
-        rel_body = "<div class='empty'><b>Reliability table disembunyikan sementara.</b><br>Belum cukup pasangan data. Setelah minimal 30 pasangan, LANGIT akan menampilkan error suhu, Brier score, hit rate, false alarm, dan reliability table.</div>"
-    else:
-        rel_rows = "".join(f"<tr><td>{_lg_esc(r.get('probability_bin') or r.get('bin'))}</td><td>{_lg_esc(r.get('n') or r.get('cases') or 0)}</td><td>{_lg_esc(r.get('mean_forecast_probability') or r.get('mean_forecast_pct') or '—')}</td><td>{_lg_esc(r.get('observed_rain_frequency') or r.get('observed_frequency_pct') or '—')}</td></tr>" for r in reliability if isinstance(r, dict))
-        rel_body = f"<div class='table-wrap'><table><thead><tr><th>Kelompok peluang</th><th>Kasus</th><th>Rata-rata prakiraan</th><th>Hujan benar terjadi</th></tr></thead><tbody>{rel_rows}</tbody></table></div>"
-    body = (
-        f"<section class='panel'><div class='head'><h2>{'Akurasi mulai bisa dibaca' if matched >= target else 'Data akurasi belum cukup'}</h2><p>Target awal {target} pasangan.</p></div>"
-        f"<div class='kpi'><span>Progress verifikasi</span><b>{matched}/{target}</b><small>{pct}% menuju minimum</small></div></section>"
-        f"<section class='grid g4'>{_lg_kpi('Error suhu','—','lebih kecil lebih baik')}{_lg_kpi('Skor peluang hujan','—','lebih kecil lebih baik')}{_lg_kpi('Hujan terdeteksi','—','kemampuan menangkap hujan')}{_lg_kpi('Alarm keliru','—','lebih kecil lebih baik')}</section>"
-        f"<section class='panel'><div class='head'><h2>Bukti peluang hujan</h2><p>Ditampilkan saat data observasi cukup.</p></div>{rel_body}</section>"
-    )
-    return _lg_doc(dummy, args, "accuracy", "accuracy", body)
+    summary, pairs, reliability = sentinel_compute_verification(rows or [], args)
+    def display(key):
+        value = summary.get(key)
+        return 'Belum tersedia' if value is None else str(round(value, 4)) if isinstance(value, float) else str(value)
+    fields = [('Kasus hujan valid','rain_valid_cases'), ('Kasus suhu valid','temperature_valid_cases'), ('Hari berbeda','independent_days'), ('MAE suhu (°C)','temperature_mae_c'), ('Brier score','rain_brier_score'), ('Brier baseline','baseline_brier_score'), ('Skill vs baseline','rain_brier_skill_score'), ('POD','rain_pod'), ('FAR','rain_far'), ('CSI','rain_csi')]
+    body = '<section class="panel"><h2>Verifikasi prakiraan</h2><p>Jumlah sampel tidak membuktikan kalibrasi. Hanya prakiraan sebelum kejadian dan pengamatan dengan asal serta QC yang jelas dihitung.</p><p>Status: '+_lg_esc(summary['calibration_status'])+' · '+_lg_esc(summary['sample_status'])+'</p><table>'+''.join('<tr><th>'+_lg_esc(label)+'</th><td>'+_lg_esc(display(key))+'</td></tr>' for label,key in fields)+'</table></section>'
+    dummy = {'location_name':args.location_name,'days':[],'updated_label':summary['generated_at']}
+    return _lg_doc(dummy, args, 'accuracy', 'accuracy', body)
 
 
 def aether_write_public_accuracy_page(args):
-    all_rows = []
-    try:
-        import glob
-        import re
-        pattern = os.path.join(ACTIVE_OUTPUT_DIR, "sentinel_x_*.csv")
-        for filepath in glob.glob(pattern):
-            filename = os.path.basename(filepath)
-            if re.match(r"sentinel_x_\d{8}\.csv", filename):
-                all_rows.extend(read_dict_csv(filepath))
-    except Exception as exc:
-        log_warning("Gagal memuat histori sentinel_x_*.csv untuk akurasi:", exc)
-    
-    if not all_rows and os.path.exists(path_output(AETHER_CSV_FILENAME)):
-        all_rows = read_dict_csv(path_output(AETHER_CSV_FILENAME))
-        
-    atomic_write_text(path_output("sentinel_x_accuracy_public.html"), lambda f: f.write(_lg_accuracy_html(all_rows, args)))
-    return path_output("sentinel_x_accuracy_public.html")
+    return sentinel_write_verification_artifacts([], args) and path_output("sentinel_x_accuracy_public.html")
 
 
 def _lg_portal_card(loc, base_url=""):
@@ -10731,43 +9901,11 @@ def _lg_activity_rows(items, fallback_priority=""):
 
 
 def _lg_activity_matrix(day):
-    """Return LANGIT activity matrix as list[dict], never tuple rows."""
-    day = dict(day or {})
-    p = _lg_prob(day.get("peak_rain_probability"), 0)
-    score = _lg_float(day.get("risk_score"), p) or p
-    peak = _lg_hour(day.get("peak_rain_hour"), "—")
-    best = _lg_best_window_text(day.get("best_activity_window"))
-    if not best or best == "—" or best.strip() in {"", "—", "-"}:
-        best = "pagi hingga siang hari"
-
-    if score >= 70 or p >= 70:
-        raw = [
-            ("Perjalanan / Motor", "Bawa Jas Hujan", f"Hindari berkendara di sekitar pukul {peak} WIB.", peak, "rain"),
-            ("Jalan Kaki", "Siapkan Payung", f"Antisipasi tempat berteduh di sekitar pukul {peak} WIB.", peak, "rain"),
-            ("Jemur Pakaian", "Pagi Hari", "Hindari meninggalkan jemuran terlalu lama.", "pagi", "watch"),
-            ("Aktivitas Outdoor", "Siapkan Rencana Cadangan", "Gunakan opsi ruangan tertutup.", peak, "rain"),
-            ("Olahraga", "Sesuaikan Jadwal", f"Pilih jam alternatif: {best}.", best, "watch"),
-            ("Fotografi", "Gunakan Pelindung", "Lindungi peralatan elektronik dari kelembapan.", peak, "watch"),
-        ]
-    elif score >= 45 or p >= 45:
-        raw = [
-            ("Perjalanan / Motor", "Cukup Kondusif", f"Tetap antisipasi potensi hujan sekitar pukul {peak} WIB.", peak, "watch"),
-            ("Jalan Kaki", "Aman Bersyarat", f"Periode nyaman: {best}.", best, "safe"),
-            ("Jemur Pakaian", "Pagi–Siang", "Angkat pakaian sebelum memasuki sore hari.", "pagi hingga siang", "safe"),
-            ("Aktivitas Outdoor", "Kondusif", "Tetap pantau perkembangan awan.", peak, "watch"),
-            ("Olahraga", "Hindari Terik", f"Periode nyaman: {best}.", best, "safe"),
-            ("Fotografi", "Pantau Awan", f"Perhatikan perubahan intensitas cahaya sekitar pukul {peak} WIB.", peak, "watch"),
-        ]
-    else:
-        raw = [
-            ("Perjalanan / Motor", "Aman", "Kondisi cuaca mendukung perjalanan luar ruang.", best, "safe"),
-            ("Jalan Kaki", "Sangat Nyaman", f"Periode terbaik: {best}.", best, "safe"),
-            ("Jemur Pakaian", "Sangat Baik", "Pagi hingga siang hari sangat mendukung.", "pagi hingga siang", "safe"),
-            ("Aktivitas Outdoor", "Sangat Aman", "Sangat mendukung untuk kegiatan luar ruang.", best, "safe"),
-            ("Olahraga", "Pagi / Sore", f"Periode nyaman: {best}.", best, "safe"),
-            ("Fotografi", "Sangat Baik", "Kondisi cahaya pagi dan sore terpantau optimal.", best, "safe"),
-        ]
-    return _lg_activity_rows(raw, fallback_priority=peak)
+    names = ["Perjalanan / Motor", "Jalan Kaki", "Jemur Pakaian", "Aktivitas Outdoor", "Olahraga", "Fotografi"]
+    if day.get("data_quality") != "usable" or not day.get("best_activity_window"):
+        return [{"activity": name, "status": "Rekomendasi belum tersedia", "advice": "Data atau rentang cuaca belum memenuhi syarat. Pantau pembaruan dan kondisi setempat.", "priority_hour": "—", "risk_class": "unavailable"} for name in names]
+    best = _lg_best_window_text(day["best_activity_window"])
+    return [{"activity": name, "status": "Pertimbangkan rentang ini", "advice": "Risiko relatif lebih rendah pada rentang terpilih; sesuaikan kegiatan dengan kondisi setempat.", "priority_hour": best, "risk_class": "watch"} for name in names]
 
 
 def _lg_activity_section(day):
@@ -10813,7 +9951,6 @@ def _lg_write_outputs(args, forecast_dates=None):
         "langit_3day.html": _lg_page(api, args, "3day"),
         "langit_activity.html": _lg_page(api, args, "activity"),
         "keandalan_data.html": _lg_page(api, args, "court"),
-        "langit_map_room.html": _lg_page(api, args, "map"),
         "langit_planner.html": _lg_planner(api, args),
     }
     for name, doc in pages.items():
@@ -10821,6 +9958,452 @@ def _lg_write_outputs(args, forecast_dates=None):
     atomic_write_text(path_output("langit_whatsapp_brief.txt"), lambda f: f.write(_lg_share_text(api)))
     return "langit_app.html"
 
+
+
+# Data integrity and chronological learning support.
+import uuid
+
+from dataclasses import asdict
+
+from datetime import timezone
+
+QUALITY_VERSION = "LANGIT v60.5-data-integrity"
+
+QUALITY_SCHEMA = "langit-quality-1"
+
+_RUN_ISSUED_AT = None
+
+_QUALITY_SKILL = {}
+
+_QUALITY_FAMILY_COUNTS = {}
+
+_QUALITY_TARGET_DT = None
+
+_SOURCE_FAMILIES = {"METNO": "ECMWF", "ECMWF": "ECMWF"}
+
+_OBS_TYPES = {"station_observation", "sensor_observation", "manual_observation", "external_observation"}
+
+_OBS_FIELDS = ("temp_c", "rh_pct", "rain_mm", "wind_kmh", "category")
+
+def _quality_first(row, *keys, default=None):
+    for key in keys:
+        value = row.get(key)
+        if value is not None and value != "":
+            return value
+    return default
+
+def _quality_datetime(value, tz_name=DEFAULT_TIMEZONE):
+    if isinstance(value, datetime):
+        dt = value
+    elif value:
+        try:
+            dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    else:
+        return None
+    if dt.tzinfo is None:
+        # Provenance timestamps without an offset are not safely interpretable.
+        return None
+    return dt.astimezone(ZoneInfo(tz_name))
+
+def _quality_issued(args):
+    return _RUN_ISSUED_AT or now_local(args.timezone)
+
+def _quality_family(source_id):
+    return _SOURCE_FAMILIES.get(source_id, source_id)
+
+def _quality_set_families(points):
+    global _QUALITY_FAMILY_COUNTS
+    ids = {p.source_id for p in points if any(getattr(p, k, None) is not None for k in ("temp_c", "rh_pct", "rain_mm", "wind_kmh"))}
+    _QUALITY_FAMILY_COUNTS = {}
+    for sid in ids:
+        family = _quality_family(sid)
+        _QUALITY_FAMILY_COUNTS[family] = _QUALITY_FAMILY_COUNTS.get(family, 0) + 1
+
+def _quality_context(valid_time, issued_at=None):
+    lead = max(0, (valid_time - (issued_at or valid_time)).total_seconds() / 3600)
+    return {"lead": aether_lead_bucket(lead), "hour": hour_bucket_for_time(valid_time.strftime("%H:%M")), "month": str(valid_time.month)}
+
+def _quality_skill_section(variable, valid_time, issued_at=None):
+    section = (_QUALITY_SKILL.get("variables") or {}).get(variable) or {}
+    context = _quality_context(valid_time, issued_at)
+    for key in ("lead:" + context["lead"], "hour:" + context["hour"], "month:" + context["month"], "all"):
+        candidate = section.get(key)
+        if candidate and candidate.get("accepted"):
+            return candidate
+    return {}
+
+def point_variable_weight(point, variable):
+    valid = getattr(point, "valid_time", None) or point.source_datetime
+    section = _quality_skill_section(variable, valid, _RUN_ISSUED_AT)
+    multiplier = safe_float((section.get("multipliers") or {}).get(point.source_id)) or 1
+    return point_weight(point) * multiplier
+
+def _quality_array_value(hourly, field, index):
+    array = hourly.get(field) or []
+    return safe_float(array[index]) if index < len(array) else None
+
+def _quality_native_step(times):
+    differences = sorted((b - a).total_seconds() / 60 for a, b in zip(times, times[1:]) if b > a)
+    return differences[len(differences) // 2] if differences else None
+
+def _quality_observation_rank(row, field):
+    kind = row.get(field + "_type") or row.get("observation_type") or "legacy_unclassified"
+    qc = row.get(field + "_qc") or row.get("qc")
+    return (3 if kind in {"station_observation", "sensor_observation"} else 2 if kind in _OBS_TYPES else 0) if qc == "passed" else 0
+
+def _quality_merge_observation(left, right):
+    out = dict(left or {})
+    for key in ("tanggal", "target_date", "jam", "observed_datetime", "observation_type", "source_id", "available_at", "qc"):
+        if key not in out and right.get(key) is not None:
+            out[key] = right[key]
+    for field in _OBS_FIELDS:
+        incoming = right.get(field)
+        if incoming in (None, ""):
+            continue
+        old = out.get(field)
+        incoming_rank = _quality_observation_rank(right, field)
+        old_rank = _quality_observation_rank(out, field)
+        if old not in (None, "") and str(old) != str(incoming):
+            conflict = {"field": field, "previous": old, "incoming": incoming, "incoming_source": right.get(field + "_source") or right.get("source_id")}
+            try:
+                conflicts = json.loads(out.get("conflicts_json") or "[]")
+                if not isinstance(conflicts, list):
+                    conflicts = []
+            except (ValueError, TypeError):
+                conflicts = []
+            conflicts.append(conflict)
+            out["conflicts_json"] = json.dumps(conflicts, ensure_ascii=False)
+        if old in (None, "") or incoming_rank > old_rank:
+            out[field] = incoming
+            for suffix in ("type", "qc", "available_at", "source"):
+                out[field + "_" + suffix] = right.get(field + "_" + suffix) or right.get({"type": "observation_type", "qc": "qc", "available_at": "available_at", "source": "source_id"}[suffix])
+    return out
+
+def _quality_observed_value(row, field):
+    if _quality_observation_rank(row, field) == 0:
+        return None
+    return row.get(field) if field == "category" else safe_float(row.get(field))
+
+def _quality_observation_available(row, field, issued_at):
+    value = _quality_observed_value(row, field)
+    available = _quality_datetime(row.get(field + "_available_at") or row.get("available_at"))
+    return value if value is not None and available is not None and available <= issued_at else None
+
+def _quality_payload_run(payload, args):
+    if not isinstance(payload, dict):
+        return None
+    stamp = ((payload.get("properties") or {}).get("meta") or {}).get("updated_at")
+    if stamp:
+        return _quality_datetime(stamp, args.timezone)
+    stamps = []
+    for day in payload.get("data") or []:
+        for group in day.get("cuaca") or []:
+            for item in group:
+                value = _quality_datetime(item.get("analysis_date"), args.timezone)
+                if value:
+                    stamps.append(value)
+    return max(stamps) if stamps else None
+
+def _quality_result_metadata(result, args):
+    now = now_local(args.timezone)
+    result.is_cached = any(getattr(p, "is_cached", False) for p in result.points.values())
+    result.live_fetch_success = result.success and not result.is_cached
+    originals = [p.original_fetched_at for p in result.points.values() if p.original_fetched_at]
+    result.original_fetched_at = min(originals) if originals else (now if result.live_fetch_success else None)
+    result.model_run_at = _quality_payload_run(result.raw_payload, args)
+    result.cache_age_hours = max((p.cache_age_hours or 0 for p in result.points.values()), default=0)
+    result.model_family = _quality_family(result.source_id)
+    for p in result.points.values():
+        p.original_fetched_at = result.original_fetched_at
+        p.model_run_at = p.model_run_at or result.model_run_at
+    return result
+
+def _quality_jsonable(value):
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {str(k): _quality_jsonable(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_quality_jsonable(v) for v in value]
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    return value
+
+def _quality_archive_dir():
+    directory = path_output("forecast_archive")
+    ensure_directory(directory)
+    return directory
+
+def _quality_archive_run(run_id, target_date, results, rows, args):
+    issued = _quality_issued(args)
+    source_points = []
+    for result in results:
+        for p in result.points.values():
+            source_points.append(_quality_jsonable({**asdict(p), "weight": point_weight(p)}))
+    payload = {"schema_version": QUALITY_SCHEMA, "run_id": run_id, "issued_at": issued.isoformat(), "target_date": target_date.isoformat(),
+               "location_slug": args.location_slug, "location_name": args.location_name, "latitude": args.latitude, "longitude": args.longitude,
+               "skill_config": _QUALITY_SKILL, "hourly": rows, "source_points": source_points}
+    archive = os.path.join(_quality_archive_dir(), run_id + ".json")
+    if os.path.exists(archive):
+        raise ValueError("Forecast run already archived: " + run_id)
+    write_json(archive, payload)
+    conn = aether_connect_db()
+    try:
+        conn.execute("CREATE TABLE IF NOT EXISTS quality_runs (run_id TEXT PRIMARY KEY, issued_at TEXT NOT NULL, target_date TEXT NOT NULL, payload_json TEXT NOT NULL)")
+        conn.execute("INSERT INTO quality_runs VALUES (?,?,?,?)", (run_id, issued.isoformat(), target_date.isoformat(), json.dumps(_quality_jsonable(payload), ensure_ascii=False, allow_nan=False)))
+        conn.commit()
+    finally:
+        conn.close()
+    return archive
+
+def _quality_historical_rows():
+    rows = []
+    for entry in sorted(os.scandir(_quality_archive_dir()), key=lambda e: e.name):
+        if not entry.is_file() or not entry.name.endswith(".json"):
+            continue
+        doc = read_json(entry.path, {}) or {}
+        for row in doc.get("hourly") or []:
+            rows.append({**row, "issued_at": doc.get("issued_at"), "run_id": doc.get("run_id"), "location_slug": doc.get("location_slug")})
+    return rows
+
+def _quality_forecast_pairs(rows, observations, args):
+    # One forecast per target and lead bucket: choose the earliest issue in that
+    # bucket, preserving fixed availability instead of an after-event update.
+    selected = {}
+    for row in rows or []:
+        date, hour = row.get("target_date"), _lg_hour(row.get("jam"), "")
+        issued = _quality_datetime(row.get("issued_at"), args.timezone)
+        valid = _quality_datetime(row.get("target_datetime"), args.timezone)
+        if issued is None or valid is None or valid > now_local(args.timezone) or issued > valid - timedelta(hours=1) or row.get("data_quality") not in {"usable", "limited", "stale"}:
+            continue
+        observation = observations.get((date, hour))
+        if observation is None:
+            continue
+        lead = (valid - issued).total_seconds() / 3600
+        key = (date, hour, aether_lead_bucket(lead))
+        previous = selected.get(key)
+        if previous is None or issued < previous[0]:
+            selected[key] = (issued, row, observation, lead)
+    return [selected[k] for k in sorted(selected)]
+
+def _quality_apply_probability(probability, valid_time):
+    probability = _lg_prob(probability)
+    if probability is None:
+        return None
+    section = _quality_skill_section("prob_rain", valid_time, _RUN_ISSUED_AT)
+    mapping = section.get("mapping") or []
+    for left, right in zip(mapping, mapping[1:]):
+        if left[0] <= probability <= right[0] and right[0] > left[0]:
+            fraction = (probability - left[0]) / (right[0] - left[0])
+            return round(left[1] + fraction * (right[1] - left[1]), 3)
+    return probability
+
+def _quality_load_skill(args):
+    global _QUALITY_SKILL
+    doc = read_json(path_output("quality_skill_config.json"), {}) or {}
+    fitted = _quality_datetime(doc.get("fitted_at"), args.timezone)
+    if doc.get("location_slug") == args.location_slug and fitted and fitted <= _quality_issued(args):
+        _QUALITY_SKILL = doc
+    else:
+        _QUALITY_SKILL = {}
+
+def _quality_training_cases(args):
+    observations = sentinel_load_observations_by_key(args)
+    now = now_local(args.timezone)
+    cases = []
+    for entry in os.scandir(_quality_archive_dir()):
+        if not entry.name.endswith(".json") or not entry.is_file():
+            continue
+        doc = read_json(entry.path, {}) or {}
+        issued = _quality_datetime(doc.get("issued_at"), args.timezone)
+        if issued is None:
+            continue
+        points_by_hour = {}
+        for p in doc.get("source_points") or []:
+            points_by_hour.setdefault(p.get("target_time"), []).append(p)
+        for row in doc.get("hourly") or []:
+            valid = _quality_datetime(row.get("target_datetime"), args.timezone)
+            if valid is None or valid > now or issued > valid - timedelta(hours=1):
+                continue
+            obs = observations.get((row.get("target_date"), row.get("jam")))
+            if obs is None:
+                continue
+            # Observations not available at the fit timestamp cannot enter fitting.
+            clean = {}
+            for field in _OBS_FIELDS:
+                value = _quality_observation_available(obs, field, now)
+                if value is not None:
+                    clean[field] = value
+                    for suffix in ("type", "qc", "available_at", "source"):
+                        clean[field + "_" + suffix] = obs.get(field + "_" + suffix)
+            if clean:
+                cases.append({"date": valid.date().isoformat(), "valid": valid, "issued": issued, "row": row, "obs": clean, "points": points_by_hour.get(row.get("jam"), [])})
+    # Deduplicate revisions within each lead bucket before fitting.
+    selected = {}
+    for c in sorted(cases, key=lambda c: c["issued"]):
+        key = (c["date"], c["valid"].strftime("%H:%M"), aether_lead_bucket((c["valid"] - c["issued"]).total_seconds() / 3600))
+        selected.setdefault(key, c)
+    return list(selected.values())
+
+def _quality_predict_variable(case, variable, multipliers=None):
+    pairs = []
+    for p in case["points"]:
+        value = safe_float(p.get(variable))
+        if value is None:
+            continue
+        weight = safe_float(p.get("weight")) or SOURCE_BASE_WEIGHTS.get(p.get("source_id"), 1)
+        weight *= (multipliers or {}).get(p.get("source_id"), 1)
+        pairs.append((value, weight))
+    return aether_weighted_quantile(pairs, 0.5)
+
+def _quality_mean_error(cases, variable, multipliers=None, bias=0):
+    errors = []
+    for c in cases:
+        observed = safe_float(c["obs"].get(variable))
+        pred = _quality_predict_variable(c, variable, multipliers)
+        if observed is not None and pred is not None:
+            errors.append(abs(observed - (pred + bias)))
+    return sum(errors) / len(errors) if errors else None
+
+def _quality_fit_scope(cases, args):
+    days = sorted({c["date"] for c in cases})
+    minimum = getattr(args, "learning_min_samples", 60)
+    if len(cases) < minimum or len(days) < 10:
+        return {}, {"status": "insufficient_data", "samples": len(cases), "days": len(days)}
+    split = max(1, int(len(days) * 0.7))
+    boundary = days[split]
+    train = [c for c in cases if c["date"] < boundary]
+    holdout = [c for c in cases if c["date"] >= boundary]
+    if len(train) < 30 or len(holdout) < 15 or len({c["date"] for c in holdout}) < 3:
+        return {}, {"status": "insufficient_chronological_holdout"}
+    sections, evidence = {}, {"status": "evaluated", "train_samples": len(train), "holdout_samples": len(holdout), "holdout_start": boundary, "variables": {}}
+    for variable in ("temp_c", "rh_pct", "rain_mm", "wind_kmh"):
+        source_errors = {}
+        for c in train:
+            obs = safe_float(c["obs"].get(variable))
+            if obs is None:
+                continue
+            for p in c["points"]:
+                pred = safe_float(p.get(variable))
+                if pred is not None:
+                    source_errors.setdefault(p["source_id"], []).append(abs(pred - obs))
+        means = {sid: sum(e) / len(e) for sid, e in source_errors.items() if len(e) >= 20}
+        if len(means) < 2:
+            continue
+        mean_error = sum(means.values()) / len(means)
+        multipliers = {}
+        for sid, error in means.items():
+            strength = len(source_errors[sid]) / (len(source_errors[sid]) + 100)
+            ratio = clamp((mean_error + 0.1) / (error + 0.1), 0.5, 2)
+            multipliers[sid] = 1 + strength * (ratio - 1)
+        baseline = _quality_mean_error(holdout, variable)
+        candidate = _quality_mean_error(holdout, variable, multipliers)
+        accepted = baseline is not None and candidate is not None and candidate < baseline - 1e-9
+        section = {"accepted": accepted, "multipliers": multipliers, "baseline_holdout_mae": baseline, "candidate_holdout_mae": candidate, "train_source_samples": {sid: len(e) for sid, e in source_errors.items()}, "holdout_start": boundary}
+        evidence["variables"][variable] = section
+        if accepted:
+            sections[variable] = section
+    # Bias correction is tested jointly with any accepted variable weights.
+    for variable, name, limit in (("temp_c", "temp_bias", 3), ("rh_pct", "rh_bias", 10)):
+        weights = (sections.get(variable) or {}).get("multipliers")
+        residuals = []
+        for c in train:
+            obs = safe_float(c["obs"].get(variable))
+            pred = _quality_predict_variable(c, variable, weights)
+            if obs is not None and pred is not None:
+                residuals.append(obs - pred)
+        if len(residuals) < 30:
+            continue
+        bias = clamp(sum(residuals) / len(residuals) * len(residuals) / (len(residuals) + 100), -limit, limit)
+        base = _quality_mean_error(holdout, variable, weights)
+        candidate = _quality_mean_error(holdout, variable, weights, bias)
+        if candidate is not None and base is not None and candidate < base - 1e-9:
+            sections[name] = {"accepted": True, "bias": bias, "baseline_holdout_mae": base, "candidate_holdout_mae": candidate, "holdout_start": boundary}
+        evidence["variables"][name] = {"accepted": name in sections, "baseline_holdout_mae": base, "candidate_holdout_mae": candidate, "bias": bias}
+    bins = {}
+    for c in train:
+        p = _lg_prob(c["row"].get("prob_rain_raw", c["row"].get("prob_rain")))
+        event = sentinel_observed_rain_event(c["obs"])
+        if p is not None and event is not None:
+            bins.setdefault(min(9, int(p // 10)), []).append((p, int(event)))
+    mapping = []
+    for values in bins.values():
+        if len(values) >= 10:
+            x = sum(p for p, _ in values) / len(values)
+            freq = sum(e for _, e in values) / len(values) * 100
+            shrink = len(values) / (len(values) + 50)
+            mapping.append([x, shrink * freq + (1 - shrink) * x, len(values)])
+    mapping.sort()
+    # Pool adjacent violating bins for a monotonic calibration map.
+    blocks = [[x * n, y * n, n] for x, y, n in mapping]
+    i = 0
+    while i + 1 < len(blocks):
+        if blocks[i][1] / blocks[i][2] > blocks[i + 1][1] / blocks[i + 1][2]:
+            blocks[i:i + 2] = [[sum(b[j] for b in blocks[i:i + 2]) for j in range(3)]]
+            i = max(0, i - 1)
+        else:
+            i += 1
+    mapping = [[b[0] / b[2], b[1] / b[2]] for b in blocks]
+    before, after = [], []
+    if len(mapping) >= 3:
+        for c in holdout:
+            p = _lg_prob(c["row"].get("prob_rain_raw", c["row"].get("prob_rain")))
+            event = sentinel_observed_rain_event(c["obs"])
+            if p is None or event is None:
+                continue
+            calibrated = p
+            for left, right in zip(mapping, mapping[1:]):
+                if left[0] <= p <= right[0]:
+                    calibrated = left[1] + (p - left[0]) / (right[0] - left[0]) * (right[1] - left[1])
+                    break
+            before.append((p / 100 - int(event)) ** 2)
+            after.append((calibrated / 100 - int(event)) ** 2)
+    if len(before) >= 15:
+        baseline, candidate = sum(before) / len(before), sum(after) / len(after)
+        accepted = candidate < baseline - 1e-9
+        probability_section = {"accepted": accepted, "mapping": mapping, "baseline_holdout_brier": baseline, "candidate_holdout_brier": candidate, "holdout_cases": len(before), "holdout_start": boundary}
+        evidence["variables"]["prob_rain"] = probability_section
+        if accepted:
+            sections["prob_rain"] = probability_section
+    return sections, evidence
+
+def _quality_enrich_rows(rows, points, target_date, args):
+    issued = _quality_issued(args)
+    grouped = {}
+    for p in points:
+        grouped.setdefault(p.target_time, []).append(p)
+    for row in rows:
+        bucket = grouped.get(row["jam"], [])
+        actual = [p for p in bucket if any(getattr(p, k) is not None for k in ("temp_c", "rh_pct", "rain_mm", "wind_kmh"))]
+        families = {_quality_family(p.source_id) for p in actual}
+        row["issued_at"] = issued.isoformat()
+        row["model_families"] = sorted(families)
+        row["independent_families_used"] = len(families)
+        row["variable_coverage"] = {k: sum(getattr(p, k) is not None for p in bucket) for k in ("temp_c", "rh_pct", "rain_mm", "wind_kmh")}
+        row["quality_flags"] = sorted({flag for p in bucket for flag in p.quality_flags})
+        row["is_cached"] = any(p.is_cached for p in actual)
+        row["cache_age_hours"] = max((p.cache_age_hours or 0 for p in actual), default=0)
+        row["data_quality"] = "unavailable" if len(families) < 3 or not actual or safe_float(row.get("prob_rain")) is None or (safe_float(row.get("coverage_fraction")) or 0) < 0.5 else "stale" if row["is_cached"] else "limited" if len(actual) < len(ACTIVE_SOURCE_CONFIGS) else "usable"
+        if row["data_quality"] == "unavailable":
+            row["operational_status"] = "BLACK"
+            row["trust_level"] = "DO_NOT_TRUST"
+            for field in ("prob_rain", "prob_heavy_rain", "prob_moderate_heavy_rain", "rain_threat_score", "heavy_rain_threat_score", "direct_hit_risk", "nearby_rain_risk"):
+                row[field] = None
+            row["decision_recommendation"] = "Data cuaca belum memadai untuk rekomendasi aktivitas."
+        row["probability_unit"] = "percent"
+        row["risk_score_basis"] = "heuristic_not_observation_certified"
+        row["rain_interval_start"] = (parse_local_hour_string(target_date, row["jam"], args.timezone) - timedelta(hours=1)).isoformat()
+        row["rain_interval_end"] = row["target_datetime"]
+        row["rain_quantile_basis"] = "inter_model_quantile_not_calibrated_interval"
+    return rows
+
+def _quality_map_probability(probability, mapping):
+    for left, right in zip(mapping, mapping[1:]):
+        if left[0] <= probability <= right[0] and right[0] > left[0]:
+            return left[1] + (probability-left[0])/(right[0]-left[0])*(right[1]-left[1])
+    return probability
 
 if __name__ == "__main__":
     main()
