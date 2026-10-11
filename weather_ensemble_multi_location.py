@@ -1448,6 +1448,8 @@ class ForecastPoint:
     is_cached: bool = False
     cache_age_hours: float = 0.0
     precipitation_intervals: tuple = ()
+    model_elevation_m: Optional[float] = None
+    model_elevation_basis: str = "unknown"
 
 
 @dataclass
@@ -1471,6 +1473,10 @@ class SourceResult:
     model_run_at: Optional[datetime] = None
     cache_age_hours: float = 0.0
     model_family: str = ""
+    availability_reason: str = "unknown"
+    requested_source_id: str = ""
+    is_backup: bool = False
+    model_identifier: str = ""
 
 
 def fetch_bmkg_forecast(target_date, config, args):
@@ -2525,6 +2531,7 @@ def save_outputs(target_date, results, args):
             "error_snippet",
             "payload_saved_path",
             "error",
+            "availability_reason", "live_fetch_success", "is_cached", "is_backup", "model_identifier", "original_fetched_at", "cache_age_hours",
         ],
         status_rows,
     )
@@ -2546,6 +2553,7 @@ def save_outputs(target_date, results, args):
             "error_snippet",
             "payload_saved_path",
             "error",
+            "availability_reason", "live_fetch_success", "is_cached", "is_backup", "model_identifier", "original_fetched_at", "cache_age_hours",
         ],
         status_rows,
     )
@@ -2663,7 +2671,7 @@ def save_outputs(target_date, results, args):
         "output_dir": ACTIVE_OUTPUT_DIR,
         "retention_days": args.retention_days,
         "low_coverage_slots": low_coverage_slots,
-        "run_status": "error" if not any(r.success for r in results) else "warning" if low_coverage_slots or any(r.is_cached for r in results) else "ok",
+        "run_status": "error" if not any(r.success for r in results) else "warning" if low_coverage_slots or any(r.is_cached for r in results) or sum(r.success for r in results) < (getattr(args,"min_success_sources",None) or len(ACTIVE_SOURCE_CONFIGS)) else "ok",
         "sentinel_x": sentinel_payload,
     }
     write_json(path_output("run_summary.json"), summary)
@@ -4295,7 +4303,7 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
         weights = [(p, point_weight(p)) for p in bucket]
         weight_total = sum(w for _, w in weights)
         expected_sources = max(len(ACTIVE_SOURCE_CONFIGS), 1)
-        coverage_fraction = round(sources_used / expected_sources, 4) if expected_sources else 0
+        coverage_fraction = round(clamp(sources_used / expected_sources, 0, 1), 4) if expected_sources else 0
 
         temp_pairs = [(p.temp_c, point_variable_weight(p, "temp_c")) for p, w in weights if p.temp_c is not None]
         rh_pairs = [(p.rh_pct, point_variable_weight(p, "rh_pct")) for p, w in weights if p.rh_pct is not None]
@@ -4349,9 +4357,20 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
             prob_rain = analog_prob
         prob_rain_raw = prob_rain
         prob_rain = _quality_apply_probability(prob_rain, _QUALITY_TARGET_DT)
+        prob_rain_heuristic = prob_rain
+        member_signal = {"target_datetime": _QUALITY_TARGET_DT.isoformat(), "prob_rain": prob_rain, "prob_rain_raw": prob_rain_raw}
+        v61_enrich_probabilistic_rows([member_signal], _V61_ENSEMBLES, args)
+        if member_signal.get("rain_two_stage", {}).get("available"):
+            prob_rain, prob_rain_raw = member_signal["prob_rain"], member_signal["prob_rain_raw"]
+            prob_heavy, prob_mod_heavy = member_signal["prob_heavy_rain"], member_signal["prob_moderate_heavy_rain"]
+            rain_p05, rain_p10, rain_p25, rain_p50, rain_p75, rain_p90, rain_p95 = [member_signal.get("rain_" + quantile) for quantile in ("p05", "p10", "p25", "p50", "p75", "p90", "p95")]
+
         temp_micro, rh_micro, fog_bonus, temp_adj, rh_adj = aether_microclimate_adjustment(micro_profile, hour, temp_p50, rh_p50)
 
+        temp_micro, local_temp_metadata = v61_local_adjustment(temp_micro, "temp_c", _QUALITY_TARGET_DT, args, points=bucket)
+        rh_micro, local_rh_metadata = v61_local_adjustment(rh_micro, "rh_pct", _QUALITY_TARGET_DT, args, points=bucket)
         hi_p50 = heat_index(temp_micro, rh_micro)
+        hi_p90 = max((value for value in (hi_p90, hi_p50) if value is not None), default=None)
         confidence_score = aether_value(ens[6]) if ens else None
         source_health_values = [source_health_factor(p.source_id) for p in bucket]
         source_health_mean = round(sum(source_health_values) / len(source_health_values), 4) if source_health_values else None
@@ -4362,7 +4381,7 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
         lead_hours = aether_lead_hours(target_date, jam, args)
         lead_uncertainty = clamp((lead_hours or 24.0) / 72.0 * 100.0, 5.0, 100.0)
         rain_spread_uncertainty = clamp(((rain_p90 or 0.0) - (rain_p10 or 0.0)) / 15.0 * 100.0, 0.0, 100.0)
-        displacement_personality = 70 if personality.get("rain_displacement_risk") == "high" else 50 if personality.get("rain_displacement_risk") == "medium" else 35
+        displacement_personality = 50  # Generic unvalidated risk prior; no location-name correction.
         rain_displacement_risk = round(clamp(0.32 * category_disagreement + 0.25 * rain_spread_uncertainty + 0.20 * displacement_personality + 0.15 * (prob_rain or 0) + 0.08 * lead_uncertainty, 0, 100), 1)
         spatial_uncertainty = round(clamp(0.62 * rain_displacement_risk + 0.38 * category_disagreement, 0, 100), 1)
         uncertainty_score = round(clamp(0.28 * category_disagreement + 0.22 * rain_spread_uncertainty + 0.18 * freshness_uncertainty + 0.14 * health_uncertainty + 0.10 * lead_uncertainty + 0.08 * spatial_uncertainty, 0, 100), 1)
@@ -4403,6 +4422,9 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
             route = "sentinel_probabilistic_risk_route"
 
         row = {
+            "local_temp_correction": local_temp_metadata,
+            "local_rh_correction": local_rh_metadata,
+            "prob_rain_heuristic": prob_rain_heuristic,
             "prob_rain_raw": prob_rain_raw,
             "target_date": target_date.isoformat(),
             "jam": jam,
@@ -7760,6 +7782,22 @@ def build_arg_parser():
             help='Hanya buat satu hari prakiraan publik, mengikuti --target-date atau default lama.',
         )
     parser.add_argument("--cache-max-age-hours", type=float, default=6.0, help="Batas usia asli cache; usia tidak direset saat dipakai ulang.")
+    parser.add_argument("--stations-file", help="CSV metadata stasiun/sensor lokal.")
+    parser.add_argument("--station-max-distance-km", type=float, default=30)
+    parser.add_argument("--observation-jump-temp-c", type=float, default=8)
+    parser.add_argument("--observation-stuck-hours", type=int, default=8)
+    parser.add_argument("--evaluation-min-days", type=int, default=30)
+    parser.add_argument("--evaluation-test-days", type=int, default=7)
+    parser.add_argument("--evaluation-folds", type=int, default=3)
+    parser.add_argument("--site-elevation-m", type=float, help="Elevasi lokasi yang diketahui, meter.")
+    parser.add_argument("--terrain-class", default="unknown", help="Karakter medan nyata; unknown bila belum diketahui.")
+    parser.add_argument("--ensemble-models", default="ncep_gefs_seamless,ecmwf_ifs025_ensemble,icon_global_eps")
+    parser.add_argument("--disable-ensemble", action="store_true")
+    parser.add_argument("--ensemble-min-members", type=int, default=5)
+    parser.add_argument("--ensemble-min-families", type=int, default=2)
+    parser.add_argument("--backup-models", default="jma_seamless,cmc_gem_gdps,bom_access_global", help="Model cadangan bernama asli; kosong untuk menonaktifkan.")
+    parser.add_argument("--min-success-sources", type=int, help="Target keberhasilan, default jumlah sumber yang dipilih.")
+    parser.add_argument("--activity-profiles-file", help="JSON ambang aktivitas; opsional.")
     return parser
 
 
@@ -10144,7 +10182,11 @@ def _quality_archive_run(run_id, target_date, results, rows, args):
             source_points.append(_quality_jsonable({**asdict(p), "weight": point_weight(p)}))
     payload = {"schema_version": QUALITY_SCHEMA, "run_id": run_id, "issued_at": issued.isoformat(), "target_date": target_date.isoformat(),
                "location_slug": args.location_slug, "location_name": args.location_name, "latitude": args.latitude, "longitude": args.longitude,
-               "skill_config": _QUALITY_SKILL, "hourly": rows, "source_points": source_points}
+               "skill_config": _QUALITY_SKILL, "hourly": rows, "source_points": source_points,
+               "activity_plans": v61_activity_plans(rows, args, now=issued),
+               "source_availability": read_json(path_output("source_availability.json"), {}),
+               "ensemble_status": {k:v for k,v in _V61_ENSEMBLES.items() if k!="hourly"},
+               "site_elevation_m": getattr(args, "site_elevation_m", None), "terrain_class": getattr(args, "terrain_class", "unknown")}
     archive = os.path.join(_quality_archive_dir(), run_id + ".json")
     if os.path.exists(archive):
         raise ValueError("Forecast run already archived: " + run_id)
@@ -10379,6 +10421,10 @@ def _quality_enrich_rows(rows, points, target_date, args):
         actual = [p for p in bucket if any(getattr(p, k) is not None for k in ("temp_c", "rh_pct", "rain_mm", "wind_kmh"))]
         families = {_quality_family(p.source_id) for p in actual}
         row["issued_at"] = issued.isoformat()
+        row["site_latitude"], row["site_longitude"] = args.latitude, args.longitude
+        row["site_elevation_m"] = getattr(args, "site_elevation_m", None)
+        row["terrain_class"] = getattr(args, "terrain_class", "unknown")
+        row["rain_interval_minutes"] = 60
         row["model_families"] = sorted(families)
         row["independent_families_used"] = len(families)
         row["variable_coverage"] = {k: sum(getattr(p, k) is not None for p in bucket) for k in ("temp_c", "rh_pct", "rain_mm", "wind_kmh")}
@@ -10396,7 +10442,7 @@ def _quality_enrich_rows(rows, points, target_date, args):
         row["risk_score_basis"] = "heuristic_not_observation_certified"
         row["rain_interval_start"] = (parse_local_hour_string(target_date, row["jam"], args.timezone) - timedelta(hours=1)).isoformat()
         row["rain_interval_end"] = row["target_datetime"]
-        row["rain_quantile_basis"] = "inter_model_quantile_not_calibrated_interval"
+        row["rain_quantile_basis"] = "family_balanced_real_members_raw_not_calibrated_interval" if row.get("rain_two_stage", {}).get("available") else "inter_model_quantile_not_calibrated_interval"
     return rows
 
 def _quality_map_probability(probability, mapping):
@@ -10404,6 +10450,2203 @@ def _quality_map_probability(probability, mapping):
         if left[0] <= probability <= right[0] and right[0] > left[0]:
             return left[1] + (probability-left[0])/(right[0]-left[0])*(right[1]-left[1])
     return probability
+
+
+# v61 upgrades (all runtime code remains inside this single script).
+# LANGIT v61 local observations. This block is appended to the single script.
+# Thresholds are configurable QC heuristics, not a claim of sensor certification.
+from collections import defaultdict
+_V61_BASE_NORMALIZE_OBSERVATION = normalize_observation_row
+_V61_BASE_MERGE_OBSERVATION = _quality_merge_observation
+_V61_OBSERVATION_QC_VERSION = "langit-observation-qc-1"
+_V61_OBSERVATION_NUMERIC = ("temp_c", "rh_pct", "rain_mm", "wind_kmh")
+_V61_OBSERVATION_LIMITS = {"temp_c": (-80.0, 60.0), "rh_pct": (0.0, 100.0),
+                           "rain_mm": (0.0, 1000.0), "wind_kmh": (0.0, 500.0)}
+
+
+def _v61_qc_list(value):
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    if not value:
+        return []
+    try:
+        result = json.loads(value)
+        return result if isinstance(result, list) else []
+    except (ValueError, TypeError):
+        return [flag for flag in str(value).split(";") if flag]
+
+
+def _v61_observation_add_flag(row, field, flag):
+    flags = _v61_qc_list(row.get(field + "_qc_flags"))
+    if flag not in flags:
+        flags.append(flag)
+    row[field + "_qc_flags"] = json.dumps(sorted(flags), ensure_ascii=False)
+
+
+def _v61_observation_finalize(row):
+    all_flags = []
+    states = []
+    failed_prefixes = ("range:", "non_numeric:", "duplicate_conflict:",
+                       "temporal_jump:", "invalid_interval:", "invalid_timestamp:")
+    for field in _OBS_FIELDS:
+        if row.get(field) in (None, ""):
+            continue
+        flags = _v61_qc_list(row.get(field + "_qc_flags"))
+        state = "failed" if any(str(f).startswith(failed_prefixes) for f in flags) else "unverified" if flags else "passed"
+        row[field + "_qc"] = state
+        states.append(state)
+        all_flags.extend(field + ":" + str(f) for f in flags)
+    row["qc"] = "failed" if "failed" in states else "unverified" if "unverified" in states else "passed" if states else "unverified"
+    row["qc_flags"] = ";".join(sorted(set(all_flags + _v61_qc_list(row.get("record_qc_flags")))))
+    row["qc_version"] = _V61_OBSERVATION_QC_VERSION
+    row["qc_evidence_json"] = json.dumps({"version": _V61_OBSERVATION_QC_VERSION,
+         "checks": _v61_qc_list(row.get("qc_checks_json")), "flags": row["qc_flags"],
+         "policy": row.get("qc_policy", "station_series")}, ensure_ascii=False)
+    return row
+
+
+def normalize_observation_row(row):
+    """Preserve computed field QC on reload; legacy imports cannot self-assert passed."""
+    raw = dict(row or {})
+    normalized = _V61_BASE_NORMALIZE_OBSERVATION(raw)
+    if not normalized:
+        return None
+    if raw.get("qc_version") == _V61_OBSERVATION_QC_VERSION:
+        # The base normalizer recalculates qc_flags; restore the audited evidence.
+        for key, value in raw.items():
+            if key.endswith("_qc") or key.endswith("_qc_flags") or key in {
+                "qc", "qc_flags", "qc_evidence_json", "qc_checks_json", "record_qc_flags"}:
+                normalized[key] = value
+        return normalized
+    kind = normalized.get("observation_type")
+    if kind == "model_reference":
+        normalized["qc"] = "reference_only"
+        for field in _OBS_FIELDS:
+            if normalized.get(field) not in (None, ""):
+                normalized[field + "_qc"] = "reference_only"
+        return normalized
+    if kind == "manual_observation":
+        # Simple CLI feedback remains useful, with an explicitly limited QC policy.
+        normalized["qc_policy"] = "manual_report_range_only"
+        normalized["qc_checks_json"] = json.dumps(["manual_report", "finite_numeric", "physical_range"])
+        for field in _OBS_FIELDS:
+            if normalized.get(field) not in (None, ""):
+                normalized[field + "_qc_flags"] = "[]"
+                if field == "rain_mm" and not (raw.get("rain_interval_start") and raw.get("rain_interval_end")):
+                    _v61_observation_add_flag(normalized, field, "unknown_rain_interval")
+        # Do not let invalid manually supplied measurements become passed after normalization.
+        for field in _V61_OBSERVATION_NUMERIC:
+            value = _quality_first(raw, field, "observed_" + field)
+            if value not in (None, ""):
+                number = safe_float(value)
+                if number is None:
+                    normalized[field] = value
+                    _v61_observation_add_flag(normalized, field, "non_numeric:" + field)
+                elif not _V61_OBSERVATION_LIMITS[field][0] <= number <= _V61_OBSERVATION_LIMITS[field][1]:
+                    normalized[field] = number
+                    _v61_observation_add_flag(normalized, field, "range:" + field)
+        return _v61_observation_finalize(normalized)
+    normalized["qc"] = "unverified" if kind in _OBS_TYPES else normalized.get("qc", "unverified")
+    for field in _OBS_FIELDS:
+        if normalized.get(field) not in (None, ""):
+            normalized[field + "_qc"] = "unverified"
+    normalized["qc_flags"] = ";".join(sorted(set(str(raw.get("qc_flags", "")).split(";") + ["metadata_or_series_qc_not_checked"]))).strip(";")
+    return normalized
+
+
+def load_external_observation_rows(path):
+    """Compatibility loader treats file-provided QC fields as untrusted claims.
+
+    Full station QC requires args and therefore runs in import_external_observations.
+    This helper can parse files for older callers, but cannot certify their rows.
+    """
+    rows = []
+    for raw in read_dict_csv(path):
+        claimed = dict(raw)
+        raw = dict(raw)
+        raw.pop("qc_version", None)
+        raw["claimed_qc"] = claimed.get("qc", "")
+        raw["claimed_qc_flags"] = claimed.get("qc_flags", "")
+        raw["qc"] = "unverified"
+        raw["observation_type"] = raw.get("observation_type") or "external_observation"
+        observed = _quality_datetime(_quality_first(raw, "observed_datetime", "timestamp", "datetime"))
+        if observed is not None:
+            observed = observed.astimezone(ZoneInfo(DEFAULT_TIMEZONE))
+            raw.setdefault("target_date", observed.date().isoformat())
+            raw.setdefault("jam", observed.strftime("%H:%M"))
+        # File labels cannot convert imported data into the CLI feedback trust path.
+        if raw["observation_type"] == "manual_observation":
+            raw["observation_type"] = "external_observation"
+        for field in _OBS_FIELDS:
+            raw[field + "_qc"] = "unverified"
+        row = normalize_observation_row(raw)
+        if row:
+            rows.append(row)
+    return rows
+
+
+def _v61_station_registry(args):
+    path = getattr(args, "stations_file", None)
+    if not path:
+        return {}
+    if not os.path.isfile(path):
+        raise ValueError("File stasiun tidak ditemukan: " + str(path))
+    if str(path).lower().endswith(".json"):
+        with open(path, encoding="utf-8-sig") as handle:
+            payload = json.load(handle)
+        rows = payload.get("stations", []) if isinstance(payload, dict) else payload
+        if isinstance(rows, dict):
+            rows = [{"station_id": key, **value} for key, value in rows.items()]
+        if not isinstance(rows, list):
+            raise ValueError("JSON stasiun harus berupa daftar atau {stations: [...]}.")
+    else:
+        rows = read_dict_csv(path)
+    registry = {}
+    for raw in rows:
+        station = dict(raw)
+        identifier = str(_quality_first(station, "station_id", "id", default="")).strip()
+        if not identifier:
+            raise ValueError("Setiap stasiun harus mempunyai station_id.")
+        if identifier in registry and registry[identifier] != station:
+            raise ValueError("Metadata station_id bertentangan: " + identifier)
+        registry[identifier] = station
+    return registry
+
+
+def _v61_station_metadata(raw, registry):
+    station_id = str(_quality_first(raw, "station_id", "sensor_station_id", default="")).strip()
+    station = dict(registry.get(station_id, {}))
+    # Inline non-empty fields may fill missing registry fields. Registry conflicts are flagged.
+    conflicts = []
+    aliases = {"latitude": ("latitude", "lat", "station_latitude"),
+               "longitude": ("longitude", "lon", "station_longitude"),
+               "elevation_m": ("elevation_m", "elevation", "station_elevation_m"),
+               "timezone": ("timezone", "station_timezone")}
+    for name, keys in aliases.items():
+        incoming = _quality_first(raw, *keys)
+        original = _quality_first(station, *keys)
+        if incoming not in (None, "") and original not in (None, ""):
+            a, b = safe_float(incoming), safe_float(original)
+            differs = abs(a - b) > 1e-6 if a is not None and b is not None else str(incoming) != str(original)
+            if differs:
+                conflicts.append("station_metadata_conflict:" + name)
+        station[name] = original if original not in (None, "") else incoming
+    station["station_id"] = station_id
+    return station, conflicts
+
+
+def _v61_observation_datetime(raw, station, args):
+    text = _quality_first(raw, "observed_datetime", "timestamp", "datetime")
+    zone = station.get("timezone")
+    try:
+        station_zone = ZoneInfo(str(zone)) if zone else None
+    except (ValueError, KeyError, TypeError):
+        station_zone = None
+    if text:
+        try:
+            observed = datetime.fromisoformat(str(text).replace("Z", "+00:00"))
+        except ValueError:
+            return None, "invalid_timestamp:observed_datetime"
+    else:
+        day = sentinel_obs_date_to_iso(_quality_first(raw, "target_date", "tanggal", "date", default=""))
+        jam = _lg_hour(_quality_first(raw, "jam", "time"), "")
+        try:
+            observed = datetime.fromisoformat(day + "T" + jam)
+        except (TypeError, ValueError):
+            return None, "invalid_timestamp:date_time"
+    if observed.tzinfo is None or observed.utcoffset() is None:
+        if station_zone is None:
+            return None, "invalid_timestamp:missing_timezone"
+        observed = observed.replace(tzinfo=station_zone)
+    try:
+        return observed.astimezone(ZoneInfo(getattr(args, "timezone", DEFAULT_TIMEZONE))), ""
+    except (ValueError, KeyError):
+        return None, "invalid_timestamp:target_timezone"
+
+
+def _v61_observation_distance(lat1, lon1, lat2, lon2):
+    values = [safe_float(value) for value in (lat1, lon1, lat2, lon2)]
+    if any(value is None for value in values):
+        return None
+    a, b, c, d = map(math.radians, values)
+    term = math.sin((c - a) / 2) ** 2 + math.cos(a) * math.cos(c) * math.sin((d - b) / 2) ** 2
+    return 6371.0088 * 2 * math.asin(min(1.0, math.sqrt(max(0.0, term))))
+
+
+def _v61_convert_observation(raw, field, station):
+    value = _quality_first(raw, field, "observed_" + field)
+    if value in (None, ""):
+        return None, []
+    parsed = safe_float(value)
+    if parsed is None:
+        return value, ["non_numeric:" + field]
+    unit_keys = {"temp_c": ("temp_unit", "temperature_unit"), "rh_pct": ("rh_unit", "humidity_unit"),
+                 "rain_mm": ("rain_unit", "precipitation_unit"), "wind_kmh": ("wind_unit", "wind_speed_unit")}
+    unit = _quality_first(raw, *unit_keys[field], default=_quality_first(station, *unit_keys[field]))
+    normalized_unit = str(unit or "").strip().lower().replace(" ", "")
+    canonical_units = {"temp_c": {"c", "°c", "celsius"}, "rh_pct": {"%", "percent", "percentage"},
+                       "rain_mm": {"mm", "millimeter", "millimetre"}, "wind_kmh": {"km/h", "kmh", "kph"}}
+    if normalized_unit in canonical_units[field]:
+        return parsed, []
+    if field == "temp_c" and normalized_unit in {"f", "°f", "fahrenheit"}:
+        return (parsed - 32) * 5 / 9, []
+    if field == "rh_pct" and normalized_unit in {"fraction", "0-1"}:
+        return parsed * 100, []
+    if field == "rain_mm" and normalized_unit in {"inch", "in", "inches"}:
+        return parsed * 25.4, []
+    if field == "wind_kmh" and normalized_unit in {"m/s", "ms", "mps"}:
+        return parsed * 3.6, []
+    if field == "wind_kmh" and normalized_unit in {"mph", "mi/h"}:
+        return parsed * 1.609344, []
+    return parsed, ["unknown_unit:" + field]
+
+
+def v61_quality_control_observations(rows, args):
+    """Return audited rows + report; values are never interpolated across missing hours.
+
+    Rain amounts pass hourly verification only with an explicit one-hour interval
+    ending at the observation time. Other measured intervals remain in the archive.
+    Range/jump/conflict failures apply per variable. Suspected stuck sensors are
+    unverified, since rounded natural measurements can also remain constant.
+    """
+    registry = _v61_station_registry(args)
+    normalized = []
+    rejected = []
+    record_issues = []
+    now_stamp = now_local(getattr(args, "timezone", DEFAULT_TIMEZONE)).isoformat()
+    max_distance = safe_float(getattr(args, "station_max_distance_km", 30.0))
+    max_distance = 30.0 if max_distance is None else max_distance
+    if max_distance <= 0:
+        raise ValueError("--station-max-distance-km harus positif")
+    for index, item in enumerate(rows):
+        raw = dict(item or {})
+        station, metadata_flags = _v61_station_metadata(raw, registry)
+        observed, timestamp_flag = _v61_observation_datetime(raw, station, args)
+        if observed is None:
+            rejected.append({"input_row": index + 1, "reason": timestamp_flag, "raw": raw})
+            continue
+        kind = raw.get("observation_type") or ("station_observation" if station.get("station_id") else "external_observation")
+        row = {**raw, "input_row": index + 1, "station_id": station.get("station_id", ""),
+               "station_latitude": safe_float(station.get("latitude")), "station_longitude": safe_float(station.get("longitude")),
+               "station_elevation_m": safe_float(station.get("elevation_m")), "station_timezone": station.get("timezone") or "",
+               "expected_interval_minutes": safe_float(_quality_first(raw, "expected_interval_minutes", default=station.get("expected_interval_minutes"))) or 60.0,
+               "observed_datetime": observed.isoformat(), "target_date": observed.date().isoformat(),
+               "tanggal": observed.strftime("%d-%m-%Y"), "jam": observed.strftime("%H:%M"),
+               "observation_type": kind, "source_id": raw.get("source_id") or station.get("station_id") or kind,
+               "available_at": raw.get("available_at") or now_stamp, "qc_policy": "station_series", "qc_computed_at": now_stamp,
+               "qc_checks_json": json.dumps(["station_metadata", "timezone", "finite_numeric", "explicit_units", "physical_range", "rain_interval", "duplicate", "temporal_jump", "stuck_sensor", "missing_hours", "location_distance"]),
+               "claimed_qc": raw.get("qc", ""), "claimed_qc_flags": raw.get("qc_flags", ""),
+               "raw_row_json": json.dumps(raw, ensure_ascii=False), "record_qc_flags": "[]"}
+        lat, lon, elevation = row["station_latitude"], row["station_longitude"], row["station_elevation_m"]
+        if not row["station_id"]:
+            metadata_flags.append("missing_station_id")
+        if lat is None or lon is None or not -90 <= lat <= 90 or not -180 <= lon <= 180:
+            metadata_flags.append("invalid_or_missing_coordinates")
+        if elevation is None or not -500 <= elevation <= 9000:
+            metadata_flags.append("invalid_or_missing_elevation")
+        try:
+            ZoneInfo(row["station_timezone"])
+        except (ValueError, KeyError, TypeError):
+            metadata_flags.append("missing_or_invalid_station_timezone")
+        row["station_distance_km"] = _v61_observation_distance(lat, lon, getattr(args, "latitude", None), getattr(args, "longitude", None)) if "invalid_or_missing_coordinates" not in metadata_flags else None
+        if row["station_distance_km"] is None:
+            metadata_flags.append("target_location_not_associated")
+        elif row["station_distance_km"] > max_distance:
+            metadata_flags.append("station_outside_location_radius")
+        available = _quality_datetime(row["available_at"])
+        if available is None:
+            metadata_flags.append("invalid_available_at")
+        elif available < observed:
+            metadata_flags.append("available_at_before_observation")
+        for field in _V61_OBSERVATION_NUMERIC:
+            value, flags = _v61_convert_observation(raw, field, station)
+            row[field] = value
+            if value not in (None, ""):
+                numeric = safe_float(value)
+                if numeric is not None:
+                    low, high = _V61_OBSERVATION_LIMITS[field]
+                    if not low <= numeric <= high:
+                        flags.append("range:" + field)
+                row[field + "_qc_flags"] = json.dumps(sorted(set(flags + metadata_flags)))
+        row["category"] = _quality_first(raw, "category", "observed_category", default="")
+        if row["category"]:
+            row["category_qc_flags"] = json.dumps(sorted(set(metadata_flags)))
+        for field in _OBS_FIELDS:
+            if row.get(field) not in (None, ""):
+                row[field + "_type"] = kind
+                row[field + "_source"] = row["source_id"]
+                row[field + "_available_at"] = row["available_at"]
+                row[field + "_qc_computed_at"] = now_stamp
+                row[field + "_station_id"] = row["station_id"]
+                for suffix in ("latitude", "longitude", "elevation_m", "distance_km"):
+                    row[field + "_station_" + suffix] = row.get("station_" + suffix)
+        if row.get("rain_mm") not in (None, ""):
+            start = _quality_datetime(raw.get("rain_interval_start"))
+            end = _quality_datetime(raw.get("rain_interval_end"))
+            minutes = safe_float(_quality_first(raw, "rain_interval_minutes", default=station.get("rain_interval_minutes")))
+            if end is None and minutes is not None and minutes > 0:
+                end = observed
+            if start is None and end is not None and minutes is not None and minutes > 0:
+                start = end - timedelta(minutes=minutes)
+            if start is None or end is None:
+                _v61_observation_add_flag(row, "rain_mm", "unknown_rain_interval")
+            elif end <= start or abs((end - observed).total_seconds()) > 1:
+                _v61_observation_add_flag(row, "rain_mm", "invalid_interval:rain_mm")
+            else:
+                row["rain_interval_start"], row["rain_interval_end"] = start.isoformat(), end.isoformat()
+                row["rain_interval_minutes"] = (end - start).total_seconds() / 60
+                row["rain_mm_interval_start"], row["rain_mm_interval_end"] = start.isoformat(), end.isoformat()
+                row["rain_mm_interval_minutes"] = row["rain_interval_minutes"]
+                if abs(row["rain_interval_minutes"] - 60) > 1e-6:
+                    _v61_observation_add_flag(row, "rain_mm", "rain_interval_not_hourly")
+        if observed.minute or observed.second or observed.microsecond:
+            for field in _OBS_FIELDS:
+                if row.get(field) not in (None, ""):
+                    _v61_observation_add_flag(row, field, "timestamp_not_on_hour")
+        normalized.append(row)
+    groups = defaultdict(list)
+    for row in normalized:
+        groups[(row["station_id"] or row["source_id"], row["observed_datetime"])].append(row)
+    duplicate_rows = 0
+    conflict_rows = 0
+    excluded_ids = set()
+    for key, duplicates in sorted(groups.items()):
+        if len(duplicates) < 2:
+            continue
+        duplicate_rows += len(duplicates) - 1
+        conflicts = [field for field in _OBS_FIELDS if len({str(r.get(field)) for r in duplicates if r.get(field) not in (None, "")}) > 1]
+        if conflicts:
+            conflict_rows += len(duplicates)
+            for row in duplicates:
+                for field in conflicts:
+                    if row.get(field) not in (None, ""):
+                        _v61_observation_add_flag(row, field, "duplicate_conflict:" + field)
+        else:
+            # Identical or complementary duplicate rows collapse without averaging.
+            first = duplicates[0]
+            for duplicate in duplicates[1:]:
+                for field in _OBS_FIELDS:
+                    if first.get(field) in (None, "") and duplicate.get(field) not in (None, ""):
+                        first[field] = duplicate[field]
+                        for suffix in ("qc_flags", "qc_computed_at", "type", "source", "available_at", "station_id", "station_latitude", "station_longitude", "station_elevation_m", "station_distance_km", "interval_start", "interval_end", "interval_minutes"):
+                            first[field + "_" + suffix] = duplicate.get(field + "_" + suffix)
+                excluded_ids.add(id(duplicate))
+            first["record_qc_flags"] = json.dumps(["exact_or_complementary_duplicate_collapsed"])
+        record_issues.append({"station_id": key[0], "observed_datetime": key[1], "kind": "duplicate_conflict" if conflicts else "duplicate_collapsed", "fields": conflicts, "input_rows": [r["input_row"] for r in duplicates]})
+    normalized = [row for row in normalized if id(row) not in excluded_ids]
+    series = defaultdict(list)
+    for row in normalized:
+        series[row["station_id"] or row["source_id"]].append(row)
+    gap_rows = []
+    jump_temp = safe_float(getattr(args, "observation_jump_temp_c", 8.0))
+    stuck_hours = safe_float(getattr(args, "observation_stuck_hours", 8.0))
+    jump_temp = 8.0 if jump_temp is None else jump_temp
+    stuck_hours = 8.0 if stuck_hours is None else stuck_hours
+    if jump_temp <= 0 or stuck_hours <= 0:
+        raise ValueError("Ambang lonjakan dan durasi sensor macet harus positif")
+    for station_id, values in sorted(series.items()):
+        values.sort(key=lambda r: (r["observed_datetime"], r["input_row"]))
+        for left, right in zip(values, values[1:]):
+            a = _quality_datetime(left["observed_datetime"])
+            b = _quality_datetime(right["observed_datetime"])
+            gap_hours = (b - a).total_seconds() / 3600
+            expected = max(1.0, safe_float(right.get("expected_interval_minutes")) or 60.0)
+            if gap_hours * 60 > expected * 1.5:
+                missing = int(round(gap_hours * 60 / expected)) - 1
+                gap_rows.append({"station_id": station_id, "start": a.isoformat(), "end": b.isoformat(), "expected_interval_minutes": expected, "missing_intervals": max(1, missing)})
+            if 0 < gap_hours <= 3:
+                for field, threshold in (("temp_c", jump_temp), ("rh_pct", 40.0), ("wind_kmh", 80.0)):
+                    v1, v2 = safe_float(left.get(field)), safe_float(right.get(field))
+                    bad_prefixes = ("range:", "non_numeric:", "duplicate_conflict:")
+                    already_bad = any(str(flag).startswith(bad_prefixes) for item in (left, right) for flag in _v61_qc_list(item.get(field + "_qc_flags")))
+                    if not already_bad and v1 is not None and v2 is not None and abs(v2 - v1) > threshold * gap_hours:
+                        _v61_observation_add_flag(left, field, "temporal_jump:" + field)
+                        _v61_observation_add_flag(right, field, "temporal_jump:" + field)
+        for field in ("temp_c", "rh_pct", "wind_kmh"):
+            chain = []
+            def mark_stuck(items):
+                if len(items) < 3:
+                    return
+                duration = (_quality_datetime(items[-1]["observed_datetime"]) - _quality_datetime(items[0]["observed_datetime"])).total_seconds() / 3600
+                if duration >= stuck_hours:
+                    for item in items:
+                        _v61_observation_add_flag(item, field, "suspected_stuck_sensor:" + field)
+            for row in values:
+                number = safe_float(row.get(field))
+                invalid = any(str(flag).startswith(("range:", "non_numeric:", "duplicate_conflict:")) for flag in _v61_qc_list(row.get(field + "_qc_flags")))
+                if number is None or invalid:
+                    mark_stuck(chain); chain = []; continue
+                continues = bool(chain) and abs(number - safe_float(chain[-1].get(field))) < 1e-9 and 0 < (_quality_datetime(row["observed_datetime"]) - _quality_datetime(chain[-1]["observed_datetime"])).total_seconds() <= max(1, row["expected_interval_minutes"]) * 90
+                if not continues:
+                    mark_stuck(chain); chain = []
+                chain.append(row)
+            mark_stuck(chain)
+    for row in normalized:
+        _v61_observation_finalize(row)
+        if row.get("observation_type") not in _OBS_TYPES:
+            row["qc"] = "reference_only" if row.get("observation_type") == "model_reference" else "unverified"
+            for field in _OBS_FIELDS:
+                if row.get(field) not in (None, ""):
+                    row[field + "_qc"] = row["qc"]
+    cross_station = []
+    simultaneous = defaultdict(list)
+    for row in normalized:
+        simultaneous[(row["target_date"], row["jam"])].append(row)
+    for key, values in sorted(simultaneous.items()):
+        for field in _V61_OBSERVATION_NUMERIC:
+            comparable = [row for row in values if row.get(field + "_qc") == "passed" and safe_float(row.get(field)) is not None]
+            if len({row.get("station_id") for row in comparable}) > 1:
+                low = min(safe_float(row[field]) for row in comparable)
+                high = max(safe_float(row[field]) for row in comparable)
+                if high - low > 1e-6:
+                    cross_station.append({"target_date": key[0], "jam": key[1], "field": field, "spread": high - low,
+                        "stations": [{"station_id": row.get("station_id"), "value": row[field], "distance_km": row.get("station_distance_km")} for row in comparable],
+                        "policy": "Record disagreement; select nearest passed station per field without averaging or assuming identical local conditions."})
+    counts = {status: sum(row.get("qc") == status for row in normalized) for status in ("passed", "unverified", "failed", "reference_only")}
+    field_counts = {field: {status: sum(row.get(field) not in (None, "") and row.get(field + "_qc") == status for row in normalized) for status in ("passed", "unverified", "failed")} for field in _OBS_FIELDS}
+    report = {"qc_version": _V61_OBSERVATION_QC_VERSION, "input_rows": len(rows), "normalized_rows": len(normalized),
+              "rejected_timestamp_rows": rejected, "row_counts": counts, "field_counts": field_counts,
+              "duplicate_extra_rows": duplicate_rows, "duplicate_conflict_rows": conflict_rows, "record_issues": record_issues,
+              "missing_hour_intervals": gap_rows, "station_ids": sorted(series), "station_max_distance_km": max_distance,
+              "cross_station_disagreement": cross_station,
+              "thresholds": {"temp_jump_c_per_hour": jump_temp, "rh_jump_percent_per_hour": 40.0, "wind_jump_kmh_per_hour": 80.0, "stuck_duration_hours": stuck_hours},
+              "policy": "Heuristic QC; suspected stuck readings remain unverified. Missing observations are not interpolated. Hourly rain requires explicit 60-minute interval. Multiple stations selected per field by proximity."}
+    return normalized, report
+
+
+def _quality_merge_observation(left, right):
+    merged = _V61_BASE_MERGE_OBSERVATION(left, right)
+    for field in _OBS_FIELDS:
+        incoming = right.get(field)
+        selected = incoming not in (None, "") and (not left or left.get(field) in (None, "") or _quality_observation_rank(right, field) > _quality_observation_rank(left, field))
+        # New audited station-series QC can revoke an earlier passed value. Otherwise
+        # repeated partial imports would leave a newly discovered stuck sensor trusted.
+        if left and incoming not in (None, "") and right.get("qc_version") == _V61_OBSERVATION_QC_VERSION:
+            checked_new = _quality_datetime(right.get(field + "_qc_computed_at") or right.get("qc_computed_at"))
+            checked_old = _quality_datetime(left.get(field + "_qc_computed_at") or left.get("qc_computed_at"))
+            same_station = bool(right.get(field + "_station_id")) and right.get(field + "_station_id") == left.get(field + "_station_id")
+            new_selection = right.get("qc_policy") == "station_selection" and (left.get(field + "_type") or left.get("observation_type")) in {"station_observation", "sensor_observation", "external_observation"}
+            same_target = (left.get("target_date"), left.get("jam")) == (right.get("target_date"), right.get("jam"))
+            if same_target and (same_station or new_selection) and checked_new and (checked_old is None or checked_new >= checked_old):
+                selected = True
+        if selected:
+            merged[field] = incoming
+            for suffix in ("type", "qc", "available_at", "source"):
+                merged[field + "_" + suffix] = right.get(field + "_" + suffix) or right.get({"type": "observation_type", "qc": "qc", "available_at": "available_at", "source": "source_id"}[suffix])
+        source = right if selected else left or {}
+        for suffix in ("qc_flags", "qc_computed_at", "station_id", "station_latitude", "station_longitude", "station_elevation_m", "station_distance_km", "interval_start", "interval_end", "interval_minutes"):
+            key = field + "_" + suffix
+            if key in source:
+                merged[key] = source[key]
+    for key in ("qc_version", "qc_computed_at", "qc_policy", "qc_checks_json", "qc_evidence_json", "qc_flags", "record_qc_flags", "station_id", "station_latitude", "station_longitude", "station_elevation_m", "station_distance_km", "station_timezone", "location_slug"):
+        if key not in merged and key in right:
+            merged[key] = right[key]
+    if merged.get("qc_version") == _V61_OBSERVATION_QC_VERSION:
+        # Row status describes mixed-source values; field metadata remains authoritative.
+        states = [merged.get(field + "_qc") for field in _OBS_FIELDS if merged.get(field) not in (None, "")]
+        merged["qc"] = "failed" if "failed" in states else "unverified" if "unverified" in states else "passed" if states else "unverified"
+        merged["qc_flags"] = ";".join(sorted({field + ":" + str(flag) for field in _OBS_FIELDS if merged.get(field) not in (None, "") for flag in _v61_qc_list(merged.get(field + "_qc_flags"))}))
+        merged["qc_evidence_json"] = json.dumps({"version": _V61_OBSERVATION_QC_VERSION, "policy": merged.get("qc_policy"),
+            "checks": _v61_qc_list(merged.get("qc_checks_json")), "fields": {field: {"qc": merged.get(field + "_qc"),
+            "flags": _v61_qc_list(merged.get(field + "_qc_flags")), "station_id": merged.get(field + "_station_id"), "source": merged.get(field + "_source")}
+            for field in _OBS_FIELDS if merged.get(field) not in (None, "")}}, ensure_ascii=False)
+    return merged
+
+
+def _v61_select_station_observations(rows, args):
+    groups = defaultdict(list)
+    for row in rows:
+        if row.get("observation_type") in _OBS_TYPES:
+            groups[(row["target_date"], row["jam"])].append(row)
+    selected_rows = []
+    for key in sorted(groups):
+        candidates = groups[key]
+        candidates.sort(key=lambda r: (-(max((_quality_observation_rank(r, field) for field in _OBS_FIELDS), default=0)), safe_float(r.get("station_distance_km")) if safe_float(r.get("station_distance_km")) is not None else float("inf"), str(r.get("station_id")), r.get("input_row", 0)))
+        composite = None
+        # First restrict each field to nearest passed reading; unresolved fields retain QC evidence.
+        for field in _OBS_FIELDS:
+            available = [row for row in candidates if row.get(field) not in (None, "")]
+            if not available:
+                continue
+            available.sort(key=lambda r: (0 if _quality_observation_rank(r, field) > 0 else 1, safe_float(r.get("station_distance_km")) if safe_float(r.get("station_distance_km")) is not None else float("inf"), str(r.get("station_id")), r.get("input_row", 0)))
+            best = dict(available[0])
+            for other in _OBS_FIELDS:
+                if other != field:
+                    best[other] = None if other != "category" else ""
+            composite = _quality_merge_observation(composite, best)
+        if composite:
+            composite["location_slug"] = getattr(args, "location_slug", "")
+            composite["qc_policy"] = "station_selection"
+            composite["qc_computed_at"] = max((row.get("qc_computed_at", "") for row in candidates), default="")
+            _v61_observation_finalize(composite)
+            selected_rows.append(composite)
+    return selected_rows
+
+
+def import_external_observations(args):
+    path = getattr(args, "observations_csv", None)
+    if not path:
+        raise ValueError("--observations-csv diperlukan")
+    raw = read_dict_csv(path)
+    if not raw:
+        raise ValueError("File observasi kosong atau tidak dapat dibaca")
+    history_path = os.path.join(observation_dir(), "raw_station_history.csv")
+    history = read_dict_csv(history_path)
+    # Exact repeated imports remain idempotent. Conflicting duplicates remain in
+    # history, so QC can reject them rather than silently choosing the last value.
+    history_index = {json.dumps(dict(row), sort_keys=True, ensure_ascii=False): dict(row) for row in history}
+    for row in raw:
+        history_index[json.dumps(dict(row), sort_keys=True, ensure_ascii=False)] = dict(row)
+    history = list(history_index.values())
+    rows, report = v61_quality_control_observations(history, args)
+    selected = _v61_select_station_observations(rows, args)
+    stamp = now_local(getattr(args, "timezone", DEFAULT_TIMEZONE)).strftime("%Y%m%d_%H%M%S_%f")
+    directory = os.path.join(observation_dir(), "qc_archive")
+    ensure_directory(directory)
+    write_dict_csv(os.path.join(directory, "raw_import_" + stamp + ".csv"), rows=raw)
+    write_dict_csv(history_path, rows=history)
+    write_dict_csv(os.path.join(directory, "station_observations_" + stamp + ".csv"), rows=rows)
+    write_json(os.path.join(directory, "qc_report_" + stamp + ".json"), report)
+    rejected_rows = [row for row in rows if row.get("qc") != "passed"]
+    write_dict_csv(os.path.join(directory, "flagged_observations_" + stamp + ".csv"), rows=rejected_rows)
+    dates = sorted({row["target_date"] for row in selected})
+    for day in dates:
+        write_observation_rows(parse_iso_date(day), [row for row in selected if row["target_date"] == day])
+    summary = {**report, "source_file": path, "uploaded_rows": len(raw), "rows_imported": len(selected), "dates": dates,
+               "stations_file": getattr(args, "stations_file", None), "qc_archive": directory,
+               "selected_station_ids": sorted({str(row.get(field + "_station_id")) for row in selected for field in _OBS_FIELDS if row.get(field + "_station_id")})}
+    write_json(os.path.join(report_dir(), "import_observations_summary.json"), summary)
+    if not rows:
+        raise ValueError("Tidak ada timestamp observasi valid; rincian penolakan disimpan di " + directory)
+    return selected
+
+
+def sentinel_load_observations_by_key(args=None):
+    index = {}
+    slug = str(getattr(args, "location_slug", "") or "") if args is not None else ""
+    for path in (observation_master_file(), path_output(AETHER_FEEDBACK_FILENAME)):
+        for raw in read_dict_csv(path):
+            row = normalize_observation_row(raw)
+            if row and (not slug or not row.get("location_slug") or row["location_slug"] == slug):
+                key = (row["target_date"], row["jam"])
+                index[key] = _quality_merge_observation(index.get(key), row)
+    return index
+
+
+# LANGIT v61: real ensemble members and a separately validated two-stage rain model.
+# This source is appended to the single-file application before its main guard.
+# Primary references: https://open-meteo.com/en/docs/ensemble-api and the
+# remappedToEnsembleApi implementation in open-meteo/open-meteo.
+import re
+from datetime import date
+
+V61_ENSEMBLE_URL = "https://ensemble-api.open-meteo.com/v1/ensemble"
+V61_ENSEMBLE_MODELS = {
+    "ncep_gefs_seamless": {"family": "GFS", "native_hours": 3},
+    "ncep_gefs025": {"family": "GFS", "native_hours": 3},
+    "ncep_gefs05": {"family": "GFS", "native_hours": 3},
+    "ecmwf_ifs025_ensemble": {"family": "ECMWF", "native_hours": 3},
+    "ecmwf_aifs025_ensemble": {"family": "ECMWF", "native_hours": 6},
+    "icon_global_eps": {"family": "ICON", "native_hours": 1},
+    "icon_seamless_eps": {"family": "ICON", "native_hours": 1},
+    "gem_global_ensemble": {"family": "GEM", "native_hours": 3},
+    "ukmo_global_ensemble_20km": {"family": "UKMO", "native_hours": 1},
+}
+V61_ENSEMBLE_ALIASES = {
+    "gfs_seamless": "ncep_gefs_seamless", "gfs025": "ncep_gefs025",
+    "gfs05": "ncep_gefs05", "ecmwf_ifs025": "ecmwf_ifs025_ensemble",
+    "ecmwf_aifs025": "ecmwf_aifs025_ensemble", "icon_global": "icon_global_eps",
+    "icon_seamless": "icon_seamless_eps", "gem_global": "gem_global_ensemble",
+}
+V61_ENSEMBLE_VARIABLES = {
+    "temperature_2m": ("temp_c", "°C", -80.0, 60.0),
+    "relative_humidity_2m": ("rh_pct", "%", 0.0, 100.0),
+    "precipitation": ("rain_mm", "mm", 0.0, 1000.0),
+    "wind_speed_10m": ("wind_kmh", "km/h", 0.0, 500.0),
+}
+# Upstream download schedule is distinct from the API's hourly output grid.
+# ICON-EPS global: first 48h hourly, then 3h to72h, 6h to120h, 12h to180h.
+# Source: getDownloadForecastSteps(.iconEps) in Open-Meteo's Icon.swift.
+# A response does not supply a verified cycle for each value; never infer the
+# exact native step from its requested valid hour or an interpolated time axis.
+V61_ICON_GLOBAL_RESOLUTION_SCHEDULE = [
+    {"through_lead_hours": 48, "native_step_hours": 1},
+    {"through_lead_hours": 72, "native_step_hours": 3},
+    {"through_lead_hours": 120, "native_step_hours": 6},
+    {"through_lead_hours": 180, "native_step_hours": 12},
+]
+_V61_ENSEMBLE_RUNTIME_CACHE = {}
+
+
+def v61_weighted_quantile(members, quantile):
+    """Inverse empirical CDF; uses normalized, nonnegative finite weights."""
+    pairs = []
+    for member in members:
+        value = safe_float(member.get("value"))
+        weight = safe_float(member.get("weight", 1.0))
+        if value is not None and weight is not None and weight > 0:
+            pairs.append((value, weight))
+    if not pairs:
+        return None
+    pairs.sort()
+    total = sum(w for _, w in pairs)
+    cut = max(0.0, min(1.0, float(quantile))) * total
+    cumulative = 0.0
+    for value, weight in pairs:
+        cumulative += weight
+        if cumulative >= cut:
+            return value
+    return pairs[-1][0]
+
+
+def v61_family_balanced_members(members):
+    """One vote per family, then per model, then per valid native member."""
+    groups = {}
+    unique = {}
+    for member in members:
+        value = safe_float(member.get("value"))
+        if value is None:
+            continue
+        key = (str(member.get("family") or "unknown"), str(member.get("model") or "unknown"), str(member.get("member") or "unknown"))
+        if key in unique:
+            continue
+        item = dict(member, value=value)
+        unique[key] = item
+        groups.setdefault(key[0], {}).setdefault(key[1], []).append(item)
+    out = []
+    for family, models in sorted(groups.items()):
+        for model, items in sorted(models.items()):
+            weight = 1.0 / (len(groups) * len(models) * len(items))
+            out.extend(dict(item, weight=weight) for item in items)
+    return out
+
+
+def v61_distribution_summary(members):
+    balanced = v61_family_balanced_members(members)
+    if not balanced:
+        return {"members": [], "member_count": 0, "family_count": 0, "mean": None, "quantiles": {}}
+    return {
+        "members": balanced, "member_count": len(balanced),
+        "family_count": len({m["family"] for m in balanced}),
+        "model_count": len({m["model"] for m in balanced}),
+        "mean": sum(m["value"] * m["weight"] for m in balanced),
+        "quantiles": {"p%02d" % p: v61_weighted_quantile(balanced, p / 100.0) for p in (5, 10, 25, 50, 75, 90, 95)},
+    }
+
+
+def v61_rain_two_stage_summary(members, interval_minutes=60):
+    """Occurrence and wet-only intensity are separate; thresholds are mm/hour."""
+    dist = v61_distribution_summary(members)
+    if not dist["members"] or interval_minutes != 60:
+        return {"available": False, "reason": "missing_members_or_interval_not_one_hour", "interval_minutes": interval_minutes}
+    values = dist["members"]
+    wet = [m for m in values if m["value"] > 0.1]
+    wet_weight = sum(m["weight"] for m in wet)
+    wet_mean = sum(m["value"] * m["weight"] for m in wet) / wet_weight if wet_weight else 0.0
+    # Quantiles conditional on being wet retain family probability mass.
+    wet_quantiles = {"p%02d" % p: v61_weighted_quantile(wet, p / 100.0) for p in (10, 50, 90, 95)} if wet else {}
+    bins = (("dry", 0.0, 0.1), ("light", 0.1, 5.0), ("moderate", 5.0, 10.0), ("heavy", 10.0, 20.0), ("extreme", 20.0, None))
+    probabilities = {}
+    for name, low, high in bins:
+        if name == "dry":
+            selected = [m for m in values if m["value"] <= high]
+        else:
+            selected = [m for m in values if (m["value"] > low if name == "light" else m["value"] >= low) and (high is None or m["value"] < high)]
+        probabilities[name] = 100.0 * sum(m["weight"] for m in selected)
+    exceedance = {str(t): 100.0 * sum(m["weight"] for m in values if (m["value"] > t if t == 0.1 else m["value"] >= t)) for t in (0.1, 5.0, 10.0, 20.0)}
+    return {
+        "available": True, "occurrence_threshold_mm": 0.1, "interval_minutes": 60,
+        "probability_percent": 100.0 * wet_weight,
+        "conditional_wet_mean_mm": wet_mean, "conditional_wet_quantiles_mm": wet_quantiles,
+        "expected_rain_mm": wet_weight * wet_mean,
+        "all_member_mean_mm": dist["mean"],
+        "bin_definitions_mm_per_hour": {name: {"min": low, "min_inclusive": name not in {"light"}, "max": high, "max_inclusive": name == "dry"} for name, low, high in bins},
+        "bin_probabilities_percent": probabilities, "exceedance_probabilities_percent": exceedance,
+        "calibration_status": "RAW_UNCALIBRATED", "method": "family_balanced_real_member_empirical_distribution",
+    }
+
+
+def v61_parse_ensemble_payload(payload, model, target_date, args, fetched_at=None):
+    """Validate individual member columns without inventing missing members."""
+    info = V61_ENSEMBLE_MODELS.get(model)
+    if not info:
+        raise ValueError("Model ensemble tidak didukung: " + str(model))
+    if not isinstance(payload, dict) or payload.get("error"):
+        raise ValueError("Respons ensemble bukan payload data yang valid")
+    hourly = payload.get("hourly") or {}
+    units = payload.get("hourly_units") or {}
+    times = hourly.get("time") or []
+    parsed_times = []
+    for stamp in times:
+        try:
+            dt = parse_open_meteo_time(stamp, args.timezone)
+            parsed_times.append(dt if dt.tzinfo is not None else None)
+        except (TypeError, ValueError, OverflowError):
+            parsed_times.append(None)
+    valid_times = [d for d in parsed_times if d is not None]
+    steps = [(b - a).total_seconds() / 60.0 for a, b in zip(valid_times, valid_times[1:]) if b > a]
+    step_minutes = min(steps) if steps else None
+    flags = []
+    if len(valid_times) != len(times):
+        flags.append("invalid_timestamp")
+    if len(set(valid_times)) != len(valid_times):
+        flags.append("duplicate_timestamp")
+    if any(b <= a for a, b in zip(valid_times, valid_times[1:])):
+        flags.append("non_monotonic_time")
+    if step_minutes is None:
+        flags.append("unverifiable_interval")
+    elif any(step != step_minutes for step in steps):
+        flags.append("irregular_interval")
+    fetched_at = fetched_at or now_local(args.timezone).isoformat()
+    out = {}
+    rejected = 0
+    for base, (field, unit, lower, upper) in V61_ENSEMBLE_VARIABLES.items():
+        columns = {}
+        perturbed = False
+        for key, values in hourly.items():
+            match = re.fullmatch(re.escape(base) + r"_member(\d+)", key)
+            if match:
+                member_id = int(match.group(1))
+                columns[member_id] = (key, values)
+                perturbed = perturbed or member_id > 0
+        # API member zero is sometimes the unsuffixed control column. Only accept
+        # it alongside actual perturbed columns, never as a synthetic ensemble.
+        if perturbed and base in hourly and 0 not in columns:
+            columns[0] = (base, hourly[base])
+        if not perturbed:
+            continue
+        for member_id, (key, values) in sorted(columns.items()):
+            if not isinstance(values, list) or len(values) != len(times):
+                flags.append(field + ":member_length_mismatch")
+                continue
+            received_unit = units.get(key, units.get(base))
+            accepted_units = {unit, "celsius"} if field == "temp_c" else ({unit, "kmh", "km h-1"} if field == "wind_kmh" else {unit})
+            if received_unit not in accepted_units:
+                flags.append(field + ":unit_mismatch")
+                continue
+            for idx, dt in enumerate(parsed_times):
+                if dt is None or dt.date() != target_date:
+                    continue
+                raw = values[idx]
+                value = safe_float(raw)
+                if value is None or value < lower or value > upper:
+                    rejected += 1
+                    continue
+                if field == "rain_mm" and (step_minutes != 60 or "irregular_interval" in flags or "duplicate_timestamp" in flags or "non_monotonic_time" in flags):
+                    # Request always asks hourly; another interval cannot be
+                    # silently interpreted as an hourly accumulation.
+                    continue
+                valid_iso = dt.isoformat()
+                slot = out.setdefault(valid_iso, {"valid_time": valid_iso, "variables": {}})
+                value_dict = slot["variables"].setdefault(field, {"members": [], "unit": unit,
+                    "interval_minutes": 60 if field == "rain_mm" else None,
+                    "interval_start": (dt - timedelta(hours=1)).isoformat() if field == "rain_mm" else None,
+                    "interval_end": valid_iso if field == "rain_mm" else None})
+                value_dict["members"].append({"model": model, "family": info["family"], "member": "member%02d" % member_id,
+                    "value": value, "fetched_at": fetched_at, "model_run_at": payload.get("model_run_at") or payload.get("run"),
+                    "provider_native_resolution_hours": None,
+                    "provider_initial_resolution_hours": info["native_hours"],
+                    "provider_resolution_scope": "documented_initial_step; exact_run_and_horizon_step_unverified",
+                    "provider_native_schedule": V61_ICON_GLOBAL_RESOLUTION_SCHEDULE if info["family"] == "ICON" else None,
+                    "provider_may_interpolate": True, "api_interpolated": None,
+                    "interpolation_status": "provider_hourly_grid; interpolation_unverified_per_value",
+                    "api_resolution_minutes": step_minutes, "rain_interval_semantics": "provider_preceding_hour" if field == "rain_mm" else None})
+    usable = sum(len(slot["variables"].get("rain_mm", {}).get("members", [])) for slot in out.values())
+    min_members = max(2, int(getattr(args, "ensemble_min_members", 5)))
+    sufficient_hours = sum(len(slot["variables"].get("rain_mm", {}).get("members", [])) >= min_members for slot in out.values())
+    return {"model": model, "family": info["family"], "success": sufficient_hours > 0,
+        "status": "usable" if sufficient_hours else ("limited" if out else "unavailable"),
+        "fetched_at": fetched_at, "model_run_at": payload.get("model_run_at") or payload.get("run"),
+        "native_resolution_hours": None,
+        "documented_initial_resolution_hours": info["native_hours"],
+        "documented_global_schedule": V61_ICON_GLOBAL_RESOLUTION_SCHEDULE if info["family"] == "ICON" else None,
+        "resolution_reference": "https://raw.githubusercontent.com/open-meteo/open-meteo/main/Sources/App/Icon/Icon.swift" if info["family"] == "ICON" else "https://open-meteo.com/en/docs/ensemble-api",
+        "provider_resolution_scope": "documented_initial_step; exact_run_and_horizon_step_unverified",
+        "api_resolution_minutes": step_minutes,
+        "provider_may_interpolate": True, "api_interpolated": None, "qc_flags": sorted(set(flags)),
+        "rejected_member_values": rejected, "valid_rain_member_values": usable,
+        "sufficient_rain_hours": sufficient_hours, "hourly": out,
+        "grid_latitude": safe_float(payload.get("latitude")), "grid_longitude": safe_float(payload.get("longitude")),
+        "api_elevation_m": safe_float(payload.get("elevation")),
+        "elevation_basis": "api_target_downscaling_elevation_not_verified_native_grid_elevation",
+        "provenance": "real_individual_ensemble_api_members; hourly values may be interpolated by provider"}
+
+
+def v61_fetch_ensembles(target_date, args):
+    """Fetch each model independently; failures remain explicit per model."""
+    if getattr(args, "disable_ensemble", False):
+        return {"enabled": False, "status": "disabled", "models": {}, "hourly": {}}
+    requested = str(getattr(args, "ensemble_models", "ncep_gefs_seamless,ecmwf_ifs025_ensemble,icon_global_eps"))
+    models = list(dict.fromkeys(V61_ENSEMBLE_ALIASES.get(x.strip(), x.strip()) for x in requested.split(",") if x.strip()))
+    # Additional models are possible explicitly; the default has three families.
+    issued = _quality_issued(args).isoformat()
+    cache_key = (issued, str(getattr(args, "location_slug", "")), args.latitude, args.longitude, target_date.isoformat(), tuple(models))
+    if cache_key in _V61_ENSEMBLE_RUNTIME_CACHE:
+        return _V61_ENSEMBLE_RUNTIME_CACHE[cache_key]
+    result = {"enabled": True, "issued_at": issued, "target_date": target_date.isoformat(), "models": {}, "hourly": {},
+        "endpoint": V61_ENSEMBLE_URL, "calibration_status": "RAW_UNCALIBRATED", "requested_model_count": len(models)}
+    def fetch_model(model):
+        if model not in V61_ENSEMBLE_MODELS:
+            return {"model": model, "success": False, "status": "unsupported_model", "error": "Use an explicitly supported global ensemble identifier", "hourly": {}}
+        params = {"latitude": args.latitude, "longitude": args.longitude, "models": model,
+            "hourly": ",".join(V61_ENSEMBLE_VARIABLES), "temperature_unit": "celsius", "wind_speed_unit": "kmh",
+            "precipitation_unit": "mm", "timezone": args.timezone,
+            "start_date": target_date.isoformat(), "end_date": target_date.isoformat(), "temporal_resolution": "hourly"}
+        url = build_url(V61_ENSEMBLE_URL, params)
+        try:
+            payload, status, duration = fetch_json_with_retry(url, headers=DEFAULT_HTTP_HEADERS,
+                source_id="ENSEMBLE:" + model, timeout=getattr(args, "http_timeout", HTTP_TIMEOUT_SECONDS),
+                max_retry=getattr(args, "max_retry_http", MAX_RETRY_HTTP))
+            parsed = v61_parse_ensemble_payload(payload, model, target_date, args)
+            parsed.update({"http_status": status, "duration_ms": duration, "url": url})
+            return parsed
+        except Exception as exc:
+            return {"model": model, "family": V61_ENSEMBLE_MODELS[model]["family"],
+                "success": False, "status": "failed", "error": type(exc).__name__ + ": " + str(exc), "url": url, "hourly": {}}
+    # Model requests remain independent while bounded host throttling in the
+    # existing HTTP helper limits the actual number of concurrent connections.
+    with ThreadPoolExecutor(max_workers=max(1, min(3, len(models)))) as executor:
+        futures = {executor.submit(fetch_model, model): model for model in models}
+        for future in as_completed(futures):
+            parsed = future.result()
+            model = futures[future]
+            result["models"][model] = {k: v for k, v in parsed.items() if k != "hourly"}
+            for valid_iso, slot in parsed["hourly"].items():
+                out = result["hourly"].setdefault(valid_iso, {"valid_time": valid_iso, "variables": {}})
+                for field, distribution in slot["variables"].items():
+                    merged = out["variables"].setdefault(field, {k: v for k, v in distribution.items() if k != "members"})
+                    merged.setdefault("members", []).extend(distribution["members"])
+    for slot in result["hourly"].values():
+        for field, distribution in slot["variables"].items():
+            # A sparse model does not gain equal family voting from one survivor.
+            counts = {}
+            for member in distribution["members"]:
+                counts[member["model"]] = counts.get(member["model"], 0) + 1
+            minimum = max(2, int(getattr(args, "ensemble_min_members", 5)))
+            usable = [member for member in distribution["members"] if counts[member["model"]] >= minimum]
+            distribution["excluded_sparse_models"] = [model for model, n in counts.items() if n < minimum]
+            distribution["raw_member_count"] = len(distribution["members"])
+            distribution.update(v61_distribution_summary(usable))
+            distribution["quantile_status"] = "RAW_NOT_VALIDATED_AS_CONFIDENCE_INTERVAL"
+    result["successful_model_count"] = sum(bool(m.get("success")) for m in result["models"].values())
+    result["status"] = "usable" if result["successful_model_count"] == len(models) and models else ("partial" if result["successful_model_count"] else "unavailable")
+    _V61_ENSEMBLE_RUNTIME_CACHE[cache_key] = result
+    return result
+
+
+def v61_enrich_probabilistic_rows(rows, ensemble_payload, args):
+    """Attach native members; override hourly POP only with adequate real families."""
+    hourly = (ensemble_payload or {}).get("hourly") or {}
+    by_instant = {}
+    for stamp, slot in hourly.items():
+        dt = _quality_datetime(stamp, args.timezone)
+        if dt is not None:
+            by_instant[dt] = slot
+    for row in rows:
+        stamp = row.get("valid_time") or row.get("target_datetime")
+        dt = _quality_datetime(stamp, args.timezone)
+        if dt is None and row.get("date") and row.get("time"):
+            try:
+                dt = parse_local_hour_string(date.fromisoformat(str(row["date"])), str(row["time"]), args.timezone)
+            except (TypeError, ValueError):
+                dt = None
+        slot = by_instant.get(dt)
+        distributions = (slot or {}).get("variables") or {}
+        row["ensemble_distribution"] = distributions
+        row["ensemble_status"] = (ensemble_payload or {}).get("status", "unavailable")
+        row["ensemble_models"] = (ensemble_payload or {}).get("models") or {}
+        row["ensemble_quantile_status"] = "RAW_NOT_VALIDATED_AS_CONFIDENCE_INTERVAL"
+        for field, prefix in (("temp_c", "temp"), ("rh_pct", "rh"), ("rain_mm", "rain"), ("wind_kmh", "wind")):
+            for quantile, value in (distributions.get(field) or {}).get("quantiles", {}).items():
+                row["ensemble_" + prefix + "_" + quantile] = value
+        rain_dist = distributions.get("rain_mm") or {}
+        row["ensemble_member_count"] = rain_dist.get("member_count", 0)
+        row["ensemble_family_count"] = rain_dist.get("family_count", 0)
+        needed_families = max(1, int(getattr(args, "ensemble_min_families", 2)))
+        needed_members = max(2, int(getattr(args, "ensemble_min_members", 5)))
+        adequate = rain_dist.get("member_count", 0) >= needed_members and rain_dist.get("family_count", 0) >= needed_families and rain_dist.get("interval_minutes") == 60
+        if not adequate:
+            row["probability_basis"] = row.get("probability_basis") or "deterministic_source_heuristic"
+            row["rain_two_stage"] = {"available": False, "reason": "insufficient_real_members_or_families"}
+            continue
+        rain = v61_rain_two_stage_summary(rain_dist["members"], 60)
+        row["rain_two_stage_raw"] = dict(rain)
+        model = (_QUALITY_SKILL or {}).get("rain_two_stage")
+        if model and model.get("accepted") is True:
+            raw_exceedances = dict(rain["exceedance_probabilities_percent"])
+            rain.update(v61_apply_two_stage(rain["probability_percent"], rain["conditional_wet_mean_mm"], model))
+            scale = safe_float(model.get("wet_amount_scale")) or 1.0
+            original_wet = [m for m in rain_dist["members"] if m["value"] > 0.1]
+            original_wet_weight = sum(m["weight"] for m in original_wet)
+            occurrence = rain["probability_percent"] / 100.0
+            rain["conditional_wet_quantiles_mm"] = {key: value * scale for key, value in rain["conditional_wet_quantiles_mm"].items()}
+            rain["raw_exceedance_probabilities_percent"] = raw_exceedances
+            rain["exceedance_probabilities_percent"] = {"0.1": rain["probability_percent"]}
+            for threshold in (5.0, 10.0, 20.0):
+                mass = sum(m["weight"] for m in original_wet if m["value"] * scale >= threshold)
+                rain["exceedance_probabilities_percent"][str(threshold)] = 100.0 * occurrence * mass / original_wet_weight if original_wet_weight else 0.0
+            rain["bin_probabilities_percent"] = {"dry": 100.0 - rain["probability_percent"],
+                "light": rain["probability_percent"] - rain["exceedance_probabilities_percent"]["5.0"],
+                "moderate": rain["exceedance_probabilities_percent"]["5.0"] - rain["exceedance_probabilities_percent"]["10.0"],
+                "heavy": rain["exceedance_probabilities_percent"]["10.0"] - rain["exceedance_probabilities_percent"]["20.0"],
+                "extreme": rain["exceedance_probabilities_percent"]["20.0"]}
+            rain["calibration_status"] = "VALIDATED_CANDIDATE_APPLIED_RECHECK_REQUIRED"
+            rain["method"] = "family_balanced_real_members_plus_frozen_two_stage_model"
+        row["rain_two_stage"] = rain
+        row["prob_rain_heuristic"] = row.get("prob_rain_heuristic", row.get("prob_rain"))
+        row["prob_rain_raw"] = row["rain_two_stage_raw"]["probability_percent"]
+        row["prob_rain"] = rain["probability_percent"]
+        row["probability_basis"] = rain["method"]
+        row["prob_heavy_rain"] = rain["exceedance_probabilities_percent"]["10.0"]
+        row["prob_moderate_heavy_rain"] = rain["exceedance_probabilities_percent"]["5.0"]
+        row["rain_mm_expected"] = rain["expected_rain_mm"]
+        row["rain_mm_est"] = rain_dist["quantiles"].get("p50")
+        for quantile, value in rain_dist["quantiles"].items():
+            row["rain_" + quantile] = value
+        row["rain_interval_start"] = rain_dist["interval_start"]
+        row["rain_interval_end"] = rain_dist["interval_end"]
+        row["rain_interval_minutes"] = 60
+        row["calibration_status"] = rain["calibration_status"]
+    return rows
+
+
+def v61_crps(members, observation):
+    """Weighted empirical CRPS, O(n log n), exact for the stored distribution."""
+    observation = safe_float(observation)
+    if observation is None:
+        return None
+    pairs = [(safe_float(m.get("value")), safe_float(m.get("weight", 1.0))) for m in members]
+    pairs = sorted((v, w) for v, w in pairs if v is not None and w is not None and w > 0)
+    if not pairs:
+        return None
+    total = sum(w for _, w in pairs)
+    absolute = sum(w * abs(v - observation) for v, w in pairs) / total
+    accumulated_weight = accumulated_value = half_pair_sum = 0.0
+    for value, weight in pairs:
+        half_pair_sum += weight * (value * accumulated_weight - accumulated_value)
+        accumulated_weight += weight
+        accumulated_value += weight * value
+    return max(0.0, absolute - half_pair_sum / (total * total))
+
+
+def _v61_observation_lookup(observations):
+    if isinstance(observations, dict):
+        return observations
+    return {(sentinel_obs_date_to_iso(str(o.get("date") or o.get("target_date") or o.get("tanggal") or "")), str(o.get("time") or o.get("jam") or "")): o for o in observations or []}
+
+
+def _v61_same_observed_interval(obs, distribution, valid, args):
+    minutes = safe_float(_quality_first(obs, "rain_mm_interval_minutes", "rain_interval_minutes", "interval_minutes"))
+    end = _quality_datetime(_quality_first(obs, "rain_mm_interval_end", "rain_interval_end", "interval_end"), args.timezone)
+    start = _quality_datetime(_quality_first(obs, "rain_mm_interval_start", "rain_interval_start", "interval_start"), args.timezone)
+    if end is None or start is None:
+        return False
+    expected_end = _quality_datetime(distribution.get("interval_end"), args.timezone)
+    expected_start = _quality_datetime(distribution.get("interval_start"), args.timezone)
+    return minutes == 60 and end == expected_end == valid and start == expected_start and (end - start).total_seconds() == 3600
+
+
+def _v61_observed_location_distance(obs, field, target=None):
+    """A composite observation retains the station used for each variable.
+
+    Reported QC-computed per-variable distance wins. Otherwise calculate from
+    explicit station/target coordinates, or use global distance only when its
+    station also supplied this variable. Missing location is not zero distance.
+    """
+    reported = safe_float(obs.get(field + "_station_distance_km"))
+    if reported is not None:
+        return reported if reported >= 0 else None
+    variable_station = obs.get(field + "_station_id")
+    global_station = obs.get("station_id")
+    composite_other_station = variable_station and global_station and variable_station != global_station
+    latitude_keys = [field + "_station_latitude"]
+    longitude_keys = [field + "_station_longitude"]
+    if not composite_other_station:
+        latitude_keys.extend(("station_latitude", "latitude"))
+        longitude_keys.extend(("station_longitude", "longitude"))
+    latitude = safe_float(_quality_first(obs, *latitude_keys))
+    longitude = safe_float(_quality_first(obs, *longitude_keys))
+    if isinstance(target, dict):
+        target_latitude = safe_float(_quality_first(target, "site_latitude", "latitude"))
+        target_longitude = safe_float(_quality_first(target, "site_longitude", "longitude"))
+    else:
+        target_latitude = safe_float(getattr(target, "latitude", None))
+        target_longitude = safe_float(getattr(target, "longitude", None))
+    coordinates = (latitude, longitude, target_latitude, target_longitude)
+    if all(value is not None for value in coordinates):
+        if not (-90 <= latitude <= 90 and -90 <= target_latitude <= 90 and -180 <= longitude <= 180 and -180 <= target_longitude <= 180):
+            return None
+        a_lat, a_lon, b_lat, b_lon = map(math.radians, coordinates)
+        haversine = math.sin((b_lat - a_lat) / 2) ** 2 + math.cos(a_lat) * math.cos(b_lat) * math.sin((b_lon - a_lon) / 2) ** 2
+        return 6371.0088 * 2 * math.asin(math.sqrt(max(0.0, min(1.0, haversine))))
+    if not composite_other_station:
+        global_distance = safe_float(obs.get("station_distance_km"))
+        if global_distance is not None and global_distance >= 0:
+            return global_distance
+    return None
+
+
+def v61_probabilistic_verification(rows, observations, args):
+    """Verify only immutable forecasts issued before events and QC observations."""
+    observed = _v61_observation_lookup(observations)
+    eval_at = now_local(args.timezone)
+    buckets = {}
+    unique = {}
+    rejected = {"not_pre_event": 0, "missing_qc_observation": 0, "rain_interval_mismatch": 0,
+        "unknown_observation_location": 0, "observation_outside_local_radius": 0}
+    for row in rows:
+        valid = _quality_datetime(row.get("valid_time") or row.get("target_datetime"), args.timezone)
+        if valid is None:
+            continue
+        issued = _quality_datetime(row.get("issued_at"), args.timezone)
+        if issued is None or issued > valid - timedelta(hours=1) or valid > eval_at:
+            rejected["not_pre_event"] += 1
+            continue
+        obs = observed.get((valid.date().isoformat(), valid.strftime("%H:%M"))) or observed.get(valid.isoformat())
+        if not obs:
+            rejected["missing_qc_observation"] += 1
+            continue
+        lead = (valid - issued).total_seconds() / 3600.0
+        lead_bin = "0-24h" if lead <= 24 else ("24-48h" if lead <= 48 else "48h+")
+        key = (str(row.get("location_slug") or ""), valid, lead_bin)
+        prior = unique.get(key)
+        if prior is None or issued < prior[0]:
+            unique[key] = (issued, row, obs, valid, lead_bin)
+    for issued, row, obs, valid, lead_bin in unique.values():
+        for field, distribution in (row.get("ensemble_distribution") or {}).items():
+            value = _quality_observed_value(obs, field)
+            available = _quality_datetime(obs.get(field + "_available_at") or obs.get("available_at"), args.timezone)
+            if value is None or available is None or available > eval_at:
+                rejected["missing_qc_observation"] += 1
+                continue
+            local_distance = _v61_observed_location_distance(obs, field, args)
+            maximum_distance = {"rain_mm": 2.0, "temp_c": 10.0, "rh_pct": 10.0, "wind_kmh": 5.0}.get(field, 2.0)
+            if local_distance is None:
+                rejected["unknown_observation_location"] += 1
+                continue
+            if local_distance > maximum_distance:
+                rejected["observation_outside_local_radius"] += 1
+                continue
+            if field == "rain_mm" and not _v61_same_observed_interval(obs, distribution, valid, args):
+                rejected["rain_interval_mismatch"] += 1
+                continue
+            members = distribution.get("members") or []
+            score = v61_crps(members, value)
+            if score is None:
+                continue
+            p10 = v61_weighted_quantile(members, 0.1)
+            p90 = v61_weighted_quantile(members, 0.9)
+            item = {"date": valid.date().isoformat(), "lead_bin": lead_bin, "crps": score,
+                "covered": p10 <= value <= p90, "width": p90 - p10}
+            if field == "rain_mm":
+                stage = v61_rain_two_stage_summary(members, 60)
+                item["brier"] = {t: (p / 100.0 - (1.0 if (value > float(t) if float(t) == 0.1 else value >= float(t)) else 0.0)) ** 2 for t, p in stage["exceedance_probabilities_percent"].items()}
+                item["rain_bin"] = "dry" if value <= 0.1 else ("light" if value < 5 else ("moderate" if value < 10 else ("heavy" if value < 20 else "extreme")))
+            buckets.setdefault(field, []).append(item)
+    result = {"schema": "langit-probabilistic-verification-1", "generated_at": eval_at.isoformat(),
+        "status": "evaluated" if buckets else "insufficient_matching_observations", "nominal_interval_coverage": 0.8,
+        "calibration_status": "NOT_CERTIFIED", "distribution": "raw_family_balanced_individual_members",
+        "issue_rule": "earliest pre-event issue per valid_time and lead bin, minimum one-hour lead",
+        "rain_interval_rule": "explicit matching per-variable start/end, exactly one hour",
+        "local_observation_radius_km": {"rain_mm": 2, "temp_c": 10, "rh_pct": 10, "wind_kmh": 5},
+        "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
+        "rejected": rejected, "variables": {}}
+    for field, items in buckets.items():
+        def summarize(group):
+            summary = {"n": len(group), "distinct_days": len({i["date"] for i in group}),
+                "crps": sum(i["crps"] for i in group) / len(group),
+                "p10_p90_coverage": sum(i["covered"] for i in group) / len(group),
+                "p10_p90_mean_width": sum(i["width"] for i in group) / len(group)}
+            if field == "rain_mm":
+                summary["brier_by_threshold_mm_per_hour"] = {t: sum(i["brier"][t] for i in group) / len(group) for t in ("0.1", "5.0", "10.0", "20.0")}
+                summary["observed_intensity_counts"] = {bin_name: sum(i["rain_bin"] == bin_name for i in group) for bin_name in ("dry", "light", "moderate", "heavy", "extreme")}
+            return summary
+        result["variables"][field] = summarize(items)
+        result["variables"][field]["by_lead"] = {lead: summarize([i for i in items if i["lead_bin"] == lead]) for lead in sorted({i["lead_bin"] for i in items})}
+        if field == "rain_mm":
+            result["variables"][field]["by_observed_intensity"] = {name: summarize([i for i in items if i["rain_bin"] == name]) for name in sorted({i["rain_bin"] for i in items})}
+    return result
+
+
+def _v61_rain_case(case):
+    row = case.get("row") or case.get("forecast") or case
+    obs = case.get("obs") or case.get("observation") or {}
+    rain = _quality_observed_value(obs, "rain_mm")
+    if rain is None:
+        return None
+    raw_stage = row.get("rain_two_stage_raw") or row.get("rain_two_stage") or {}
+    valid = case.get("valid")
+    if not isinstance(valid, datetime):
+        valid = _quality_datetime(row.get("valid_time") or row.get("target_datetime"))
+    observation_end = _quality_datetime(_quality_first(obs, "rain_mm_interval_end", "rain_interval_end", "interval_end"))
+    observation_start = _quality_datetime(_quality_first(obs, "rain_mm_interval_start", "rain_interval_start", "interval_start"))
+    observation_minutes = safe_float(_quality_first(obs, "rain_mm_interval_minutes", "rain_interval_minutes", "interval_minutes"))
+    if valid is None or observation_end != valid or observation_start != valid - timedelta(hours=1) or observation_minutes != 60:
+        return None
+    local_distance = _v61_observed_location_distance(obs, "rain_mm", row)
+    if local_distance is None or local_distance > 2:
+        return None
+    forecast_distribution = ((row.get("ensemble_distribution") or {}).get("rain_mm") or {})
+    forecast_minutes = forecast_distribution.get("interval_minutes") or raw_stage.get("interval_minutes") or row.get("rain_interval_minutes")
+    if forecast_minutes != 60:
+        return None
+    probability = safe_float(raw_stage.get("probability_percent"))
+    if probability is None:
+        probability = safe_float(row.get("prob_rain_raw"))
+    if probability is None:
+        probability = safe_float(row.get("prob_rain"))
+    wet_mean = safe_float(raw_stage.get("conditional_wet_mean_mm"))
+    if wet_mean is None:
+        distribution = (row.get("ensemble_distribution") or {}).get("rain_mm") or {}
+        if distribution.get("members"):
+            stage = v61_rain_two_stage_summary(distribution["members"], distribution.get("interval_minutes"))
+            wet_mean = safe_float(stage.get("conditional_wet_mean_mm"))
+    if wet_mean is None:
+        # Deterministic median is not a conditional wet distribution. It may be
+        # evaluated as an intensity proxy, but receives an explicit basis label.
+        wet_mean = safe_float(row.get("rain_mm_est"))
+        if wet_mean is None:
+            wet_mean = safe_float(row.get("rain_p50"))
+    if probability is None or not 0 <= probability <= 100 or wet_mean is None or wet_mean < 0:
+        return None
+    return {"p": probability, "wet_mean": wet_mean, "rain": rain,
+        "date": str(case.get("date") or row.get("date") or str(case.get("valid") or "")[:10]),
+        "intensity_basis": "conditional_real_members" if raw_stage.get("available") or ((row.get("ensemble_distribution") or {}).get("rain_mm") or {}).get("members") else "deterministic_intensity_proxy"}
+
+
+def v61_apply_two_stage(probability_percent, conditional_wet_mean_mm, candidate):
+    candidate = (candidate or {}).get("candidate", candidate or {})
+    probability = safe_float(probability_percent)
+    wet_mean = safe_float(conditional_wet_mean_mm)
+    if probability is None or wet_mean is None:
+        return {"probability_percent": probability, "conditional_wet_mean_mm": wet_mean, "expected_rain_mm": None}
+    occurrence = candidate.get("occurrence") or {}
+    bins = occurrence.get("bins") or []
+    if bins:
+        sorted_bins = sorted(bins, key=lambda b: b["center"])
+        # Outside learned centers, retain the raw probability rather than
+        # extrapolate an unsupported correction.
+        if sorted_bins[0]["center"] <= probability <= sorted_bins[-1]["center"]:
+            if len(sorted_bins) == 1:
+                probability = sorted_bins[0]["probability_percent"]
+            else:
+                for left, right in zip(sorted_bins, sorted_bins[1:]):
+                    if left["center"] <= probability <= right["center"]:
+                        span = right["center"] - left["center"]
+                        fraction = (probability - left["center"]) / span if span else 0.0
+                        probability = left["probability_percent"] + fraction * (right["probability_percent"] - left["probability_percent"])
+                        break
+    scale = safe_float(candidate.get("wet_amount_scale")) or 1.0
+    wet_mean = max(0.0, wet_mean * max(0.5, min(2.0, scale)))
+    probability = max(0.0, min(100.0, probability))
+    return {"probability_percent": probability, "conditional_wet_mean_mm": wet_mean,
+        "expected_rain_mm": probability / 100.0 * wet_mean}
+
+
+def v61_score_rain_two_stage(cases, candidate=None):
+    samples = [item for item in (_v61_rain_case(c) for c in cases) if item is not None and item["intensity_basis"] == "conditional_real_members"]
+    wet_errors = []
+    brier = []
+    bins = {name: [] for name in ("dry", "light", "moderate", "heavy", "extreme")}
+    for item in samples:
+        prediction = v61_apply_two_stage(item["p"], item["wet_mean"], candidate)
+        event = item["rain"] > 0.1
+        brier.append((prediction["probability_percent"] / 100.0 - float(event)) ** 2)
+        name = "dry" if item["rain"] <= 0.1 else ("light" if item["rain"] < 5 else ("moderate" if item["rain"] < 10 else ("heavy" if item["rain"] < 20 else "extreme")))
+        if event:
+            error = abs(prediction["conditional_wet_mean_mm"] - item["rain"])
+            wet_errors.append(error)
+            bins[name].append(error)
+    return {"n": len(samples), "distinct_days": len({s["date"] for s in samples if s["date"]}),
+        "n_wet": sum(s["rain"] > 0.1 for s in samples), "n_dry": sum(s["rain"] <= 0.1 for s in samples),
+        "brier": sum(brier) / len(brier) if brier else None,
+        "wet_mae": sum(wet_errors) / len(wet_errors) if wet_errors else None,
+        "intensity_mae_by_bin": {name: {"n": len(errors), "mae": sum(errors) / len(errors) if errors else None} for name, errors in bins.items()},
+        "conditional_member_samples": sum(s["intensity_basis"] == "conditional_real_members" for s in samples)}
+
+
+def v61_fit_rain_two_stage(train_cases, validation_cases):
+    """Fit on training only; return candidate separately from validation acceptance."""
+    train = [item for item in (_v61_rain_case(c) for c in train_cases) if item is not None and item["intensity_basis"] == "conditional_real_members"]
+    before = v61_score_rain_two_stage(validation_cases)
+    wet = [s for s in train if s["rain"] > 0.1 and s["wet_mean"] > 0.1]
+    dry = [s for s in train if s["rain"] <= 0.1]
+    evidence = {"n_train": len(train), "distinct_training_days": len({s["date"] for s in train if s["date"]}),
+        "n_wet_train": len(wet), "n_dry_train": len(dry), "n_validation": before["n"],
+        "n_wet_validation": before["n_wet"], "brier_before": before["brier"], "wet_mae_before": before["wet_mae"],
+        "fit_uses_validation": False, "test_set_used": False}
+    if len(train) < 60 or len(wet) < 20 or len(dry) < 20 or evidence["distinct_training_days"] < 10:
+        evidence["reason"] = "insufficient_training_days_or_event_classes"
+        return {"candidate": None, "accepted": False, "evidence": evidence}
+    probability_bins = []
+    for lower in range(0, 100, 20):
+        group = [s for s in train if lower <= s["p"] < lower + 20 or (lower == 80 and s["p"] == 100)]
+        if len(group) < 10:
+            continue
+        center = sum(s["p"] for s in group) / len(group)
+        # Twenty effective observations shrink correction toward raw probability.
+        target = (100.0 * sum(s["rain"] > 0.1 for s in group) + 20.0 * center) / (len(group) + 20.0)
+        probability_bins.append({"center": center, "probability_percent": target, "n": len(group)})
+    if len(probability_bins) < 3:
+        evidence["reason"] = "insufficient_probability_support"
+        return {"candidate": None, "accepted": False, "evidence": evidence}
+    blocks = []
+    for b in probability_bins:
+        blocks.append([b])
+        while len(blocks) >= 2:
+            left = sum(x["probability_percent"] * x["n"] for x in blocks[-2]) / sum(x["n"] for x in blocks[-2])
+            right = sum(x["probability_percent"] * x["n"] for x in blocks[-1]) / sum(x["n"] for x in blocks[-1])
+            if left <= right:
+                break
+            blocks[-2].extend(blocks.pop())
+    for block in blocks:
+        pooled = sum(x["probability_percent"] * x["n"] for x in block) / sum(x["n"] for x in block)
+        for b in block:
+            b["probability_percent"] = pooled
+    log_ratios = [math.log(s["rain"] / s["wet_mean"]) for s in wet]
+    mean_log = sum(log_ratios) / len(log_ratios)
+    log_scale = mean_log * len(wet) / (len(wet) + 50.0)
+    scale = max(0.5, min(2.0, math.exp(log_scale)))
+    candidate = {"schema": "langit-two-stage-rain-1", "threshold_mm": 0.1, "interval_minutes": 60,
+        "occurrence": {"method": "shrunken_monotonic_bins_no_extrapolation", "bins": probability_bins},
+        "wet_amount_scale": scale, "wet_scale_method": "regularized_mean_log_ratio",
+        "status": "candidate_requires_rolling_and_frozen_test_acceptance", "training_case_count": len(train),
+        "training_probability_basis": "real_individual_members", "training_intensity_basis": "conditional_real_members"}
+    after = v61_score_rain_two_stage(validation_cases, candidate)
+    evidence.update({"brier_after": after["brier"], "wet_mae_after": after["wet_mae"],
+        "validation_before": before, "validation_after": after})
+    accepted = (before["n"] >= 20 and before["n_wet"] >= 10 and before["n_dry"] >= 10 and before["distinct_days"] >= 3
+        and before["brier"] is not None and after["brier"] < before["brier"]
+        and before["wet_mae"] is not None and after["wet_mae"] < before["wet_mae"])
+    evidence["reason"] = "joint_validation_improvement" if accepted else "validation_absent_insufficient_or_not_jointly_improved"
+    return {"candidate": candidate, "accepted": bool(accepted), "evidence": evidence}
+
+
+"""LANGIT v61: frozen rolling evaluation and empirically validated local correction.
+
+This snippet is appended to the single distribution script before its main call.
+The final test and previous final tests never enter fitting or model selection.
+"""
+
+import hashlib as _v61_hashlib
+
+_V61_NUMERIC_VARIABLES = ("temp_c", "rh_pct", "rain_mm", "wind_kmh")
+_V61_STATION_METADATA = ("station_latitude", "station_longitude", "station_elevation_m", "station_distance_km", "station_id", "latitude", "longitude", "elevation_m", "terrain_class", "interval_start", "interval_end", "interval_minutes", "rain_interval_start", "rain_interval_end", "rain_interval_minutes", "rain_mm_interval_start", "rain_mm_interval_end", "rain_mm_interval_minutes")
+_V61_FIELD_STATION_METADATA = tuple(field + "_station_" + suffix for field in _OBS_FIELDS for suffix in ("latitude", "longitude", "elevation_m", "distance_km", "id"))
+_V61_PREVIOUS_TRAINING_CASES = _quality_training_cases
+
+
+def _v61_distance_km(lat1, lon1, lat2, lon2):
+    values = [safe_float(x) for x in (lat1, lon1, lat2, lon2)]
+    if any(x is None for x in values):
+        return None
+    lat1, lon1, lat2, lon2 = map(math.radians, values)
+    delta_lat, delta_lon = lat2 - lat1, lon2 - lon1
+    a = math.sin(delta_lat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(delta_lon / 2) ** 2
+    return 6371.0088 * 2 * math.asin(math.sqrt(clamp(a, 0, 1)))
+
+
+def _v61_matching_rain_interval(observation, valid):
+    start = _quality_datetime(observation.get("rain_mm_interval_start") or observation.get("rain_interval_start") or observation.get("interval_start"))
+    end = _quality_datetime(observation.get("rain_mm_interval_end") or observation.get("rain_interval_end") or observation.get("interval_end"))
+    minutes = safe_float(observation.get("rain_mm_interval_minutes", observation.get("rain_interval_minutes", observation.get("interval_minutes"))))
+    if start is None or end is None:
+        return False
+    actual_minutes = (end - start).total_seconds() / 60
+    return abs(actual_minutes - 60) < 1e-6 and (minutes is None or abs(minutes - 60) < 1e-6) and abs((end - valid).total_seconds()) < 1 and abs((start - (valid - timedelta(hours=1))).total_seconds()) < 1
+
+
+def _quality_training_cases(args):
+    """Retain station provenance; exclude distant stations and delayed observations."""
+    observations = sentinel_load_observations_by_key(args)
+    cases = _V61_PREVIOUS_TRAINING_CASES(args)
+    distances = {"rain_mm": 2.0, "wind_kmh": 5.0, "temp_c": 10.0, "rh_pct": 10.0}
+    filtered = []
+    for case in cases:
+        row = case["row"]
+        if row.get("location_slug") and row["location_slug"] != args.location_slug:
+            continue
+        raw = observations.get((row.get("target_date"), row.get("jam")), {})
+        obs = dict(case["obs"])
+        for key in _V61_STATION_METADATA + _V61_FIELD_STATION_METADATA:
+            if raw.get(key) not in (None, ""):
+                obs[key] = raw[key]
+        for field in _OBS_FIELDS:
+            for suffix in ("type", "qc", "available_at", "source"):
+                if field in obs and not obs.get(field + "_" + suffix):
+                    obs[field + "_" + suffix] = raw.get(field + "_" + suffix) or raw.get({"type": "observation_type", "qc": "qc", "available_at": "available_at", "source": "source_id"}[suffix])
+        if "rain_mm" in obs and not _v61_matching_rain_interval(obs, case["valid"]):
+            obs.pop("rain_mm", None)
+        for field, maximum in dict(distances, category=2).items():
+            latitude = _v61_station_value(obs, field if field != "category" else "rain_mm", "latitude")
+            longitude = _v61_station_value(obs, field if field != "category" else "rain_mm", "longitude")
+            distance = _v61_distance_km(getattr(args, "latitude", None), getattr(args, "longitude", None), latitude, longitude)
+            if distance is None:
+                distance = _v61_station_value(obs, field if field != "category" else "rain_mm", "distance_km")
+            if distance is None or distance < 0 or distance > maximum:
+                obs.pop(field, None)
+            else:
+                obs[field + "_station_distance_km"] = distance
+        if not any(field in obs for field in _OBS_FIELDS):
+            continue
+        case = dict(case)
+        case["obs"] = obs
+        filtered.append(case)
+    return filtered
+
+
+def _v61_asof_cases(cases, cutoff):
+    """A historical training fold may only see observations available then."""
+    output = []
+    for case in cases:
+        if case["valid"] >= cutoff:
+            continue
+        clean = {key: value for key, value in case["obs"].items() if key in _V61_STATION_METADATA + _V61_FIELD_STATION_METADATA or key == "station_distance_km"}
+        for field in _OBS_FIELDS:
+            value = _quality_observation_available(case["obs"], field, cutoff)
+            if value is not None:
+                clean[field] = value
+                for suffix in ("type", "qc", "available_at", "source"):
+                    clean[field + "_" + suffix] = case["obs"].get(field + "_" + suffix)
+        if any(field in clean for field in _OBS_FIELDS):
+            copied = dict(case)
+            copied["obs"] = clean
+            output.append(copied)
+    return output
+
+
+def _v61_scope_cases(cases):
+    scopes = {"all": cases}
+    for case in cases:
+        context = _quality_context(case["valid"], case["issued"])
+        for name, value in context.items():
+            scopes.setdefault(name + ":" + value, []).append(case)
+    return scopes
+
+
+def _v61_frozen_cohort(cases, args, ledger):
+    pending = next((cohort for cohort in ledger.get("cohorts", []) if cohort.get("status") == "reserved"), None)
+    if pending:
+        return pending, None
+    used_cutoff = max((cohort["data_cutoff_date"] for cohort in ledger.get("cohorts", [])), default="")
+    fresh = [case for case in cases if case["date"] > used_cutoff]
+    days = sorted({case["date"] for case in fresh})
+    minimum_days = max(20, int(getattr(args, "evaluation_min_days", 30)))
+    test_days = max(3, int(getattr(args, "evaluation_test_days", 7)))
+    folds_count = max(2, min(5, int(getattr(args, "evaluation_folds", 3))))
+    if len(days) < max(minimum_days, test_days + 13) or len(fresh) < int(getattr(args, "learning_min_samples", 60)):
+        return None, {"status": "insufficient_new_data", "new_days": len(days), "new_samples": len(fresh), "required_days": max(minimum_days, test_days + 13), "previous_cutoff": used_cutoff or None}
+    development_days, final_days = days[:-test_days], days[-test_days:]
+    initial = max(10, len(development_days) // 2)
+    validation_days = development_days[initial:]
+    if len(validation_days) < 3 * folds_count:
+        folds_count = max(2, len(validation_days) // 3)
+    if len(validation_days) < 6:
+        return None, {"status": "insufficient_rolling_validation_days"}
+    folds = []
+    for index in range(folds_count):
+        left = initial + index * len(validation_days) // folds_count
+        right = initial + (index + 1) * len(validation_days) // folds_count
+        block = development_days[left:right]
+        folds.append({"fold": index + 1, "train_dates": development_days[:left], "validation_dates": block,
+                      "fit_cutoff": parse_local_hour_string(datetime.fromisoformat(block[0]).date(), "00:00", args.timezone).isoformat()})
+    identities = sorted((case["date"], case["valid"].isoformat(), case["issued"].isoformat()) for case in fresh)
+    digest = _v61_hashlib.sha256(json.dumps(identities, separators=(",", ":")).encode()).hexdigest()
+    cohort = {"cohort_id": uuid.uuid4().hex, "created_at": now_local(args.timezone).isoformat(), "location_slug": args.location_slug,
+              "cohort_digest": digest, "data_cutoff_date": days[-1], "development_dates": development_days,
+              "final_test_dates": final_days, "folds": folds, "final_fit_cutoff": parse_local_hour_string(datetime.fromisoformat(final_days[0]).date(), "00:00", args.timezone).isoformat(),
+              "policy": "predeclared chronological expanding folds; final test used once for reporting; all final-test dates permanently excluded from learning", "status": "reserved"}
+    return cohort, None
+
+
+def _v61_source_multipliers(cases, variable):
+    errors = {}
+    for case in cases:
+        if variable == "rain_mm" and not _v61_matching_rain_interval(case["obs"], case["valid"]):
+            continue
+        observed = safe_float(case["obs"].get(variable))
+        if observed is None:
+            continue
+        for point in case["points"]:
+            value = safe_float(point.get(variable))
+            if value is not None:
+                errors.setdefault(point["source_id"], []).append(abs(value - observed))
+    means = {source: sum(values) / len(values) for source, values in errors.items() if len(values) >= 20}
+    if len(means) < 2:
+        return None
+    overall = sum(means.values()) / len(means)
+    multipliers = {source: 1 + len(errors[source]) / (len(errors[source]) + 100) * (clamp((overall + .1) / (mae + .1), .5, 2) - 1) for source, mae in means.items()}
+    return {"accepted": True, "multipliers": multipliers, "training_source_samples": {source: len(values) for source, values in errors.items()}, "method": "shrunk_inverse_training_mae"}
+
+
+def _v61_error_summary(pairs):
+    if not pairs:
+        return {"n": 0, "mae": None, "rmse": None, "bias": None}
+    errors = [prediction - observation for prediction, observation in pairs]
+    return {"n": len(errors), "mae": sum(abs(value) for value in errors) / len(errors), "rmse": math.sqrt(sum(value * value for value in errors) / len(errors)), "bias": sum(errors) / len(errors)}
+
+
+def _v61_variable_pairs(cases, variable, section=None, bias=0, local=None, args=None):
+    output = []
+    for case in cases:
+        if variable == "rain_mm" and not _v61_matching_rain_interval(case["obs"], case["valid"]):
+            continue
+        observed = safe_float(case["obs"].get(variable))
+        prediction = _quality_predict_variable(case, variable, (section or {}).get("multipliers"))
+        if observed is None or prediction is None:
+            continue
+        prediction += bias
+        if local and args:
+            features, _ = _v61_local_features(case, args, local.get("station_reference"), variable)
+            if features is not None and _v61_local_in_range(features, local):
+                prediction += _v61_local_delta(features, local, variable)
+        output.append((prediction, observed))
+    return output
+
+
+def _v61_accept_folds(folds, minimum_cases=12):
+    eligible = [fold for fold in folds if fold["baseline"]["n"] >= minimum_cases and fold["candidate"]["n"] == fold["baseline"]["n"] and fold["baseline"]["mae"] is not None]
+    if len(eligible) < 2:
+        return False, {"status": "insufficient_independent_folds", "folds": folds}
+    total = sum(fold["baseline"]["n"] for fold in eligible)
+    baseline = sum(fold["baseline"]["mae"] * fold["baseline"]["n"] for fold in eligible) / total
+    candidate = sum(fold["candidate"]["mae"] * fold["candidate"]["n"] for fold in eligible) / total
+    wins = sum(fold["candidate"]["mae"] < fold["baseline"]["mae"] - 1e-9 for fold in eligible)
+    accepted = wins >= math.ceil(2 * len(eligible) / 3) and candidate < baseline - max(1e-6, baseline * .005)
+    return accepted, {"status": "accepted" if accepted else "no_consistent_rolling_improvement", "n": total, "baseline_mae": baseline, "candidate_mae": candidate, "improved_folds": wins, "eligible_folds": len(eligible), "folds": folds}
+
+
+def _v61_fit_bias(cases, variable, section=None):
+    residuals = [observed - prediction for prediction, observed in _v61_variable_pairs(cases, variable, section)]
+    if len(residuals) < 30:
+        return None
+    limit = 3 if variable == "temp_c" else 10
+    return clamp(sum(residuals) / (len(residuals) + 100), -limit, limit)
+
+
+def _v61_station_value(observation, variable, suffix):
+    for key in (variable + "_station_" + suffix, "station_" + suffix, suffix):
+        value = safe_float(observation.get(key))
+        if value is not None:
+            return value
+    return None
+
+
+def _v61_station_reference(cases, variable="temp_c"):
+    keys = {"station_latitude": "latitude", "station_longitude": "longitude", "station_elevation_m": "elevation_m"}
+    reference = {}
+    for field, fallback in keys.items():
+        values = sorted(value for case in cases for value in [_v61_station_value(case["obs"], variable, fallback)] if value is not None)
+        if not values:
+            return None
+        reference[field] = values[len(values) // 2]
+    return reference
+
+
+def _v61_local_features(case, args, station_reference=None, variable="temp_c"):
+    row, obs = case.get("row", {}), station_reference or case.get("obs", {})
+    site_lat = safe_float(row.get("site_latitude", getattr(args, "latitude", None)))
+    site_lon = safe_float(row.get("site_longitude", getattr(args, "longitude", None)))
+    site_elevation = safe_float(row.get("site_elevation_m", getattr(args, "site_elevation_m", None)))
+    station_lat = _v61_station_value(obs, variable, "latitude")
+    station_lon = _v61_station_value(obs, variable, "longitude")
+    station_elevation = _v61_station_value(obs, variable, "elevation_m")
+    model_elevations = [safe_float(point.get("model_elevation_m")) for point in case.get("points", [])]
+    model_elevations = [value for value in model_elevations if value is not None]
+    if any(value is None for value in (site_lat, site_lon, site_elevation, station_lat, station_lon, station_elevation)) or not model_elevations:
+        return None, "missing_site_station_or_model_elevation_metadata"
+    distance = _v61_distance_km(site_lat, site_lon, station_lat, station_lon)
+    if distance is None or distance > 5:
+        return None, "station_outside_local_correction_radius"
+    model_elevation = sum(model_elevations) / len(model_elevations)
+    terrain = str(row.get("terrain_class") or getattr(args, "terrain_class", "unknown") or "unknown").lower()
+    terrain_levels = ("urban", "valley", "coastal", "mountain", "rural", "forest", "highland", "lowland", "urban_highland", "valley_highland")
+    features = [1.0, (site_elevation - model_elevation) / 1000, (site_elevation - station_elevation) / 1000, distance]
+    features.extend(1.0 if terrain == name else 0.0 for name in terrain_levels)
+    return features, {"station_distance_km": distance, "terrain_class": terrain, "model_elevation_basis": "api_downscaled_elevation_or_source_declared; empirical_feature_only"}
+
+
+def _v61_ridge_solve(features, targets, penalty=20):
+    width = len(features[0])
+    matrix = [[sum(row[i] * row[j] for row in features) + (penalty if i == j else 0) for j in range(width)] + [sum(row[i] * target for row, target in zip(features, targets))] for i in range(width)]
+    for index in range(width):
+        pivot = max(range(index, width), key=lambda item: abs(matrix[item][index]))
+        matrix[index], matrix[pivot] = matrix[pivot], matrix[index]
+        divisor = matrix[index][index]
+        if abs(divisor) < 1e-10:
+            return None
+        matrix[index] = [value / divisor for value in matrix[index]]
+        for other in range(width):
+            if other == index:
+                continue
+            factor = matrix[other][index]
+            matrix[other] = [left - factor * right for left, right in zip(matrix[other], matrix[index])]
+    return [row[-1] for row in matrix]
+
+
+def _v61_fit_local(cases, variable, args, section=None, bias=0):
+    reference = _v61_station_reference(cases, variable)
+    if reference is None:
+        return None, "missing_station_metadata"
+    features, targets = [], []
+    for case in cases:
+        row, reason = _v61_local_features(case, args, variable=variable)
+        observed = safe_float(case["obs"].get(variable))
+        prediction = _quality_predict_variable(case, variable, (section or {}).get("multipliers"))
+        if row is not None and observed is not None and prediction is not None:
+            features.append(row)
+            targets.append(observed - prediction - bias)
+    if len(features) < 60:
+        return None, "insufficient_local_metadata_samples"
+    coefficients = _v61_ridge_solve(features, targets)
+    if coefficients is None:
+        return None, "singular_regularized_fit"
+    return {"accepted": True, "coefficients": coefficients, "station_reference": reference, "training_samples": len(features),
+            "feature_names": ["intercept", "site_minus_api_elevation_km", "site_minus_station_elevation_km", "station_distance_km", "urban", "valley", "coastal", "mountain", "rural", "forest", "highland", "lowland", "urban_highland", "valley_highland"],
+            "feature_min": [min(row[index] for row in features) for index in range(len(coefficients))],
+            "feature_max": [max(row[index] for row in features) for index in range(len(coefficients))],
+            "penalty": 20, "method": "regularized_empirical_residual_fit; no_named_location_offset"}, None
+
+
+def _v61_local_in_range(features, section):
+    minimum, maximum = section.get("feature_min", []), section.get("feature_max", [])
+    if len(features) != len(minimum) or len(features) != len(maximum):
+        return False
+    return all(low - (.15 if index < 4 else 0) <= value <= high + (.15 if index < 4 else 0) for index, (value, low, high) in enumerate(zip(features, minimum, maximum)))
+
+
+def _v61_local_delta(features, section, variable):
+    delta = sum(coefficient * feature for coefficient, feature in zip(section.get("coefficients", []), features))
+    return clamp(delta, -3 if variable == "temp_c" else -10, 3 if variable == "temp_c" else 10)
+
+
+def v61_local_adjustment(value, variable, valid_time, args, points=None):
+    """Return (value, provenance); apply only an accepted, in-range empirical fit."""
+    metadata = {"status": "unavailable", "reason": "no_validated_local_correction", "variable": variable}
+    if value is None or variable not in {"temp_c", "rh_pct"}:
+        return value, metadata
+    section = _quality_skill_section("local_" + variable, valid_time, _quality_issued(args))
+    if not section:
+        return value, metadata
+    case = {"row": {}, "obs": {}, "points": [asdict(point) if hasattr(point, "__dataclass_fields__") else dict(point) for point in (points or [])]}
+    features, details = _v61_local_features(case, args, section.get("station_reference"), variable)
+    if features is None:
+        metadata["reason"] = details
+        return value, metadata
+    if not _v61_local_in_range(features, section):
+        metadata["reason"] = "metadata_outside_validated_training_range"
+        return value, metadata
+    delta = _v61_local_delta(features, section, variable)
+    adjusted = value + delta
+    if variable == "rh_pct":
+        adjusted = clamp(adjusted, 0, 100)
+    return adjusted, {"status": "applied", "variable": variable, "delta": delta, "cohort_id": section.get("cohort_id"), "details": details}
+
+
+def _v61_selected_scope(variables, variable, case, cohort_id=None):
+    sections = variables.get(variable, {})
+    context = _quality_context(case["valid"], case["issued"])
+    eligible = []
+    for key in ("lead:" + context["lead"], "hour:" + context["hour"], "month:" + context["month"], "all"):
+        section = sections.get(key)
+        if section and section.get("accepted"):
+            eligible.append(section)
+    return next((section for section in eligible if cohort_id and section.get("cohort_id") == cohort_id), eligible[0] if eligible else {})
+
+
+def _quality_skill_section(variable, valid_time, issued_at=None):
+    """Prefer scopes trained in the newest accepted cohort over retained legacy scopes."""
+    sections = (_QUALITY_SKILL.get("variables") or {}).get(variable) or {}
+    context = _quality_context(valid_time, issued_at)
+    keys = ("lead:" + context["lead"], "hour:" + context["hour"], "month:" + context["month"], "all")
+    eligible = [sections[key] for key in keys if sections.get(key) and sections[key].get("accepted")]
+    newest = _QUALITY_SKILL.get("cohort_id")
+    return next((section for section in eligible if newest and section.get("cohort_id") == newest), eligible[0] if eligible else {})
+
+
+def _v61_configuration_metrics(cases, config, args):
+    variables = config.get("variables", {})
+    metrics = {}
+    for variable in _V61_NUMERIC_VARIABLES:
+        pairs = []
+        for case in cases:
+            section = _v61_selected_scope(variables, variable, case, config.get("cohort_id"))
+            bias_name = "temp_bias" if variable == "temp_c" else "rh_bias" if variable == "rh_pct" else ""
+            bias = safe_float(_v61_selected_scope(variables, bias_name, case, config.get("cohort_id")).get("bias")) or 0
+            local = _v61_selected_scope(variables, "local_" + variable, case, config.get("cohort_id"))
+            pairs.extend(_v61_variable_pairs([case], variable, section, bias, local, args))
+        metrics[variable] = _v61_error_summary(pairs)
+    brier, events = [], []
+    for case in cases:
+        probability = _lg_prob(case["row"].get("prob_rain_raw", case["row"].get("prob_rain")))
+        observation = case["obs"]
+        event = sentinel_observed_rain_event(observation) if _v61_matching_rain_interval(observation, case["valid"]) else None
+        if probability is None or event is None:
+            continue
+        section = _v61_selected_scope(variables, "prob_rain", case, config.get("cohort_id"))
+        probability = _quality_map_probability(probability, section.get("mapping", []))
+        brier.append((probability / 100 - int(event)) ** 2)
+        events.append(int(event))
+    metrics["rain_probability"] = {"n": len(brier), "brier": sum(brier) / len(brier) if brier else None, "wet_cases": sum(events), "dry_cases": len(events) - sum(events)}
+    scorer = globals().get("v61_score_rain_two_stage")
+    if callable(scorer):
+        metrics["rain_two_stage"] = scorer(cases, config.get("rain_two_stage"))
+    return metrics
+
+
+def _v61_per_lead_metrics(cases, config, args):
+    leads = {}
+    for case in cases:
+        lead = aether_lead_bucket((case["valid"] - case["issued"]).total_seconds() / 3600)
+        leads.setdefault(lead, []).append(case)
+    return {lead: {"samples": len(subset), "days": len({case["date"] for case in subset}), "metrics": _v61_configuration_metrics(subset, config, args)} for lead, subset in leads.items()}
+
+
+def _v61_fit_rolling_scope(development, scope, cohort, previous, args):
+    minimum = max(60, int(getattr(args, "learning_min_samples", 60)))
+    if len(development) < minimum:
+        return {}, {"status": "insufficient_scope_samples", "samples": len(development)}
+    fold_data = []
+    for fold in cohort["folds"]:
+        training = _v61_asof_cases([case for case in development if case["date"] in fold["train_dates"]], _quality_datetime(fold["fit_cutoff"], args.timezone))
+        validation = [case for case in development if case["date"] in fold["validation_dates"]]
+        fold_data.append((fold, training, validation))
+    final_training = _v61_asof_cases(development, _quality_datetime(cohort["final_fit_cutoff"], args.timezone))
+    sections, evidence = {}, {"status": "evaluated", "samples": len(development), "asof_fit_samples": len(final_training), "variables": {}}
+    previous_fitted = _quality_datetime(previous.get("fitted_at"), args.timezone)
+    cohort_start = parse_local_hour_string(datetime.fromisoformat(cohort["development_dates"][0]).date(), "00:00", args.timezone)
+    incumbent_eligible = previous_fitted is not None and previous_fitted < cohort_start
+    for variable in _V61_NUMERIC_VARIABLES:
+        prior_sections = (previous.get("variables") or {}).get(variable) or {}
+        incumbent = prior_sections.get(scope) or prior_sections.get("all") or {}
+        if incumbent and not incumbent_eligible:
+            evidence["variables"][variable] = {"status": "incumbent_temporally_ineligible; preserved_until_fresh_cohort"}
+            continue
+        folds, candidates = [], []
+        for fold, train, validation in fold_data:
+            candidate = _v61_source_multipliers(train, variable)
+            candidates.append(candidate)
+            if candidate:
+                folds.append({"fold": fold["fold"], "train_samples": len(train), "baseline": _v61_error_summary(_v61_variable_pairs(validation, variable, incumbent)), "candidate": _v61_error_summary(_v61_variable_pairs(validation, variable, candidate))})
+        accepted, detail = _v61_accept_folds(folds)
+        evidence["variables"][variable] = detail
+        selected = _v61_source_multipliers(final_training, variable) if accepted else incumbent
+        if accepted and selected:
+            sections[variable] = dict(selected, rolling_validation=detail, cohort_id=cohort["cohort_id"], selection_basis="rolling_validation_only")
+        if variable not in {"temp_c", "rh_pct"}:
+            continue
+        bias_name = "temp_bias" if variable == "temp_c" else "rh_bias"
+        prior_bias = (previous.get("variables") or {}).get(bias_name) or {}
+        incumbent_bias_section = prior_bias.get(scope) or prior_bias.get("all") or {}
+        incumbent_bias = safe_float(incumbent_bias_section.get("bias")) or 0
+        if incumbent_bias_section and not incumbent_eligible:
+            evidence["variables"][bias_name] = {"status": "incumbent_temporally_ineligible; preserved_until_fresh_cohort"}
+            continue
+        bias_folds, fold_biases = [], []
+        for (fold, train, validation), candidate in zip(fold_data, candidates):
+            weights = candidate if accepted else incumbent
+            fitted_bias = _v61_fit_bias(train, variable, weights)
+            fold_biases.append(fitted_bias)
+            if fitted_bias is not None:
+                bias_folds.append({"fold": fold["fold"], "baseline": _v61_error_summary(_v61_variable_pairs(validation, variable, weights, incumbent_bias)), "candidate": _v61_error_summary(_v61_variable_pairs(validation, variable, weights, fitted_bias))})
+        bias_accepted, bias_evidence = _v61_accept_folds(bias_folds)
+        evidence["variables"][bias_name] = bias_evidence
+        final_bias = _v61_fit_bias(final_training, variable, selected) if bias_accepted else incumbent_bias
+        if bias_accepted and final_bias is not None:
+            sections[bias_name] = {"accepted": True, "bias": final_bias, "rolling_validation": bias_evidence, "cohort_id": cohort["cohort_id"], "selection_basis": "rolling_validation_only"}
+        local_name = "local_" + variable
+        prior_local = (previous.get("variables") or {}).get(local_name) or {}
+        local_incumbent = prior_local.get(scope) or prior_local.get("all") or {}
+        if local_incumbent and not incumbent_eligible:
+            evidence["variables"][local_name] = {"status": "incumbent_temporally_ineligible; preserved_until_fresh_cohort"}
+            continue
+        local_folds, local_reasons = [], []
+        for (fold, train, validation), candidate, fitted_bias in zip(fold_data, candidates, fold_biases):
+            weights = candidate if accepted else incumbent
+            chosen_bias = fitted_bias if bias_accepted and fitted_bias is not None else incumbent_bias
+            local, reason = _v61_fit_local(train, variable, args, weights, chosen_bias)
+            if local is None:
+                local_reasons.append(reason)
+                continue
+            # Both models are scored on the exact same metadata-eligible subset.
+            comparable = [case for case in validation if _v61_local_features(case, args, local.get("station_reference"), variable)[0] is not None]
+            local_folds.append({"fold": fold["fold"], "baseline": _v61_error_summary(_v61_variable_pairs(comparable, variable, weights, chosen_bias, local_incumbent, args)), "candidate": _v61_error_summary(_v61_variable_pairs(comparable, variable, weights, chosen_bias, local, args))})
+        local_accepted, local_evidence = _v61_accept_folds(local_folds)
+        local_evidence["unavailable_reasons"] = sorted(set(local_reasons))
+        evidence["variables"][local_name] = local_evidence
+        if local_accepted:
+            fitted_local, _ = _v61_fit_local(final_training, variable, args, selected, final_bias or 0)
+            if fitted_local:
+                sections[local_name] = dict(fitted_local, rolling_validation=local_evidence, cohort_id=cohort["cohort_id"], selection_basis="rolling_validation_only")
+    return sections, evidence
+
+
+def _v61_fit_rolling_rain(development, cohort, previous, args):
+    fitter, scorer = globals().get("v61_fit_rain_two_stage"), globals().get("v61_score_rain_two_stage")
+    if not callable(fitter) or not callable(scorer):
+        return None, {"status": "two_stage_module_unavailable"}
+    incumbent = previous.get("rain_two_stage")
+    fitted_at = _quality_datetime(previous.get("fitted_at"), args.timezone)
+    if incumbent and (not fitted_at or fitted_at >= parse_local_hour_string(datetime.fromisoformat(cohort["development_dates"][0]).date(), "00:00", args.timezone)):
+        return None, {"status": "incumbent_temporally_ineligible; preserved_until_fresh_cohort"}
+    folds = []
+    for fold in cohort["folds"]:
+        train = _v61_asof_cases([case for case in development if case["date"] in fold["train_dates"]], _quality_datetime(fold["fit_cutoff"], args.timezone))
+        validation = [case for case in development if case["date"] in fold["validation_dates"]]
+        fitted = fitter(train, validation)
+        candidate = fitted.get("candidate")
+        if candidate is None:
+            folds.append({"fold": fold["fold"], "status": "insufficient_data", "evidence": fitted.get("evidence")})
+            continue
+        before, after = scorer(validation, incumbent), scorer(validation, candidate)
+        folds.append({"fold": fold["fold"], "baseline": before, "candidate": after})
+    eligible = []
+    for fold in folds:
+        before, after = fold.get("baseline", {}), fold.get("candidate", {})
+        # Scorer's documented keys also tolerate its explicit before/after names.
+        brier_before = before.get("brier", before.get("brier_after"))
+        brier_after = after.get("brier", after.get("brier_after"))
+        wet_before = before.get("wet_mae", before.get("wet_mae_after"))
+        wet_after = after.get("wet_mae", after.get("wet_mae_after"))
+        if all(value is not None for value in (brier_before, brier_after, wet_before, wet_after)):
+            eligible.append((brier_before, brier_after, wet_before, wet_after))
+    wins = sum(new_brier < old_brier - 1e-9 and new_wet < old_wet - 1e-9 for old_brier, new_brier, old_wet, new_wet in eligible)
+    accepted = len(eligible) >= 2 and wins >= math.ceil(2 * len(eligible) / 3) and sum(row[1] for row in eligible) < sum(row[0] for row in eligible) - 1e-9 and sum(row[3] for row in eligible) < sum(row[2] for row in eligible) - 1e-9
+    evidence = {"status": "accepted" if accepted else "insufficient_data_or_no_joint_rolling_improvement", "folds": folds, "eligible_folds": len(eligible), "joint_improved_folds": wins}
+    if not accepted:
+        return None, evidence
+    final_train = _v61_asof_cases(development, _quality_datetime(cohort["final_fit_cutoff"], args.timezone))
+    final_fit = fitter(final_train, [])
+    candidate = final_fit.get("candidate")
+    if candidate:
+        candidate = dict(candidate, accepted=True, cohort_id=cohort["cohort_id"], rolling_validation=evidence, selection_basis="rolling_validation_only")
+    return candidate, evidence
+
+
+def _v61_write_prospective(cases, previous, args, cutoff):
+    fitted_at = _quality_datetime(previous.get("fitted_at"), args.timezone)
+    prospective = [case for case in cases if case["date"] > cutoff and fitted_at is not None and case["issued"] >= fitted_at]
+    report = {"status": "prospective_observations_available" if prospective else "awaiting_new_post_fit_forecasts_and_observations", "fitted_at": previous.get("fitted_at"), "samples": len(prospective),
+              "days": len({case["date"] for case in prospective}), "policy": "report only; no automatic weight changes based on this report", "metrics": _v61_configuration_metrics(prospective, previous, args), "by_lead": _v61_per_lead_metrics(prospective, previous, args)}
+    write_json(os.path.join(report_dir(), "quality_prospective_evaluation.json"), report)
+    return report
+
+
+def evaluate_historical_performance(args):
+    """One model-selection pass per frozen cohort, then untouched test reporting."""
+    cases = _quality_training_cases(args)
+    if getattr(args, "start_date", None):
+        cases = [case for case in cases if case["date"] >= args.start_date]
+    if getattr(args, "end_date", None):
+        cases = [case for case in cases if case["date"] <= args.end_date]
+    config_path = path_output("quality_skill_config.json")
+    previous = read_json(config_path, {}) or {}
+    if previous.get("location_slug") != args.location_slug:
+        previous = {}
+    plan_path = path_output("quality_evaluation_plan.json")
+    ledger = read_json(plan_path, {}) or {}
+    if ledger.get("location_slug") != args.location_slug:
+        ledger = {"schema_version": "LANGIT.v61.frozen-evaluation", "location_slug": args.location_slug, "cohorts": []}
+    cohort, shortage = _v61_frozen_cohort(cases, args, ledger)
+    cutoff = max((entry["data_cutoff_date"] for entry in ledger.get("cohorts", [])), default="")
+    prospective = _v61_write_prospective(cases, previous, args, cutoff)
+    summary_path = os.path.join(report_dir(), "quality_learning_evaluation.json")
+    if cohort is None:
+        summary = {"status": (shortage or {}).get("status", "insufficient_data"), "samples": len(cases), "accepted_sections": 0, "retained_previous_configuration": bool(previous), "requirements": shortage, "prospective": prospective,
+                   "local_correction": "unavailable_until_station_site_and_model_elevation_metadata_and_rolling_validation_are_present"}
+        write_json(summary_path, summary)
+        return {"source_score_rows": [], "detail_rows": cases, "summary_path": summary_path, "weights_path": config_path, "learning_status": summary["status"]}
+    # Persist the partition before fitting. A crash cannot silently choose a new final test.
+    snapshot_path = path_output("quality_evaluation_cohort_" + cohort["cohort_id"] + ".json")
+    if not any(entry["cohort_id"] == cohort["cohort_id"] for entry in ledger["cohorts"]):
+        ledger["cohorts"].append(cohort)
+        snapshot_cases = [case for case in cases if case["date"] in cohort["development_dates"] or case["date"] in cohort["final_test_dates"]]
+        cohort["case_snapshot_digest"] = _v61_hashlib.sha256(json.dumps(_quality_jsonable(snapshot_cases), sort_keys=True).encode()).hexdigest()
+        write_json(snapshot_path, {"cohort_id": cohort["cohort_id"], "case_snapshot_digest": cohort["case_snapshot_digest"], "incumbent_configuration": previous, "cases": snapshot_cases})
+        write_json(plan_path, ledger)
+    else:
+        snapshot = read_json(snapshot_path, {}) or {}
+        restored = []
+        for raw in snapshot.get("cases", []):
+            case = dict(raw)
+            case["valid"] = _quality_datetime(case.get("valid"), args.timezone)
+            case["issued"] = _quality_datetime(case.get("issued"), args.timezone)
+            if case["valid"] is not None and case["issued"] is not None:
+                restored.append(case)
+        if not restored:
+            raise ValueError("Reserved evaluation cohort has no immutable case snapshot; restore the snapshot before evaluation.")
+        digest = _v61_hashlib.sha256(json.dumps(_quality_jsonable(snapshot.get("cases", [])), sort_keys=True).encode()).hexdigest()
+        if snapshot.get("case_snapshot_digest") and digest != snapshot["case_snapshot_digest"]:
+            raise ValueError("Reserved evaluation snapshot digest changed; restore the original frozen snapshot.")
+        previous = snapshot.get("incumbent_configuration") or {}
+        cases = restored
+    development = [case for case in cases if case["date"] in cohort["development_dates"]]
+    final_test = [case for case in cases if case["date"] in cohort["final_test_dates"]]
+    variables = json.loads(json.dumps(previous.get("variables") or {}))
+    evidence, accepted = {}, 0
+    for scope, subset in _v61_scope_cases(development).items():
+        sections, details = _v61_fit_rolling_scope(subset, scope, cohort, previous, args)
+        evidence[scope] = details
+        for variable, section in sections.items():
+            variables.setdefault(variable, {})[scope] = section
+            accepted += 1
+    config = dict(previous)
+    config.update({"schema_version": "LANGIT.v61.rolling-validated", "location_slug": args.location_slug, "fitted_at": cohort["created_at"], "variables": variables,
+                   "training_policy": cohort["policy"], "cohort_id": cohort["cohort_id"], "development_cutoff": cohort["development_dates"][-1], "reserved_test_dates": cohort["final_test_dates"],
+                   "model_families": _SOURCE_FAMILIES, "legacy_sections_preserved": bool(previous)})
+    rain_candidate, rain_evidence = _v61_fit_rolling_rain(development, cohort, previous, args)
+    if rain_candidate:
+        config["rain_two_stage"] = rain_candidate
+        config["variables"].setdefault("rain_two_stage", {})["all"] = rain_candidate
+        accepted += 1
+    # No candidate acceptance or parameter changes occur after this boundary.
+    decision_digest = _v61_hashlib.sha256(json.dumps(_quality_jsonable(config), sort_keys=True).encode()).hexdigest()
+    candidate_path = path_output("quality_evaluation_candidate_" + cohort["cohort_id"] + ".json")
+    candidate_artifact = read_json(candidate_path, {}) or {}
+    if candidate_artifact:
+        if candidate_artifact.get("configuration_digest") != decision_digest:
+            raise ValueError("Frozen evaluation candidate differs from the pre-test selection; restore the reserved cohort inputs.")
+    else:
+        write_json(candidate_path, {"configuration_digest": decision_digest, "cohort_id": cohort["cohort_id"], "configuration": config, "selection_excluded_test": True})
+    test_report = {"status": "retrospective_untouched_final_test", "cohort_id": cohort["cohort_id"], "configuration_digest": decision_digest,
+                   "test_dates": cohort["final_test_dates"], "samples": len(final_test), "days": len({case["date"] for case in final_test}),
+                   "selection_excluded_test": True, "baseline_metrics": _v61_configuration_metrics(final_test, previous, args), "candidate_metrics": _v61_configuration_metrics(final_test, config, args),
+                   "by_lead": _v61_per_lead_metrics(final_test, config, args), "limitations": "final-test results are reported without retuning; prospective accuracy still requires forecasts issued after fit"}
+    test_path = os.path.join(report_dir(), "quality_final_test_" + cohort["cohort_id"] + ".json")
+    existing_test = read_json(test_path, {}) or {}
+    if existing_test:
+        if existing_test.get("configuration_digest") != decision_digest:
+            raise ValueError("Completed final test is immutable and its selection digest differs; restore the reserved cohort inputs.")
+        test_report = existing_test
+    else:
+        write_json(test_path, test_report)
+    freeze = bool(getattr(args, "freeze_weights", False))
+    deployed = bool(accepted and not freeze)
+    if deployed:
+        write_json(config_path, config)
+    cohort.update({"status": "completed", "completed_at": now_local(args.timezone).isoformat(), "accepted_sections": accepted, "deployed": deployed, "candidate_path": candidate_path, "final_test_path": test_path, "configuration_digest": decision_digest})
+    write_json(plan_path, ledger)
+    summary = {"status": "rolling_improvements_deployed" if deployed else "frozen_candidate_reported" if accepted and freeze else "no_consistent_rolling_improvement; previous_configuration_retained", "samples": len(cases), "accepted_sections": accepted,
+               "cohort": cohort, "scopes": evidence, "rain_two_stage": rain_evidence, "candidate_path": candidate_path, "final_test_path": test_path, "final_test": test_report,
+               "prospective": prospective, "test_not_used_for_selection": True}
+    write_json(summary_path, summary)
+    return {"source_score_rows": [{"variable": variable, "accepted_scopes": len(scopes)} for variable, scopes in variables.items()], "detail_rows": cases,
+            "summary_path": summary_path, "weights_path": config_path, "learning_status": summary["status"]}
+
+
+# v61 network availability and activity layer; appended into the one-file release.
+V61_VERSION = 'LANGIT v61.0'
+_V61_ENSEMBLES = {}
+_V61_SOURCE_DIAGNOSTICS = []
+_V61_BASE_COLLECT_SOURCES = collect_all_sources
+_V61_BASE_FETCH_SOURCE = fetch_source
+_V61_BASE_BUILD_API = _lg_build_api
+_V61_BASE_NORM_DAY = _lg_norm_day
+_V61_BASE_VERIFY_ARTIFACTS = sentinel_write_verification_artifacts
+_V61_BASE_EXTRACT_OPEN_METEO = extract_open_meteo_points
+_V61_BASE_FORECAST_ROWS = aether_build_rows
+_V61_BASE_SAVE_ARTIFACTS = sentinel_x_save_artifacts
+_V61_BASE_STATUS_ROWS = build_status_rows
+_V61_BASE_COMMON_ARGS = validate_common_args
+
+V61_BACKUP_CONFIGS = {
+    'jma_seamless': {'source_id':'JMA_BACKUP','provider':'Open-Meteo / JMA','kind':'open_meteo','endpoint':'https://api.open-meteo.com/v1/forecast','models':'jma_seamless'},
+    'cmc_gem_gdps': {'source_id':'GEM_BACKUP','provider':'Open-Meteo / Environment Canada','kind':'open_meteo','endpoint':'https://api.open-meteo.com/v1/forecast','models':'cmc_gem_gdps'},
+    'bom_access_global': {'source_id':'BOM_BACKUP','provider':'Open-Meteo / BOM','kind':'open_meteo','endpoint':'https://api.open-meteo.com/v1/forecast','models':'bom_access_global'},
+}
+V61_ACTIVITY_PROFILES = {
+ 'motor':{'label':'Berkendara / motor','duration_hours':1,'rain_probability':35,'rain_p90_mm':2,'wind_kmh':25,'gust_kmh':35,'heat_index_c':38,'window_rain_upper_bound':60},
+ 'walking':{'label':'Jalan kaki','duration_hours':1,'rain_probability':30,'rain_p90_mm':1,'wind_kmh':25,'gust_kmh':35,'heat_index_c':34,'window_rain_upper_bound':50},
+ 'sport':{'label':'Olahraga','duration_hours':2,'rain_probability':25,'rain_p90_mm':1,'wind_kmh':20,'gust_kmh':30,'heat_index_c':32,'window_rain_upper_bound':60},
+ 'drying':{'label':'Menjemur','duration_hours':3,'rain_probability':15,'rain_p90_mm':0.1,'wind_kmh':25,'gust_kmh':35,'heat_index_c':42,'window_rain_upper_bound':40},
+ 'outdoor_event':{'label':'Acara outdoor','duration_hours':3,'rain_probability':25,'rain_p90_mm':1,'wind_kmh':20,'gust_kmh':30,'heat_index_c':33,'window_rain_upper_bound':65},
+ 'photography':{'label':'Fotografi','duration_hours':2,'rain_probability':30,'rain_p90_mm':1,'wind_kmh':20,'gust_kmh':30,'heat_index_c':35,'window_rain_upper_bound':70},
+}
+
+def v61_error_reason(result):
+    if result.success:
+        return 'cache_fallback' if result.is_cached else 'live_data'
+    text=str(result.error or '').lower()
+    status=result.http_status
+    if 'circuit_open' in text:return 'circuit_open'
+    if 'timed out' in text or 'timeout' in text:return 'network_timeout'
+    if status==429:return 'rate_limited'
+    if status in (401,403):return 'access_denied'
+    if status==400:return 'invalid_or_unsupported_request'
+    payload=result.raw_payload or {}
+    hourly=payload.get('hourly') if isinstance(payload,dict) else None
+    if isinstance(hourly,dict) and hourly.get('time'):
+        meaningful=[v for k,values in hourly.items() if k!='time' and isinstance(values,list) for v in values if safe_float(v) is not None]
+        if not meaningful:return 'provider_returned_null_data'
+        return 'no_usable_target_coverage'
+    if '0 points' in text:return 'no_usable_target_coverage'
+    return 'provider_or_network_error'
+
+def fetch_source(target_date,config,args):
+    result=_V61_BASE_FETCH_SOURCE(target_date,config,args)
+    result.availability_reason=v61_error_reason(result)
+    result.requested_source_id=config.get('source_id')
+    result.is_backup=config.get('is_backup',False)
+    result.model_identifier=config.get('models') or config.get('source_id')
+    if not result.success and result.availability_reason=='provider_returned_null_data':
+        result.error='API returned timestamps but all requested weather values are null; source not counted as successful.'
+    return result
+
+def extract_open_meteo_points(target_date,payload,config,args):
+    points=_V61_BASE_EXTRACT_OPEN_METEO(target_date,payload,config,args)
+    for point in points.values():
+        point.model_elevation_m=safe_float(payload.get('elevation'))
+        point.model_elevation_basis='api_downscaled_elevation'
+    return points
+
+def fetch_met_no_forecast(target_date,config,args):
+    coordinates={'lat':round(args.latitude,4),'lon':round(args.longitude,4)}
+    url=build_url(MET_NO_URL,coordinates)
+    ua=getattr(args,'metno_user_agent',None) or 'LANGIT/61.0'
+    headers={'User-Agent':ua,'Accept':'application/json','Accept-Encoding':'gzip,deflate','Connection':'close'}
+    try:
+        payload,status,latency=fetch_json_with_retry(url,headers=headers,source_id=config['source_id'],timeout=max(1,args.http_timeout),max_retry=max(1,args.max_retry_http))
+        points=extract_met_no_points(target_date,payload,config,args)
+        if not any(any(getattr(p,k) is not None for k in ('temp_c','rh_pct','rain_mm','wind_kmh')) for p in points.values()):
+            raise ValueError('MET.no contains no usable weather values')
+        return {'points':points,'raw_payload':payload,'request_url':url,'http_status':status,'duration_ms':latency}
+    except Exception as exc:
+        cached=load_cached_source_payload(target_date,config['source_id'],lambda d,p:extract_met_no_points(d,p,config,args),args)
+        if not cached:raise
+        return {'points':cached['points'],'raw_payload':cached['payload'],'request_url':url+' [cached:'+os.path.basename(cached['path'])+']','note':'Live MET.no unavailable; original cache age retained: '+str(exc),'http_status':None,'duration_ms':None}
+
+def collect_all_sources(target_date,args):
+    global _V61_ENSEMBLES,_V61_SOURCE_DIAGNOSTICS
+    results=_V61_BASE_COLLECT_SOURCES(target_date,args)
+    # Supplemental forecasts retain their actual provider/model identity. They
+    # never masquerade as KMA or MET.no, and cannot guarantee external uptime.
+    minimum=getattr(args,'min_success_sources',None) or len(ACTIVE_SOURCE_CONFIGS)
+    configured={c.get('models') for c in ACTIVE_SOURCE_CONFIGS}
+    for name in str(getattr(args,'backup_models','jma_seamless,cmc_gem_gdps,bom_access_global')).split(','):
+        if sum(r.success for r in results)>=minimum:break
+        name=name.strip()
+        if not name or name in configured:continue
+        if name not in V61_BACKUP_CONFIGS:continue
+        config={**V61_BACKUP_CONFIGS[name],'is_backup':True}
+        log_info('Supplemental forecast model:',name)
+        results.append(fetch_source(target_date,config,args))
+    _V61_SOURCE_DIAGNOSTICS=[{'source_id':r.source_id,'requested_source_id':getattr(r,'requested_source_id',r.source_id),'success':r.success,'live_fetch_success':r.live_fetch_success,'is_cached':r.is_cached,'is_backup':getattr(r,'is_backup',False),'reason':v61_result_reason(r),'error':r.error,'model_identifier':getattr(r,'model_identifier',r.source_id),'http_status':r.http_status,'points':len(r.points)} for r in results]
+    write_json(path_output('source_availability.json'),{'issued_at':_quality_issued(args).isoformat(),'configured_sources':len(ACTIVE_SOURCE_CONFIGS),'successful_sources':sum(r.success for r in results),'successful_live_sources':sum(r.live_fetch_success for r in results),'target_success_sources':minimum,'target_met':sum(r.success for r in results)>=minimum,'sources':_V61_SOURCE_DIAGNOSTICS,'note':'Original unavailable providers remain listed; supplemental models carry their own identities.'})
+    _V61_ENSEMBLES=v61_fetch_ensembles(target_date,args)
+    write_json(path_output('ensemble_member_status.json'),_V61_ENSEMBLES)
+    return results
+
+def v61_activity_profiles(args=None):
+    profiles=json.loads(json.dumps(V61_ACTIVITY_PROFILES))
+    path=getattr(args,'activity_profiles_file',None) if args else None
+    if path:
+        custom=read_json(path,{})
+        if not isinstance(custom,dict):raise ValueError('Activity profiles must be a JSON object')
+        for name,values in custom.items():
+            if name not in profiles or not isinstance(values,dict):raise ValueError('Unknown activity profile: '+name)
+            for key,value in values.items():
+                if key=='label':continue
+                if key not in profiles[name] or safe_float(value) is None or safe_float(value)<0:raise ValueError('Invalid activity threshold: '+name+'.'+key)
+                profiles[name][key]=safe_float(value)
+            if not 1<=profiles[name]['duration_hours']<=8:raise ValueError('Activity duration must be between 1 and 8 hours')
+    return profiles
+
+def v61_activity_hour(hour):
+    heat=max((value for key in ('heat_index_p90','heat_index_c','heat_index_p50') if (value:=safe_float(hour.get(key))) is not None),default=None)
+    return {**hour,'hour':_quality_first(hour,'hour','jam'),'rain_probability':_quality_first(hour,'rain_probability','prob_rain'),'heat_index_c':heat,'wind_kmh':_quality_first(hour,'wind_p90','wind_kmh','wind_p50'),'rain_p90_mm':_quality_first(hour,'rain_p90_mm','rain_p90'),'gust_kmh':_quality_first(hour,'gust_kmh','gust_p90')}
+
+def v61_activity_plans(hours,args=None,now=None):
+    now=now or (_quality_issued(args) if args else now_local(DEFAULT_TIMEZONE))
+    normalized=[v61_activity_hour(h) for h in hours or []]
+    normalized.sort(key=lambda h:h.get('target_datetime') or '')
+    plans=[]
+    for name,profile in v61_activity_profiles(args).items():
+        valid=[]
+        rejects={}
+        for h in normalized:
+            dt=_quality_datetime(h.get('target_datetime'))
+            reasons=[]
+            if dt is None or dt<now or not 6<=dt.hour<=18:continue
+            if h.get('data_quality')!='usable' or h.get('operational_status')=='BLACK':reasons.append('data_not_usable')
+            for key in ('rain_probability','rain_p90_mm','wind_kmh','heat_index_c'):
+                value=safe_float(h.get(key))
+                if value is None:reasons.append(key+'_missing')
+                elif value>profile[key]:reasons.append(key+'_above_limit')
+            gust=safe_float(h.get('gust_kmh'))
+            if gust is not None and gust>profile['gust_kmh']:reasons.append('gust_above_limit')
+            if reasons:
+                for reason in reasons:rejects[reason]=rejects.get(reason,0)+1
+            else:valid.append((dt,h))
+        windows=[]
+        for i,(start,h) in enumerate(valid):
+            chain=[(start,h)]
+            for next_item in valid[i+1:]:
+                if next_item[0]-chain[-1][0]!=timedelta(hours=1):break
+                chain.append(next_item)
+                if (chain[-1][0]-start).total_seconds()/3600>=profile['duration_hours']:break
+            if (chain[-1][0]-start).total_seconds()/3600<profile['duration_hours']:continue
+            # Union bound avoids assuming that successive rainy hours are independent.
+            event_hours=chain[1:]
+            upper=min(100,sum(safe_float(item[1]['rain_probability']) or 0 for item in event_hours))
+            if upper>profile['window_rain_upper_bound']:continue
+            windows.append({'start':start.isoformat(),'end':chain[-1][0].isoformat(),'hours':[item[1]['hour'] for item in chain],'any_rain_probability_upper_bound_pct':round(upper,2),'max_rain_probability_pct':max(safe_float(item[1]['rain_probability']) or 0 for item in event_hours),'evaluation_hours':[item[1]['hour'] for item in event_hours],'limiting_gust_data_missing':any(safe_float(item[1].get('gust_kmh')) is None for item in chain)})
+        windows.sort(key=lambda w:(w['any_rain_probability_upper_bound_pct'],w['start']))
+        selected=windows[0] if windows else None
+        plans.append({'activity_id':name,'activity':profile['label'],'profile':profile,'window':selected,'issued_at':now.isoformat(),'status':'Rentang risiko relatif lebih rendah' if selected else 'Rekomendasi belum tersedia','advice':'Sesuaikan dengan kondisi setempat; batas ini belum merupakan jaminan keselamatan.' if selected else 'Tidak ada rentang masa depan yang memenuhi data dan batas aktivitas.','priority_hour':(selected['hours'][0]+'–'+selected['hours'][-1]) if selected else '—','risk_class':'watch' if selected else 'unavailable','rejection_counts':rejects})
+    return plans
+
+def _lg_norm_day(raw,idx,loc,args):
+    day=_V61_BASE_NORM_DAY(raw,idx,loc,args)
+    day['activity_matrix']=v61_activity_plans(day.get('key_hours') or [],args)
+    return day
+
+def _lg_activity_matrix(day):
+    return day.get('activity_matrix') or v61_activity_plans(day.get('key_hours') or [])
+
+def _lg_build_api(args,forecast_dates=None):
+    api=_V61_BASE_BUILD_API(args,forecast_dates)
+    api.update({'version':V61_VERSION,'source_availability':read_json(path_output('source_availability.json'),{}),'ensemble_status':{k:v for k,v in (read_json(path_output('ensemble_member_status.json'),{}) or {}).items() if k!='hourly'},'scientific_status':'Awaiting local observation verification'})
+    return api
+
+def aether_build_rows(points,ensemble_rows,target_date,args):
+    rows=_V61_BASE_FORECAST_ROWS(points,ensemble_rows,target_date,args)
+    v61_enrich_probabilistic_rows(rows,_V61_ENSEMBLES,args)
+    # Native members are applied inside the base builder before every dependent
+    # score and decision. This pass attaches full distribution/provenance only.
+    return rows
+
+def sentinel_x_save_artifacts(target_date,results,args,source_rows,status_rows,ensemble_rows):
+    output=_V61_BASE_SAVE_ARTIFACTS(target_date,results,args,source_rows,status_rows,ensemble_rows)
+    doc=read_json(path_output(f'sentinel_x_{target_date:%Y%m%d}.json'),{}) or {}
+    doc.update({'version':V61_VERSION,'source_availability':read_json(path_output('source_availability.json'),{}),'ensemble_status':{k:v for k,v in _V61_ENSEMBLES.items() if k!='hourly'}})
+    doc.setdefault('daily',{})['activity_plans']=v61_activity_plans(doc.get('hourly') or [],args)
+    write_json(path_output(f'sentinel_x_{target_date:%Y%m%d}.json'),doc)
+    write_json(path_output(AETHER_JSON_FILENAME),doc)
+    # Render after all additional fields are present.
+    aether_write_dashboard(doc.get('hourly') or [],doc.get('source_states') or [],doc['daily'],args)
+    aether_write_report(doc.get('hourly') or [],doc['daily'],args)
+    return output
+
+def v61_activity_verification(args):
+    obs=sentinel_load_observations_by_key(args)
+    counts={name:{'recommended_windows':0,'evaluated_windows':0,'disrupted_windows':0,'unknown_windows':0} for name in V61_ACTIVITY_PROFILES}
+    seen=set()
+    docs=[read_json(entry.path,{}) or {} for entry in os.scandir(_quality_archive_dir()) if entry.name.endswith('.json')]
+    docs.sort(key=lambda doc:doc.get('issued_at') or '')
+    for doc in docs:
+        issued=_quality_datetime(doc.get('issued_at'))
+        if issued is None:continue
+        plans=doc.get('activity_plans') or []
+        for plan in plans:
+            name=plan.get('activity_id');window=plan.get('window')
+            if name not in counts or not window:continue
+            start=_quality_datetime(window.get('start'));end=_quality_datetime(window.get('end'))
+            if start is None or end is None or start<=issued or end>now_local(args.timezone):continue
+            identity=(name,window['start'],window['end'])
+            if identity in seen:continue
+            seen.add(identity);counts[name]['recommended_windows']+=1
+            unknown=False;disrupted=False
+            profile=plan['profile']
+            for hour in window.get('evaluation_hours') or []:
+                row=obs.get((start.date().isoformat(),hour)) or {}
+                valid=parse_local_hour_string(start.date(),hour,args.timezone)
+                rain=_quality_observation_available(row,'rain_mm',now_local(args.timezone));wind=_quality_observation_available(row,'wind_kmh',now_local(args.timezone));temp=_quality_observation_available(row,'temp_c',now_local(args.timezone));rh=_quality_observation_available(row,'rh_pct',now_local(args.timezone))
+                if not _v61_matching_rain_interval(row,valid):rain=None
+                for field,maximum in {'rain_mm':2,'wind_kmh':5,'temp_c':10,'rh_pct':10}.items():
+                    distance=_v61_distance_km(args.latitude,args.longitude,_v61_station_value(row,field,'latitude'),_v61_station_value(row,field,'longitude'))
+                    if distance is None or distance>maximum:
+                        if field=='rain_mm':rain=None
+                        elif field=='wind_kmh':wind=None
+                        elif field=='temp_c':temp=None
+                        else:rh=None
+                if any(v is None for v in (rain,wind,temp,rh)):unknown=True;continue
+                hi=heat_index(temp,rh)
+                if rain>profile['rain_p90_mm'] or wind>profile['wind_kmh'] or (hi is not None and hi>profile['heat_index_c']):disrupted=True
+            if unknown:counts[name]['unknown_windows']+=1
+            else:
+                counts[name]['evaluated_windows']+=1;counts[name]['disrupted_windows']+=int(disrupted)
+    for c in counts.values():c['disruption_rate']=c['disrupted_windows']/c['evaluated_windows'] if c['evaluated_windows'] else None
+    return {'activities':counts,'gust_verification':'Unavailable unless observed gust data is supplied; rates do not certify gust safety.','policy':'Only complete QC-passed local observation windows scored. Unknown is not counted as success.'}
+
+def sentinel_write_verification_artifacts(rows,args):
+    summary=_V61_BASE_VERIFY_ARTIFACTS(rows,args)
+    history=_quality_historical_rows();observations=sentinel_load_observations_by_key(args)
+    probabilistic=v61_probabilistic_verification(history,observations,args)
+    activity=v61_activity_verification(args)
+    write_json(path_output('probabilistic_verification.json'),probabilistic)
+    write_json(path_output('activity_verification.json'),activity)
+    summary.update({'probabilistic_verification':probabilistic,'activity_verification':activity})
+    write_json(path_output('sentinel_x_verification_summary.json'),summary)
+    return summary
+
+
+_V61_BASE_FETCH_JSON = fetch_json_with_retry
+_V61_BASE_RESULT_METADATA = _quality_result_metadata
+_V61_BASE_ACTIVITY_ROW = _lg_activity_row
+_V61_TRANSPORT_CACHE = {}
+_V61_TRANSPORT_LOCK = threading.Lock()
+_V61_FETCH_ORIGINALS = {}
+_SOURCE_FAMILIES.update({'JMA_BACKUP':'JMA','GEM_BACKUP':'GEM','BOM_BACKUP':'BOM'})
+
+def fetch_json_with_retry(url,headers=None,source_id='UNKNOWN',timeout=HTTP_TIMEOUT_SECONDS,max_retry=None):
+    key=(url,tuple(sorted((headers or {}).items())))
+    now=time.monotonic()
+    with _V61_TRANSPORT_LOCK:
+        memo=_V61_TRANSPORT_CACHE.get(key)
+    if memo and now-memo['monotonic']<300:
+        _V61_FETCH_ORIGINALS[source_id]=memo['fetched_at']
+        return memo['result']
+    # Keep the configured timeout/retry policy; no verification shortcuts.
+    result=_V61_BASE_FETCH_JSON(url,headers=headers,source_id=source_id,timeout=timeout,max_retry=max_retry)
+    fetched=now_local(DEFAULT_TIMEZONE)
+    with _V61_TRANSPORT_LOCK:
+        _V61_TRANSPORT_CACHE[key]={'monotonic':time.monotonic(),'fetched_at':fetched,'result':result}
+        _V61_FETCH_ORIGINALS[source_id]=fetched
+    return result
+
+def _quality_result_metadata(result,args):
+    original=_V61_FETCH_ORIGINALS.get(result.source_id)
+    if original and result.success and not any(p.is_cached for p in result.points.values()):
+        for p in result.points.values():p.original_fetched_at=original
+    return _V61_BASE_RESULT_METADATA(result,args)
+
+def _lg_activity_row(item,fallback_priority=''):
+    normalized=_V61_BASE_ACTIVITY_ROW(item,fallback_priority)
+    return {**item,**normalized} if isinstance(item,dict) else normalized
+
+QUALITY_VERSION = V61_VERSION
+LANGIT_PUBLIC_VERSION = V61_VERSION
+
+
+def build_status_rows(results,target_date):
+    rows=_V61_BASE_STATUS_ROWS(results,target_date)
+    for row,result in zip(rows,results):
+        row.update({'availability_reason':v61_result_reason(result),'is_backup':getattr(result,'is_backup',False),'live_fetch_success':result.live_fetch_success,'is_cached':result.is_cached,'model_identifier':getattr(result,'model_identifier',result.source_id),'original_fetched_at':_quality_jsonable(result.original_fetched_at),'cache_age_hours':result.cache_age_hours})
+    return rows
+
+def validate_common_args(args):
+    _V61_BASE_COMMON_ARGS(args)
+    if args.http_timeout<=0 or args.max_retry_http<1:raise ValueError('Timeout must be positive and retry attempts at least one')
+    if getattr(args,'min_success_sources',None) is not None and not 1<=args.min_success_sources<=12:raise ValueError('min-success-sources must be 1..12')
+    if getattr(args,'station_max_distance_km',30)<=0:raise ValueError('station-max-distance-km must be positive')
+    if getattr(args,'ensemble_min_members',5)<2:raise ValueError('ensemble-min-members must be at least two')
+    if getattr(args,'ensemble_min_families',2)<1:raise ValueError('ensemble-min-families must be at least one')
+    unknown=[name.strip() for name in str(getattr(args,'backup_models','')).split(',') if name.strip() and name.strip() not in V61_BACKUP_CONFIGS]
+    if unknown:raise ValueError('Unknown backup model(s): '+','.join(unknown))
+    v61_activity_profiles(args)
+
+
+def v61_result_reason(result):
+    value=getattr(result,'availability_reason',None)
+    return value if value and value!='unknown' else v61_error_reason(result)
+
+def sentinel_location_personality(args):
+    return {'personality':'unspecified_local_conditions','convective_sensitivity':'unknown','rain_displacement_risk':'unknown','morning_humidity_memory':'unknown','forecast_difficulty':'unknown','notes':'Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum.'}
+
+def _lg_microclimate(args):
+    accepted=any(section.get('accepted') is True for name,scopes in ((_QUALITY_SKILL or {}).get('variables') or {}).items() if name.startswith('local_') for section in scopes.values())
+    return {'profile':getattr(args,'terrain_class','unknown'),'note':'Koreksi lokal diterapkan per variabel hanya jika kandidat diterima melalui evaluasi bergulir.' if accepted else 'Belum tersedia koreksi lokal yang diterima melalui evaluasi pengamatan.','zone_count':0,'engine':'validated_empirical_local_correction' if accepted else 'awaiting_observations','site_elevation_m':getattr(args,'site_elevation_m',None)}
+
 
 if __name__ == "__main__":
     main()
