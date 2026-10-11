@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-10-11T11:19:22.247716+07:00",
+  "generated_at": "2026-10-11T11:23:47.657572+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "bmkg_point_name": "Dago",
@@ -13,8 +13,8 @@
   "timezone": "Asia/Jakarta",
   "target_date": "2026-10-11",
   "sources_total": 9,
-  "sources_success": 6,
-  "points_total": 124,
+  "sources_success": 8,
+  "points_total": 172,
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -56,28 +56,18 @@
   "health_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/source_health.json",
   "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago",
   "retention_days": 30,
-  "low_coverage_slots": [
-    "00:00",
-    "01:00",
-    "02:00",
-    "03:00",
-    "04:00",
-    "05:00",
-    "06:00",
-    "07:00",
-    "08:00"
-  ],
-  "run_status": "warning",
+  "low_coverage_slots": [],
+  "run_status": "ok",
   "sentinel_x": {
     "version": "LANGIT v60.5-data-integrity",
-    "run_id": "dago_20261011_ce8c784d7d4940678bcf46c88cb864bf",
+    "run_id": "dago_20261011_e5f4a3dc2f054e468cda8e271cf5efb4",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/command_center_sentinel_x.html",
     "report": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_report.md",
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_ledger.sqlite",
-    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/forecast_archive/dago_20261011_ce8c784d7d4940678bcf46c88cb864bf.json",
-    "daily_operational_status": "BLACK"
+    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/forecast_archive/dago_20261011_e5f4a3dc2f054e468cda8e271cf5efb4.json",
+    "daily_operational_status": "YELLOW"
   }
 }

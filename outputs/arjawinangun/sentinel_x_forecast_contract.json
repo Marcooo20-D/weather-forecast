@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-10-11T11:19:29.669039+07:00",
+  "generated_at": "2026-10-11T11:24:49.650553+07:00",
   "location": "Arjawinangun, Cirebon",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,18 +25,18 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-10-11T11:19:28.774963+07:00",
-    "issued_at": "2026-10-11T11:19:28.774963+07:00",
+    "generated_at": "2026-10-11T11:24:46.009900+07:00",
+    "issued_at": "2026-10-11T11:24:46.009900+07:00",
     "aether_version": "LANGIT v60.5-data-integrity",
     "location": "Arjawinangun, Cirebon",
     "mission": "safety_first",
-    "daily_operational_status": "BLACK",
-    "data_quality": "unavailable",
+    "daily_operational_status": "GREEN",
+    "data_quality": "limited",
     "best_general_activity_window": [],
-    "peak_rain_threat_hour": null,
-    "peak_rain_threat_score": null,
-    "peak_heavy_rain_threat_hour": null,
-    "peak_heavy_rain_threat_score": null,
+    "peak_rain_threat_hour": "19:00",
+    "peak_rain_threat_score": 19.5,
+    "peak_heavy_rain_threat_hour": "19:00",
+    "peak_heavy_rain_threat_score": 6.8,
     "summary_text": "Arjawinangun, Cirebon: data prakiraan belum lengkap atau sudah usang. Rekomendasi waktu aktivitas belum tersedia.",
     "risk_window": [],
     "location_personality": {
@@ -47,8 +47,8 @@
       "forecast_difficulty": "medium",
       "notes": "Lowland/agricultural setting; heat discomfort dan humidity transitions perlu dipantau."
     },
-    "dominant_atmospheric_mode": "UNAVAILABLE",
-    "peak_rain_probability": null
+    "dominant_atmospheric_mode": "STABLE_LOW_RAIN",
+    "peak_rain_probability": 9.0
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",

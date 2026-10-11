@@ -1,10 +1,10 @@
 source_id,provider,state,success,points,ema_success,ema_completeness,consecutive_failures,http_status,duration_ms,error,is_cached,live_fetch_success,original_fetched_at,cache_age_hours,model_family
-BMKG,BMKG,ACTIVE,True,23,0.9769,0.3357,0,200,60,,False,True,2026-10-11T11:19:24.191441+07:00,0,BMKG
-CMA,Open-Meteo / CMA GRAPES,RECOVERING,False,0,0.6499,0.6499,1,,0,circuit_open host=api.open-meteo.com wait=25s,False,False,,0,CMA
-ECMWF,Open-Meteo / ECMWF,RECOVERING,False,0,0.6499,0.6499,1,,0,circuit_open host=api.open-meteo.com wait=25s,False,False,,0,ECMWF
-GFS,Open-Meteo / NOAA GFS,RECOVERING,False,0,0.6499,0.6499,1,,0,circuit_open host=api.open-meteo.com wait=25s,False,False,,0,GFS
-ICON,Open-Meteo / DWD ICON,RECOVERING,False,0,0.6499,0.6499,1,,0,circuit_open host=api.open-meteo.com wait=25s,False,False,,0,ICON
-KMA,Open-Meteo / KMA,QUARANTINED,False,0,0.116,0.116,5,,0,circuit_open host=api.open-meteo.com wait=25s,False,False,,0,KMA
-METEOFRANCE,Open-Meteo / Meteo-France,DEGRADED,False,0,0.4224,0.4224,2,,0,circuit_open host=api.open-meteo.com wait=25s,False,False,,0,METEOFRANCE
-METNO,MET Norway,ACTIVE,True,24,1.0,0.8596,0,200,490,,False,True,2026-10-11T11:19:24.627527+07:00,0,ECMWF
-UKMO,Open-Meteo / UK Met Office,DEGRADED,False,0,0.4224,0.4224,2,,0,circuit_open host=api.open-meteo.com wait=25s,False,False,,0,UKMO
+BMKG,BMKG,ACTIVE,True,23,0.9936,0.2961,0,200,21,,False,True,2026-10-11T11:23:51.544075+07:00,0,BMKG
+CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.756,0.756,0,200,387,,False,True,2026-10-11T11:24:00.447723+07:00,0,CMA
+ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.756,0.756,0,200,385,,False,True,2026-10-11T11:24:00.035454+07:00,0,ECMWF
+GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.756,0.756,0,200,391,,False,True,2026-10-11T11:24:02.132396+07:00,0,GFS
+ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.756,0.756,0,200,393,,False,True,2026-10-11T11:24:02.550220+07:00,0,ICON
+KMA,Open-Meteo / KMA,QUARANTINED,False,0,0.0319,0.0319,8,200,403,source returned 0 points,False,False,,0,KMA
+METEOFRANCE,Open-Meteo / Meteo-France,ACTIVE,True,24,0.6935,0.6935,0,200,384,,False,True,2026-10-11T11:24:00.856232+07:00,0,METEOFRANCE
+METNO,MET Norway,ACTIVE,True,24,1.0,0.8571,0,200,373,,False,True,2026-10-11T11:24:02.123215+07:00,0,ECMWF
+UKMO,Open-Meteo / UK Met Office,ACTIVE,True,24,0.6935,0.6935,0,200,394,,False,True,2026-10-11T11:24:01.702787+07:00,0,UKMO
