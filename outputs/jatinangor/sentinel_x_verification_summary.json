@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-12T18:31:56.104788+07:00",
+  "generated_at": "2026-10-13T03:42:13.805421+07:00",
   "location_slug": "jatinangor",
   "location_name": "Jatinangor, Sumedang",
   "matched_cases": 0,
@@ -90,7 +90,7 @@
   ],
   "probabilistic_verification": {
     "schema": "langit-probabilistic-verification-1",
-    "generated_at": "2026-10-12T18:31:59.315330+07:00",
+    "generated_at": "2026-10-13T03:42:16.525232+07:00",
     "status": "insufficient_matching_observations",
     "nominal_interval_coverage": 0.8,
     "calibration_status": "NOT_CERTIFIED",
@@ -105,8 +105,8 @@
     },
     "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
     "rejected": {
-      "not_pre_event": 410,
-      "missing_qc_observation": 166,
+      "not_pre_event": 411,
+      "missing_qc_observation": 237,
       "rain_interval_mismatch": 0,
       "unknown_observation_location": 0,
       "observation_outside_local_radius": 0
