@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-10-14T16:13:11.005813+07:00",
+  "generated_at": "2026-10-14T21:50:51.472217+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.2931,
+      "ema_completeness": 0.2792,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-16",
@@ -38,8 +38,8 @@
       "last_served_from_cache": false
     },
     "ICON": {
-      "ema_success": 0.9992,
-      "ema_completeness": 0.9992,
+      "ema_success": 0.9998,
+      "ema_completeness": 0.9998,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-16",
@@ -49,15 +49,15 @@
     "KMA": {
       "ema_success": 0.0001,
       "ema_completeness": 0.0001,
-      "consecutive_failures": 39,
+      "consecutive_failures": 42,
       "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
       "last_run_date": "2026-10-16",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
     "METEOFRANCE": {
-      "ema_success": 0.9992,
-      "ema_completeness": 0.9992,
+      "ema_success": 0.9998,
+      "ema_completeness": 0.9998,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-16",
@@ -66,7 +66,7 @@
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.8748,
+      "ema_completeness": 0.8363,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-16",
@@ -74,8 +74,8 @@
       "last_served_from_cache": false
     },
     "UKMO": {
-      "ema_success": 0.9992,
-      "ema_completeness": 0.9992,
+      "ema_success": 0.9998,
+      "ema_completeness": 0.9998,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-16",
