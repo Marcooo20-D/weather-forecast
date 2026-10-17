@@ -1,0 +1,141 @@
+{
+  "brand": "LANGIT",
+  "version": "LANGIT v61.0",
+  "nowcast": {
+    "window": "0–6 jam",
+    "status": "Risiko relatif rendah",
+    "method": "model_forecast_subset",
+    "summary": "Ringkasan model enam jam berikutnya. Belum menggunakan radar atau pengamatan nowcast.",
+    "peak_hour": "21:00",
+    "peak_probability": 0.0
+  },
+  "microclimate": {
+    "profile": "unknown",
+    "note": "Belum tersedia koreksi lokal yang diterima melalui evaluasi pengamatan.",
+    "zone_count": 0,
+    "engine": "awaiting_observations",
+    "site_elevation_m": null
+  },
+  "source_court": {
+    "status": "Data tersedia",
+    "agreement": "Belum diukur",
+    "summary": "9 sumber live; 0 sumber cache. Status ini menunjukkan ketersediaan, bukan akurasi atau kesepakatan model.",
+    "sources": [
+      {
+        "source_id": "BMKG",
+        "verdict": "Aktif",
+        "points": "23",
+        "http_status": "200",
+        "latency_ms": "351",
+        "model_family": "BMKG",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-17T20:25:29.328000+07:00",
+        "cache_age_hours": 0.0
+      },
+      {
+        "source_id": "CMA",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "608",
+        "model_family": "CMA",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-17T20:25:30.237550+07:00",
+        "cache_age_hours": 0.0
+      },
+      {
+        "source_id": "ECMWF",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "617",
+        "model_family": "ECMWF",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-17T20:25:29.594018+07:00",
+        "cache_age_hours": 0.0
+      },
+      {
+        "source_id": "GFS",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "556",
+        "model_family": "GFS",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-17T20:25:32.624906+07:00",
+        "cache_age_hours": 0.0
+      },
+      {
+        "source_id": "ICON",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "531",
+        "model_family": "ICON",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-17T20:25:33.191842+07:00",
+        "cache_age_hours": 0.0
+      },
+      {
+        "source_id": "KMA",
+        "verdict": "Gagal / tidak tersedia",
+        "points": "0",
+        "http_status": "200",
+        "latency_ms": "519",
+        "model_family": "KMA",
+        "is_cached": false,
+        "original_fetched_at": "",
+        "cache_age_hours": 0.0
+      },
+      {
+        "source_id": "METEOFRANCE",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "601",
+        "model_family": "METEOFRANCE",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-17T20:25:30.874338+07:00",
+        "cache_age_hours": 0.0
+      },
+      {
+        "source_id": "METNO",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "584",
+        "model_family": "ECMWF",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-17T20:25:32.655101+07:00",
+        "cache_age_hours": 0.0
+      },
+      {
+        "source_id": "UKMO",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "536",
+        "model_family": "UKMO",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-17T20:25:32.005844+07:00",
+        "cache_age_hours": 0.0
+      },
+      {
+        "source_id": "JMA_BACKUP",
+        "verdict": "Aktif",
+        "points": "24",
+        "http_status": "200",
+        "latency_ms": "563",
+        "model_family": "JMA",
+        "is_cached": false,
+        "original_fetched_at": "2026-10-17T20:25:33.790946+07:00",
+        "cache_age_hours": 0.0
+      }
+    ]
+  },
+  "map_layers": [
+    "Model risk estimates",
+    "Illustrative microclimate zones",
+    "Time selector"
+  ]
+}

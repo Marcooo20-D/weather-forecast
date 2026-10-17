@@ -1,0 +1,69 @@
+{
+  "version": "ANEMOS Public Weather v11",
+  "public_version": "sentinel-x-public-operational-v2",
+  "generated_at": "2026-10-17T20:25:24.937407+07:00",
+  "location": "Dago, Bandung",
+  "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
+  "allowed_uses": [
+    "rencana aktivitas umum",
+    "estimasi risiko kehujanan",
+    "pendukung keputusan non-kritis",
+    "edukasi/riset pribadi"
+  ],
+  "not_allowed_uses": [
+    "peringatan bencana resmi",
+    "penerbangan",
+    "operasi keselamatan kritis",
+    "keputusan banjir resmi",
+    "pengganti informasi BMKG"
+  ],
+  "known_weaknesses": [
+    "timing hujan konvektif lokal",
+    "intensitas hujan ekstrem",
+    "posisi tepat sel hujan",
+    "wilayah dengan observasi historis minim"
+  ],
+  "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
+  "daily_summary": {
+    "generated_at": "2026-10-17T20:25:02.942405+07:00",
+    "issued_at": "2026-10-17T20:25:02.942405+07:00",
+    "aether_version": "LANGIT v61.0",
+    "location": "Dago, Bandung",
+    "mission": "safety_first",
+    "daily_operational_status": "GREEN",
+    "data_quality": "limited",
+    "best_general_activity_window": [
+      "06:00",
+      "07:00",
+      "08:00"
+    ],
+    "peak_rain_threat_hour": "19:00",
+    "peak_rain_threat_score": 29.4,
+    "peak_heavy_rain_threat_hour": "19:00",
+    "peak_heavy_rain_threat_score": 4.1,
+    "summary_text": "Dago, Bandung: data prakiraan belum lengkap atau sudah usang. Rekomendasi waktu aktivitas belum tersedia.",
+    "risk_window": [],
+    "location_personality": {
+      "personality": "unspecified_local_conditions",
+      "convective_sensitivity": "unknown",
+      "rain_displacement_risk": "unknown",
+      "morning_humidity_memory": "unknown",
+      "forecast_difficulty": "unknown",
+      "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
+    },
+    "dominant_atmospheric_mode": "MIXED_LOCAL_ATMOSPHERE",
+    "peak_rain_probability": 26.691967109424418
+  },
+  "constitution": [
+    "Do not assign high trust when source coverage is weak.",
+    "Do not hide source disagreement; disagreement is a risk signal.",
+    "Do not treat rainfall mean as the only reality; always preserve P90/P95 worst-case signals.",
+    "Do not treat BMKG rain proxy as precise rain_mm observation.",
+    "For local convective rain, communicate timing and spatial displacement uncertainty.",
+    "If the forecast may fail, say how and why it may fail.",
+    "When decision cost is asymmetric, prefer safety-first interpretation.",
+    "If data quality is poor, use BLACK/RED status and avoid confident recommendations.",
+    "Every forecast must include reasoning, limitations, and a recommended action.",
+    "The system learns from observations and feedback, but never replaces official warnings."
+  ]
+}

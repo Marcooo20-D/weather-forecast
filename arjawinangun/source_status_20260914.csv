@@ -1,0 +1,10 @@
+tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error
+14-09-2026,BMKG,BMKG,no,1.8452,0.9837,1.8151,0,24,,876,,,,BMKG tidak mengembalikan kandidat untuk target date
+14-09-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1597,0.995,1.1539,24,24,200,579,,,,
+14-09-2026,ECMWF,Open-Meteo / ECMWF,yes,1.707,0.995,1.6985,24,24,200,575,,,,
+14-09-2026,GFS,Open-Meteo / NOAA GFS,yes,1.4096,1.0,1.4096,24,24,200,605,,,,
+14-09-2026,ICON,Open-Meteo / DWD ICON,yes,1.4824,1.0,1.4824,24,24,200,597,,,,
+14-09-2026,KMA,Open-Meteo / KMA,yes,0.771,0.995,0.7671,24,24,200,566,,,,
+14-09-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.5529,0.995,1.5451,24,24,200,579,,,,
+14-09-2026,METNO,MET Norway,yes,1.4324,0.9837,1.4091,3,24,200,471,,,,
+14-09-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3244,0.995,1.3178,24,24,200,585,,,,

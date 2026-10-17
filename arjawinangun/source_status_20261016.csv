@@ -1,0 +1,13 @@
+tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error,availability_reason,live_fetch_success,is_cached,is_backup,model_identifier,original_fetched_at,cache_age_hours
+16-10-2026,BMKG,BMKG,yes,1.7646,0.894,1.5776,3,24,200,807,,,,,live_data,True,False,False,BMKG,2026-10-16T21:29:46.793079+07:00,0
+16-10-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1466,1.0,1.1466,24,24,200,6047,,,,,live_data,True,False,False,CMA,2026-10-16T21:30:00.337820+07:00,0
+16-10-2026,ECMWF,Open-Meteo / ECMWF,yes,1.6704,1.0,1.6704,24,24,200,201,,,,,live_data,True,False,False,ECMWF,2026-10-16T21:29:54.266792+07:00,0
+16-10-2026,GFS,Open-Meteo / NOAA GFS,yes,1.4089,1.0,1.4089,24,24,200,1736,,,,,live_data,True,False,False,GFS,2026-10-16T21:30:18.248856+07:00,0
+16-10-2026,ICON,Open-Meteo / DWD ICON,no,1.4711,1.0,1.4711,0,24,,47588,,,,<urlopen error _ssl.c:993: The handshake operation timed out>,network_timeout,False,False,False,ICON,,0
+16-10-2026,KMA,Open-Meteo / KMA,no,0.7943,0.45,0.3574,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=18s,circuit_open,False,False,False,kma_seamless,,0.0
+16-10-2026,METEOFRANCE,Open-Meteo / Meteo-France,no,1.5573,1.0,1.5573,0,24,,16135,,,,The read operation timed out,network_timeout,False,False,False,METEOFRANCE,,0
+16-10-2026,METNO,MET Norway,yes,1.4096,0.982,1.3842,5,24,200,386,,,,,live_data,True,False,False,METNO,2026-10-16T21:30:16.899947+07:00,0
+16-10-2026,UKMO,Open-Meteo / UK Met Office,no,1.3235,1.0,1.3235,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=18s,circuit_open,False,False,False,ukmo_seamless,,0.0
+16-10-2026,JMA_BACKUP,Open-Meteo / JMA,no,1.0,1.0,1.0,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=21s,circuit_open,False,False,True,jma_seamless,,0.0
+16-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,no,1.0,1.0,1.0,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=21s,circuit_open,False,False,True,cmc_gem_gdps,,0.0
+16-10-2026,BOM_BACKUP,Open-Meteo / BOM,no,1.0,1.0,1.0,0,24,,0,,,,circuit_open host=api.open-meteo.com wait=21s,circuit_open,False,False,True,bom_access_global,,0.0

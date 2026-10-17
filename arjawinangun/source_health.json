@@ -1,0 +1,113 @@
+{
+  "generated_at": "2026-10-17T20:28:04.433406+07:00",
+  "sources": {
+    "BMKG": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.2792,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-19",
+      "last_live_fetch_success": true,
+      "last_served_from_cache": false
+    },
+    "CMA": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-19",
+      "last_live_fetch_success": true,
+      "last_served_from_cache": false
+    },
+    "ECMWF": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-19",
+      "last_live_fetch_success": true,
+      "last_served_from_cache": false
+    },
+    "GFS": {
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-19",
+      "last_live_fetch_success": true,
+      "last_served_from_cache": false
+    },
+    "ICON": {
+      "ema_success": 0.9969,
+      "ema_completeness": 0.9969,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-19",
+      "last_live_fetch_success": true,
+      "last_served_from_cache": false
+    },
+    "KMA": {
+      "ema_success": 0.0001,
+      "ema_completeness": 0.0001,
+      "consecutive_failures": 72,
+      "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
+      "last_run_date": "2026-10-19",
+      "last_live_fetch_success": false,
+      "last_served_from_cache": false
+    },
+    "METEOFRANCE": {
+      "ema_success": 0.9922,
+      "ema_completeness": 0.9922,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-19",
+      "last_live_fetch_success": true,
+      "last_served_from_cache": false
+    },
+    "METNO": {
+      "ema_success": 1.0,
+      "ema_completeness": 0.8439,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-19",
+      "last_live_fetch_success": true,
+      "last_served_from_cache": false
+    },
+    "UKMO": {
+      "ema_success": 0.9922,
+      "ema_completeness": 0.9922,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-19",
+      "last_live_fetch_success": true,
+      "last_served_from_cache": false
+    },
+    "JMA_BACKUP": {
+      "ema_success": 0.9969,
+      "ema_completeness": 0.9969,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-19",
+      "last_live_fetch_success": true,
+      "last_served_from_cache": false
+    },
+    "GEM_BACKUP": {
+      "ema_success": 0.4225,
+      "ema_completeness": 0.4225,
+      "consecutive_failures": 2,
+      "last_error": "<urlopen error _ssl.c:993: The handshake operation timed out>",
+      "last_run_date": "2026-10-17",
+      "last_live_fetch_success": false,
+      "last_served_from_cache": false
+    },
+    "BOM_BACKUP": {
+      "ema_success": 0.4225,
+      "ema_completeness": 0.4225,
+      "consecutive_failures": 2,
+      "last_error": "circuit_open host=api.open-meteo.com wait=17s",
+      "last_run_date": "2026-10-17",
+      "last_live_fetch_success": false,
+      "last_served_from_cache": false
+    }
+  }
+}

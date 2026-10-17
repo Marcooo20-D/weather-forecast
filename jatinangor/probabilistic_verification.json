@@ -1,0 +1,25 @@
+{
+  "schema": "langit-probabilistic-verification-1",
+  "generated_at": "2026-10-17T20:26:37.891256+07:00",
+  "status": "insufficient_matching_observations",
+  "nominal_interval_coverage": 0.8,
+  "calibration_status": "NOT_CERTIFIED",
+  "distribution": "raw_family_balanced_individual_members",
+  "issue_rule": "earliest pre-event issue per valid_time and lead bin, minimum one-hour lead",
+  "rain_interval_rule": "explicit matching per-variable start/end, exactly one hour",
+  "local_observation_radius_km": {
+    "rain_mm": 2,
+    "temp_c": 10,
+    "rh_pct": 10,
+    "wind_kmh": 5
+  },
+  "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
+  "rejected": {
+    "not_pre_event": 610,
+    "missing_qc_observation": 1118,
+    "rain_interval_mismatch": 0,
+    "unknown_observation_location": 0,
+    "observation_outside_local_radius": 0
+  },
+  "variables": {}
+}

@@ -1,0 +1,49 @@
+{
+  "generated_at": "2026-10-17T20:30:27.377506+07:00",
+  "mode": "evaluate",
+  "locations_file": "",
+  "default_multi_locations": [
+    "dago",
+    "jatinangor",
+    "arjawinangun"
+  ],
+  "locations_total": 3,
+  "locations": [
+    {
+      "location_slug": "dago",
+      "location_name": "Dago, Bandung",
+      "bmkg_point_name": "Dago",
+      "area_level": "kelurahan",
+      "is_proxy_bmkg": false,
+      "evaluated_sources": 0,
+      "evaluated_rows": 0,
+      "weights_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/quality_skill_config.json",
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago",
+      "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/evaluate_20261017_203012.log"
+    },
+    {
+      "location_slug": "jatinangor",
+      "location_name": "Jatinangor, Sumedang",
+      "bmkg_point_name": "Hegarmanah",
+      "area_level": "kecamatan",
+      "is_proxy_bmkg": true,
+      "evaluated_sources": 0,
+      "evaluated_rows": 0,
+      "weights_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/quality_skill_config.json",
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor",
+      "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/evaluate_20261017_203017.log"
+    },
+    {
+      "location_slug": "arjawinangun",
+      "location_name": "Arjawinangun, Cirebon",
+      "bmkg_point_name": "Arjawinangun",
+      "area_level": "kecamatan",
+      "is_proxy_bmkg": false,
+      "evaluated_sources": 0,
+      "evaluated_rows": 0,
+      "weights_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/quality_skill_config.json",
+      "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun",
+      "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/evaluate_20261017_203022.log"
+    }
+  ]
+}
