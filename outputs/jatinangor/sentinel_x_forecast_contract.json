@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-10-17T09:29:05.112478+07:00",
+  "generated_at": "2026-10-17T15:14:02.239679+07:00",
   "location": "Jatinangor, Sumedang",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,8 +25,8 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-10-17T09:28:37.472268+07:00",
-    "issued_at": "2026-10-17T09:28:37.472268+07:00",
+    "generated_at": "2026-10-17T15:13:33.045112+07:00",
+    "issued_at": "2026-10-17T15:13:33.045112+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Jatinangor, Sumedang",
     "mission": "safety_first",
@@ -38,10 +38,10 @@
       "08:00"
     ],
     "peak_rain_threat_hour": "19:00",
-    "peak_rain_threat_score": 28.8,
+    "peak_rain_threat_score": 31.4,
     "peak_heavy_rain_threat_hour": "19:00",
-    "peak_heavy_rain_threat_score": 3.3,
-    "summary_text": "Jatinangor, Sumedang: peluang hujan per jam tertinggi 27.8094% sekitar 17:00. Rentang dengan risiko relatif lebih rendah: 06:00 · 07:00 · 08:00. Tetap pantau kondisi setempat.",
+    "peak_heavy_rain_threat_score": 3.6,
+    "summary_text": "Jatinangor, Sumedang: peluang hujan per jam tertinggi 31.6466% sekitar 17:00. Rentang dengan risiko relatif lebih rendah: 06:00 · 07:00 · 08:00. Tetap pantau kondisi setempat.",
     "risk_window": [],
     "location_personality": {
       "personality": "unspecified_local_conditions",
@@ -52,7 +52,7 @@
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
     "dominant_atmospheric_mode": "MIXED_LOCAL_ATMOSPHERE",
-    "peak_rain_probability": 27.809403331224964
+    "peak_rain_probability": 31.646637149483453
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",

@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-10-17T09:30:41.321860+07:00",
+  "generated_at": "2026-10-17T15:15:41.500615+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.3,
+      "ema_completeness": 0.2934,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-19",
@@ -38,8 +38,8 @@
       "last_served_from_cache": false
     },
     "ICON": {
-      "ema_success": 0.9594,
-      "ema_completeness": 0.9594,
+      "ema_success": 0.9888,
+      "ema_completeness": 0.9888,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-19",
@@ -49,15 +49,15 @@
     "KMA": {
       "ema_success": 0.0001,
       "ema_completeness": 0.0001,
-      "consecutive_failures": 66,
+      "consecutive_failures": 69,
       "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
       "last_run_date": "2026-10-19",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
     "METEOFRANCE": {
-      "ema_success": 0.8969,
-      "ema_completeness": 0.8969,
+      "ema_success": 0.9717,
+      "ema_completeness": 0.9717,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-19",
@@ -66,7 +66,7 @@
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.9,
+      "ema_completeness": 0.8801,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-19",
@@ -74,8 +74,8 @@
       "last_served_from_cache": false
     },
     "UKMO": {
-      "ema_success": 0.8969,
-      "ema_completeness": 0.8969,
+      "ema_success": 0.9717,
+      "ema_completeness": 0.9717,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-19",
@@ -83,8 +83,8 @@
       "last_served_from_cache": false
     },
     "JMA_BACKUP": {
-      "ema_success": 0.9594,
-      "ema_completeness": 0.9594,
+      "ema_success": 0.9888,
+      "ema_completeness": 0.9888,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-19",
