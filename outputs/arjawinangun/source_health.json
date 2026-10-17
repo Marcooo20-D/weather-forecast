@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-10-16T21:32:45.741920+07:00",
+  "generated_at": "2026-10-17T09:30:41.321860+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.2792,
+      "ema_completeness": 0.3,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-10-18",
+      "last_run_date": "2026-10-19",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
@@ -15,7 +15,7 @@
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-10-18",
+      "last_run_date": "2026-10-19",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
@@ -24,7 +24,7 @@
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-10-18",
+      "last_run_date": "2026-10-19",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
@@ -33,61 +33,61 @@
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-10-18",
+      "last_run_date": "2026-10-19",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "ICON": {
-      "ema_success": 0.8521,
-      "ema_completeness": 0.8521,
+      "ema_success": 0.9594,
+      "ema_completeness": 0.9594,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-10-18",
+      "last_run_date": "2026-10-19",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "KMA": {
       "ema_success": 0.0001,
       "ema_completeness": 0.0001,
-      "consecutive_failures": 63,
-      "last_error": "<urlopen error _ssl.c:993: The handshake operation timed out>",
-      "last_run_date": "2026-10-18",
+      "consecutive_failures": 66,
+      "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
+      "last_run_date": "2026-10-19",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
     "METEOFRANCE": {
-      "ema_success": 0.6246,
-      "ema_completeness": 0.6246,
+      "ema_success": 0.8969,
+      "ema_completeness": 0.8969,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-10-18",
+      "last_run_date": "2026-10-19",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.8377,
+      "ema_completeness": 0.9,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-10-18",
+      "last_run_date": "2026-10-19",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "UKMO": {
-      "ema_success": 0.6246,
-      "ema_completeness": 0.6246,
+      "ema_success": 0.8969,
+      "ema_completeness": 0.8969,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-10-18",
+      "last_run_date": "2026-10-19",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "JMA_BACKUP": {
-      "ema_success": 0.8521,
-      "ema_completeness": 0.8521,
+      "ema_success": 0.9594,
+      "ema_completeness": 0.9594,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-10-18",
+      "last_run_date": "2026-10-19",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },

@@ -1,5 +1,5 @@
 {
-  "issued_at": "2026-10-16T21:31:59.094688+07:00",
+  "issued_at": "2026-10-17T09:30:12.320521+07:00",
   "configured_sources": 9,
   "successful_sources": 9,
   "successful_live_sources": 9,
@@ -78,10 +78,10 @@
       "live_fetch_success": false,
       "is_cached": false,
       "is_backup": false,
-      "reason": "network_timeout",
-      "error": "<urlopen error _ssl.c:993: The handshake operation timed out>",
+      "reason": "provider_returned_null_data",
+      "error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
       "model_identifier": "kma_seamless",
-      "http_status": null,
+      "http_status": 200,
       "points": 0
     },
     {
