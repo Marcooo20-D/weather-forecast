@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-10-18T09:28:36.265786+07:00",
+  "generated_at": "2026-10-18T15:30:40.181037+07:00",
   "location": "Jatinangor, Sumedang",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,8 +25,8 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-10-18T09:28:12.994342+07:00",
-    "issued_at": "2026-10-18T09:28:12.994342+07:00",
+    "generated_at": "2026-10-18T15:30:14.818581+07:00",
+    "issued_at": "2026-10-18T15:30:14.818581+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Jatinangor, Sumedang",
     "mission": "safety_first",
@@ -37,11 +37,11 @@
       "07:00",
       "08:00"
     ],
-    "peak_rain_threat_hour": "22:00",
-    "peak_rain_threat_score": 21.2,
-    "peak_heavy_rain_threat_hour": "22:00",
-    "peak_heavy_rain_threat_score": 3.0,
-    "summary_text": "Jatinangor, Sumedang: peluang hujan per jam tertinggi 7.5269% sekitar 17:00. Rentang dengan risiko relatif lebih rendah: 06:00 · 07:00 · 08:00. Tetap pantau kondisi setempat.",
+    "peak_rain_threat_hour": "03:00",
+    "peak_rain_threat_score": 20.6,
+    "peak_heavy_rain_threat_hour": "03:00",
+    "peak_heavy_rain_threat_score": 2.3,
+    "summary_text": "Jatinangor, Sumedang: peluang hujan per jam tertinggi 6.4516% sekitar 17:00. Rentang dengan risiko relatif lebih rendah: 06:00 · 07:00 · 08:00. Tetap pantau kondisi setempat.",
     "risk_window": [],
     "location_personality": {
       "personality": "unspecified_local_conditions",
@@ -51,8 +51,8 @@
       "forecast_difficulty": "unknown",
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
-    "dominant_atmospheric_mode": "STABLE_LOW_RAIN",
-    "peak_rain_probability": 7.526881720430108
+    "dominant_atmospheric_mode": "HUMID_STABLE_MORNING",
+    "peak_rain_probability": 6.451612903225806
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
