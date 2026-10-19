@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-10-19T16:36:31.602674+07:00",
+  "generated_at": "2026-10-19T23:47:24.685189+07:00",
   "location_slug": "arjawinangun",
   "location_name": "Arjawinangun, Cirebon",
   "bmkg_point_name": "Arjawinangun",
@@ -12,9 +12,9 @@
   "longitude": 108.4103,
   "timezone": "Asia/Jakarta",
   "target_date": "2026-10-19",
-  "sources_total": 12,
-  "sources_success": 6,
-  "points_total": 114,
+  "sources_total": 10,
+  "sources_success": 9,
+  "points_total": 172,
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -56,33 +56,18 @@
   "health_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/source_health.json",
   "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun",
   "retention_days": 30,
-  "low_coverage_slots": [
-    "00:00",
-    "01:00",
-    "02:00",
-    "03:00",
-    "04:00",
-    "05:00",
-    "06:00",
-    "07:00",
-    "08:00",
-    "09:00",
-    "10:00",
-    "11:00",
-    "12:00",
-    "13:00"
-  ],
-  "run_status": "warning",
+  "low_coverage_slots": [],
+  "run_status": "ok",
   "sentinel_x": {
     "version": "LANGIT v61.0",
-    "run_id": "arjawinangun_20261019_2ee6f4656da942b99a7338547610d6c9",
+    "run_id": "arjawinangun_20261019_dd305f5a84bc4ae28d342702c3900e42",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/command_center_sentinel_x.html",
     "report": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_report.md",
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_ledger.sqlite",
-    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/forecast_archive/arjawinangun_20261019_2ee6f4656da942b99a7338547610d6c9.json",
-    "daily_operational_status": "BLACK"
+    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/forecast_archive/arjawinangun_20261019_dd305f5a84bc4ae28d342702c3900e42.json",
+    "daily_operational_status": "GREEN"
   }
 }
