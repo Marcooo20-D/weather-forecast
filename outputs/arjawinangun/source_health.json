@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-10-19T09:43:24.810950+07:00",
+  "generated_at": "2026-10-19T16:38:04.328955+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.3,
+      "ema_completeness": 0.2934,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-21",
@@ -11,8 +11,8 @@
       "last_served_from_cache": false
     },
     "CMA": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.8521,
+      "ema_completeness": 0.8521,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-21",
@@ -49,15 +49,15 @@
     "KMA": {
       "ema_success": 0.0001,
       "ema_completeness": 0.0001,
-      "consecutive_failures": 84,
+      "consecutive_failures": 87,
       "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
       "last_run_date": "2026-10-21",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
     "METEOFRANCE": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.6246,
+      "ema_completeness": 0.6246,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-21",
@@ -66,7 +66,7 @@
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.9017,
+      "ema_completeness": 0.8744,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-21",
@@ -74,8 +74,8 @@
       "last_served_from_cache": false
     },
     "UKMO": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.6246,
+      "ema_completeness": 0.6246,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-21",
@@ -92,20 +92,20 @@
       "last_served_from_cache": false
     },
     "GEM_BACKUP": {
-      "ema_success": 0.4225,
-      "ema_completeness": 0.4225,
-      "consecutive_failures": 2,
-      "last_error": "<urlopen error _ssl.c:993: The handshake operation timed out>",
-      "last_run_date": "2026-10-17",
-      "last_live_fetch_success": false,
+      "ema_success": 0.5285,
+      "ema_completeness": 0.5285,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-10-20",
+      "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "BOM_BACKUP": {
-      "ema_success": 0.4225,
-      "ema_completeness": 0.4225,
-      "consecutive_failures": 2,
-      "last_error": "circuit_open host=api.open-meteo.com wait=17s",
-      "last_run_date": "2026-10-17",
+      "ema_success": 0.1785,
+      "ema_completeness": 0.1785,
+      "consecutive_failures": 4,
+      "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
+      "last_run_date": "2026-10-20",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     }
