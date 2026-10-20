@@ -1,45 +1,45 @@
 {
   "activities": {
     "motor": {
-      "recommended_windows": 21,
+      "recommended_windows": 23,
       "evaluated_windows": 0,
       "disrupted_windows": 0,
-      "unknown_windows": 21,
+      "unknown_windows": 23,
       "disruption_rate": null
     },
     "walking": {
-      "recommended_windows": 14,
+      "recommended_windows": 16,
       "evaluated_windows": 0,
       "disrupted_windows": 0,
-      "unknown_windows": 14,
+      "unknown_windows": 16,
       "disruption_rate": null
     },
     "sport": {
+      "recommended_windows": 10,
+      "evaluated_windows": 0,
+      "disrupted_windows": 0,
+      "unknown_windows": 10,
+      "disruption_rate": null
+    },
+    "drying": {
+      "recommended_windows": 16,
+      "evaluated_windows": 0,
+      "disrupted_windows": 0,
+      "unknown_windows": 16,
+      "disruption_rate": null
+    },
+    "outdoor_event": {
       "recommended_windows": 9,
       "evaluated_windows": 0,
       "disrupted_windows": 0,
       "unknown_windows": 9,
       "disruption_rate": null
     },
-    "drying": {
-      "recommended_windows": 15,
-      "evaluated_windows": 0,
-      "disrupted_windows": 0,
-      "unknown_windows": 15,
-      "disruption_rate": null
-    },
-    "outdoor_event": {
-      "recommended_windows": 8,
-      "evaluated_windows": 0,
-      "disrupted_windows": 0,
-      "unknown_windows": 8,
-      "disruption_rate": null
-    },
     "photography": {
-      "recommended_windows": 10,
+      "recommended_windows": 12,
       "evaluated_windows": 0,
       "disrupted_windows": 0,
-      "unknown_windows": 10,
+      "unknown_windows": 12,
       "disruption_rate": null
     }
   },
