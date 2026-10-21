@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-10-21T09:51:49.631027+07:00",
+  "generated_at": "2026-10-21T16:07:24.613650+07:00",
   "sources": {
     "BMKG": {
-      "ema_success": 0.5539,
-      "ema_completeness": 0.1827,
-      "consecutive_failures": 1,
-      "last_error": "BMKG tidak mengembalikan kandidat target date",
+      "ema_success": 0.8775,
+      "ema_completeness": 0.2612,
+      "consecutive_failures": 0,
+      "last_error": "",
       "last_run_date": "2026-10-23",
-      "last_live_fetch_success": false,
+      "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "CMA": {
-      "ema_success": 0.9997,
-      "ema_completeness": 0.9997,
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-23",
@@ -38,8 +38,8 @@
       "last_served_from_cache": false
     },
     "ICON": {
-      "ema_success": 0.9997,
-      "ema_completeness": 0.9997,
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-23",
@@ -49,15 +49,15 @@
     "KMA": {
       "ema_success": 0.0001,
       "ema_completeness": 0.0001,
-      "consecutive_failures": 105,
+      "consecutive_failures": 108,
       "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
       "last_run_date": "2026-10-23",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
     "METEOFRANCE": {
-      "ema_success": 0.9997,
-      "ema_completeness": 0.9997,
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-23",
@@ -66,7 +66,7 @@
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.9186,
+      "ema_completeness": 0.8791,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-23",
@@ -74,8 +74,8 @@
       "last_served_from_cache": false
     },
     "UKMO": {
-      "ema_success": 0.9997,
-      "ema_completeness": 0.9997,
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-23",
@@ -83,8 +83,8 @@
       "last_served_from_cache": false
     },
     "JMA_BACKUP": {
-      "ema_success": 0.9997,
-      "ema_completeness": 0.9997,
+      "ema_success": 0.9999,
+      "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-23",
