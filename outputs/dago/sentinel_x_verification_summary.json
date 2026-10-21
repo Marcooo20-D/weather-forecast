@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-21T16:04:21.632441+07:00",
+  "generated_at": "2026-10-21T21:51:42.386527+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "matched_cases": 0,
@@ -90,7 +90,7 @@
   ],
   "probabilistic_verification": {
     "schema": "langit-probabilistic-verification-1",
-    "generated_at": "2026-10-21T16:04:42.167573+07:00",
+    "generated_at": "2026-10-21T21:52:04.302712+07:00",
     "status": "insufficient_matching_observations",
     "nominal_interval_coverage": 0.8,
     "calibration_status": "NOT_CERTIFIED",
@@ -105,8 +105,8 @@
     },
     "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
     "rejected": {
-      "not_pre_event": 838,
-      "missing_qc_observation": 1754,
+      "not_pre_event": 866,
+      "missing_qc_observation": 1798,
       "rain_interval_mismatch": 0,
       "unknown_observation_location": 0,
       "observation_outside_local_radius": 0
@@ -116,10 +116,10 @@
   "activity_verification": {
     "activities": {
       "motor": {
-        "recommended_windows": 29,
+        "recommended_windows": 30,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 29,
+        "unknown_windows": 30,
         "disruption_rate": null
       },
       "walking": {
