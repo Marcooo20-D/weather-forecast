@@ -1,12 +1,12 @@
 source_id,provider,state,success,points,ema_success,ema_completeness,consecutive_failures,http_status,duration_ms,error,is_cached,live_fetch_success,original_fetched_at,cache_age_hours,model_family
-BMKG,BMKG,DEGRADED,False,0,0.9999,0.3223,0,,10,BMKG tidak mengembalikan kandidat target date,False,False,,0,BMKG
-CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.9997,0.9997,0,200,572,,False,True,2026-10-21T08:54:46.310286+07:00,0,CMA
-ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9999,0.9999,0,200,708,,False,True,2026-10-21T08:54:45.716078+07:00,0,ECMWF
-GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9999,0.9999,0,200,648,,False,True,2026-10-21T08:54:48.884274+07:00,0,GFS
-ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.9999,0.9999,0,200,595,,False,True,2026-10-21T08:54:49.498802+07:00,0,ICON
-KMA,Open-Meteo / KMA,QUARANTINED,False,0,0.0001,0.0001,101,200,573,API returned timestamps but all requested weather values are null; source not counted as successful.,False,False,,0,KMA
-METEOFRANCE,Open-Meteo / Meteo-France,ACTIVE,True,24,0.9991,0.9991,0,200,585,,False,True,2026-10-21T08:54:46.916421+07:00,0,METEOFRANCE
-METNO,MET Norway,ACTIVE,True,24,1.0,0.8547,0,200,638,,False,True,2026-10-21T08:54:48.876444+07:00,0,ECMWF
-UKMO,Open-Meteo / UK Met Office,ACTIVE,True,24,0.9991,0.9991,0,200,669,,False,True,2026-10-21T08:54:48.202186+07:00,0,UKMO
-JMA_BACKUP,Open-Meteo / JMA,ACTIVE,True,24,0.9999,0.9999,0,200,836,,False,True,2026-10-21T08:54:50.355032+07:00,0,JMA
-GEM_BACKUP,Open-Meteo / Environment Canada,DEGRADED,True,24,0.5285,0.5285,0,200,571,,False,True,2026-10-21T08:55:58.414537+07:00,0,GEM
+BMKG,BMKG,DEGRADED,False,0,0.8521,0.281,0,,8,BMKG tidak mengembalikan kandidat target date,False,False,,0,BMKG
+CMA,Open-Meteo / CMA GRAPES,ACTIVE,True,24,0.9999,0.9999,0,200,773,,False,True,2026-10-21T09:51:54.541304+07:00,0,CMA
+ECMWF,Open-Meteo / ECMWF,ACTIVE,True,24,0.9999,0.9999,0,200,623,,False,True,2026-10-21T09:51:53.744551+07:00,0,ECMWF
+GFS,Open-Meteo / NOAA GFS,ACTIVE,True,24,0.9999,0.9999,0,200,631,,False,True,2026-10-21T09:51:57.173690+07:00,0,GFS
+ICON,Open-Meteo / DWD ICON,ACTIVE,True,24,0.9999,0.9999,0,200,623,,False,True,2026-10-21T09:51:57.820839+07:00,0,ICON
+KMA,Open-Meteo / KMA,QUARANTINED,False,0,0.0001,0.0001,104,200,612,API returned timestamps but all requested weather values are null; source not counted as successful.,False,False,,0,KMA
+METEOFRANCE,Open-Meteo / Meteo-France,ACTIVE,True,24,0.9997,0.9997,0,200,613,,False,True,2026-10-21T09:51:55.178081+07:00,0,METEOFRANCE
+METNO,MET Norway,ACTIVE,True,24,1.0,0.8748,0,200,623,,False,True,2026-10-21T09:51:57.166896+07:00,0,ECMWF
+UKMO,Open-Meteo / UK Met Office,ACTIVE,True,24,0.9997,0.9997,0,200,667,,False,True,2026-10-21T09:51:56.506866+07:00,0,UKMO
+JMA_BACKUP,Open-Meteo / JMA,ACTIVE,True,24,0.9999,0.9999,0,200,607,,False,True,2026-10-21T09:51:58.452801+07:00,0,JMA
+GEM_BACKUP,Open-Meteo / Environment Canada,ACTIVE,True,24,0.6935,0.6935,0,200,637,,False,True,2026-10-21T09:53:27.696302+07:00,0,GEM
