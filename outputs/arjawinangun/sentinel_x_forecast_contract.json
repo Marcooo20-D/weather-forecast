@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-10-20T21:41:59.207137+07:00",
+  "generated_at": "2026-10-21T08:56:31.376756+07:00",
   "location": "Arjawinangun, Cirebon",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,8 +25,8 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-10-20T21:41:26.307224+07:00",
-    "issued_at": "2026-10-20T21:41:26.307224+07:00",
+    "generated_at": "2026-10-21T08:55:57.803332+07:00",
+    "issued_at": "2026-10-21T08:55:57.803332+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Arjawinangun, Cirebon",
     "mission": "safety_first",
@@ -37,11 +37,11 @@
       "07:00",
       "08:00"
     ],
-    "peak_rain_threat_hour": "15:00",
-    "peak_rain_threat_score": 22.8,
-    "peak_heavy_rain_threat_hour": "15:00",
-    "peak_heavy_rain_threat_score": 5.5,
-    "summary_text": "Arjawinangun, Cirebon: peluang hujan per jam tertinggi 17.6471% sekitar 14:00. Rentang dengan risiko relatif lebih rendah: 06:00 · 07:00 · 08:00. Tetap pantau kondisi setempat.",
+    "peak_rain_threat_hour": "19:00",
+    "peak_rain_threat_score": 17.3,
+    "peak_heavy_rain_threat_hour": "19:00",
+    "peak_heavy_rain_threat_score": 3.6,
+    "summary_text": "Arjawinangun, Cirebon: peluang hujan per jam tertinggi 8.4967% sekitar 14:00. Rentang dengan risiko relatif lebih rendah: 06:00 · 07:00 · 08:00. Tetap pantau kondisi setempat.",
     "risk_window": [],
     "location_personality": {
       "personality": "unspecified_local_conditions",
@@ -52,7 +52,7 @@
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
     "dominant_atmospheric_mode": "STABLE_LOW_RAIN",
-    "peak_rain_probability": 17.647058823529413
+    "peak_rain_probability": 8.49673202614379
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",

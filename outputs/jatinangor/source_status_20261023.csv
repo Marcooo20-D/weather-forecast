@@ -1,0 +1,12 @@
+tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error,availability_reason,live_fetch_success,is_cached,is_backup,model_identifier,original_fetched_at,cache_age_hours
+23-10-2026,BMKG,BMKG,no,1.6902,0.8983,1.5183,0,24,,2,,,,BMKG tidak mengembalikan kandidat target date,provider_or_network_error,False,False,False,BMKG,,0
+23-10-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1432,0.9992,1.1423,24,24,200,579,,,,,live_data,True,False,False,CMA,2026-10-21T08:52:54.624086+07:00,0
+23-10-2026,ECMWF,Open-Meteo / ECMWF,yes,1.71,0.9996,1.7093,24,24,200,566,,,,,live_data,True,False,False,ECMWF,2026-10-21T08:52:54.025032+07:00,0
+23-10-2026,GFS,Open-Meteo / NOAA GFS,yes,1.3715,0.9996,1.371,24,24,200,550,,,,,live_data,True,False,False,GFS,2026-10-21T08:52:56.962871+07:00,0
+23-10-2026,ICON,Open-Meteo / DWD ICON,yes,1.4053,0.9992,1.4042,24,24,200,593,,,,,live_data,True,False,False,ICON,2026-10-21T08:52:57.576195+07:00,0
+23-10-2026,KMA,Open-Meteo / KMA,no,0.7502,0.45,0.3376,0,24,200,546,,,,API returned timestamps but all requested weather values are null; source not counted as successful.,provider_returned_null_data,False,False,False,kma_seamless,,0
+23-10-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.4271,0.9992,1.426,24,24,200,574,,,,,live_data,True,False,False,METEOFRANCE,2026-10-21T08:52:55.218749+07:00,0
+23-10-2026,METNO,MET Norway,yes,1.3731,0.9782,1.3432,24,24,200,682,,,,,live_data,True,False,False,METNO,2026-10-21T08:52:57.098477+07:00,0
+23-10-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3138,0.9992,1.3127,24,24,200,579,,,,,live_data,True,False,False,ukmo_seamless,2026-10-21T08:52:56.383831+07:00,0
+23-10-2026,JMA_BACKUP,Open-Meteo / JMA,yes,1.0,0.9994,0.9994,24,24,200,579,,,,,live_data,True,False,True,jma_seamless,2026-10-21T08:52:58.175753+07:00,0
+23-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,yes,1.0,0.5119,0.5119,24,24,200,772,,,,,live_data,True,False,True,cmc_gem_gdps,2026-10-21T08:54:07.166159+07:00,0
