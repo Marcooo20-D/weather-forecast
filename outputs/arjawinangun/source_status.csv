@@ -1,11 +1,11 @@
 tanggal,source_id,provider,success,base_weight,health_factor,effective_base_weight,points_collected,target_points,http_status,duration_ms,error_content_type,error_snippet,payload_saved_path,error,availability_reason,live_fetch_success,is_cached,is_backup,model_identifier,original_fetched_at,cache_age_hours
-23-10-2026,BMKG,BMKG,yes,1.7646,0.87,1.5352,24,24,200,905,,,,,live_data,True,False,False,BMKG,2026-10-21T21:54:58.261138+07:00,0
-23-10-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1466,1.0,1.1466,24,24,200,467,,,,,live_data,True,False,False,CMA,2026-10-21T21:54:58.691400+07:00,0
-23-10-2026,ECMWF,Open-Meteo / ECMWF,yes,1.6704,1.0,1.6704,24,24,200,420,,,,,live_data,True,False,False,ECMWF,2026-10-21T21:54:57.776998+07:00,0
-23-10-2026,GFS,Open-Meteo / NOAA GFS,yes,1.4089,1.0,1.4089,24,24,200,396,,,,,live_data,True,False,False,GFS,2026-10-21T21:54:59.987378+07:00,0
-23-10-2026,ICON,Open-Meteo / DWD ICON,yes,1.4711,1.0,1.4711,24,24,200,398,,,,,live_data,True,False,False,ICON,2026-10-21T21:54:58.199662+07:00,0
-23-10-2026,KMA,Open-Meteo / KMA,no,0.7943,0.45,0.3574,0,24,200,395,,,,API returned timestamps but all requested weather values are null; source not counted as successful.,provider_returned_null_data,False,False,False,kma_seamless,,0
-23-10-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.5573,1.0,1.5573,24,24,200,552,,,,,live_data,True,False,False,METEOFRANCE,2026-10-21T21:55:00.564309+07:00,0
-23-10-2026,METNO,MET Norway,yes,1.4096,0.9629,1.3573,24,24,200,429,,,,,live_data,True,False,False,METNO,2026-10-21T21:55:00.023174+07:00,0
-23-10-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3235,1.0,1.3235,24,24,200,410,,,,,live_data,True,False,False,ukmo_seamless,2026-10-21T21:54:59.550409+07:00,0
-23-10-2026,JMA_BACKUP,Open-Meteo / JMA,yes,1.0,1.0,1.0,24,24,200,420,,,,,live_data,True,False,True,jma_seamless,2026-10-21T21:55:01.009850+07:00,0
+24-10-2026,BMKG,BMKG,yes,1.7646,0.8875,1.5661,24,24,200,1268,,,,,live_data,True,False,False,BMKG,2026-10-22T09:50:43.664393+07:00,0
+24-10-2026,CMA,Open-Meteo / CMA GRAPES,yes,1.1466,1.0,1.1466,24,24,200,671,,,,,live_data,True,False,False,CMA,2026-10-22T09:50:47.104670+07:00,0
+24-10-2026,ECMWF,Open-Meteo / ECMWF,yes,1.6704,1.0,1.6704,24,24,200,880,,,,,live_data,True,False,False,ECMWF,2026-10-22T09:50:43.276028+07:00,0
+24-10-2026,GFS,Open-Meteo / NOAA GFS,yes,1.4089,1.0,1.4089,24,24,200,691,,,,,live_data,True,False,False,GFS,2026-10-22T09:50:47.819908+07:00,0
+24-10-2026,ICON,Open-Meteo / DWD ICON,yes,1.4711,1.0,1.4711,24,24,200,763,,,,,live_data,True,False,False,ICON,2026-10-22T09:50:44.063252+07:00,0
+24-10-2026,KMA,Open-Meteo / KMA,no,0.7943,0.45,0.3574,0,24,200,699,,,,API returned timestamps but all requested weather values are null; source not counted as successful.,provider_returned_null_data,False,False,False,kma_seamless,,0
+24-10-2026,METEOFRANCE,Open-Meteo / Meteo-France,yes,1.5573,1.0,1.5573,24,24,200,839,,,,,live_data,True,False,False,METEOFRANCE,2026-10-22T09:50:44.926939+07:00,0
+24-10-2026,METNO,MET Norway,yes,1.4096,0.977,1.3772,24,24,200,653,,,,,live_data,True,False,False,METNO,2026-10-22T09:50:47.089119+07:00,0
+24-10-2026,UKMO,Open-Meteo / UK Met Office,yes,1.3235,1.0,1.3235,24,24,200,721,,,,,live_data,True,False,False,ukmo_seamless,2026-10-22T09:50:46.395880+07:00,0
+24-10-2026,JMA_BACKUP,Open-Meteo / JMA,yes,1.0,1.0,1.0,24,24,200,645,,,,,live_data,True,False,True,jma_seamless,2026-10-22T09:50:48.489805+07:00,0

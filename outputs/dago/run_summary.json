@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-10-21T21:52:19.510752+07:00",
+  "generated_at": "2026-10-22T09:48:01.195768+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "bmkg_point_name": "Dago",
@@ -11,7 +11,7 @@
   "latitude": -6.889,
   "longitude": 107.61,
   "timezone": "Asia/Jakarta",
-  "target_date": "2026-10-23",
+  "target_date": "2026-10-24",
   "sources_total": 10,
   "sources_success": 9,
   "points_total": 216,
@@ -60,14 +60,14 @@
   "run_status": "ok",
   "sentinel_x": {
     "version": "LANGIT v61.0",
-    "run_id": "dago_20261023_e18eb8eb77ee4cd2957305de00a4e11e",
+    "run_id": "dago_20261024_2d4b828a161f4adeb7ffc34e811db18a",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/command_center_sentinel_x.html",
     "report": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_report.md",
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/sentinel_x_ledger.sqlite",
-    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/forecast_archive/dago_20261023_e18eb8eb77ee4cd2957305de00a4e11e.json",
+    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/forecast_archive/dago_20261024_2d4b828a161f4adeb7ffc34e811db18a.json",
     "daily_operational_status": "GREEN"
   }
 }
