@@ -6,8 +6,8 @@
     "status": "Risiko relatif rendah",
     "method": "model_forecast_subset",
     "summary": "Ringkasan model enam jam berikutnya. Belum menggunakan radar atau pengamatan nowcast.",
-    "peak_hour": "22:00",
-    "peak_probability": 0.0
+    "peak_hour": "11:00",
+    "peak_probability": 26.1438
   },
   "microclimate": {
     "profile": "unknown",
@@ -26,10 +26,10 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "727",
+        "latency_ms": "778",
         "model_family": "BMKG",
         "is_cached": false,
-        "original_fetched_at": "2026-10-22T21:54:20.241330+07:00",
+        "original_fetched_at": "2026-10-23T09:55:26.346061+07:00",
         "cache_age_hours": 0.0
       },
       {
@@ -37,10 +37,10 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "621",
+        "latency_ms": "645",
         "model_family": "CMA",
         "is_cached": false,
-        "original_fetched_at": "2026-10-22T21:54:23.260308+07:00",
+        "original_fetched_at": "2026-10-23T09:55:29.738267+07:00",
         "cache_age_hours": 0.0
       },
       {
@@ -48,10 +48,10 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "571",
+        "latency_ms": "718",
         "model_family": "ECMWF",
         "is_cached": false,
-        "original_fetched_at": "2026-10-22T21:54:20.086226+07:00",
+        "original_fetched_at": "2026-10-23T09:55:26.287466+07:00",
         "cache_age_hours": 0.0
       },
       {
@@ -59,10 +59,10 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "567",
+        "latency_ms": "715",
         "model_family": "GFS",
         "is_cached": false,
-        "original_fetched_at": "2026-10-22T21:54:23.866421+07:00",
+        "original_fetched_at": "2026-10-23T09:55:30.473193+07:00",
         "cache_age_hours": 0.0
       },
       {
@@ -70,10 +70,10 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "585",
+        "latency_ms": "719",
         "model_family": "ICON",
         "is_cached": false,
-        "original_fetched_at": "2026-10-22T21:54:20.709246+07:00",
+        "original_fetched_at": "2026-10-23T09:55:27.026834+07:00",
         "cache_age_hours": 0.0
       },
       {
@@ -81,7 +81,7 @@
         "verdict": "Gagal / tidak tersedia",
         "points": "0",
         "http_status": "200",
-        "latency_ms": "578",
+        "latency_ms": "677",
         "model_family": "KMA",
         "is_cached": false,
         "original_fetched_at": "",
@@ -92,10 +92,10 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "608",
+        "latency_ms": "654",
         "model_family": "METEOFRANCE",
         "is_cached": false,
-        "original_fetched_at": "2026-10-22T21:54:21.355285+07:00",
+        "original_fetched_at": "2026-10-23T09:55:27.700796+07:00",
         "cache_age_hours": 0.0
       },
       {
@@ -103,10 +103,10 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "792",
+        "latency_ms": "447",
         "model_family": "ECMWF",
         "is_cached": false,
-        "original_fetched_at": "2026-10-22T21:54:23.433720+07:00",
+        "original_fetched_at": "2026-10-23T09:55:29.542430+07:00",
         "cache_age_hours": 0.0
       },
       {
@@ -114,10 +114,10 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "574",
+        "latency_ms": "650",
         "model_family": "UKMO",
         "is_cached": false,
-        "original_fetched_at": "2026-10-22T21:54:22.585589+07:00",
+        "original_fetched_at": "2026-10-23T09:55:29.066359+07:00",
         "cache_age_hours": 0.0
       },
       {
@@ -125,10 +125,10 @@
         "verdict": "Aktif",
         "points": "24",
         "http_status": "200",
-        "latency_ms": "556",
+        "latency_ms": "652",
         "model_family": "JMA",
         "is_cached": false,
-        "original_fetched_at": "2026-10-22T21:54:24.460598+07:00",
+        "original_fetched_at": "2026-10-23T09:55:31.145586+07:00",
         "cache_age_hours": 0.0
       }
     ]
