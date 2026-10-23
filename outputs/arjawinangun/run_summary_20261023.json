@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-10-23T09:56:13.144096+07:00",
+  "generated_at": "2026-10-23T16:07:10.410425+07:00",
   "location_slug": "arjawinangun",
   "location_name": "Arjawinangun, Cirebon",
   "bmkg_point_name": "Arjawinangun",
@@ -14,7 +14,7 @@
   "target_date": "2026-10-23",
   "sources_total": 10,
   "sources_success": 9,
-  "points_total": 200,
+  "points_total": 186,
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -60,14 +60,14 @@
   "run_status": "ok",
   "sentinel_x": {
     "version": "LANGIT v61.0",
-    "run_id": "arjawinangun_20261023_168b08e6bc06427eb9c097c5ba257ff8",
+    "run_id": "arjawinangun_20261023_d6598a20aa24453bab31feb1126df506",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/command_center_sentinel_x.html",
     "report": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_report.md",
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_ledger.sqlite",
-    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/forecast_archive/arjawinangun_20261023_168b08e6bc06427eb9c097c5ba257ff8.json",
+    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/forecast_archive/arjawinangun_20261023_d6598a20aa24453bab31feb1126df506.json",
     "daily_operational_status": "GREEN"
   }
 }
