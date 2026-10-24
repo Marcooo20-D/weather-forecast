@@ -1,0 +1,164 @@
+{
+  "generated_at": "2026-10-24T20:48:49.858569+07:00",
+  "location_slug": "dago",
+  "location_name": "Dago, Bandung",
+  "matched_cases": 0,
+  "rain_valid_cases": 0,
+  "temperature_valid_cases": 0,
+  "independent_days": 0,
+  "verification_min_cases": 30,
+  "sample_status": "INSUFFICIENT_DATA",
+  "calibration_status": "UNCALIBRATED",
+  "skill_status": "NOT_DEMONSTRATED",
+  "rain_brier_score": null,
+  "baseline_brier_score": null,
+  "baseline_comparable_cases": 0,
+  "rain_brier_skill_score": null,
+  "temperature_mae_c": null,
+  "category_accuracy": null,
+  "rain_hits": 0,
+  "rain_misses": 0,
+  "rain_false_alarms": 0,
+  "rain_correct_negatives": 0,
+  "rain_pod": null,
+  "rain_far": null,
+  "rain_csi": null,
+  "lead_time_metrics": {},
+  "scientific_note": "Risk/trust/scenario scores remain heuristic. Sample count is not evidence of calibration. Only dated pre-event forecasts and classified QC-passed observations are scored.",
+  "matched_pairs": [],
+  "reliability_bins": [
+    {
+      "probability_bin": "00-10",
+      "n": 0,
+      "mean_forecast_probability": null,
+      "observed_rain_frequency": null
+    },
+    {
+      "probability_bin": "10-20",
+      "n": 0,
+      "mean_forecast_probability": null,
+      "observed_rain_frequency": null
+    },
+    {
+      "probability_bin": "20-30",
+      "n": 0,
+      "mean_forecast_probability": null,
+      "observed_rain_frequency": null
+    },
+    {
+      "probability_bin": "30-40",
+      "n": 0,
+      "mean_forecast_probability": null,
+      "observed_rain_frequency": null
+    },
+    {
+      "probability_bin": "40-50",
+      "n": 0,
+      "mean_forecast_probability": null,
+      "observed_rain_frequency": null
+    },
+    {
+      "probability_bin": "50-60",
+      "n": 0,
+      "mean_forecast_probability": null,
+      "observed_rain_frequency": null
+    },
+    {
+      "probability_bin": "60-70",
+      "n": 0,
+      "mean_forecast_probability": null,
+      "observed_rain_frequency": null
+    },
+    {
+      "probability_bin": "70-80",
+      "n": 0,
+      "mean_forecast_probability": null,
+      "observed_rain_frequency": null
+    },
+    {
+      "probability_bin": "80-90",
+      "n": 0,
+      "mean_forecast_probability": null,
+      "observed_rain_frequency": null
+    },
+    {
+      "probability_bin": "90-100",
+      "n": 0,
+      "mean_forecast_probability": null,
+      "observed_rain_frequency": null
+    }
+  ],
+  "probabilistic_verification": {
+    "schema": "langit-probabilistic-verification-1",
+    "generated_at": "2026-10-24T20:48:57.359111+07:00",
+    "status": "insufficient_matching_observations",
+    "nominal_interval_coverage": 0.8,
+    "calibration_status": "NOT_CERTIFIED",
+    "distribution": "raw_family_balanced_individual_members",
+    "issue_rule": "earliest pre-event issue per valid_time and lead bin, minimum one-hour lead",
+    "rain_interval_rule": "explicit matching per-variable start/end, exactly one hour",
+    "local_observation_radius_km": {
+      "rain_mm": 2,
+      "temp_c": 10,
+      "rh_pct": 10,
+      "wind_kmh": 5
+    },
+    "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
+    "rejected": {
+      "not_pre_event": 1041,
+      "missing_qc_observation": 2343,
+      "rain_interval_mismatch": 0,
+      "unknown_observation_location": 0,
+      "observation_outside_local_radius": 0
+    },
+    "variables": {}
+  },
+  "activity_verification": {
+    "activities": {
+      "motor": {
+        "recommended_windows": 36,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 36,
+        "disruption_rate": null
+      },
+      "walking": {
+        "recommended_windows": 26,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 26,
+        "disruption_rate": null
+      },
+      "sport": {
+        "recommended_windows": 13,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 13,
+        "disruption_rate": null
+      },
+      "drying": {
+        "recommended_windows": 22,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 22,
+        "disruption_rate": null
+      },
+      "outdoor_event": {
+        "recommended_windows": 12,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 12,
+        "disruption_rate": null
+      },
+      "photography": {
+        "recommended_windows": 18,
+        "evaluated_windows": 0,
+        "disrupted_windows": 0,
+        "unknown_windows": 18,
+        "disruption_rate": null
+      }
+    },
+    "gust_verification": "Unavailable unless observed gust data is supplied; rates do not certify gust safety.",
+    "policy": "Only complete QC-passed local observation windows scored. Unknown is not counted as success."
+  }
+}

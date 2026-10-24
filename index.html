@@ -1,0 +1,123 @@
+<!doctype html><html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LANGIT Portal</title>
+<meta name="theme-color" content="#030712">
+<meta name="description" content="LANGIT Portal — Prakiraan cuaca premium untuk Indonesia">
+<link rel="stylesheet" href="assets/langit-6960d800e6d2.css">
+</head><body class="theme-noon">
+<div class="atmo">
+  <canvas id="atmo-canvas"></canvas>
+</div>
+<header class="nav-bar">
+  <a class="nav-brand" href="index.html">
+    <span class="nav-logo"></span>
+    <span><span class="nav-title">LANGIT</span><span class="nav-sub">Portal · LANGIT v65.2</span></span>
+  </a>
+  <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
+  <nav class="nav-links"><a class="nav-link active" aria-current="page" href="index.html">Lokasi</a><a class="nav-link " href="langit_portal_map.html">Peta</a></nav>
+</header>
+<main class="page">
+<section class="hero">
+    <div class="hero-glow hero-glow-1"></div>
+    <div class="hero-glow hero-glow-2"></div>
+    <div class="hero-glow hero-glow-3"></div>
+    <div class="container">
+      <div class="hero-label reveal">
+        <span class="hero-dot"></span>
+        <span>Sabtu, 24 Oktober 2026</span>
+      </div>
+      <h1 class="hero-title reveal reveal-delay-1">LANGIT</h1>
+      <p class="hero-subtitle reveal reveal-delay-2">Prakiraan cuaca untuk wilayah Institut Teknologi Bandung.</p>
+      
+    </div>
+    <div class="hero-scroll">
+      <span>Scroll</span>
+      <div class="hero-scroll-line"></div>
+    </div>
+  </section><div class="container"><div class="notice reveal">Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat.</div></div><section class="section"><div class="container">
+    <div class="section-header reveal">
+      <div class="section-overline">Lokasi</div>
+      <h2 class="section-title">Pilih lokasi</h2>
+      <p class="section-desc">Diurutkan dari yang paling perlu dipantau.</p>
+    </div>
+    <div class="location-grid"><a class="location-card reveal reveal-delay-1" href="dago/langit_app.html" style="--accent-color:#ffd052;--accent-glow:rgba(245,158,11,0.08)">
+        <span class="status-badge status-watch">Perlu diperhatikan</span>
+        <h3 class="location-name">Dago, Bandung</h3>
+        <p class="location-desc">Sabtu, 24 Oktober 2026. Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul 21:00 WIB.</p>
+        <div class="location-stats">
+          <div class="location-stat"><div class="location-stat-value">46%</div><div class="location-stat-label">Hujan</div></div>
+          <div class="location-stat"><div class="location-stat-value">21:00</div><div class="location-stat-label">Puncak</div></div>
+          <div class="location-stat"><div class="location-stat-value">46</div><div class="location-stat-label">Risiko</div></div>
+        </div>
+        <div class="location-actions">
+          <span class="btn btn-primary">Buka</span>
+          <span class="btn" onclick="event.preventDefault();window.location.href='dago/langit_3day.html'">3 hari</span>
+          <span class="btn" onclick="event.preventDefault();window.location.href='dago/langit_activity.html'">Aktivitas</span>
+        </div>
+      </a><a class="location-card reveal reveal-delay-2" href="jatinangor/langit_app.html" style="--accent-color:#35e8a4;--accent-glow:rgba(16,185,129,0.08)">
+        <span class="status-badge status-safe">Risiko lebih rendah</span>
+        <h3 class="location-name">Jatinangor, Sumedang</h3>
+        <p class="location-desc">Sabtu, 24 Oktober 2026. Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: 20:00–23:00.</p>
+        <div class="location-stats">
+          <div class="location-stat"><div class="location-stat-value">11%</div><div class="location-stat-label">Hujan</div></div>
+          <div class="location-stat"><div class="location-stat-value">23:00</div><div class="location-stat-label">Puncak</div></div>
+          <div class="location-stat"><div class="location-stat-value">23</div><div class="location-stat-label">Risiko</div></div>
+        </div>
+        <div class="location-actions">
+          <span class="btn btn-primary">Buka</span>
+          <span class="btn" onclick="event.preventDefault();window.location.href='jatinangor/langit_3day.html'">3 hari</span>
+          <span class="btn" onclick="event.preventDefault();window.location.href='jatinangor/langit_activity.html'">Aktivitas</span>
+        </div>
+      </a><a class="location-card reveal reveal-delay-3" href="arjawinangun/langit_app.html" style="--accent-color:#35e8a4;--accent-glow:rgba(16,185,129,0.08)">
+        <span class="status-badge status-safe">Risiko lebih rendah</span>
+        <h3 class="location-name">Arjawinangun, Cirebon</h3>
+        <p class="location-desc">Sabtu, 24 Oktober 2026. Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: 20:00–23:00.</p>
+        <div class="location-stats">
+          <div class="location-stat"><div class="location-stat-value">1%</div><div class="location-stat-label">Hujan</div></div>
+          <div class="location-stat"><div class="location-stat-value">20:00</div><div class="location-stat-label">Puncak</div></div>
+          <div class="location-stat"><div class="location-stat-value">15</div><div class="location-stat-label">Risiko</div></div>
+        </div>
+        <div class="location-actions">
+          <span class="btn btn-primary">Buka</span>
+          <span class="btn" onclick="event.preventDefault();window.location.href='arjawinangun/langit_3day.html'">3 hari</span>
+          <span class="btn" onclick="event.preventDefault();window.location.href='arjawinangun/langit_activity.html'">Aktivitas</span>
+        </div>
+      </a></div>
+  </div></section><section class="section-compact"><div class="container">
+    <div class="section-header reveal">
+      <div class="section-overline">Peta</div>
+      <h2 class="section-title">Peta lokasi</h2>
+      <p class="section-desc">Warna mengikuti risiko hari ini.</p>
+    </div>
+    <div class="map-wrapper reveal">
+      <iframe class="map-frame" src="langit_portal_map.html" loading="lazy"></iframe>
+      <div class="map-actions">
+        <a class="btn btn-primary" href="langit_portal_map.html">Buka peta penuh</a>
+        <a class="btn" href="langit_all_locations.geojson">GeoJSON</a>
+      </div>
+    </div>
+  </div></section><section class="section-compact"><div class="container">
+    <div class="glass glass-static reveal">
+      <div class="section-header">
+        <div class="section-overline">Data</div>
+        <h2 style="font-size:24px;font-weight:800">Data publik</h2>
+        <p style="font-size:14px;color:var(--mist);margin-top:4px">Untuk arsip dan integrasi.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+        <a class="btn" href="forecast_all_locations.csv">Forecast CSV</a>
+        <a class="btn" href="source_status_all_locations.csv">Sumber CSV</a>
+        <a class="btn" href="langit_portal_manifest.json">Manifest</a>
+      </div>
+    </div>
+  </div></section>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-brand">LANGIT</div>
+    <div class="footer-version">LANGIT v65.2 · Diperbarui 24 Oktober, 20:52 WIB</div>
+    
+  </div>
+</footer>
+</main>
+<script>window.LANGIT_CONFIG = {"location_name": "Portal", "location_slug": "portal", "latitude": null, "longitude": null, "altitude": 832, "risk_class": "safe", "condition": "Berawan", "is_portal": true};</script>
+<script defer src="assets/langit-b0c0554b7d74.js"></script>
+</body></html>
