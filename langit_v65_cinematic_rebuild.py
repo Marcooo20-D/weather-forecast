@@ -17,6 +17,7 @@ import argparse
 import csv
 import datetime as dt
 import html
+import hashlib
 import json
 import math
 import re
@@ -26,7 +27,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 BRAND = "LANGIT"
-VERSION = "LANGIT v65.1"
+VERSION = "LANGIT v65.2"
 TZ_NAME = "Asia/Jakarta"
 DISCLAIMER = "Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat."
 ID_BOUNDS = [[-11.25, 94.0], [6.45, 141.25]]
@@ -74,22 +75,23 @@ def clamp(value: Any, lo: float = 0, hi: float = 100, default: float = 0) -> flo
 
 
 def prob(value: Any, default: Optional[float] = None) -> Optional[float]:
+    """Public schemas use percent (0..100), including values below one percent."""
     x = num(value, default)
     if x is None:
         return default
-    if 0 < x < 1:
-        x *= 100.0
     return clamp(x)
 
 
 def hour(value: Any, default: str = "00:00") -> str:
     raw = text(value, default)
-    m = re.search(r"(\d{1,2})(?::(\d{2}))?", raw)
+    # An ISO date starts with a year; never interpret its first digits as hours.
+    m = re.search(r"(?:T|\s)(\d{1,2}):(\d{2})(?::\d{2})?", raw) if parse_date(raw) else None
+    if not m:
+        m = re.fullmatch(r"(\d{1,2})(?::(\d{2}))?(?::\d{2})?(?:\s*WIB)?", raw)
     if not m:
         return default
-    h = max(0, min(23, int(m.group(1))))
-    minute = (m.group(2) or "00")[:2]
-    return f"{h:02d}:{minute}"
+    h, minute = int(m.group(1)), int(m.group(2) or 0)
+    return f"{h:02d}:{minute:02d}" if 0 <= h <= 23 and 0 <= minute <= 59 else default
 
 
 def hour_int(value: Any) -> int:
@@ -135,13 +137,23 @@ def fmt_date(d: Optional[dt.date], long: bool = True) -> str:
     return f"{d.day} {MONTH_ID[d.month-1]}"
 
 
+def parse_timestamp(value: Any) -> Optional[dt.datetime]:
+    raw = text(value)
+    try:
+        stamp = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if stamp.tzinfo is None:
+            stamp = stamp.replace(tzinfo=ZoneInfo(TZ_NAME))
+        return stamp.astimezone(ZoneInfo(TZ_NAME))
+    except ValueError:
+        return None
+
+
 def fmt_update(value: Any = None) -> str:
     raw = text(value)
-    d = parse_date(raw)
-    if d:
-        h = hour(raw, "00:00")
-        return f"Diperbarui {fmt_date(d, False)}, {h} WIB"
-    return local_now().strftime("Diperbarui %d/%m/%Y, %H:%M WIB")
+    stamp = parse_timestamp(raw)
+    if stamp:
+        return f"Diperbarui {fmt_date(stamp.date(), False)}, {stamp:%H:%M} WIB"
+    return raw if raw.startswith("Diperbarui ") else "Waktu pembaruan belum tersedia"
 
 
 def pct(value: Any) -> str:
@@ -168,7 +180,7 @@ def read_json(path: Path, default: Any = None) -> Any:
 
 def write_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
 
 
 def read_csv(path: Path) -> List[Dict[str, Any]]:
@@ -294,7 +306,7 @@ def risk_class(score: Any, valid: bool = True) -> str:
 
 
 def risk_label(cls: str) -> str:
-    return {"safe": "Aman", "watch": "Perlu diperhatikan", "rain": "Waspada", "danger": "Berpotensi signifikan", "limited": "Data terbatas"}.get(cls, "Perlu diperhatikan")
+    return {"safe": "Risiko lebih rendah", "watch": "Perlu diperhatikan", "rain": "Waspada", "danger": "Berpotensi signifikan", "limited": "Data terbatas"}.get(cls, "Perlu diperhatikan")
 
 
 def risk_color(cls: str) -> str:
@@ -323,20 +335,23 @@ def condition_label(hh: str, rain: Any, temp: Any, rh: Any, heat: Any, valid: bo
 
 def row_to_hour(row: Dict[str, Any], fallback_date: Optional[dt.date] = None, fallback_relative: str = "Hari ini") -> Dict[str, Any]:
     hh = hour(pick(row, "hour", "jam", "time", "local_time", "target_hour", "target_time", "datetime", "timestamp", default="00:00"))
-    d = parse_date(pick(row, "date", "tanggal", "target_date", "valid_date", "forecast_date", "datetime", "timestamp")) or fallback_date
-    temp = num(pick(row, "temp_c", "temperature_c", "temperature_2m_c", "avg_temperature_c", "t2m", "suhu"))
-    rh = num(pick(row, "humidity_pct", "relative_humidity", "relative_humidity_2m", "rh", "kelembapan"))
-    heat = num(pick(row, "heat_index_c", "apparent_temperature_c", "feels_like_c", "terasa"), temp)
-    rain = prob(pick(row, "rain_probability", "rain_probability_raw", "precip_probability", "precipitation_probability", "pop", "hujan"))
-    wind = num(pick(row, "wind_kmh", "wind_speed_kmh", "wind_speed_10m_kmh", "angin"))
-    base_score = clamp(pick(row, "risk_score", "score", "risk", default=0), default=0)
+    d = parse_date(pick(row, "date", "date_iso", "tanggal", "target_date", "valid_date", "forecast_date", "datetime", "timestamp")) or fallback_date
+    temp = num(pick(row, "temp_c", "temp_p50", "temperature_c", "temperature_2m_c", "avg_temperature_c", "t2m", "suhu"))
+    rh = num(pick(row, "humidity_pct", "rh_p50", "rh_pct", "relative_humidity", "relative_humidity_2m", "rh", "kelembapan"))
+    heat = num(pick(row, "heat_index_c", "heat_index_p50", "apparent_temperature_c", "feels_like_c", "terasa"), temp)
+    rain = prob(pick(row, "rain_probability", "prob_rain", "rain_probability_raw", "precip_probability", "precipitation_probability", "pop", "hujan"))
+    wind = num(pick(row, "wind_kmh", "wind_p50", "wind_speed_kmh", "wind_speed_10m_kmh", "angin"))
+    base_score = clamp(pick(row, "risk_score", "rain_threat_score", "score", "risk", default=0), default=0)
     score = max(base_score, rain or 0, heat_risk(heat, temp, rh), wind_risk(wind))
-    valid = any(x is not None for x in [temp, rh, heat, rain, wind])
+    valid = all(x is not None for x in [temp, rain, wind]) and text(row.get("data_quality")) not in {"unavailable", "invalid", "stale", "limited"}
     cls = text(pick(row, "risk_class", "risk_level", default="")).lower()
     cls = cls if cls in {"safe", "watch", "rain", "danger", "limited"} else risk_class(score, valid)
-    if not valid:
+    if not valid or row.get("valid") is False:
+        valid = False
         cls = "limited"
-    cond = text(pick(row, "condition", "weather", "cuaca", "summary", default=""))
+    cond = text(pick(row, "condition", "dominant_category", "weather", "cuaca", "summary", default=""))
+    if not valid:
+        cond = "Data terbatas"
     if not cond or cond.lower() in {"aman", "dipantau", "safe", "watch"}:
         cond = condition_label(hh, rain, temp, rh, heat, valid)
         w_val = num(wind, 0)
@@ -352,6 +367,9 @@ def row_to_hour(row: Dict[str, Any], fallback_date: Optional[dt.date] = None, fa
         "risk_class": cls, "risk_label": risk_label(cls), "condition": cond, "valid": valid,
         "wind_dir": num(pick(row, "wind_direction_deg", "wind_direction", "wind_dir", "arah_angin")),
         "cloud_pct": num(pick(row, "cloud_cover_pct", "cloud_cover", "cloud_p50", "cloud_pct", "awan")),
+        "data_quality": row.get("data_quality"),
+        "probability_basis": row.get("probability_basis"),
+        "calibration_status": row.get("calibration_status"),
     }
 
 
@@ -362,13 +380,13 @@ def default_hours(base_date: dt.date, relative: str) -> List[Dict[str, Any]]:
 def best_windows(hours: List[Dict[str, Any]]) -> List[str]:
     good = sorted({hour_int(x["hour"]) for x in hours if x.get("valid") and x.get("risk_class") == "safe"})
     if not good:
-        good = sorted({hour_int(x["hour"]) for x in hours if x.get("risk_class") in {"safe", "watch"}})
+        good = sorted({hour_int(x["hour"]) for x in hours if x.get("valid") and x.get("risk_class") in {"safe", "watch"}})
     if not good:
         return []
     blocks: List[Tuple[int, int]] = []
     a = b = good[0]
     for x in good[1:]:
-        if x <= b + 3:
+        if x == b + 1:
             b = x
         else:
             blocks.append((a, b))
@@ -602,164 +620,71 @@ def split_rows_into_days(rows: List[Dict[str, Any]], base_date: dt.date) -> List
 def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
     raw_api: Dict[str, Any] = {}
     for name in ["langit_api_v1.json", "anemos_api_v1.json", "api.json"]:
-        file_path = safe_find_file(directory, name)
-        if file_path.exists():
-            raw_api = read_json(file_path, {}) or {}
-            if isinstance(raw_api, dict):
-                break
-    loc_name = text(raw_api.get("location_name"), text(meta.get("location_name"), directory.name.replace("-", " ").title()))
+        candidate = read_json(safe_find_file(directory, name), {})
+        if isinstance(candidate, dict) and candidate:
+            raw_api = candidate
+            break
+    loc_name = text(raw_api.get("location_name"), text(meta.get("location_name"), directory.name.title()))
     slug = text(raw_api.get("location_slug"), text(meta.get("slug"), directory.name))
     lat = num(raw_api.get("latitude"), num(meta.get("latitude"), num(meta.get("lat"))))
     lon = num(raw_api.get("longitude"), num(meta.get("longitude"), num(meta.get("lon"))))
     if lat is None or lon is None:
-        gj_path = safe_find_file(directory, "langit_location.geojson")
-        gj = read_json(gj_path, {}) or {}
-        feats = gj.get("features") if isinstance(gj, dict) else []
-        if feats:
-            coords = (feats[0].get("geometry") or {}).get("coordinates") or []
-            if len(coords) >= 2:
-                lon = num(coords[0], lon)
-                lat = num(coords[1], lat)
-    rows: List[Dict[str, Any]] = []
-    base_date = local_now().date()
-    d0 = parse_date(raw_api.get("target_date") or raw_api.get("date") or raw_api.get("generated_at") or raw_api.get("updated_at"))
-    if d0:
-        base_date = d0
-
-    ensembled_rows = []
-    has_ensembled = False
-    latest_generated_at = None  # Track latest timestamp from sentinel_x files
-
-    for i in range(3):
-        date_obj = base_date + dt.timedelta(days=i)
-        stamp = date_obj.strftime("%Y%m%d")
-
-        # 1. Try JSON first
-        json_path = safe_find_file(directory, f"sentinel_x_{stamp}.json")
-        if json_path.exists():
-            payload = read_json(json_path, {}) or {}
-            # Track latest generated_at from sentinel_x files (nested in 'daily' object)
-            if not latest_generated_at:
-                latest_generated_at = payload.get("daily", {}).get("generated_at") or payload.get("generated_at")
-            hourly_data = payload.get("hourly")
-            if isinstance(hourly_data, list) and hourly_data:
-                has_ensembled = True
-                for r in hourly_data:
-                    mapped = {
-                        "date": r.get("target_date") or date_obj.isoformat(),
-                        "hour": r.get("jam") or r.get("hour"),
-                        "temp_c": r.get("temp_p50") or r.get("temp_c"),
-                        "humidity_pct": r.get("rh_p50") or r.get("humidity_pct"),
-                        "heat_index_c": r.get("heat_index_p50") or r.get("heat_index_c"),
-                        "rain_probability": r.get("prob_rain") or r.get("rain_probability"),
-                        "wind_kmh": r.get("wind_p50") or r.get("wind_kmh"),
-                        "risk_score": r.get("rain_threat_score") or r.get("risk_score"),
-                        "condition": r.get("dominant_category") or r.get("condition"),
-                        "wind_direction_deg": r.get("wind_direction_deg"),
-                        "cloud_cover_pct": r.get("cloud_p50"),
-                    }
-                    ensembled_rows.append(mapped)
-                continue
-
-        # 2. Try CSV next
-        csv_path = safe_find_file(directory, f"sentinel_x_{stamp}.csv")
-        if csv_path.exists():
-            csv_data = read_csv(csv_path)
-            if csv_data:
-                has_ensembled = True
-                for r in csv_data:
-                    mapped = {
-                        "date": r.get("target_date") or date_obj.isoformat(),
-                        "hour": r.get("jam") or r.get("hour"),
-                        "temp_c": r.get("temp_p50") or r.get("temp_c"),
-                        "humidity_pct": r.get("rh_p50") or r.get("humidity_pct"),
-                        "heat_index_c": r.get("heat_index_p50") or r.get("heat_index_c"),
-                        "rain_probability": r.get("prob_rain") or r.get("rain_probability"),
-                        "wind_kmh": r.get("wind_p50") or r.get("wind_kmh"),
-                        "risk_score": r.get("rain_threat_score") or r.get("risk_score"),
-                        "condition": r.get("dominant_category") or r.get("condition"),
-                        "wind_direction_deg": r.get("wind_direction_deg"),
-                        "cloud_cover_pct": r.get("cloud_p50"),
-                    }
-                    ensembled_rows.append(mapped)
-                continue
-
-    if has_ensembled:
-        rows = ensembled_rows
-    else:
-        for fname in ["langit_hourly_intelligence.csv", "anemos_hourly_compact.csv", "anemos_risk_timeline.csv", "forecast.csv", "forecast_all_locations.csv"]:
-            rows = read_csv(safe_find_file(directory, fname))
-            if rows:
+        gj = read_json(safe_find_file(directory, "langit_location.geojson"), {}) or {}
+        for feat in gj.get("features", []):
+            if (feat.get("geometry") or {}).get("type") == "Point":
+                coords = feat["geometry"].get("coordinates") or []
+                if len(coords) == 2:
+                    lon, lat = num(coords[0], lon), num(coords[1], lat)
+                    break
+    api_rows = rows_from_api(raw_api)
+    api_dates = [parse_date(pick(r, "date", "date_iso", "target_date")) for r in api_rows]
+    base_date = (parse_date(raw_api.get("target_date")) or
+                 min((d for d in api_dates if d), default=None) or local_now().date())
+    fallback_rows = []
+    # Prefer structured API over compact CSV, which may omit missing values.
+    if not api_rows:
+        for name in ["langit_hourly_intelligence.csv", "anemos_hourly_compact.csv", "forecast.csv"]:
+            fallback_rows = read_csv(safe_find_file(directory, name))
+            if fallback_rows:
                 break
-        if not rows and raw_api:
-            rows = rows_from_api(raw_api)
-
-    chunks = split_rows_into_days(rows, base_date)
-    relatives = ["Hari ini", "Besok", "Lusa"]
+    generated = raw_api.get("generated_at_iso") or raw_api.get("issued_at") or raw_api.get("generated_at") or raw_api.get("updated_at")
     days = []
     for i in range(3):
         date_value = base_date + dt.timedelta(days=i)
-        chunk = chunks[i] if i < len(chunks) else []
-        parsed = [row_to_hour(r, date_value, relatives[i]) for r in chunk] if chunk else default_hours(date_value, relatives[i])
-        days.append(summarize_day(relatives[i], date_value, parsed))
-    
-    # Enrich days with cloud cover and wind direction from sentinel_x.csv
-    sentinel_map = {}
-    for fname in ["sentinel_x.csv", "sentinel_x_all_locations.csv"]:
-        spath = safe_find_file(directory, fname)
-        if spath.exists():
-            for sr in read_csv(spath):
-                t_date = text(sr.get("target_date"))
-                t_jam = hour(sr.get("jam"))
-                if t_date and t_jam:
-                    sentinel_map[(t_date, t_jam)] = (
-                        num(sr.get("cloud_p50")),
-                        num(sr.get("wind_direction_deg"))
-                    )
-            break
-            
-    for d in days:
-        date_iso = text(d.get("date_iso"))
-        for h in d.get("hours", []):
-            h_time = h.get("hour")
-            sentinel_data = sentinel_map.get((date_iso, h_time))
-            
-            # Cloud cover enrichment
-            cloud = sentinel_data[0] if sentinel_data else None
-            if cloud is None:
-                cloud = h.get("cloud_pct")
-            if cloud is None:
-                cond = text(h.get("condition"), "").lower()
-                if any(k in cond for k in ["hujan lebat", "danger", "ekstrem"]):
-                     cloud = 95.0
-                elif any(k in cond for k in ["hujan", "rain"]):
-                     cloud = 85.0
-                elif any(k in cond for k in ["berawan", "cloudy", "overcast", "mendung"]):
-                     cloud = 70.0
-                elif any(k in cond for k in ["cerah berawan", "partly cloudy", "partlycloudy"]):
-                     cloud = 40.0
-                else:
-                     cloud = 15.0
-            h["cloud_pct"] = cloud
-
-            # Wind direction enrichment
-            wind_dir = sentinel_data[1] if sentinel_data else None
-            if wind_dir is None:
-                wind_dir = h.get("wind_dir")
-            if wind_dir is None:
-                wind_dir = 0.0
-            h["wind_dir"] = wind_dir
-
-    sources: List[Dict[str, Any]] = []
-    for fname in ["source_status.csv", "source_status_all_locations.csv", "langit_source_status.csv"]:
-        sources = read_csv(safe_find_file(directory, fname))
+        stamp = date_value.strftime("%Y%m%d")
+        payload = read_json(safe_find_file(directory, f"sentinel_x_{stamp}.json"), {}) or {}
+        rows = payload.get("hourly") or []
+        issued = payload.get("issued_at") or (payload.get("daily") or {}).get("issued_at") or (payload.get("daily") or {}).get("generated_at")
+        if not rows:
+            rows = read_csv(safe_find_file(directory, f"sentinel_x_{stamp}.csv"))
+        if not rows:
+            rows = [r for r in api_rows or fallback_rows
+                    if parse_date(pick(r, "date", "date_iso", "target_date", "datetime", "timestamp")) == date_value]
+        # Index by date, never position: a missing middle day must stay missing.
+        delta = (date_value - local_now().date()).days
+        relative = {0: "Hari ini", 1: "Besok", 2: "Lusa", -1: "Kemarin"}.get(delta, fmt_date(date_value, False))
+        parsed = {}
+        for row in rows:
+            item = row_to_hour(row, date_value, relative)
+            if item["date_iso"] == date_value.isoformat():
+                item["relative"] = relative
+                parsed[item["hour"]] = item
+        day = summarize_day(relative, date_value, list(parsed.values()))
+        day["issued_at"] = issued or generated
+        days.append(day)
+        if parse_timestamp(issued) and (not parse_timestamp(generated) or parse_timestamp(issued) > parse_timestamp(generated)):
+            generated = issued
+    sources = []
+    for name in ["source_status.csv", "source_status_all_locations.csv", "langit_source_status.csv"]:
+        sources = read_csv(safe_find_file(directory, name))
         if sources:
             break
+    today = next((d for d in days if d["date_iso"] == local_now().date().isoformat()), days[0])
     return {
-        "brand": BRAND, "version": VERSION,
-        "generated_at": fmt_update(latest_generated_at or raw_api.get("generated_at") or raw_api.get("updated_at")),
+        "brand": BRAND, "version": VERSION, "generated_at": fmt_update(generated),
+        "generated_at_iso": generated if text(generated) and not text(generated).startswith("Diperbarui ") else None,
         "location_name": loc_name, "location_slug": slug, "latitude": lat, "longitude": lon,
-        "today": days[0], "days": days, "sources": sources, "raw_version": raw_api.get("version"),
+        "today": today, "days": days, "sources": sources, "raw_version": raw_api.get("version"),
     }
 
 
@@ -2488,7 +2413,7 @@ JS_V65 = r'''
       const targetVal = parseFloat(el.dataset.animateValue);
       const suffix = el.dataset.animateSuffix || '';
       const decimals = parseInt(el.dataset.animateDecimals || '0');
-      if (isNaN(targetVal)) return;
+      if (!Number.isFinite(targetVal) || el.textContent.trim().startsWith('—')) return;
       
       const currentVal = parseFloat(el.textContent) || 0;
       animateValue(el, currentVal, targetVal, 800, suffix, decimals);
@@ -2933,7 +2858,7 @@ JS_V65 = r'''
       // Notify map frames to update layout when tabs change
       document.querySelectorAll('.map-frame').forEach(iframe => {
         if (iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ type: 'invalidateSize' }, '*');
+          iframe.contentWindow.postMessage({ type: 'invalidateSize' }, window.location.origin);
         }
       });
       
@@ -2966,7 +2891,7 @@ JS_V65 = r'''
       // Sync the embedded map iframe layer
       const mapFrame = document.querySelector('.map-frame');
       if (mapFrame && mapFrame.contentWindow) {
-        mapFrame.contentWindow.postMessage({ type: 'switchLayer', layer: state.activeLayer }, '*');
+        mapFrame.contentWindow.postMessage({ type: 'switchLayer', layer: state.activeLayer }, window.location.origin);
       }
     });
   });
@@ -3271,7 +3196,7 @@ JS_V65 = r'''
       // Notify embedded map iframe to invalidate size
       const mapFrame = document.querySelector('.map-frame');
       if (mapFrame && mapFrame.contentWindow) {
-        mapFrame.contentWindow.postMessage({ type: 'invalidateSize' }, '*');
+        mapFrame.contentWindow.postMessage({ type: 'invalidateSize' }, window.location.origin);
       }
     }, 300);
   });
@@ -3284,6 +3209,17 @@ JS_V65 = r'''
 # ---------------------------------------------------------------------------
 # v65 HTML Components
 # ---------------------------------------------------------------------------
+
+def asset_name(kind: str) -> str:
+    source = CSS_V65 if kind == "css" else JS_V65
+    digest = hashlib.sha256(source.encode("utf-8")).hexdigest()[:12]
+    return f"langit-{digest}.{kind}"
+
+
+def inline_json(data: Any) -> str:
+    """Keep provider text from terminating a script element."""
+    return json.dumps(data, ensure_ascii=False, allow_nan=False).replace("<", "\\u003c").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029")
+
 
 def v65_nav(api: Dict[str, Any], active: str, root: bool = False) -> str:
     if root:
@@ -3340,14 +3276,15 @@ def v65_document(api: Dict[str, Any], active: str, title: str, body: str, root: 
         "condition": api.get("today", {}).get("condition", "Berawan") if api.get("today") else "Berawan",
         "is_portal": root
     }
-    config_js = f"window.LANGIT_CONFIG = {json.dumps(config, ensure_ascii=False)};"
+    config_js = f"window.LANGIT_CONFIG = {inline_json(config)};"
+    asset_dir = "assets/" if root else "../assets/"
 
     return f'''<!doctype html><html lang="id"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(title)}</title>
 <meta name="theme-color" content="#030712">
 <meta name="description" content="{esc(title)} — Prakiraan cuaca premium untuk Indonesia">
-<style>{CSS_V65}</style>
+<link rel="stylesheet" href="{asset_dir}{asset_name('css')}">
 </head><body class="theme-noon">
 <div class="atmo">
   <canvas id="atmo-canvas"></canvas>
@@ -3364,7 +3301,7 @@ def v65_document(api: Dict[str, Any], active: str, title: str, body: str, root: 
 </footer>
 </main>
 <script>{config_js}</script>
-<script>{JS_V65}</script>
+<script defer src="{asset_dir}{asset_name('js')}"></script>
 </body></html>'''
 
 
@@ -3440,7 +3377,7 @@ def v65_decision(api: Dict[str, Any], day: Dict[str, Any]) -> str:
 
 def v65_timeline(hours: List[Dict[str, Any]], title: str = "Timeline prakiraan", note: str = "") -> str:
     import json
-    data_str = esc(json.dumps(hours[:12], ensure_ascii=False))
+    data_str = esc(json.dumps(hours, ensure_ascii=False))
     return f'''<section class="section-compact"><div class="container">
     <div class="chart-wrapper reveal">
       <div class="section-header">
@@ -3649,8 +3586,10 @@ def v65_day_cards(days: List[Dict[str, Any]]) -> str:
 # ---------------------------------------------------------------------------
 
 def v65_geo_for_api(api: Dict[str, Any]) -> Dict[str, Any]:
-    lat = num(api.get("latitude"), -6.2)
-    lon = num(api.get("longitude"), 106.8)
+    lat = num(api.get("latitude"))
+    lon = num(api.get("longitude"))
+    if lat is None or lon is None or not -90 <= lat <= 90 or not -180 <= lon <= 180:
+        return {"type": "FeatureCollection", "features": []}
     features = []
     for day in api.get("days", [])[:3]:
         for h in day.get("hours", []):
@@ -3665,14 +3604,14 @@ def v65_geo_for_api(api: Dict[str, Any]) -> Dict[str, Any]:
                     "risk_class": h.get("risk_class"), "risk_label": h.get("risk_label"),
                     "condition": h.get("condition"), "temp_c": h.get("temp_c"),
                     "humidity_pct": h.get("humidity_pct"), "heat_index_c": h.get("heat_index_c"),
-                    "wind_kmh": num(h.get("wind_kmh"), 0.0),
-                    "wind_dir": num(h.get("wind_dir"), 0.0),
-                    "cloud_pct": num(h.get("cloud_pct"), 0.0),
+                    "wind_kmh": num(h.get("wind_kmh")),
+                    "wind_dir": num(h.get("wind_dir")),
+                    "cloud_pct": num(h.get("cloud_pct")),
                 },
             })
     return {"type": "FeatureCollection", "features": features}
 def v65_map_page(title: str, geojson: Dict[str, Any], back_href: str) -> str:
-    data = json.dumps(geojson, ensure_ascii=False)
+    data = inline_json(geojson)
     css = r'''html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
 #particle-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800}
 .hud{position:absolute;z-index:1000;left:24px;top:24px;width:min(340px,calc(100% - 48px));padding:24px;border-radius:24px;background:rgba(7,14,30,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);box-shadow:0 24px 80px rgba(0,0,0,0.5),inset 0 1px 1px rgba(255,255,255,0.1);animation:slideIn 0.6s cubic-bezier(0.16,1,0.3,1) both}
@@ -3793,7 +3732,8 @@ function makeSparkline(locationSlug, dateIso, activeHour) {
     const hb = (b.properties && b.properties.hour) || '';
     return ha.localeCompare(hb);
   });
-  const temps = locFeatures.map(f => f.properties.temp_c || 20);
+  const temps = locFeatures.map(f => f.properties.temp_c).filter(t => t != null);
+  if (temps.length !== locFeatures.length) return "";
   const minTemp = Math.min(...temps);
   const maxTemp = Math.max(...temps);
   const range = maxTemp - minTemp || 1;
@@ -3825,6 +3765,8 @@ function makeSparkline(locationSlug, dateIso, activeHour) {
 
 function ptxt(p) {
   if (!p) return '';
+  const escapeText = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+  p = {...p, location_name:escapeText(p.location_name), date:escapeText(p.date), hour:escapeText(p.hour), risk_label:escapeText(p.risk_label), condition:escapeText(p.condition)};
   const sparklineHtml = makeSparkline(p.slug, p.date_iso, p.hour);
   const riskColor = colors[p.risk_class || 'limited'];
   return `
@@ -3934,6 +3876,12 @@ function drawForTime(dateIso, activeHour) {
     const p = f.properties;
     const coords = f.geometry.coordinates;
     const latlng = [coords[1], coords[0]];
+    const field = {temp:'temp_c', rain:'rain_probability', wind:'wind_kmh', humidity:'humidity_pct', cloud:'cloud_pct'}[state.activeLayer];
+    if (field && p[field] == null) {
+      L.circleMarker(latlng, {radius:8, color:colors.limited, fillOpacity:0.3})
+        .bindPopup(ptxt(p)).addTo(layer);
+      return;
+    }
 
     if (state.activeLayer === 'risiko') {
       const cls = p.risk_class || 'limited';
@@ -3955,7 +3903,7 @@ function drawForTime(dateIso, activeHour) {
       }).bindPopup(ptxt(p)).addTo(layer);
 
     } else if (state.activeLayer === 'temp') {
-      const temp = p.temp_c || 24;
+      const temp = p.temp_c;
       const color = getTempColor(temp);
       const iconHtml = `
         <div class="temp-badge" style="background:${color}; box-shadow:0 0 15px ${color}80">
@@ -3972,7 +3920,7 @@ function drawForTime(dateIso, activeHour) {
       }).bindPopup(ptxt(p)).addTo(layer);
 
     } else if (state.activeLayer === 'rain') {
-      const rain = p.rain_probability || 0;
+      const rain = p.rain_probability;
       const radarColor = rain > 50 ? '#ef4444' : (rain > 20 ? '#f59e0b' : '#3b82f6');
       const iconHtml = `
         <div class="radar-marker" style="--radar-color:${radarColor}">
@@ -3990,12 +3938,12 @@ function drawForTime(dateIso, activeHour) {
       }).bindPopup(ptxt(p)).addTo(layer);
 
     } else if (state.activeLayer === 'wind') {
-      const wind = p.wind_kmh || 0;
+      const wind = p.wind_kmh;
       const color = getWindColor(wind);
-      const rotation = (coords[0] * 33 + coords[1] * 77) % 360;
+      const rotation = p.wind_dir == null ? null : (p.wind_dir + 90) % 360;
       const iconHtml = `
         <div class="wind-badge" style="background:${color}; box-shadow:0 0 15px ${color}80; display:flex; align-items:center; gap:4px; padding:4px 8px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); color:#fff; font-family:'Outfit',sans-serif; font-size:11px; font-weight:800; white-space:nowrap;">
-          <span style="display:inline-block; transform:rotate(${rotation}deg);">➔</span>
+          ${rotation == null ? "" : `<span title="Arah aliran angin" style="display:inline-block; transform:rotate(${rotation}deg);">➔</span>`}
           ${wind.toFixed(1)} km/jam
         </div>
       `;
@@ -4009,7 +3957,7 @@ function drawForTime(dateIso, activeHour) {
       }).bindPopup(ptxt(p)).addTo(layer);
 
     } else if (state.activeLayer === 'humidity') {
-      const hum = p.humidity_pct || 70;
+      const hum = p.humidity_pct;
       const color = getHumidityColor(hum);
       const size = 15 + hum * 0.15;
       const iconHtml = `
@@ -4027,7 +3975,7 @@ function drawForTime(dateIso, activeHour) {
       }).bindPopup(ptxt(p)).addTo(layer);
 
     } else if (state.activeLayer === 'cloud') {
-      const cld = p.cloud_pct || 40;
+      const cld = p.cloud_pct;
       const color = getCloudColor(cld);
       const opacity = 0.2 + (cld / 150);
       const iconHtml = `
@@ -4048,6 +3996,7 @@ function drawForTime(dateIso, activeHour) {
 }
 
 function switchLayer(layerName) {
+  if (!['risiko', 'temp', 'rain', 'wind', 'humidity', 'cloud'].includes(layerName)) return;
   state.activeLayer = layerName;
   document.querySelectorAll('.param-tab').forEach(tab => {
     if (tab.getAttribute('data-layer') === layerName) {
@@ -4197,6 +4146,8 @@ try {
 
 // Sync with postMessage from parent dashboard window
 window.addEventListener('message', (e) => {
+  if (e.origin !== window.location.origin || e.source !== window.parent) return;
+  if (e.data && e.data.type === 'invalidateSize' && typeof map !== 'undefined') map.invalidateSize();
   if (e.data && e.data.type === 'switchLayer') {
     switchLayer(e.data.layer);
   }
@@ -4361,7 +4312,7 @@ def v65_planner_page(api: Dict[str, Any]) -> str:
     day = api["today"]
     rows = day.get("hours") or []
     options = "".join(f'<option value="{esc(x.get("hour"))}">{esc(x.get("hour"))} · {esc(x.get("condition"))} · hujan {pct(x.get("rain_probability"))}</option>' for x in rows)
-    data = json.dumps(day, ensure_ascii=False)
+    data = inline_json(day)
     body = v65_hero(api, "Planner\ncuaca", f"{day['date_label']}. Cek jam terbaik untuk aktivitas.", day, show_metrics=False)
     body += v65_notice()
     body += f'''<section class="section-compact"><div class="container">
@@ -4393,7 +4344,14 @@ function decidePlanner(){{
   const act=document.getElementById('act').value;
   const val=document.getElementById('hh').value;
   const h=(plannerDay.hours||[]).find(x=>x.hour===val)||{{}};
-  const p=Math.round(Number(h.rain_probability||0));
+  if (!h.valid || h.rain_probability == null || h.risk_class === 'limited'){{
+    document.getElementById('plannerOut').textContent='Data belum cukup untuk rekomendasi.';
+    document.getElementById('plannerWhy').textContent='Periksa pembaruan prakiraan dan kondisi setempat.';
+    document.getElementById('plannerBadge').className='status-badge status-limited';
+    document.getElementById('plannerBadge').textContent='Data terbatas';
+    return;
+  }}
+  const p=Math.round(Number(h.rain_probability));
   const r=Math.round(Number(h.risk_score||0));
   const hi=Number(h.heat_index_c||h.temp_c||0);
   let msg='Bisa', cls='safe';
@@ -4418,11 +4376,11 @@ function decidePlanner(){{
 def v65_data_page(api: Dict[str, Any]) -> str:
     day = api["today"]
     sources = api.get("sources") or []
-    active = sum(1 for row in sources if text(pick(row, "active", "is_active", "used", "ok", default=""), "").lower() in {"yes", "true", "1", "aktif", "ok"})
-    total = len(sources) or 1
-    pct_val = round(active / total * 100)
+    active = sum(1 for row in sources if text(pick(row, "success", "active", "is_active", "used", "ok", default=""), "").lower() in {"yes", "true", "1", "aktif", "ok"})
+    total = len(sources)
+    pct_val = round(active / total * 100) if total else 0
     rows_html = "".join(
-        f'<tr><td>{esc(pick(r,"model","source","name",default="—"))}</td><td>{esc(pick(r,"provider","origin",default="—"))}</td><td>{esc(pick(r,"active","is_active","used","ok",default="—"))}</td><td>{esc(pick(r,"weight","score","quality",default="—"))}</td></tr>'
+        f'<tr><td>{esc(pick(r,"source_id","model","source","name",default="—"))}</td><td>{esc(pick(r,"provider","origin",default="—"))}</td><td>{esc(pick(r,"success","active","is_active","used","ok",default="—"))}</td><td>{esc(pick(r,"effective_base_weight","weight","score","quality",default="—"))}</td></tr>'
         for r in sources
     ) or '<tr><td colspan="4" style="color:var(--mist)">Belum ada tabel sumber.</td></tr>'
 
@@ -4457,6 +4415,7 @@ def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
     matched = int(num(pick(summary, "matched_cases", "pairs", "n", default=0), 0) or 0)
     target = int(num(pick(summary, "verification_min_cases", "target_cases", "minimum_cases", default=30), 30) or 30)
     pct_done = clamp(matched / max(1, target) * 100)
+    enough = summary.get("sample_status") == "ENOUGH_TO_EVALUATE" and matched >= target
 
     body = v65_hero(api, "Akurasi", f"{day['date_label']}. Skor muncul setelah data cukup.", day, show_metrics=False)
     body += v65_notice()
@@ -4464,14 +4423,14 @@ def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
     <div class="glass glass-static reveal">
       <div class="section-header">
         <div class="section-overline">Verifikasi</div>
-        <h2 style="font-size:24px;font-weight:800">{"Data akurasi cukup" if matched >= target else "Belum cukup data"}</h2>
+        <h2 style="font-size:24px;font-weight:800">{"Data cukup untuk evaluasi" if enough else "Belum cukup bukti verifikasi"}</h2>
         <p style="font-size:14px;color:var(--mist);margin-top:4px">{matched}/{target} pasangan</p>
       </div>
       <div class="trust-bar"><div class="trust-fill" data-width="{pct_done:.0f}%" style="width:0"></div></div>
     </div>
   </div></section>'''
 
-    if matched >= target:
+    if enough:
         # Format the values nicely
         mae_val = num(pick(summary, "temperature_mae_c", "mae_temp", "temperature_mae"))
         mae_str = f"{mae_val:.1f}°C" if mae_val is not None else "—"
@@ -4508,8 +4467,8 @@ def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
         for r in reliability:
             bin_label = r.get("probability_bin") or r.get("bin") or ""
             n_cases = r.get("n", 0)
-            mean_forecast = r.get("mean_forecast_probability") or r.get("mean_forecast_pct")
-            obs_freq = r.get("observed_rain_frequency") or r.get("observed_frequency_pct")
+            mean_forecast = pick(r, "mean_forecast_probability", "mean_forecast_pct")
+            obs_freq = pick(r, "observed_rain_frequency", "observed_frequency_pct")
             
             mean_str = f"{float(mean_forecast):.1f}%" if mean_forecast not in (None, "", "—") else "—"
             obs_str = f"{float(obs_freq):.1f}%" if obs_freq not in (None, "", "—") else "—"
@@ -4554,9 +4513,14 @@ def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
     return v65_document(api, "accuracy", f"LANGIT Akurasi — {api['location_name']}", body)
 
 
+def latest_issue(apis: List[Dict[str, Any]]) -> Optional[str]:
+    stamps = [stamp for api in apis if (stamp := parse_timestamp(api.get("generated_at_iso"))) is not None]
+    return max(stamps).isoformat() if stamps else None
+
+
 def v65_portal_page(apis: List[Dict[str, Any]], root: Path) -> str:
     today = apis[0]["today"] if apis else summarize_day("Hari ini", local_now().date(), [])
-    dummy = {"location_name": "Portal", "generated_at": fmt_update(), "today": today}
+    dummy = {"location_name": "Portal", "generated_at": fmt_update(latest_issue(apis)), "today": today}
 
     body = v65_hero(dummy, "LANGIT", "Prakiraan cuaca untuk wilayah Institut Teknologi Bandung.", today, show_metrics=False)
     body += v65_notice()
@@ -4657,12 +4621,14 @@ def v65_portal_geo(apis: List[Dict[str, Any]]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def verify(root: Path) -> int:
-    sanitize_existing_public_files(root)
     required_root = [root / "index.html", root / "langit_portal_map.html", root / "langit_portal_manifest.json"]
-    missing = [str(p) for p in required_root if not p.exists()]
-    for d in location_dirs(root):
+    missing = [str(p) for p in required_root if not p.is_file() or p.stat().st_size == 0]
+    dirs = location_dirs(root)
+    if not dirs:
+        missing.append("No location outputs")
+    for d in dirs:
         for name in ["langit_app.html", "langit_3day.html", "langit_activity.html", "langit_map_room.html", "keandalan_data.html", "akurasi_data.html", "langit_api_v1.json", "langit_location.geojson"]:
-            if not (d / name).exists():
+            if not (d / name).is_file() or (d / name).stat().st_size == 0:
                 missing.append(str(d / name))
     if missing:
         print("ERROR: file publik kurang:")
@@ -4691,6 +4657,8 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
     if not dirs:
         print("ERROR: tidak ada folder lokasi di outputs/. Jalankan forecast dulu.", file=sys.stderr)
         return 2
+    write_text(root / "assets" / asset_name("css"), CSS_V65)
+    write_text(root / "assets" / asset_name("js"), JS_V65)
     apis: List[Dict[str, Any]] = []
     for d in dirs:
         api = load_location_api(d, meta.get(d.name, {"slug": d.name}))
@@ -4709,13 +4677,24 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
         write_text(d / "sentinel_x_accuracy_public.html", acc_html)
         map_html = v65_map_page(f"LANGIT Map — {api['location_name']}", gj, "langit_app.html")
         write_text(d / "langit_map_room.html", map_html)
-        # Overwrite legacy pages/utilities
+        # Preserve bookmarked URLs while retiring stale duplicate dashboards.
         write_text(d / "langit_planner.html", v65_planner_page(api))
+        aliases = {
+            "langit_map.html": "langit_map_room.html", "anemos_map.html": "langit_map_room.html",
+            "anemos_3day.html": "langit_3day.html", "anemos_activity.html": "langit_activity.html",
+            "anemos_commute_advice.html": "langit_activity.html", "anemos_laundry_advice.html": "langit_activity.html",
+            "anemos_app.html": "langit_app.html", "anemos_today.html": "langit_app.html",
+            "anemos_public_landing.html": "langit_app.html", "langit_public_landing.html": "langit_app.html",
+            "command_center_sentinel_x.html": "langit_app.html", "sentinel_x_report.html": "langit_app.html",
+            "langit_planer.html": "langit_planner.html", "langit_model_court.html": "keandalan_data.html",
+        }
+        for old_name, target in aliases.items():
+            write_text(d / old_name, f"<!doctype html><html lang='id'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><meta http-equiv='refresh' content='0;url={target}'><link rel='canonical' href='{target}'><title>LANGIT</title></head><body><a href='{target}'>Buka halaman LANGIT terbaru</a></body></html>")
         write_text(d / "langit_whatsapp_brief.txt", f"LANGIT — {api['location_name']}\n{api['today']['date_label']}\n{decision_sentence(api['location_name'], api['today'], short=True)}\n")
 
     pgeo = v65_portal_geo(apis)
     write_json(root / "langit_all_locations.geojson", pgeo)
-    write_json(root / "langit_portal_manifest.json", {"brand": BRAND, "version": VERSION, "generated_at": fmt_update(), "public_base_url": public_base_url, "locations": [{"slug": a["location_slug"], "name": a["location_name"]} for a in apis]})
+    write_json(root / "langit_portal_manifest.json", {"brand": BRAND, "version": VERSION, "generated_at": latest_issue(apis), "public_base_url": public_base_url, "locations": [{"slug": a["location_slug"], "name": a["location_name"]} for a in apis]})
     write_text(root / "langit_portal_map.html", v65_map_page("LANGIT Portal Map", pgeo, "index.html"))
     write_text(root / "index.html", v65_portal_page(apis, root))
     print(f"OK: {VERSION} rebuild selesai. lokasi={len(apis)}")
@@ -4736,3 +4715,4 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

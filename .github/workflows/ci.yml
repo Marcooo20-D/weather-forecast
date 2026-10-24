@@ -1,0 +1,38 @@
+name: Offline checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - '**.py'
+      - '.github/workflows/**'
+      - 'tests/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*.py
+            /site_tools/
+            /build_utils/
+            /tests/
+            /.github/
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Python syntax
+        run: python -m compileall -q -x 'outputs|_site|\.git' .
+      - name: Offline regression tests
+        run: python -m unittest discover -s tests -v

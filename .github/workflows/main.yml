@@ -1,6 +1,13 @@
-name: LANGIT v65.0 Forecast OS
+name: LANGIT Forecast and Pages
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'weather_ensemble_multi_location.py'
+      - 'langit_v65_cinematic_rebuild.py'
+      - 'site_tools/**'
+      - '.github/workflows/main.yml'
   workflow_dispatch:
     inputs:
       locations:
@@ -17,16 +24,19 @@ on:
     - cron: "0 0,2,4,6,8,10,12 * * *"
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: langit-v65-0-forecast
-  cancel-in-progress: true
+  group: langit-production
+  cancel-in-progress: false
 
 jobs:
   forecast:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 45
+    permissions:
+      contents: write
 
     env:
       TZ: Asia/Jakarta
@@ -35,30 +45,28 @@ jobs:
 
     steps:
       - name: Checkout main generator
-        uses: actions/checkout@v4
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: main
           fetch-depth: 1
 
       - name: Setup Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
 
       - name: Install runtime helpers
         run: |
-          python -m pip install --upgrade pip certifi
+          python -m pip install certifi
 
       - name: Resolve workflow inputs
-        id: vars
-        shell: bash
-        run: |
-          LOCATIONS="${{ github.event.inputs.locations }}"
-          DEBUG_INPUT="${{ github.event.inputs.debug }}"
-          if [ -z "$LOCATIONS" ]; then LOCATIONS="all"; fi
-          if [ "$DEBUG_INPUT" = "true" ]; then DEBUG_FLAG="--debug"; else DEBUG_FLAG="--no-debug"; fi
-          echo "locations=$LOCATIONS" >> "$GITHUB_OUTPUT"
-          echo "debug_flag=$DEBUG_FLAG" >> "$GITHUB_OUTPUT"
+        env:
+          LOCATIONS_INPUT: ${{ github.event.inputs.locations }}
+          DEBUG_INPUT: ${{ github.event.inputs.debug }}
+        run: python -m site_tools.workflow_inputs
+
+      - name: Run offline regression tests
+        run: python -m unittest discover -s tests -v
 
       - name: Inspect repository
         run: |
@@ -76,9 +84,9 @@ jobs:
         run: |
           python weather_ensemble_multi_location.py \
             --mode doctor \
-            --locations "${{ steps.vars.outputs.locations }}" \
+            --locations "$LOCATIONS" \
             --timezone Asia/Jakarta \
-            ${{ steps.vars.outputs.debug_flag }} \
+            $DEBUG_FLAG \
             --no-save-raw-payloads
 
       - name: Run forecast engine
@@ -89,7 +97,7 @@ jobs:
           set +e
           python weather_ensemble_multi_location.py \
             --mode forecast \
-            --locations "${{ steps.vars.outputs.locations }}" \
+            --locations "$LOCATIONS" \
             --timezone Asia/Jakarta \
             --public-base-url "$PUBLIC_BASE_URL" \
             --http-timeout 8 \
@@ -97,7 +105,7 @@ jobs:
             --max-workers 3 \
             --max-inflight-per-host 1 \
             --target-step-minutes 180 \
-            ${{ steps.vars.outputs.debug_flag }} \
+            $DEBUG_FLAG \
             --no-save-raw-payloads
           RC=$?
           echo "forecast_exit_code=$RC" >> "$GITHUB_OUTPUT"
@@ -115,9 +123,9 @@ jobs:
         run: |
           python weather_ensemble_multi_location.py \
             --mode sync-observations \
-            --locations "${{ steps.vars.outputs.locations }}" \
+            --locations "$LOCATIONS" \
             --timezone Asia/Jakarta \
-            ${{ steps.vars.outputs.debug_flag }} \
+            $DEBUG_FLAG \
             --no-save-raw-payloads
 
       - name: Evaluate performance (backtesting)
@@ -125,12 +133,12 @@ jobs:
         run: |
           python weather_ensemble_multi_location.py \
             --mode evaluate \
-            --locations "${{ steps.vars.outputs.locations }}" \
+            --locations "$LOCATIONS" \
             --timezone Asia/Jakarta \
-            ${{ steps.vars.outputs.debug_flag }} \
+            $DEBUG_FLAG \
             --no-save-raw-payloads
 
-      - name: Rebuild LANGIT v65.0 cinematic product layer
+      - name: Rebuild LANGIT public product layer
         run: |
           python langit_v65_cinematic_rebuild.py \
             --root outputs \
@@ -141,38 +149,14 @@ jobs:
           python langit_v65_cinematic_rebuild.py --root outputs --verify-only
           test -f outputs/index.html
           test -f outputs/langit_portal_map.html
-          for d in outputs/*; do
-            if [ -d "$d" ]; then
-              test -f "$d/langit_app.html"
-              test -f "$d/langit_3day.html"
-              test -f "$d/langit_activity.html"
-              test -f "$d/langit_map_room.html"
-              test -f "$d/langit_map.html"
-              test -f "$d/keandalan_data.html"
-              test -f "$d/akurasi_data.html"
-              test -f "$d/langit_api_v1.json"
-              test -f "$d/langit_location.geojson"
-            fi
-          done
-          if grep -ER "visual-first|Data confidence|ANEMOS sedang|AETHER Sentinel|\[\.new Set|const hours=\[\.new" outputs/ 2>/dev/null; then
-            echo "Public output masih mengandung teks/JS lama."
-            exit 1
-          fi
 
-      - name: Harden public output
-        run: |
-          find outputs -name "*.sqlite" -delete || true
-          find outputs -name "*.db" -delete || true
-          find outputs -type d -name "logs" -prune -exec rm -rf {} + || true
-          find outputs -type d -name "raw_payloads" -prune -exec rm -rf {} + || true
-          find outputs -type f -name "*.py" -delete || true
-          find outputs -type f -name "*.pyc" -delete || true
-          find outputs -maxdepth 3 -type f | sort | sed -n '1,320p'
+      - name: Build and validate bounded public site
+        run: python -m site_tools.public_site --source outputs --destination _site
 
       - name: Commit and push changes back to main
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
           # Stage all outputs/ changes
           git add outputs/
           # Check if there are changes to commit
@@ -180,22 +164,25 @@ jobs:
             echo "No changes to commit."
           else
             git commit -m "chore: update weather forecast history, observations, and accuracy metrics [skip ci]"
-            git pull origin main --rebase
-            git push origin main
+            # A concurrent main update must reject this push before publication.
+            git push origin HEAD:main
           fi
 
       - name: Upload generated site artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: langit-v65-0-public-site
-          path: outputs
-          retention-days: 7
+          name: langit-public-site
+          path: _site
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 3
 
       - name: Deploy to GitHub Pages branch
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: outputs
+          publish_dir: _site
           publish_branch: gh-pages
           force_orphan: true
-          commit_message: "deploy: LANGIT v65.0 cinematic atmospheric experience"
+          commit_message: "deploy: validated LANGIT public site"
+

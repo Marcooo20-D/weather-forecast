@@ -442,9 +442,9 @@ def write_json(path, payload):
 
 
 def write_json_gz(path, payload):
-    encoded = json.dumps(_quality_jsonable(payload), ensure_ascii=False, indent=2, allow_nan=False).encode("utf-8")
+    encoded = json.dumps(_quality_jsonable(payload), ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8")
     def writer(f):
-        with gzip.GzipFile(fileobj=f, mode="wb") as compressed:
+        with gzip.GzipFile(fileobj=f, mode="wb", mtime=0) as compressed:
             compressed.write(encoded)
     atomic_write_bytes(path, writer)
 
@@ -6990,6 +6990,23 @@ def _v8_weighted_attr(points, attr):
     return aether_weighted_mean(pairs)
 
 
+def _weighted_wind_direction(points):
+    """Average a circular bearing: 359 and 1 degrees must give north."""
+    x = y = total = 0.0
+    for point in points or []:
+        direction = safe_float(getattr(point, "wind_direction_deg", None))
+        weight = point_weight(point)
+        if direction is None or weight <= 0:
+            continue
+        angle = math.radians(direction % 360)
+        x += weight * math.cos(angle)
+        y += weight * math.sin(angle)
+        total += weight
+    if not total or math.hypot(x, y) < total * 1e-10:
+        return None
+    return math.degrees(math.atan2(y, x)) % 360
+
+
 def _v8_enrich_rows_with_source_variables(points, rows):
     grouped = {jam: [] for jam in TARGET_TIMES}
     for p in points or []:
@@ -7000,7 +7017,8 @@ def _v8_enrich_rows_with_source_variables(points, rows):
         row["apparent_temperature_c"] = aether_round(_v8_weighted_attr(bucket, "apparent_temp_c"), 1)
         row["pressure_msl_hpa"] = aether_round(_v8_weighted_attr(bucket, "pressure_msl_hpa"), 1)
         row["surface_pressure_hpa"] = aether_round(_v8_weighted_attr(bucket, "surface_pressure_hpa"), 1)
-        row["wind_direction_deg"] = aether_round(_v8_weighted_attr(bucket, "wind_direction_deg"), 0)
+        direction = _weighted_wind_direction(bucket)
+        row["wind_direction_deg"] = round(direction) % 360 if direction is not None else None
         row["uv_index"] = aether_round(_v8_weighted_attr(bucket, "uv_index"), 1)
         # If apparent temperature is missing, use heat index as practical fallback.
         if row.get("apparent_temperature_c") in (None, ""):
@@ -7027,8 +7045,12 @@ def sentinel_x_save_artifacts(target_date, results, args, source_rows, status_ro
         row["calibration_status"] = verification["calibration_status"]
         row["verification_cases"] = verification["rain_valid_cases"]
         row["official_warning_disclaimer"] = sentinel_public_disclaimer(args)
-    write_dict_csv(path_output(AETHER_CSV_FILENAME), rows=rows)
-    write_dict_csv(path_output(f"sentinel_x_{target_date:%Y%m%d}.csv"), rows=rows)
+    # Nested member distributions belong to the lossless JSON issue archive,
+    # not repeated multi-megabyte Python repr strings inside every CSV row.
+    nested_fields = {"ensemble_distribution", "ensemble_models", "rain_two_stage", "rain_two_stage_raw"}
+    csv_rows = [{key: value for key, value in row.items() if key not in nested_fields} for row in rows]
+    write_dict_csv(path_output(AETHER_CSV_FILENAME), rows=csv_rows)
+    write_dict_csv(path_output(f"sentinel_x_{target_date:%Y%m%d}.csv"), rows=csv_rows)
     states = aether_source_state_rows(results)
     for state, result in zip(states, results):
         _quality_result_metadata(result, args)
@@ -10174,6 +10196,22 @@ def _quality_archive_dir():
     ensure_directory(directory)
     return directory
 
+def _quality_archive_documents():
+    """Read old JSON and new lossless gzip issues once, without loading all runs."""
+    entries = {}
+    for entry in os.scandir(_quality_archive_dir()):
+        if not entry.is_file() or not entry.name.endswith((".json", ".json.gz")):
+            continue
+        identity = entry.name.removesuffix(".gz")
+        # Prefer the original if both encodings exist during a migration.
+        if identity not in entries or entry.name.endswith(".json"):
+            entries[identity] = entry.path
+    for identity in sorted(entries):
+        doc = read_json(entries[identity], {})
+        if isinstance(doc, dict) and doc:
+            yield doc
+
+
 def _quality_archive_run(run_id, target_date, results, rows, args):
     issued = _quality_issued(args)
     source_points = []
@@ -10187,10 +10225,10 @@ def _quality_archive_run(run_id, target_date, results, rows, args):
                "source_availability": read_json(path_output("source_availability.json"), {}),
                "ensemble_status": {k:v for k,v in _V61_ENSEMBLES.items() if k!="hourly"},
                "site_elevation_m": getattr(args, "site_elevation_m", None), "terrain_class": getattr(args, "terrain_class", "unknown")}
-    archive = os.path.join(_quality_archive_dir(), run_id + ".json")
-    if os.path.exists(archive):
+    archive = os.path.join(_quality_archive_dir(), run_id + ".json.gz")
+    if os.path.exists(archive) or os.path.exists(archive.removesuffix(".gz")):
         raise ValueError("Forecast run already archived: " + run_id)
-    write_json(archive, payload)
+    write_json_gz(archive, payload)
     conn = aether_connect_db()
     try:
         conn.execute("CREATE TABLE IF NOT EXISTS quality_runs (run_id TEXT PRIMARY KEY, issued_at TEXT NOT NULL, target_date TEXT NOT NULL, payload_json TEXT NOT NULL)")
@@ -10201,14 +10239,11 @@ def _quality_archive_run(run_id, target_date, results, rows, args):
     return archive
 
 def _quality_historical_rows():
-    rows = []
-    for entry in sorted(os.scandir(_quality_archive_dir()), key=lambda e: e.name):
-        if not entry.is_file() or not entry.name.endswith(".json"):
-            continue
-        doc = read_json(entry.path, {}) or {}
+    # Verification consumes an iterable. Retaining all member-rich issues in a
+    # list can exhaust the runner before any observation matching takes place.
+    for doc in _quality_archive_documents():
         for row in doc.get("hourly") or []:
-            rows.append({**row, "issued_at": doc.get("issued_at"), "run_id": doc.get("run_id"), "location_slug": doc.get("location_slug")})
-    return rows
+            yield {**row, "issued_at": doc.get("issued_at"), "run_id": doc.get("run_id"), "location_slug": doc.get("location_slug")}
 
 def _quality_forecast_pairs(rows, observations, args):
     # One forecast per target and lead bucket: choose the earliest issue in that
@@ -10255,10 +10290,7 @@ def _quality_training_cases(args):
     observations = sentinel_load_observations_by_key(args)
     now = now_local(args.timezone)
     cases = []
-    for entry in os.scandir(_quality_archive_dir()):
-        if not entry.name.endswith(".json") or not entry.is_file():
-            continue
-        doc = read_json(entry.path, {}) or {}
+    for doc in _quality_archive_documents():
         issued = _quality_datetime(doc.get("issued_at"), args.timezone)
         if issued is None:
             continue
@@ -12531,7 +12563,8 @@ def v61_activity_verification(args):
     obs=sentinel_load_observations_by_key(args)
     counts={name:{'recommended_windows':0,'evaluated_windows':0,'disrupted_windows':0,'unknown_windows':0} for name in V61_ACTIVITY_PROFILES}
     seen=set()
-    docs=[read_json(entry.path,{}) or {} for entry in os.scandir(_quality_archive_dir()) if entry.name.endswith('.json')]
+    # Verification needs plans, not every archived member distribution in RAM.
+    docs=[{'issued_at':doc.get('issued_at'),'activity_plans':doc.get('activity_plans')} for doc in _quality_archive_documents()]
     docs.sort(key=lambda doc:doc.get('issued_at') or '')
     for doc in docs:
         issued=_quality_datetime(doc.get('issued_at'))
@@ -12650,3 +12683,4 @@ def _lg_microclimate(args):
 
 if __name__ == "__main__":
     main()
+

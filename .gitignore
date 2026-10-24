@@ -2,3 +2,10 @@ __pycache__/
 *.pyc
 logs/
 outputs/**/logs/
+_site/
+.test-output/
+outputs/**/*.sqlite
+outputs/**/*.sqlite-*
+outputs/**/*.db
+outputs/**/raw_payloads/
+
