@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-10-24T20:49:12.787658+07:00",
+  "generated_at": "2026-10-25T09:39:15.736723+07:00",
   "location": "Dago, Bandung",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,23 +25,23 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-10-24T20:48:41.039052+07:00",
-    "issued_at": "2026-10-24T20:48:41.039052+07:00",
+    "generated_at": "2026-10-25T09:38:40.509069+07:00",
+    "issued_at": "2026-10-25T09:38:40.509069+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Dago, Bandung",
     "mission": "safety_first",
     "daily_operational_status": "YELLOW",
-    "data_quality": "limited",
+    "data_quality": "usable",
     "best_general_activity_window": [
-      "08:00",
-      "09:00",
-      "10:00"
+      "06:00",
+      "07:00",
+      "08:00"
     ],
-    "peak_rain_threat_hour": "15:00",
-    "peak_rain_threat_score": 62.2,
-    "peak_heavy_rain_threat_hour": "15:00",
-    "peak_heavy_rain_threat_score": 14.2,
-    "summary_text": "Dago, Bandung: data prakiraan belum lengkap atau sudah usang. Rekomendasi waktu aktivitas belum tersedia.",
+    "peak_rain_threat_hour": "18:00",
+    "peak_rain_threat_score": 61.9,
+    "peak_heavy_rain_threat_hour": "18:00",
+    "peak_heavy_rain_threat_score": 12.2,
+    "summary_text": "Dago, Bandung: peluang hujan per jam tertinggi 76.6045% sekitar 17:00. Rentang dengan risiko relatif lebih rendah: 06:00 · 07:00 · 08:00. Tetap pantau kondisi setempat.",
     "risk_window": [],
     "location_personality": {
       "personality": "unspecified_local_conditions",
@@ -52,7 +52,7 @@
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
     "dominant_atmospheric_mode": "HEAVY_RAIN_WATCH",
-    "peak_rain_probability": 78.33333333333333
+    "peak_rain_probability": 76.60446974488721
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
