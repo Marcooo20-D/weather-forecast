@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-25T09:42:43.611540+07:00",
+  "generated_at": "2026-10-25T16:01:42.418234+07:00",
   "location_slug": "arjawinangun",
   "location_name": "Arjawinangun, Cirebon",
   "matched_cases": 0,
@@ -90,7 +90,7 @@
   ],
   "probabilistic_verification": {
     "schema": "langit-probabilistic-verification-1",
-    "generated_at": "2026-10-25T09:42:52.174354+07:00",
+    "generated_at": "2026-10-25T16:01:56.296311+07:00",
     "status": "insufficient_matching_observations",
     "nominal_interval_coverage": 0.8,
     "calibration_status": "NOT_CERTIFIED",
@@ -105,8 +105,8 @@
     },
     "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
     "rejected": {
-      "not_pre_event": 1015,
-      "missing_qc_observation": 2441,
+      "not_pre_event": 1032,
+      "missing_qc_observation": 2496,
       "rain_interval_mismatch": 0,
       "unknown_observation_location": 0,
       "observation_outside_local_radius": 0
@@ -116,10 +116,10 @@
   "activity_verification": {
     "activities": {
       "motor": {
-        "recommended_windows": 19,
+        "recommended_windows": 20,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 19,
+        "unknown_windows": 20,
         "disruption_rate": null
       },
       "walking": {
@@ -137,10 +137,10 @@
         "disruption_rate": null
       },
       "drying": {
-        "recommended_windows": 13,
+        "recommended_windows": 15,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 13,
+        "unknown_windows": 15,
         "disruption_rate": null
       },
       "outdoor_event": {
