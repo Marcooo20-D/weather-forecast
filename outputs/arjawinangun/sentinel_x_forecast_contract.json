@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-10-26T23:34:53.774097+07:00",
+  "generated_at": "2026-10-27T09:38:51.123951+07:00",
   "location": "Arjawinangun, Cirebon",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,12 +25,12 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-10-26T23:33:57.258812+07:00",
-    "issued_at": "2026-10-26T23:33:57.258812+07:00",
+    "generated_at": "2026-10-27T09:37:53.337028+07:00",
+    "issued_at": "2026-10-27T09:37:53.337028+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Arjawinangun, Cirebon",
     "mission": "safety_first",
-    "daily_operational_status": "YELLOW",
+    "daily_operational_status": "GREEN",
     "data_quality": "usable",
     "best_general_activity_window": [
       "06:00",
@@ -38,10 +38,10 @@
       "08:00"
     ],
     "peak_rain_threat_hour": "16:00",
-    "peak_rain_threat_score": 58.5,
+    "peak_rain_threat_score": 54.4,
     "peak_heavy_rain_threat_hour": "16:00",
-    "peak_heavy_rain_threat_score": 13.9,
-    "summary_text": "Arjawinangun, Cirebon: peluang hujan per jam tertinggi 78.8104% sekitar 14:00. Rentang dengan risiko relatif lebih rendah: 06:00 · 07:00 · 08:00. Tetap pantau kondisi setempat.",
+    "peak_heavy_rain_threat_score": 17.2,
+    "summary_text": "Arjawinangun, Cirebon: peluang hujan per jam tertinggi 69.7544% sekitar 14:00. Rentang dengan risiko relatif lebih rendah: 06:00 · 07:00 · 08:00. Tetap pantau kondisi setempat.",
     "risk_window": [],
     "location_personality": {
       "personality": "unspecified_local_conditions",
@@ -51,8 +51,8 @@
       "forecast_difficulty": "unknown",
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
-    "dominant_atmospheric_mode": "HEAVY_RAIN_WATCH",
-    "peak_rain_probability": 78.81035209782839
+    "dominant_atmospheric_mode": "RAIN_TRANSITION",
+    "peak_rain_probability": 69.75437486822686
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
