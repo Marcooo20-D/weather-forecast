@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-10-27T09:38:52.472482+07:00",
+  "generated_at": "2026-10-27T10:21:03.839013+07:00",
   "sources": {
     "BMKG": {
-      "ema_success": 0.2746,
-      "ema_completeness": 0.075,
-      "consecutive_failures": 3,
-      "last_error": "circuit_open host=api.bmkg.go.id wait=85s",
+      "ema_success": 0.8008,
+      "ema_completeness": 0.2439,
+      "consecutive_failures": 0,
+      "last_error": "",
       "last_run_date": "2026-10-29",
-      "last_live_fetch_success": false,
+      "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "CMA": {
@@ -49,7 +49,7 @@
     "KMA": {
       "ema_success": 0.0001,
       "ema_completeness": 0.0001,
-      "consecutive_failures": 162,
+      "consecutive_failures": 165,
       "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
       "last_run_date": "2026-10-29",
       "last_live_fetch_success": false,
@@ -66,7 +66,7 @@
     },
     "METNO": {
       "ema_success": 1.0,
-      "ema_completeness": 0.8961,
+      "ema_completeness": 0.9098,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-10-29",

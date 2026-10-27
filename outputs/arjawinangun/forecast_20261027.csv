@@ -1,4 +1,18 @@
 tanggal,source_id,provider,target_jam,source_datetime,suhu_C,RH_%,rain_mm,wind_kmh,gap_minutes,point_weight,kategori,raw_condition
+27-10-2026,BMKG,BMKG,10:00,2026-10-27 11:00:00,33.0,47.0,,8.3,60.0,0.5989,Berawan,Berawan
+27-10-2026,BMKG,BMKG,11:00,2026-10-27 11:00:00,33.0,47.0,,8.3,0.0,0.7985,Berawan,Berawan
+27-10-2026,BMKG,BMKG,12:00,2026-10-27 11:00:00,33.0,47.0,,8.3,60.0,0.5989,Berawan,Berawan
+27-10-2026,BMKG,BMKG,13:00,2026-10-27 14:00:00,30.0,65.0,,16.8,60.0,0.5989,Hujan Ringan,Hujan Ringan
+27-10-2026,BMKG,BMKG,14:00,2026-10-27 14:00:00,30.0,65.0,,16.8,0.0,0.7985,Hujan Ringan,Hujan Ringan
+27-10-2026,BMKG,BMKG,15:00,2026-10-27 14:00:00,30.0,65.0,,16.8,60.0,0.5989,Hujan Ringan,Hujan Ringan
+27-10-2026,BMKG,BMKG,16:00,2026-10-27 17:00:00,26.0,85.0,,6.9,60.0,0.5989,Hujan Ringan,Hujan Ringan
+27-10-2026,BMKG,BMKG,17:00,2026-10-27 17:00:00,26.0,85.0,,6.9,0.0,0.7985,Hujan Ringan,Hujan Ringan
+27-10-2026,BMKG,BMKG,18:00,2026-10-27 17:00:00,26.0,85.0,,6.9,60.0,0.5989,Hujan Ringan,Hujan Ringan
+27-10-2026,BMKG,BMKG,19:00,2026-10-27 20:00:00,25.0,96.0,,0.9,60.0,0.5989,Berawan,Berawan
+27-10-2026,BMKG,BMKG,20:00,2026-10-27 20:00:00,25.0,96.0,,0.9,0.0,0.7985,Berawan,Berawan
+27-10-2026,BMKG,BMKG,21:00,2026-10-27 20:00:00,25.0,96.0,,0.9,60.0,0.5989,Berawan,Berawan
+27-10-2026,BMKG,BMKG,22:00,2026-10-27 23:00:00,25.0,97.0,,2.4,60.0,0.5989,Cerah Berawan,Cerah Berawan
+27-10-2026,BMKG,BMKG,23:00,2026-10-27 23:00:00,25.0,97.0,,2.4,0.0,0.7985,Cerah Berawan,Cerah Berawan
 27-10-2026,CMA,Open-Meteo / CMA GRAPES,00:00,2026-10-27 00:00:00,26.2,86.0,0.0,9.1,0.0,1.1466,Cerah Berawan,wmo:1.0
 27-10-2026,CMA,Open-Meteo / CMA GRAPES,01:00,2026-10-27 01:00:00,26.2,86.0,0.0,8.5,0.0,1.1466,Cerah,wmo:0.0
 27-10-2026,CMA,Open-Meteo / CMA GRAPES,02:00,2026-10-27 02:00:00,26.1,87.0,0.0,8.5,0.0,1.1466,Cerah Berawan,wmo:1.0
@@ -119,23 +133,22 @@ tanggal,source_id,provider,target_jam,source_datetime,suhu_C,RH_%,rain_mm,wind_k
 27-10-2026,METEOFRANCE,Open-Meteo / Meteo-France,21:00,2026-10-27 21:00:00,28.7,73.0,0.0,11.2,0.0,1.5573,Berawan,wmo:3.0
 27-10-2026,METEOFRANCE,Open-Meteo / Meteo-France,22:00,2026-10-27 22:00:00,28.5,73.0,0.0,11.3,0.0,1.5573,Cerah Berawan,wmo:2.0
 27-10-2026,METEOFRANCE,Open-Meteo / Meteo-France,23:00,2026-10-27 23:00:00,28.3,74.0,0.0,11.6,0.0,1.5573,Berawan,wmo:3.0
-27-10-2026,METNO,MET Norway,07:00,2026-10-27 09:00:00,31.0,56.9,,10.08,120.0,0.3491,,
-27-10-2026,METNO,MET Norway,08:00,2026-10-27 09:00:00,31.0,56.9,,10.08,60.0,0.476,,
-27-10-2026,METNO,MET Norway,09:00,2026-10-27 09:00:00,31.0,56.9,,10.08,0.0,0.6347,,
-27-10-2026,METNO,MET Norway,10:00,2026-10-27 10:00:00,32.3,52.4,0.1,12.6,0.0,0.6862,Hujan Ringan,lightrain
-27-10-2026,METNO,MET Norway,11:00,2026-10-27 11:00:00,33.2,50.3,0.0,14.4,0.0,0.6862,Berawan,cloudy
-27-10-2026,METNO,MET Norway,12:00,2026-10-27 12:00:00,33.9,48.2,0.0,15.48,0.0,0.6862,Cerah Berawan,partlycloudy_day
-27-10-2026,METNO,MET Norway,13:00,2026-10-27 13:00:00,31.2,59.5,1.2,17.64,0.0,0.6862,Hujan Lebat,heavyrain
-27-10-2026,METNO,MET Norway,14:00,2026-10-27 14:00:00,30.9,63.0,1.0,18.72,0.0,0.6862,Hujan Lebat,heavyrain
-27-10-2026,METNO,MET Norway,15:00,2026-10-27 15:00:00,29.5,69.3,0.4,16.56,0.0,0.6862,Hujan Ringan,rainshowers_day
-27-10-2026,METNO,MET Norway,16:00,2026-10-27 16:00:00,29.4,70.3,0.5,12.24,0.0,0.6862,Hujan Ringan,rain
-27-10-2026,METNO,MET Norway,17:00,2026-10-27 17:00:00,28.2,76.0,0.7,8.28,0.0,0.6862,Hujan Ringan,rain
-27-10-2026,METNO,MET Norway,18:00,2026-10-27 18:00:00,26.8,84.8,0.7,7.56,0.0,0.6862,Hujan Ringan,rain
-27-10-2026,METNO,MET Norway,19:00,2026-10-27 19:00:00,26.0,91.3,0.7,7.2,0.0,0.6862,Hujan Ringan,rain
-27-10-2026,METNO,MET Norway,20:00,2026-10-27 20:00:00,25.8,92.4,0.5,3.96,0.0,0.6862,Hujan Ringan,rain
-27-10-2026,METNO,MET Norway,21:00,2026-10-27 21:00:00,25.7,93.0,0.2,6.48,0.0,0.6862,Hujan Ringan,lightrainshowers_night
-27-10-2026,METNO,MET Norway,22:00,2026-10-27 22:00:00,25.2,95.7,0.1,6.84,0.0,0.6862,Hujan Ringan,lightrainshowers_night
-27-10-2026,METNO,MET Norway,23:00,2026-10-27 23:00:00,24.9,97.0,0.1,3.96,0.0,0.6862,Hujan Ringan,lightrainshowers_night
+27-10-2026,METNO,MET Norway,08:00,2026-10-27 10:00:00,32.3,52.4,,12.6,120.0,0.353,,
+27-10-2026,METNO,MET Norway,09:00,2026-10-27 10:00:00,32.3,52.4,,12.6,60.0,0.4813,,
+27-10-2026,METNO,MET Norway,10:00,2026-10-27 10:00:00,32.3,52.4,,12.6,0.0,0.6418,,
+27-10-2026,METNO,MET Norway,11:00,2026-10-27 11:00:00,33.2,50.3,0.0,14.4,0.0,0.6938,Berawan,cloudy
+27-10-2026,METNO,MET Norway,12:00,2026-10-27 12:00:00,33.9,48.2,0.0,15.48,0.0,0.6938,Cerah Berawan,partlycloudy_day
+27-10-2026,METNO,MET Norway,13:00,2026-10-27 13:00:00,31.2,59.5,1.2,17.64,0.0,0.6938,Hujan Lebat,heavyrain
+27-10-2026,METNO,MET Norway,14:00,2026-10-27 14:00:00,30.9,63.0,1.0,18.72,0.0,0.6938,Hujan Lebat,heavyrain
+27-10-2026,METNO,MET Norway,15:00,2026-10-27 15:00:00,29.5,69.3,0.4,16.56,0.0,0.6938,Hujan Ringan,rainshowers_day
+27-10-2026,METNO,MET Norway,16:00,2026-10-27 16:00:00,29.4,70.3,0.5,12.24,0.0,0.6938,Hujan Ringan,rain
+27-10-2026,METNO,MET Norway,17:00,2026-10-27 17:00:00,28.2,76.0,0.7,8.28,0.0,0.6938,Hujan Ringan,rain
+27-10-2026,METNO,MET Norway,18:00,2026-10-27 18:00:00,26.8,84.8,0.7,7.56,0.0,0.6938,Hujan Ringan,rain
+27-10-2026,METNO,MET Norway,19:00,2026-10-27 19:00:00,26.0,91.3,0.7,7.2,0.0,0.6938,Hujan Ringan,rain
+27-10-2026,METNO,MET Norway,20:00,2026-10-27 20:00:00,25.8,92.4,0.5,3.96,0.0,0.6938,Hujan Ringan,rain
+27-10-2026,METNO,MET Norway,21:00,2026-10-27 21:00:00,25.7,93.0,0.2,6.48,0.0,0.6938,Hujan Ringan,lightrainshowers_night
+27-10-2026,METNO,MET Norway,22:00,2026-10-27 22:00:00,25.2,95.7,0.1,6.84,0.0,0.6938,Hujan Ringan,lightrainshowers_night
+27-10-2026,METNO,MET Norway,23:00,2026-10-27 23:00:00,24.9,97.0,0.1,3.96,0.0,0.6938,Hujan Ringan,lightrainshowers_night
 27-10-2026,UKMO,Open-Meteo / UK Met Office,00:00,2026-10-27 00:00:00,26.2,90.0,0.0,2.9,0.0,1.3235,Berawan,wmo:3.0
 27-10-2026,UKMO,Open-Meteo / UK Met Office,01:00,2026-10-27 01:00:00,25.4,93.0,0.0,2.5,0.0,1.3235,Berawan,wmo:3.0
 27-10-2026,UKMO,Open-Meteo / UK Met Office,02:00,2026-10-27 02:00:00,25.4,92.0,0.0,3.2,0.0,1.3235,Berawan,wmo:3.0
@@ -184,27 +197,3 @@ tanggal,source_id,provider,target_jam,source_datetime,suhu_C,RH_%,rain_mm,wind_k
 27-10-2026,JMA_BACKUP,Open-Meteo / JMA,21:00,2026-10-27 21:00:00,27.5,82.0,0.3,7.2,0.0,1.0,Hujan Ringan,wmo:51.0
 27-10-2026,JMA_BACKUP,Open-Meteo / JMA,22:00,2026-10-27 22:00:00,27.4,83.0,0.3,7.1,0.0,1.0,Hujan Ringan,wmo:51.0
 27-10-2026,JMA_BACKUP,Open-Meteo / JMA,23:00,2026-10-27 23:00:00,27.3,83.0,0.3,6.5,0.0,1.0,Hujan Ringan,wmo:51.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,00:00,2026-10-27 00:00:00,25.1,91.0,0.0,5.4,0.0,0.9104,Berawan,wmo:3.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,01:00,2026-10-27 01:00:00,25.0,90.0,0.0,5.8,0.0,0.9104,Berawan,wmo:3.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,02:00,2026-10-27 02:00:00,24.9,90.0,0.0,6.1,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,03:00,2026-10-27 03:00:00,24.8,90.0,0.0,6.5,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,04:00,2026-10-27 04:00:00,24.6,90.0,0.0,6.5,0.0,0.9104,Cerah Berawan,wmo:1.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,05:00,2026-10-27 05:00:00,24.4,89.0,0.0,5.8,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,06:00,2026-10-27 06:00:00,24.7,88.0,0.0,6.8,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,07:00,2026-10-27 07:00:00,26.2,81.0,0.0,5.0,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,08:00,2026-10-27 08:00:00,28.1,74.0,0.0,5.8,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,09:00,2026-10-27 09:00:00,29.3,70.0,0.0,9.4,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,10:00,2026-10-27 10:00:00,30.1,67.0,0.0,11.2,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,11:00,2026-10-27 11:00:00,30.5,65.0,0.0,13.3,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,12:00,2026-10-27 12:00:00,31.0,62.0,0.0,14.4,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,13:00,2026-10-27 13:00:00,31.2,61.0,0.0,14.8,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,14:00,2026-10-27 14:00:00,31.1,60.0,0.0,15.1,0.0,0.9104,Cerah Berawan,wmo:1.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,15:00,2026-10-27 15:00:00,30.9,61.0,0.0,16.2,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,16:00,2026-10-27 16:00:00,30.4,63.0,0.0,17.3,0.0,0.9104,Cerah Berawan,wmo:2.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,17:00,2026-10-27 17:00:00,29.8,67.0,0.0,15.8,0.0,0.9104,Cerah Berawan,wmo:1.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,18:00,2026-10-27 18:00:00,29.1,72.0,0.0,11.9,0.0,0.9104,Cerah,wmo:0.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,19:00,2026-10-27 19:00:00,28.2,77.0,0.0,7.2,0.0,0.9104,Cerah,wmo:0.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,20:00,2026-10-27 20:00:00,27.4,82.0,0.0,6.1,0.0,0.9104,Cerah,wmo:0.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,21:00,2026-10-27 21:00:00,26.9,84.0,0.0,6.5,0.0,0.9104,Cerah,wmo:0.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,22:00,2026-10-27 22:00:00,26.3,86.0,0.0,6.5,0.0,0.9104,Cerah,wmo:0.0
-27-10-2026,GEM_BACKUP,Open-Meteo / Environment Canada,23:00,2026-10-27 23:00:00,25.8,88.0,0.0,7.6,0.0,0.9104,Cerah,wmo:0.0
