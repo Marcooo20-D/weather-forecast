@@ -1,0 +1,523 @@
+{
+  "audit_date": "2026-10-30",
+  "timezone": "Asia/Jakarta",
+  "source_baseline": "7224aed537f83614f64d9933da63004a4a2aee18",
+  "pages_baseline": "2befb601aca07fa9bdaa872b481e6d0b261369c4",
+  "tested_code_commit": "154289fd56a34c55c6177bbb09985ab1f6e551d3",
+  "branch": "codex/langit-audit-20261030",
+  "pull_request": "https://github.com/Marcooo20-D/weather-forecast/pull/3",
+  "ci_run": "https://github.com/Marcooo20-D/weather-forecast/actions/runs/41036686288",
+  "python_tests": {
+    "passed": 55,
+    "failed": 0,
+    "skipped": 0,
+    "node_subtests_included": 6
+  },
+  "scientific": {
+    "hours_checked": 216,
+    "numeric_fields_compared": 1080,
+    "member_distributions_checked": 864,
+    "locations": {
+      "dago": {
+        "hours": 72,
+        "quality": {
+          "limited": 10,
+          "usable": 62
+        }
+      },
+      "jatinangor": {
+        "hours": 72,
+        "quality": {
+          "limited": 10,
+          "usable": 62
+        }
+      },
+      "arjawinangun": {
+        "hours": 72,
+        "quality": {
+          "limited": 12,
+          "usable": 60
+        }
+      }
+    }
+  },
+  "archive_samples": [
+    {
+      "path": "outputs/dago/forecast_archive/dago_20261011_720244318bd24d1c84ec8561f1b1eed9.json",
+      "sha": "ea4f3f56ce0e15c4ffae2f4f8862f54edcf0560e",
+      "bytes": 12862735,
+      "schema": "langit-quality-1",
+      "issued_at": "2026-10-11T14:14:50.822843+07:00",
+      "hours": 24,
+      "integrity": "pass",
+      "scientific_accuracy": "not_evaluated"
+    },
+    {
+      "path": "outputs/dago/forecast_archive/dago_20261101_eb8c59ba1e214801a92605a9edfe5149.json.gz",
+      "sha": "3a2c52ea62ead9c926ae8cea2847f85acf1493f6",
+      "bytes": 218032,
+      "schema": "langit-quality-1",
+      "issued_at": "2026-10-30T00:58:09.354809+07:00",
+      "hours": 24,
+      "integrity": "pass",
+      "scientific_accuracy": "not_evaluated"
+    },
+    {
+      "path": "outputs/jatinangor/forecast_archive/jatinangor_20261011_29988d234d084e5a8bca37ec89183020.json",
+      "sha": "9e8fccd003131e99c889ddbed8904e41ef8b278b",
+      "bytes": 12830784,
+      "schema": "langit-quality-1",
+      "issued_at": "2026-10-11T17:28:44.848459+07:00",
+      "hours": 24,
+      "integrity": "pass",
+      "scientific_accuracy": "not_evaluated"
+    },
+    {
+      "path": "outputs/jatinangor/forecast_archive/jatinangor_20261101_dfa165b1e5b246cfbba10dfca8e0da16.json.gz",
+      "sha": "a3e520ce79122e882858f691c57a15181117f58c",
+      "bytes": 220178,
+      "schema": "langit-quality-1",
+      "issued_at": "2026-10-30T10:59:50.317636+07:00",
+      "hours": 24,
+      "integrity": "pass",
+      "scientific_accuracy": "not_evaluated"
+    },
+    {
+      "path": "outputs/arjawinangun/forecast_archive/arjawinangun_20261011_8ca39b63017c473089ea3dc0e3d725a5.json",
+      "sha": "457d45c3b63a9805dbce7bac4e42b56949ae0297",
+      "bytes": 216605,
+      "schema": "langit-quality-1",
+      "issued_at": "2026-10-11T11:19:27.271986+07:00",
+      "hours": 24,
+      "integrity": "pass",
+      "scientific_accuracy": "not_evaluated"
+    },
+    {
+      "path": "outputs/arjawinangun/forecast_archive/arjawinangun_20261101_f4fb9412511047b3abd31a3f876544fc.json.gz",
+      "sha": "cc0ee37a4f7fed6a597efc09d68418749637020b",
+      "bytes": 219549,
+      "schema": "langit-quality-1",
+      "issued_at": "2026-10-30T08:37:56.838202+07:00",
+      "hours": 24,
+      "integrity": "pass",
+      "scientific_accuracy": "not_evaluated"
+    }
+  ],
+  "public_http": {
+    "count": 127,
+    "matching": 127,
+    "seconds": 121.79514916700009,
+    "failures": []
+  },
+  "javascript": {
+    "inline_script_blocks": 29,
+    "unique_inline_scripts": 11,
+    "shared_js_files": 2
+  },
+  "metrics": {
+    "baseline": {
+      "build_seconds": 0.893609338000033,
+      "stage_seconds": 0.20798171299998103,
+      "stats": {
+        "files": 128,
+        "bytes": 3571470
+      },
+      "rc": 0,
+      "shared_js_bytes": 31930,
+      "css_bytes": 41559,
+      "html_bytes": 1865230
+    },
+    "candidate": {
+      "build_seconds": 0.9413498249996337,
+      "stage_seconds": 0.35870572900057596,
+      "stats": {
+        "files": 129,
+        "bytes": 3671507
+      },
+      "source_revision": "154289fd56a34c55c6177bbb09985ab1f6e551d3",
+      "shared_js_bytes": 26306,
+      "css_bytes": 40922,
+      "html_bytes": 1553981
+    }
+  },
+  "source_subtrees_preserved": {
+    "outputs": "b43ec824a48111a0d79ae50055e9c0f3833ee4fd",
+    "trading-dashboard": "4a89ba19f15e47edf6a7d901848f37249d5e5f9d"
+  },
+  "release_gates": {
+    "offline_tests": "pass",
+    "github_ci": "pass",
+    "public_contracts": "pass",
+    "candidate_browser": "not_verified",
+    "cross_browser": "not_verified",
+    "wcag_full": "not_verified",
+    "browser_performance": "not_verified",
+    "deployment": "not_performed"
+  },
+  "issue_register": [
+    {
+      "id": "A01",
+      "severity": "P1",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "condition_label",
+      "line": 333,
+      "observed_behavior_and_root_cause": "Probabilitas dipakai untuk menamai intensitas dan bahaya; klaim cahaya tidak ditopang variabel.",
+      "expected_behavior": "Peluang 99% tidak menentukan intensitas.",
+      "reproduction_or_regression_evidence": "WeatherContracts.test_probability_does_not_imply_rain_intensity",
+      "implemented_change": "Pelabelan peluang/indeks aktivitas dan saran berbasis data.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A02",
+      "severity": "P1",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "prob",
+      "line": 77,
+      "observed_behavior_and_root_cause": "Clipping 140 menjadi 100 dan penerimaan nilai fisik tidak sah.",
+      "expected_behavior": "Nilai invalid menjadi null/flag, nol tetap nol.",
+      "reproduction_or_regression_evidence": "WeatherContracts.test_invalid_probability_is_missing_not_clipped; test_physical_ranges_are_flagged_without_fabrication",
+      "implemented_change": "Validasi rentang dan boolean.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A03",
+      "severity": "P1",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "row_to_hour",
+      "line": 349,
+      "observed_behavior_and_root_cause": "UTC dibaca sebagai jam/tanggal lokal tanpa konversi lengkap.",
+      "expected_behavior": "23Z tanggal 30 menjadi 06 WIB tanggal 31.",
+      "reproduction_or_regression_evidence": "WeatherContracts.test_utc_valid_time_rolls_into_next_wib_day",
+      "implemented_change": "Konversi zona dan tanggal alias waktu berlaku.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A04",
+      "severity": "P1",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "row_to_hour",
+      "line": 349,
+      "observed_behavior_and_root_cause": "Default jam membuat input kosong menjadi tengah malam valid.",
+      "expected_behavior": "Jam kosong tidak menghasilkan 00.00 valid.",
+      "reproduction_or_regression_evidence": "WeatherContracts.test_missing_or_invalid_hour_never_becomes_valid_midnight",
+      "implemented_change": "Jam tidak sah ditolak dan dihitung.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A05",
+      "severity": "P1",
+      "file": "weather_ensemble_multi_location.py",
+      "function": "v61_parse_ensemble_payload",
+      "line": 11216,
+      "observed_behavior_and_root_cause": "Duplikat timestamp dapat menimpa jam atau menggandakan anggota.",
+      "expected_behavior": "Timestamp unik dan meningkat.",
+      "reproduction_or_regression_evidence": "WeatherContracts.test_ensemble_duplicate_times_reject_all_variables; PackageContracts.test_conflicting_duplicate_hours_fail_rebuild",
+      "implemented_change": "Tolak duplikat/urutan salah di parser dan builder.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A06",
+      "severity": "P1",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "v65_portal_geo",
+      "line": 4350,
+      "observed_behavior_and_root_cause": "Serializer portal memberi default nol untuk data kosong.",
+      "expected_behavior": "Portal dan lokasi memiliki null/nilai yang sama.",
+      "reproduction_or_regression_evidence": "PackageContracts.test_portal_preserves_null_wind_and_cloud",
+      "implemented_change": "Satu serializer GeoJSON untuk kedua jalur.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A07",
+      "severity": "P1",
+      "file": "weather_ensemble_multi_location.py",
+      "function": "aether_build_rows",
+      "line": 12561,
+      "observed_behavior_and_root_cause": "Persen awan diisi dari kategori cuaca.",
+      "expected_behavior": "Tidak ada persen awan tanpa data sumber.",
+      "reproduction_or_regression_evidence": "WeatherContracts.test_missing_cloud_not_derived_from_weather_category",
+      "implemented_change": "Hapus fallback kategori menjadi persen.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A08",
+      "severity": "P2",
+      "file": "weather_ensemble_multi_location.py",
+      "function": "_weighted_wind_direction",
+      "line": 7007,
+      "observed_behavior_and_root_cause": "Bearing pada angin tenang tetap dihitung.",
+      "expected_behavior": "Angin nol tidak memiliki arah/panah.",
+      "reproduction_or_regression_evidence": "WeatherContracts.test_calm_wind_has_no_direction; Node windRotation",
+      "implemented_change": "Lewati calm dan bearing invalid.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A09",
+      "severity": "P1",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "summarize_day",
+      "line": 471,
+      "observed_behavior_and_root_cause": "Indeks 35 dan panas terasa dari suhu mengisi data turunan kosong.",
+      "expected_behavior": "Nilai turunan kosong tetap null.",
+      "reproduction_or_regression_evidence": "WeatherContracts.test_unavailable_day_has_no_invented_risk_index; test_missing_heat_index_is_not_replaced_with_air_temperature",
+      "implemented_change": "Nilai kosong dan placeholder yang benar.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A10",
+      "severity": "P1",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "write_public_tables",
+      "line": 759,
+      "observed_behavior_and_root_cause": "Formatter CSV lama bertentangan dengan API akhir.",
+      "expected_behavior": "Nilai/status CSV mengikuti API akhir.",
+      "reproduction_or_regression_evidence": "PackageContracts.test_csv_null_and_zero_match_api; test_csv_and_geojson_contracts_reject_value_drift",
+      "implemented_change": "CSV tampilan dibangun ulang dari API akhir.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A11",
+      "severity": "P2",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "load_location_api",
+      "line": 665,
+      "observed_behavior_and_root_cause": "Status sumber latest berasal dari tanggal terakhir horizon.",
+      "expected_behavior": "Halaman tanggal 30 memakai status tanggal 30.",
+      "reproduction_or_regression_evidence": "PackageContracts.test_source_status_uses_the_current_forecast_day",
+      "implemented_change": "Pilih status bertanggal/payload tanggal sama.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A12",
+      "severity": "P1",
+      "file": "weather_ensemble_multi_location.py",
+      "function": "write_combined_csv",
+      "line": 3298,
+      "observed_behavior_and_root_cause": "Run parsial menulis gabungan/dimensi hanya lokasi terpilih.",
+      "expected_behavior": "Lokasi lain pada tanggal berlaku dipertahankan.",
+      "reproduction_or_regression_evidence": "WeatherContracts.test_partial_combined_export_preserves_other_locations",
+      "implemented_change": "Merge baris yang masih berlaku dan dimensi.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A13",
+      "severity": "P1",
+      "file": "site_tools/public_site.py",
+      "function": "build_site",
+      "line": 196,
+      "observed_behavior_and_root_cause": "Kegagalan mkdir dapat membersihkan direktori milik proses lain.",
+      "expected_behavior": "Hanya staging yang berhasil dibuat sendiri boleh dibersihkan.",
+      "reproduction_or_regression_evidence": "PackageContracts.test_staging_collision_does_not_delete_another_build",
+      "implemented_change": "Flag kepemilikan staging.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A14",
+      "severity": "P1",
+      "file": "site_tools/public_site.py",
+      "function": "validate_location_contract",
+      "line": 75,
+      "observed_behavior_and_root_cause": "Gate tidak memeriksa semantik silang/HTML wajib kosong.",
+      "expected_behavior": "Versi, waktu, range dan nilai konsisten.",
+      "reproduction_or_regression_evidence": "PackageContracts.test_empty_required_html_fails_validation; test_csv_and_geojson_contracts_reject_value_drift; test_corrupt_source_is_not_silently_replaced_by_old_api",
+      "implemented_change": "Gate data/berkas diperketat; sumber JSON kritis strict.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A15",
+      "severity": "P1",
+      "file": "check_fixes.py",
+      "function": "main",
+      "line": 11,
+      "observed_behavior_and_root_cause": "Pemeriksa kata hanya mencetak MISSING tanpa failure status.",
+      "expected_behavior": "Pelanggaran publikasi menyebabkan exit nonzero.",
+      "reproduction_or_regression_evidence": "python check_fixes.py --root outputs; shared package failure tests",
+      "implemented_change": "Gunakan gate staging sebenarnya.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A16",
+      "severity": "P1",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "v65_timeline",
+      "line": 3128,
+      "observed_behavior_and_root_cause": "Grafik mengubah null menjadi nol dan memakai koordinat di luar viewBox.",
+      "expected_behavior": "Gap terputus, nol nyata terjaga, seluruh titik muat.",
+      "reproduction_or_regression_evidence": "FrontendContracts.test_generated_scripts_run_against_dom_contract; tests/public_data.test.js",
+      "implemented_change": "Model grafik murni, viewBox dinamis dan sumbu variabel.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A17",
+      "severity": "P2",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "v65_map_page",
+      "line": 3372,
+      "observed_behavior_and_root_cause": "Timeline hanya berasal dari lokasi pertama.",
+      "expected_behavior": "Gabungan unik slot semua lokasi.",
+      "reproduction_or_regression_evidence": "Node timeline union; generated DOM fixture",
+      "implemented_change": "Timeline bersama semua fitur.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A18",
+      "severity": "P2",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "v65_map_page",
+      "line": 3372,
+      "observed_behavior_and_root_cause": "HUD selalu memilih lokasi pertama dan tidak mengikuti pilihan lokasi.",
+      "expected_behavior": "HUD sesuai lokasi/jam; slot hilang tetap kosong.",
+      "reproduction_or_regression_evidence": "Generated DOM fixture: selector and absent slot",
+      "implemented_change": "Selector, callback marker dan fallback null.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A19",
+      "severity": "P2",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "v65_map_page",
+      "line": 3372,
+      "observed_behavior_and_root_cause": "Kegagalan Leaflet menutup angka, play kosong tidak dibatasi.",
+      "expected_behavior": "Angka/timeline dan tautan tersedia saat CDN gagal.",
+      "reproduction_or_regression_evidence": "Generated DOM fixture with Leaflet unavailable",
+      "implemented_change": "Inisialisasi teks sebelum Leaflet, fallback dan guard play.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A20",
+      "severity": "P2",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "v65_document",
+      "line": 3001,
+      "observed_behavior_and_root_cause": "Overlay statis mengaku menghubungi satelit/orbit, elevasi hardcoded.",
+      "expected_behavior": "Tidak ada klaim pengambilan satelit atau elevasi tak bersumber.",
+      "reproduction_or_regression_evidence": "Inspeksi JS/CSS/config; sintaks hasil build",
+      "implemented_change": "Hapus simulasi blocking dan elevasi tersebut.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A21",
+      "severity": "P2",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "best_windows",
+      "line": 422,
+      "observed_behavior_and_root_cause": "Jam yang telah lewat tetap menjadi saran hari ini.",
+      "expected_behavior": "Hanya jam yang belum lewat pada hari berjalan.",
+      "reproduction_or_regression_evidence": "WeatherContracts.test_today_activity_windows_exclude_elapsed_hours",
+      "implemented_change": "Filter jam berdasarkan WIB.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A22",
+      "severity": "P2",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "v65_today_page",
+      "line": 4007,
+      "observed_behavior_and_root_cause": "Panel awal indeks nol walaupun today berpindah tanggal.",
+      "expected_behavior": "Panel aktif mengikuti tanggal today.",
+      "reproduction_or_regression_evidence": "Ad hoc PackageContracts fixture shifted to 31 October: PASS",
+      "implemented_change": "Hitung active_index dari tanggal.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A23",
+      "severity": "P2",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "rebuild",
+      "line": 4391,
+      "observed_behavior_and_root_cause": "Provenance revisi hilang dan issue/build tidak dibedakan jelas.",
+      "expected_behavior": "Revisi checkout dan kedua waktu dapat dibedakan.",
+      "reproduction_or_regression_evidence": "Clean rebuild manifest source_revision assertion; per-day issue checks",
+      "implemented_change": "Manifest revisi/build, issue per hari dan catatan freshness.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A24",
+      "severity": "P2",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "v65_document",
+      "line": 3001,
+      "observed_behavior_and_root_cause": "Nama/fokus/state dan modal mobile kurang memadai.",
+      "expected_behavior": "Kontrol bernama, fokus jelas, modal native dan reduced motion.",
+      "reproduction_or_regression_evidence": "Static HTML/JS review; generated script state tests",
+      "implemented_change": "Label/fokus/dialog/pengumuman; browser candidate NOT VERIFIED.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A25",
+      "severity": "P2",
+      "file": "site_tools/public_site.py",
+      "function": "build_site",
+      "line": 196,
+      "observed_behavior_and_root_cause": "Semua aset lama dan setiap HTML lokasi ikut disalin.",
+      "expected_behavior": "Hanya aset yang direferensikan dan halaman publik.",
+      "reproduction_or_regression_evidence": "PackageContracts.test_unreferenced_assets_and_internal_html_are_not_published",
+      "implemented_change": "Daftar halaman publik dan referensi aset.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    },
+    {
+      "id": "A26",
+      "severity": "P2",
+      "file": "langit_v65_cinematic_rebuild.py",
+      "function": "rebuild",
+      "line": 4391,
+      "observed_behavior_and_root_cause": "Fallback offline masih beridentitas ANEMOS.",
+      "expected_behavior": "Fallback LANGIT dan URL lama dipertahankan.",
+      "reproduction_or_regression_evidence": "Output inspection; no removed page URLs; package link validation",
+      "implemented_change": "Generate offline.html di builder aktif.",
+      "implementation_status": "implemented",
+      "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
+      "production_status": "not_deployed"
+    }
+  ]
+}

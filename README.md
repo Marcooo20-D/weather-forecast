@@ -11,6 +11,7 @@ Mesin memakai pustaka standar Python; `certifi` dapat dipasang untuk CA HTTPS.
 
 ```bash
 python -m unittest discover -s tests -v
+node --test tests/public_data.test.js
 python -m compileall -q -x 'outputs|_site|\.git' .
 ```
 
@@ -22,6 +23,7 @@ Gunakan data `outputs/` yang ada atau jalankan mesin prakiraan terlebih dahulu.
 
 ```bash
 python langit_v65_cinematic_rebuild.py --root outputs
+python check_fixes.py --root outputs
 python -m site_tools.public_site --source outputs --destination _site
 python -m http.server 8000 --directory _site
 ```
@@ -49,6 +51,12 @@ Arsip forecast baru memakai `.json.gz` lossless; pembaca mendukung arsip lama
 `.json` dan arsip baru. CSV terbaru menyimpan nilai skalar; distribusi lengkap
 tetap tersimpan dalam JSON dan arsip immutable.
 
-Lihat [hasil audit 24 Oktober 2026](docs/AUDIT_2026-10-24.md) untuk temuan,
-validasi, dan batas pemeriksaan. Metrik akurasi membutuhkan observasi lokal
+Lihat [audit terbaru](docs/AUDIT_LATEST.md) dan
+[arsitektur/kontrak data](docs/ARCHITECTURE.md) untuk temuan, reproduksi dan
+batas pemeriksaan. Kandidat v65.3 pada PR #3 belum diterbitkan; pengujian
+browser kandidat masih menjadi gate rilis.
+
+[Audit 24 Oktober 2026](docs/AUDIT_2026-10-24.md) tetap disimpan sebagai
+riwayat. Metrik akurasi membutuhkan observasi lokal
 yang sesuai; sinkronisasi referensi model saja bukan bukti akurasi lapangan.
+
