@@ -3,9 +3,8 @@
 LANGIT v65 Cinematic Rebuild
 =============================
 
-Premium atmospheric experience layer for LANGIT weather intelligence.
-Replaces langit_v63_product_rebuild.py with a cinematic, Apple-grade
-visual experience while preserving 100% of the data pipeline.
+Public presentation layer for the forecast engine's existing output.
+Scientific quantities keep their source units, dates and missing values.
 
 Usage:
   python langit_v65_cinematic_rebuild.py --root outputs --public-base-url https://marcooo20-d.github.io/weather-forecast
@@ -20,6 +19,7 @@ import html
 import hashlib
 import json
 import math
+import os
 import re
 import sys
 from pathlib import Path
@@ -27,7 +27,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 BRAND = "LANGIT"
-VERSION = "LANGIT v65.2"
+VERSION = "LANGIT v65.3"
 TZ_NAME = "Asia/Jakarta"
 DISCLAIMER = "Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat."
 ID_BOUNDS = [[-11.25, 94.0], [6.45, 141.25]]
@@ -53,7 +53,7 @@ def text(value: Any, default: str = "") -> str:
 
 def num(value: Any, default: Optional[float] = None) -> Optional[float]:
     try:
-        if value is None:
+        if value is None or isinstance(value, bool):
             return default
         if isinstance(value, str):
             value = value.strip().replace("%", "").replace("°C", "").replace("km/jam", "").replace(",", ".")
@@ -79,11 +79,15 @@ def prob(value: Any, default: Optional[float] = None) -> Optional[float]:
     x = num(value, default)
     if x is None:
         return default
-    return clamp(x)
+    return x if 0 <= x <= 100 else default
 
 
 def hour(value: Any, default: str = "00:00") -> str:
     raw = text(value, default)
+    if parse_date(raw):
+        stamp = parse_timestamp(raw)
+        if stamp and re.search(r"[T\s]\d{1,2}:\d{2}", raw):
+            return stamp.strftime("%H:%M")
     # An ISO date starts with a year; never interpret its first digits as hours.
     m = re.search(r"(?:T|\s)(\d{1,2}):(\d{2})(?::\d{2})?", raw) if parse_date(raw) else None
     if not m:
@@ -139,6 +143,8 @@ def fmt_date(d: Optional[dt.date], long: bool = True) -> str:
 
 def parse_timestamp(value: Any) -> Optional[dt.datetime]:
     raw = text(value)
+    if not re.search(r"[T\s]\d{1,2}:\d{2}", raw):
+        return None
     try:
         stamp = dt.datetime.fromisoformat(raw.replace("Z", "+00:00"))
         if stamp.tzinfo is None:
@@ -158,7 +164,7 @@ def fmt_update(value: Any = None) -> str:
 
 def pct(value: Any) -> str:
     x = prob(value, None)
-    return "—" if x is None else f"{round(x):.0f}%"
+    return "—" if x is None else "<1%" if 0 < x < 1 else f"{round(x):.0f}%"
 
 
 def deg(value: Any) -> str:
@@ -171,10 +177,21 @@ def kmh(value: Any) -> str:
     return "—" if x is None else f"{x:.1f} km/jam"
 
 
-def read_json(path: Path, default: Any = None) -> Any:
+def score_text(value: Any) -> str:
+    value = num(value)
+    return "—" if value is None else str(round(value))
+
+
+def read_json(path: Path, default: Any = None, *, strict: bool = False) -> Any:
+    if not path.exists():
+        return default
     try:
-        return json.loads(path.read_text(encoding="utf-8", errors="replace"))
-    except Exception:
+        def reject_constant(value):
+            raise ValueError("Non-finite JSON constant: " + value)
+        return json.loads(path.read_text(encoding="utf-8"), parse_constant=reject_constant)
+    except (OSError, UnicodeError, ValueError) as exc:
+        if strict:
+            raise ValueError(f"Invalid forecast input {path}: {exc}") from exc
         return default
 
 
@@ -306,7 +323,7 @@ def risk_class(score: Any, valid: bool = True) -> str:
 
 
 def risk_label(cls: str) -> str:
-    return {"safe": "Risiko lebih rendah", "watch": "Perlu diperhatikan", "rain": "Waspada", "danger": "Berpotensi signifikan", "limited": "Data terbatas"}.get(cls, "Perlu diperhatikan")
+    return {"safe": "Potensi gangguan rendah", "watch": "Perlu dipantau", "rain": "Gangguan aktivitas mungkin", "danger": "Potensi gangguan tinggi", "limited": "Data terbatas"}.get(cls, "Perlu dipantau")
 
 
 def risk_color(cls: str) -> str:
@@ -321,29 +338,49 @@ def condition_label(hh: str, rain: Any, temp: Any, rh: Any, heat: Any, valid: bo
     hi_val = num(heat, t)
     r = num(rh, None)
     h = hour_int(hh)
-    if p >= 78: return "Hujan kuat"
-    if p >= 55: return "Hujan lokal"
-    if p >= 35: return "Potensi hujan"
-    if p >= 20: return "Awan menebal"
+    if p >= 55: return "Peluang hujan tinggi"
+    if p >= 20: return "Ada peluang hujan"
     if hi_val is not None and hi_val >= 36 and 10 <= h <= 16: return "Panas menyengat"
     if hi_val is not None and hi_val >= 34 and 9 <= h <= 16: return "Panas lembap"
     if r is not None and r >= 88 and (h <= 8 or h >= 19): return "Lembap"
-    if 10 <= h <= 15: return "Cerah berawan"
-    if 16 <= h <= 18: return "Berawan sore"
-    return "Berawan"
+    return "Peluang hujan rendah"
 
 
 def row_to_hour(row: Dict[str, Any], fallback_date: Optional[dt.date] = None, fallback_relative: str = "Hari ini") -> Dict[str, Any]:
-    hh = hour(pick(row, "hour", "jam", "time", "local_time", "target_hour", "target_time", "datetime", "timestamp", default="00:00"))
-    d = parse_date(pick(row, "date", "date_iso", "tanggal", "target_date", "valid_date", "forecast_date", "datetime", "timestamp")) or fallback_date
+    flags = []
+    raw_moment = text(pick(row, "valid_time", "target_datetime", "datetime", "timestamp", "time", "local_time"))
+    moment = parse_timestamp(raw_moment) if re.search(r"[T\s]\d{1,2}:\d{2}", raw_moment) else None
+    hh = moment.strftime("%H:%M") if moment else hour(pick(row, "hour", "jam", "time", "local_time", "target_hour", "target_time"), "")
+    d = moment.date() if moment else parse_date(pick(row, "date", "date_iso", "tanggal", "target_date", "valid_date", "forecast_date", "time")) or fallback_date
+    if not hh:
+        flags.append("missing_or_invalid_valid_hour")
+    def bounded(value, lower, upper, field):
+        number = num(value)
+        if number is not None and not lower <= number <= upper:
+            flags.append(field + "_out_of_range")
+            return None
+        return number
     temp = num(pick(row, "temp_c", "temp_p50", "temperature_c", "temperature_2m_c", "avg_temperature_c", "t2m", "suhu"))
     rh = num(pick(row, "humidity_pct", "rh_p50", "rh_pct", "relative_humidity", "relative_humidity_2m", "rh", "kelembapan"))
     heat = num(pick(row, "heat_index_c", "heat_index_p50", "apparent_temperature_c", "feels_like_c", "terasa"), temp)
     rain = prob(pick(row, "rain_probability", "prob_rain", "rain_probability_raw", "precip_probability", "precipitation_probability", "pop", "hujan"))
     wind = num(pick(row, "wind_kmh", "wind_p50", "wind_speed_kmh", "wind_speed_10m_kmh", "angin"))
-    base_score = clamp(pick(row, "risk_score", "rain_threat_score", "score", "risk", default=0), default=0)
+    temp = bounded(temp, -80, 60, "temp_c")
+    rh = bounded(rh, 0, 100, "humidity_pct")
+    wind = bounded(wind, 0, 500, "wind_kmh")
+    raw_rain = pick(row, "rain_probability", "prob_rain", "rain_probability_raw", "precip_probability", "precipitation_probability", "pop", "hujan")
+    if num(raw_rain) is not None and rain is None:
+        flags.append("rain_probability_out_of_range")
+    heat = bounded(pick(row, "heat_index_c", "heat_index_p50", "apparent_temperature_c", "feels_like_c", "terasa"), -100, 100, "heat_index_c")
+    direction = bounded(pick(row, "wind_direction_deg", "wind_direction", "wind_dir", "arah_angin"), 0, 360, "wind_dir")
+    cloud = bounded(pick(row, "cloud_cover_pct", "cloud_cover", "cloud_p50", "cloud_pct", "awan"), 0, 100, "cloud_pct")
+    if wind is None or wind == 0:
+        direction = None
+    elif direction is not None:
+        direction %= 360
+    base_score = bounded(pick(row, "risk_score", "rain_threat_score", "score", "risk", default=0), 0, 100, "risk_score") or 0
     score = max(base_score, rain or 0, heat_risk(heat, temp, rh), wind_risk(wind))
-    valid = all(x is not None for x in [temp, rain, wind]) and text(row.get("data_quality")) not in {"unavailable", "invalid", "stale", "limited"}
+    valid = bool(hh) and all(x is not None for x in [temp, rain, wind]) and text(row.get("data_quality")).lower() not in {"unavailable", "invalid", "stale", "limited"}
     cls = text(pick(row, "risk_class", "risk_level", default="")).lower()
     cls = cls if cls in {"safe", "watch", "rain", "danger", "limited"} else risk_class(score, valid)
     if not valid or row.get("valid") is False:
@@ -363,10 +400,15 @@ def row_to_hour(row: Dict[str, Any], fallback_date: Optional[dt.date] = None, fa
         "date_short": fmt_date(d, False) if d else "—",
         "relative": text(pick(row, "relative_day", "day_tag", "hari", "day", default=fallback_relative), fallback_relative),
         "hour": hh, "temp_c": temp, "humidity_pct": rh, "heat_index_c": heat,
-        "rain_probability": rain, "wind_kmh": wind, "risk_score": round(score),
+        "rain_probability": rain, "wind_kmh": wind, "risk_score": round(score) if valid else None,
         "risk_class": cls, "risk_label": risk_label(cls), "condition": cond, "valid": valid,
-        "wind_dir": num(pick(row, "wind_direction_deg", "wind_direction", "wind_dir", "arah_angin")),
-        "cloud_pct": num(pick(row, "cloud_cover_pct", "cloud_cover", "cloud_p50", "cloud_pct", "awan")),
+        "wind_dir": direction, "cloud_pct": cloud,
+        "validation_flags": flags,
+        "risk_score_basis": "activity_disruption_heuristic_not_hazard_probability",
+        "rain_interval_start": row.get("rain_interval_start"),
+        "rain_interval_end": row.get("rain_interval_end"),
+        "rain_interval_minutes": num(row.get("rain_interval_minutes")),
+        "rain_amount_p50_mm": num(pick(row, "rain_amount_p50_mm", "rain_p50")),
         "data_quality": row.get("data_quality"),
         "probability_basis": row.get("probability_basis"),
         "calibration_status": row.get("calibration_status"),
@@ -378,6 +420,9 @@ def default_hours(base_date: dt.date, relative: str) -> List[Dict[str, Any]]:
 
 
 def best_windows(hours: List[Dict[str, Any]]) -> List[str]:
+    now = local_now()
+    hours = [row for row in hours if not (
+        row.get("date_iso") == now.date().isoformat() and hour(row.get("hour"), "") < now.strftime("%H:%M"))]
     good = sorted({hour_int(x["hour"]) for x in hours if x.get("valid") and x.get("risk_class") == "safe"})
     if not good:
         good = sorted({hour_int(x["hour"]) for x in hours if x.get("valid") and x.get("risk_class") in {"safe", "watch"}})
@@ -430,14 +475,14 @@ def summarize_day(relative: str, date_value: dt.date, rows: List[Dict[str, Any]]
     peak = max(basis, key=lambda z: prob(z.get("rain_probability"), -1) if prob(z.get("rain_probability"), None) is not None else -1) if basis else {}
     worst = max(basis, key=lambda z: clamp(z.get("risk_score"), default=0)) if basis else {}
     cls = "limited" if not valid else worst.get("risk_class", "watch")
-    score = 35 if cls == "limited" else clamp(worst.get("risk_score"), default=0)
+    score = None if cls == "limited" else clamp(worst.get("risk_score"), default=0)
     return {
         "relative": relative, "date_iso": date_value.isoformat(), "date_label": fmt_date(date_value),
         "date_short": fmt_date(date_value, False), "weekday": DAY_ID[date_value.weekday()],
         "hours": rows, "periods": period_summaries(rows),
         "peak_rain_probability": prob(peak.get("rain_probability"), None),
         "peak_rain_hour": text(peak.get("hour"), "—"),
-        "risk_score": round(score), "risk_class": cls, "risk_label": risk_label(cls),
+        "risk_score": round(score) if score is not None else None, "risk_class": cls, "risk_label": risk_label(cls),
         "condition": text(worst.get("condition"), "Data terbatas" if cls == "limited" else "Berawan"),
         "avg_temp_c": mean(x.get("temp_c") for x in valid),
         "avg_rh": mean(x.get("humidity_pct") for x in valid),
@@ -464,7 +509,7 @@ def decision_sentence(location: str, day: Dict[str, Any], short: bool = False) -
     if c == "limited":
         return "Data prakiraan belum lengkap. Pantau kondisi langit secara mandiri."
     if c == "danger":
-        return f"Disarankan untuk membatasi aktivitas luar ruang pada jam rawan sekitar pukul {peak} WIB (peluang {p})."
+        return f"Siapkan rencana cadangan untuk aktivitas luar ruang sekitar pukul {peak} WIB; peluang hujan {p}. Indeks aktivitas ini bukan peringatan cuaca ekstrem."
     if c == "rain":
         return f"Potensi hujan terpantau cukup tinggi. Siapkan perlengkapan hujan jika beraktivitas luar ruang di sekitar pukul {peak} WIB (peluang {p})."
     if c == "watch":
@@ -481,7 +526,7 @@ def short_activity_advice(day: Dict[str, Any]) -> List[Tuple[str, str, str, str]
         return [
             ("Perjalanan / Motor", "Bawa Jas Hujan", f"Hindari berkendara sekitar pukul {peak}.", "rain"),
             ("Jalan Kaki", "Siapkan Payung", f"Antisipasi tempat berteduh di sekitar pukul {peak}.", "rain"),
-            ("Jemur Pakaian", "Pagi Hari", "Hindari meninggalkan jemuran terlalu lama.", "watch"),
+            ("Jemur Pakaian", "Periksa jam", "Pilih periode peluang hujan lebih rendah jika tersedia.", "watch"),
             ("Aktivitas Outdoor", "Siapkan Rencana Cadangan", "Gunakan opsi ruangan tertutup.", "rain"),
             ("Olahraga", "Sesuaikan Jadwal", f"Pilih jam alternatif: {win}.", "watch"),
             ("Fotografi", "Gunakan Pelindung", "Lindungi peralatan elektronik dari kelembapan.", "watch"),
@@ -490,7 +535,7 @@ def short_activity_advice(day: Dict[str, Any]) -> List[Tuple[str, str, str, str]
         return [
             ("Perjalanan / Motor", "Cukup Kondusif", f"Tetap antisipasi potensi hujan sekitar pukul {peak}.", "watch"),
             ("Jalan Kaki", "Aman Bersyarat", f"Periode nyaman: {win}.", "safe"),
-            ("Jemur Pakaian", "Pagi–Siang", "Angkat pakaian sebelum memasuki sore hari.", "safe" if heat < 36 else "watch"),
+            ("Jemur Pakaian", "Pantau cuaca", "Pilih waktu dengan data lengkap dan peluang hujan lebih rendah.", "watch"),
             ("Aktivitas Outdoor", "Kondusif", "Tetap pantau perkembangan awan.", "watch"),
             ("Olahraga", "Hindari Terik", f"Periode nyaman: {win}.", "watch" if heat >= 34 else "safe"),
             ("Fotografi", "Pantau Awan", f"Perhatikan perubahan intensitas cahaya sekitar pukul {peak}.", "watch"),
@@ -508,9 +553,9 @@ def short_activity_advice(day: Dict[str, Any]) -> List[Tuple[str, str, str, str]
         ("Perjalanan / Motor", "Aman", "Kondisi cuaca mendukung perjalanan luar ruang.", "safe"),
         ("Jalan Kaki", "Sangat Nyaman", f"Periode terbaik: {win}.", "safe"),
         ("Jemur Pakaian", "Sangat Baik", "Pagi hingga siang hari sangat mendukung.", "safe"),
-        ("Aktivitas Outdoor", "Sangat Aman", "Sangat mendukung untuk kegiatan luar ruang.", "safe"),
+        ("Aktivitas Outdoor", "Relatif mendukung", "Tetap pantau kondisi setempat.", "safe"),
         ("Olahraga", "Pagi / Sore", f"Periode nyaman: {win}.", "safe"),
-        ("Fotografi", "Sangat Baik", "Kondisi cahaya pagi dan sore terpantau optimal.", "safe"),
+        ("Fotografi", "Periksa cahaya", "Peluang hujan rendah belum memastikan langit cerah.", "safe"),
     ]
 
 
@@ -620,7 +665,7 @@ def split_rows_into_days(rows: List[Dict[str, Any]], base_date: dt.date) -> List
 def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
     raw_api: Dict[str, Any] = {}
     for name in ["langit_api_v1.json", "anemos_api_v1.json", "api.json"]:
-        candidate = read_json(safe_find_file(directory, name), {})
+        candidate = read_json(safe_find_file(directory, name), {}, strict=True)
         if isinstance(candidate, dict) and candidate:
             raw_api = candidate
             break
@@ -649,10 +694,12 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
                 break
     generated = raw_api.get("generated_at_iso") or raw_api.get("issued_at") or raw_api.get("generated_at") or raw_api.get("updated_at")
     days = []
+    sources_by_date = {}
+    previous_sources = raw_api.get("sources_by_date") or {}
     for i in range(3):
         date_value = base_date + dt.timedelta(days=i)
         stamp = date_value.strftime("%Y%m%d")
-        payload = read_json(safe_find_file(directory, f"sentinel_x_{stamp}.json"), {}) or {}
+        payload = read_json(safe_find_file(directory, f"sentinel_x_{stamp}.json"), {}, strict=True) or {}
         rows = payload.get("hourly") or []
         issued = payload.get("issued_at") or (payload.get("daily") or {}).get("issued_at") or (payload.get("daily") or {}).get("generated_at")
         if not rows:
@@ -666,11 +713,23 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
         parsed = {}
         for row in rows:
             item = row_to_hour(row, date_value, relative)
+            if not item["hour"]:
+                continue
             if item["date_iso"] == date_value.isoformat():
                 item["relative"] = relative
+                if item["hour"] in parsed:
+                    raise ValueError(f"Duplicate forecast hour: {directory.name} {date_value} {item['hour']}")
                 parsed[item["hour"]] = item
         day = summarize_day(relative, date_value, list(parsed.values()))
+        day["rejected_time_records"] = len(rows) - len(parsed)
         day["issued_at"] = issued or generated
+        day["time_basis"] = "forecast_issue_not_provider_model_initialization"
+        sources_by_date[date_value.isoformat()] = (
+            read_csv(directory / f"source_status_{stamp}.csv") or
+            payload.get("source_states") or previous_sources.get(date_value.isoformat()) or [])
+        ensemble = payload.get("ensemble_status") or {}
+        day["ensemble_status"] = {key: ensemble.get(key) for key in
+                                  ("status", "requested_model_count", "successful_model_count", "calibration_status")}
         days.append(day)
         if parse_timestamp(issued) and (not parse_timestamp(generated) or parse_timestamp(issued) > parse_timestamp(generated)):
             generated = issued
@@ -680,12 +739,49 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
         if sources:
             break
     today = next((d for d in days if d["date_iso"] == local_now().date().isoformat()), days[0])
+    selected_sources = sources_by_date.get(today["date_iso"]) or [
+        row for row in sources
+        if parse_date(pick(row, "tanggal", "target_date", "date")) == parse_date(today["date_iso"])]
+    if not selected_sources and sources and not any(pick(row, "tanggal", "target_date", "date") for row in sources):
+        selected_sources = sources  # Legacy fixtures without a date are explicitly unclassified.
     return {
         "brand": BRAND, "version": VERSION, "generated_at": fmt_update(generated),
-        "generated_at_iso": generated if text(generated) and not text(generated).startswith("Diperbarui ") else None,
+        "generated_at_iso": generated if parse_timestamp(generated) else None,
         "location_name": loc_name, "location_slug": slug, "latitude": lat, "longitude": lon,
-        "today": today, "days": days, "sources": sources, "raw_version": raw_api.get("version"),
+        "today": today, "days": days, "sources": selected_sources,
+        "sources_by_date": sources_by_date, "source_status_date": today["date_iso"],
+        "built_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+        "scientific_status": "Probabilitas belum terkalibrasi; akurasi lokal harus dibuktikan dengan observasi.",
+        "raw_version": raw_api.get("raw_version") or raw_api.get("version"),
     }
+
+
+def write_public_tables(directory: Path, api: Dict[str, Any]) -> None:
+    """The final public API is also the source of all three public UI tables."""
+    def save(name, fields, rows):
+        with (directory / name).open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
+            writer.writeheader()
+            writer.writerows(rows)
+    hourly, daily, activities = [], [], []
+    for day in api["days"]:
+        common = {"date": day["date_iso"], "day_tag": day["relative"], "issued_at": day["issued_at"]}
+        for row in day["hours"]:
+            hourly.append({**row, **common})
+        daily.append({**day, **common, "best_activity_window": ", ".join(day["safe_windows"]),
+                      "summary": decision_sentence(api["location_name"], day)})
+        for activity, status, advice, cls in short_activity_advice(day):
+            activities.append({**common, "activity": activity, "status": status,
+                               "advice": advice, "priority_hour": day["peak_rain_hour"], "risk_class": cls})
+    save("langit_hourly_intelligence.csv",
+         ["date", "day_tag", "hour", "condition", "temp_c", "humidity_pct", "heat_index_c",
+          "rain_probability", "wind_kmh", "risk_score", "risk_label", "risk_class",
+          "valid", "data_quality", "probability_basis", "calibration_status", "risk_score_basis",
+          "issued_at", "rain_interval_start", "rain_interval_end", "rain_interval_minutes", "rain_amount_p50_mm"], hourly)
+    save("langit_daily_outlook.csv", ["date", "day_tag", "risk_score", "risk_label",
+         "peak_rain_probability", "peak_rain_hour", "best_activity_window", "summary", "issued_at"], daily)
+    save("langit_activity_matrix.csv", ["date", "day_tag", "activity", "status", "advice",
+         "priority_hour", "risk_class", "issued_at"], activities)
 
 
 # ---------------------------------------------------------------------------
@@ -786,6 +882,19 @@ body.theme-dusk { background: radial-gradient(circle at 50% -100px, rgba(139,92,
 body.theme-void { background: radial-gradient(circle at 50% -100px, rgba(99,102,241,0.15), var(--void) 70%), var(--void); }
 
 a { color: inherit; text-decoration: none; }
+a:focus-visible, button:focus-visible, select:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid #67e8f9; outline-offset: 4px;
+}
+.skip-link { position: fixed; top: -100px; left: 16px; z-index: 10000; padding: 12px; background: #030712; color: #fff; }
+.skip-link:focus { top: 12px; }
+.freshness-note { padding-top: 96px; font-size: 12px; color: #94a3b8; }
+.freshness-note.is-stale { color: #fcd34d; }
+.planner-controls { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; margin-bottom: 24px; }
+@media(max-width:600px) { .planner-controls { grid-template-columns: 1fr; } }
+.mobile-bottom-sheet[open] { display: block; transform: none; margin: 0; max-width: 100%; color: var(--snow); }
+.mobile-bottom-sheet::backdrop { background: rgba(0,0,0,.65); }
+.sheet-close { display: block; margin: 0 0 12px auto; padding: 10px 18px; background: #15294a; color: #fff; border: 1px solid #94a3b8; border-radius: 12px; }
+
 
 /* --- ATMOSPHERIC CANVAS --- */
 .atmo {
@@ -800,78 +909,6 @@ a { color: inherit; text-decoration: none; }
   height: 100%;
   opacity: 0.8;
   mix-blend-mode: screen;
-}
-
-/* --- SPATIAL ZOOMS / SCANNER OVERLAY --- */
-#spatial-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 99999;
-  background: var(--void);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
-  overflow: hidden;
-}
-#spatial-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-.spatial-hud {
-  position: relative;
-  z-index: 10;
-  text-align: center;
-  font-family: var(--font-display);
-  color: var(--snow);
-  max-width: 90vw;
-}
-.spatial-title {
-  font-size: 13px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-  color: var(--noon);
-  margin-bottom: 12px;
-  animation: tracking-pulse 2s infinite ease-in-out;
-}
-.spatial-status {
-  font-size: 26px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  margin-bottom: 24px;
-}
-.spatial-skip {
-  position: absolute;
-  bottom: 40px;
-  z-index: 11;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  padding: 10px 24px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--mist);
-  cursor: pointer;
-  backdrop-filter: blur(12px);
-  transition: all 0.3s var(--ease-out);
-}
-.spatial-skip:hover {
-  color: var(--white);
-  border-color: rgba(6, 182, 212, 0.4);
-  background: rgba(6, 182, 212, 0.1);
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
-}
-
-@keyframes tracking-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
 }
 
 /* --- NAVIGATION --- */
@@ -1002,8 +1039,8 @@ a { color: inherit; text-decoration: none; }
 
 /* --- SCROLL REVEAL --- */
 .reveal {
-  opacity: 0;
-  transform: translateY(24px);
+  opacity: 1;
+  transform: none;
   transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
 }
 .reveal.visible {
@@ -2330,6 +2367,8 @@ a { color: inherit; text-decoration: none; }
 # v65 CINEMATIC JAVASCRIPT
 # ---------------------------------------------------------------------------
 
+DATA_JS = (Path(__file__).parent / 'site_tools' / 'public_data.js').read_text(encoding='utf-8')
+
 JS_V65 = r'''
 (function(){
   'use strict';
@@ -2337,17 +2376,16 @@ JS_V65 = r'''
   // Retrieve dynamic configuration injected from backend engine
   const config = window.LANGIT_CONFIG || {};
 
-  // Safe SessionStorage wrapper to prevent incognito/private mode crashes
-  const safeStorage = {
-    getItem(key) {
-      try { return sessionStorage.getItem(key); } catch (e) { return null; }
-    },
-    setItem(key, value) {
-      try { sessionStorage.setItem(key, value); } catch (e) {}
-    }
-  };
-
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const freshness = document.querySelector('.freshness-note');
+  if (freshness) {
+    const issued = Date.parse(config.forecast_issued_at);
+    const age = (Date.now()-issued)/3600000;
+    if (!Number.isFinite(issued) || age < -1 || age > (config.stale_after_hours || 18)) {
+      freshness.classList.add('is-stale');
+      freshness.textContent = 'Prakiraan perlu diperiksa pembaruannya. ' + freshness.textContent;
+    }
+  }
   let initialLayer = 'rain';
   const cond = (config.condition || '').toLowerCase();
   if (cond.includes('hujan') || cond.includes('gerimis') || cond.includes('rain') || cond.includes('drizzle')) {
@@ -2388,6 +2426,7 @@ JS_V65 = r'''
   // --- Smooth Numerical Counting Transition ---
   function animateValue(obj, start, end, duration, suffix = '', decimals = 0) {
     if (!obj) return;
+    if (prefersReducedMotion) { obj.textContent = end.toFixed(decimals) + suffix; return; }
     if (obj._animId) {
       window.cancelAnimationFrame(obj._animId);
     }
@@ -2415,6 +2454,7 @@ JS_V65 = r'''
       const decimals = parseInt(el.dataset.animateDecimals || '0');
       if (!Number.isFinite(targetVal) || el.textContent.trim().startsWith('—')) return;
       
+      if (suffix === '%' && targetVal > 0 && targetVal < 1) { el.textContent = '<1%'; return; }
       const currentVal = parseFloat(el.textContent) || 0;
       animateValue(el, currentVal, targetVal, 800, suffix, decimals);
     });
@@ -2622,145 +2662,50 @@ JS_V65 = r'''
     const tooltip = container.querySelector('.chart-tooltip');
     
     function drawChart() {
-      if (!svg || !hours.length) return;
-      const w = svg.clientWidth || 900;
-      const h = svg.clientHeight || 200;
-      const padX = w < 400 ? 25 : w < 700 ? 35 : 50;
-      const padTop = w < 400 ? 20 : 30;
-      const padBot = w < 400 ? 30 : 40;
-      const innerW = w - 2 * padX;
-      const innerH = h - padTop - padBot;
-      const n = hours.length;
-
-      // Determine Variable Metadata
-      let getter = x => 0;
-      let unit = '';
-      let strokeColor = '#06b6d4';
-      let fillGradientId = 'noonChartGrad';
-      let title = '';
-
-      if (activeVar === 'rain') {
-        getter = x => parseFloat(x.rain_probability || 0);
-        unit = '%';
-        strokeColor = '#06b6d4'; // Cyan
-        fillGradientId = 'rainChartGrad';
-      } else if (activeVar === 'temp') {
-        getter = x => parseFloat(x.temp_c || 0);
-        unit = '°C';
-        strokeColor = '#f97316'; // Orange
-        fillGradientId = 'tempChartGrad';
-      } else if (activeVar === 'humidity') {
-        getter = x => parseFloat(x.humidity_pct || 0);
-        unit = '%';
-        strokeColor = '#6366f1'; // Indigo
-        fillGradientId = 'humidityChartGrad';
-      } else if (activeVar === 'wind') {
-        getter = x => parseFloat(x.wind_kmh || 0);
-        unit = ' km/j';
-        strokeColor = '#10b981'; // Green
-        fillGradientId = 'windChartGrad';
+      if (!svg || !hours.length || svg.clientWidth <= 0) return;
+      const w = Math.max(240, svg.clientWidth), h = Math.max(180, svg.clientHeight);
+      svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+      const model = window.LangitPublicData.chart(hours, activeVar, w, h);
+      const strokeColor = {rain:'#06b6d4',temp:'#f97316',humidity:'#a5b4fc',wind:'#34d399'}[activeVar];
+      const unit = model.unit;
+      const path = points => points.map((point,index) => (index ? 'L ' : 'M ') + point.x.toFixed(1) + ',' + point.y.toFixed(1)).join(' ');
+      svg.replaceChildren();
+      function element(tag, attributes, content) {
+        const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+        Object.entries(attributes).forEach(([name,value]) => node.setAttribute(name,String(value)));
+        if (content != null) node.textContent = content;
+        svg.appendChild(node);
+        return node;
       }
-
-      const vals = hours.map(getter);
-      const minVal = activeVar === 'temp' ? Math.min(...vals, 15) - 2 : 0;
-      const maxVal = Math.max(...vals, activeVar === 'temp' ? 30 : 100) || 1;
-      const valRange = maxVal - minVal;
-
-      const points = hours.map((hr, i) => {
-        const x = padX + (i / Math.max(1, n - 1)) * innerW;
-        const y = padTop + innerH - ((getter(hr) - minVal) / valRange) * innerH;
-        return { x, y, hr, val: getter(hr) };
+      [model.low, (model.high + model.low)/2, model.high].forEach(value => {
+        const y = model.padTop + (model.high-value)/(model.high-model.low)*(model.bottom-model.padTop);
+        element('line',{x1:model.padX,y1:y,x2:w-model.padX,y2:y,stroke:'rgba(255,255,255,.12)'});
+        element('text',{x:model.padX-8,y:y+4,'text-anchor':'end',fill:'#94a3b8','font-size':10},Math.round(value));
       });
-
-      // SVG path helpers
-      function bezierPath(pts) {
-        if (pts.length < 2) return '';
-        let d = 'M ' + pts[0].x.toFixed(1) + ',' + pts[0].y.toFixed(1);
-        if (pts.length === 2) {
-          d += ' L ' + pts[1].x.toFixed(1) + ',' + pts[1].y.toFixed(1);
-          return d;
+      model.segments.forEach(segment => {
+        if (segment.length < 2) return;
+        element('path',{class:'curve-fill',d:path(segment)+' L '+segment[segment.length-1].x+','+model.bottom+' L '+segment[0].x+','+model.bottom+' Z',fill:strokeColor,opacity:.08});
+        element('path',{class:'curve-line',d:path(segment),stroke:strokeColor,fill:'none'});
+      });
+      const stride = Math.max(1,Math.ceil(model.points.length / Math.max(2,Math.floor(w/75))));
+      model.points.forEach((point,index) => {
+        if (index % stride === 0 || index === model.points.length-1) {
+          element('text',{class:'curve-label',x:point.x,y:h-8},point.hr.hour);
         }
-        for (let i = 0; i < pts.length - 1; i++) {
-          const p0 = pts[Math.max(0, i - 1)];
-          const p1 = pts[i];
-          const p2 = pts[Math.min(pts.length - 1, i + 1)];
-          const p3 = pts[Math.min(pts.length - 1, i + 2)];
-          
-          const cp1x = p1.x + (p2.x - p0.x) / 6;
-          const cp1y = p1.y + (p2.y - p0.y) / 6;
-          const cp2x = p2.x - (p3.x - p1.x) / 6;
-          const cp2y = p2.y - (p3.y - p1.y) / 6;
-          
-          d += ' C ' + cp1x.toFixed(1) + ',' + cp1y.toFixed(1) + ' ' +
-               cp2x.toFixed(1) + ',' + cp2y.toFixed(1) + ' ' +
-               p2.x.toFixed(1) + ',' + p2.y.toFixed(1);
-        }
-        return d;
-      }
-
-      const linePathD = bezierPath(points);
-      const fillPathD = linePathD + ' L ' + points[points.length-1].x.toFixed(1) + ',' + (h - padBot).toFixed(1) + ' L ' + points[0].x.toFixed(1) + ',' + (h - padBot).toFixed(1) + ' Z';
-
-      // Draw SVG Elements
-      svg.innerHTML = `
-        <defs>
-          <linearGradient id="rainChartGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.25"/>
-            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
-          </linearGradient>
-          <linearGradient id="tempChartGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#f97316" stop-opacity="0.25"/>
-            <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
-          </linearGradient>
-          <linearGradient id="humidityChartGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#6366f1" stop-opacity="0.25"/>
-            <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
-          </linearGradient>
-          <linearGradient id="windChartGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
-            <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        
-        <!-- Y Grid Lines -->
-        <line x1="${padX}" y1="${padTop}" x2="${w - padX}" y2="${padTop}" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-        <line x1="${padX}" y1="${padTop + innerH/2}" x2="${w - padX}" y2="${padTop + innerH/2}" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-        <line x1="${padX}" y1="${h - padBot}" x2="${w - padX}" y2="${h - padBot}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-        
-        <!-- Main Area Grads & Line -->
-        <path class="curve-fill" d="${fillPathD}" fill="url(#${fillGradientId})"/>
-        <path class="curve-line" d="${linePathD}" stroke="${strokeColor}"/>
-      `;
-
-      // Draw interactive dots and text labels
-      points.forEach(p => {
-        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        dot.setAttribute('class', 'curve-dot');
-        dot.setAttribute('cx', p.x.toFixed(1));
-        dot.setAttribute('cy', p.y.toFixed(1));
-        dot.setAttribute('r', '5');
-        dot.setAttribute('fill', strokeColor);
-        dot.addEventListener('mouseenter', (ev) => showTooltip(ev, p, unit));
-        dot.addEventListener('mouseleave', hideTooltip);
-        svg.appendChild(dot);
-
-        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        label.setAttribute('class', 'curve-label');
-        label.setAttribute('x', p.x.toFixed(1));
-        label.setAttribute('y', (h - 8).toString());
-        label.textContent = p.hr.hour;
-        svg.appendChild(label);
-
-        // Conditional numeric displays
-        if (p.val > 0 || activeVar === 'temp') {
-          const valTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-          valTxt.setAttribute('class', 'curve-value');
-          valTxt.setAttribute('x', p.x.toFixed(1));
-          valTxt.setAttribute('y', Math.max(15, p.y - 12).toFixed(1));
-          valTxt.textContent = Math.round(p.val) + unit;
-          svg.appendChild(valTxt);
+        if (point.val == null) return;
+        const dot = element('circle',{class:'curve-dot',cx:point.x,cy:point.y,r:5,fill:strokeColor,tabindex:0,role:'img',
+          'aria-label':point.hr.hour+' WIB: '+window.LangitPublicData.format(point.val,unit)});
+        dot.addEventListener('mouseenter',event=>showTooltip(event,point,unit));
+        dot.addEventListener('mouseleave',hideTooltip);
+        dot.addEventListener('focus',event=>showTooltip(event,point,unit));
+        dot.addEventListener('blur',hideTooltip);
+        if (index % stride === 0 || index === model.points.length-1) {
+          element('text',{class:'curve-value',x:point.x,y:Math.max(15,point.y-12)},window.LangitPublicData.format(point.val,unit));
         }
       });
+      const status = container.querySelector('.chart-status');
+      if (status) status.textContent = model.points.some(point=>point.val!=null) ? '' : 'Data parameter ini belum tersedia.';
+      chips.forEach(chip=>chip.setAttribute('aria-pressed',String(chip.dataset.var===activeVar)));
     }
 
     function showTooltip(ev, p, unit) {
@@ -2769,7 +2714,7 @@ JS_V65 = r'''
       const y = p.y;
       
       tooltip.querySelector('.chart-tooltip-time').textContent = 'Pukul ' + p.hr.hour + ' WIB';
-      tooltip.querySelector('.chart-tooltip-value').textContent = p.val.toFixed(decimalsForVar()) + unit + ' · ' + (p.hr.condition || '-');
+      tooltip.querySelector('.chart-tooltip-value').textContent = window.LangitPublicData.format(p.val,unit) + ' · ' + (p.hr.condition || '-');
       
       tooltip.style.opacity = '1';
       tooltip.style.transform = 'translate(' + (x - 70) + 'px, ' + (y - 75) + 'px)';
@@ -2777,10 +2722,6 @@ JS_V65 = r'''
 
     function hideTooltip() {
       if (tooltip) tooltip.style.opacity = '0';
-    }
-
-    function decimalsForVar() {
-      return activeVar === 'temp' ? 1 : 0;
     }
 
     chips.forEach(chip => {
@@ -2810,6 +2751,7 @@ JS_V65 = r'''
     });
 
     drawChart();
+    document.addEventListener('langit:daychange', drawChart);
     let chartResizeTimeout;
     window.addEventListener('resize', () => {
       clearTimeout(chartResizeTimeout);
@@ -2841,6 +2783,7 @@ JS_V65 = r'''
       
       container.querySelectorAll('.timeline-node').forEach(t => t.classList.remove('active'));
       node.classList.add('active');
+      container.querySelectorAll('.timeline-node').forEach(button=>button.setAttribute('aria-pressed',String(button===node)));
       
       // Update color scheme of the body gradient
       const relLabel = node.querySelector('.timeline-node-label').textContent;
@@ -2853,6 +2796,7 @@ JS_V65 = r'''
         document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
         targetPanel.classList.add('active');
         triggerCounters(targetPanel);
+        document.dispatchEvent(new Event('langit:daychange'));
       }
       
       // Notify map frames to update layout when tabs change
@@ -2928,214 +2872,22 @@ JS_V65 = r'''
     if (sheet && sheetTrigger) {
       sheetTrigger.addEventListener('click', (ev) => {
         // If mobile, prevent default details collapse and show sliding bottom sheet instead
-        if (window.innerWidth < 768) {
+        if (window.innerWidth < 768 && typeof sheet.showModal === 'function') {
           ev.preventDefault();
-          sheet.classList.add('open');
+          sheet.showModal();
         }
       });
       
-      const handle = sheet.querySelector('.mobile-bottom-sheet-handle');
+      const handle = sheet.querySelector('.sheet-close');
       if (handle) {
         handle.addEventListener('click', () => {
-          sheet.classList.remove('open');
+          sheet.close();
         });
       }
     }
   });
 
-  // --- Apple Vision Pro Spatial Coordinates Zoom Scanner ---
-  function runSpatialZoomScanner() {
-    const isMainPage = document.querySelector('.hero') !== null;
-    const sessionKey = 'langit_v65_spatial_scanner_run';
-    
-    if (!isMainPage || safeStorage.getItem(sessionKey) || prefersReducedMotion) {
-      // Clean up scanner markup and display page immediately if already run or reduced motion
-      const overlay = document.getElementById('spatial-overlay');
-      if (overlay) overlay.remove();
-      return;
-    }
-
-    // Insert overlay markup dynamically if not in HTML
-    let overlay = document.getElementById('spatial-overlay');
-    if (!overlay) {
-      const activeLocName = config.location_name || 'ITB Bandung';
-      overlay = document.createElement('div');
-      overlay.id = 'spatial-overlay';
-      overlay.innerHTML = `
-        <canvas id="spatial-canvas"></canvas>
-        <div class="spatial-hud">
-          <div class="spatial-title">MENYIAPKAN DATA CUACA</div>
-          <div class="spatial-status" id="spatial-status">MEMUAT DATA PRAKIRAAN...</div>
-        </div>
-        <button class="spatial-skip">Lewati</button>
-      `;
-      document.body.appendChild(overlay);
-    }
-
-    const canvas = document.getElementById('spatial-canvas');
-    const statusText = document.getElementById('spatial-status');
-    const skipBtn = overlay.querySelector('.spatial-skip');
-    
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let width = canvas.width = window.innerWidth;
-    let height = canvas.height = window.innerHeight;
-    
-    window.addEventListener('resize', () => {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    }, { passive: true });
-
-    let scanProgress = 0;
-    let frame = 0;
-    
-    const telemetrySteps = [
-      { p: 0.0, txt: 'Menghubungkan ke satelit cuaca...' },
-      { p: 0.2, txt: 'Telemetri aman. Memetakan orbit...' },
-      { p: 0.45, txt: 'Menginisialisasi pencarian koordinat wilayah Indonesia...' },
-      { p: 0.7, txt: 'Memindai wilayah: ' + (config.location_name || 'ITB').toUpperCase() },
-      { p: 0.9, txt: 'Koordinat terkunci: Kampus ' + (config.location_name || 'ITB').toUpperCase() }
-    ];
-
-    let requestID = null;
-
-    function drawScanner() {
-      frame++;
-      scanProgress += 0.014;
-      if (scanProgress >= 1.0) scanProgress = 1.0;
-
-      // Draw High Tech background grid
-      ctx.fillStyle = '#030712';
-      ctx.fillRect(0, 0, width, height);
-
-      // Star particles
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-      for (let i = 0; i < 50; i++) {
-        const sx = (Math.sin(i * 123.4) * 0.5 + 0.5) * width;
-        const sy = (Math.cos(i * 567.8) * 0.5 + 0.5) * height;
-        ctx.fillRect(sx, sy, 1.5, 1.5);
-      }
-
-      // Globe Grid sequence
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const radiusBase = Math.min(width, height) * 0.35;
-      
-      // Zoom factor increases over time
-      const zoom = 1 + Math.pow(scanProgress, 2.5) * 8;
-      const currentRadius = radiusBase * zoom;
-
-      // Update HUD telemetry
-      const step = telemetrySteps.find((s, idx) => {
-        const next = telemetrySteps[idx + 1];
-        return scanProgress >= s.p && (!next || scanProgress < next.p);
-      });
-      if (step) {
-        statusText.textContent = step.txt;
-      }
-
-      ctx.strokeStyle = 'rgba(6, 182, 212, ' + (1 - scanProgress * 0.8) + ')';
-      ctx.lineWidth = 1;
-
-      if (scanProgress < 0.7) {
-        // Draw rotating sphere wireframe (Globe Search)
-        const rotY = frame * 0.012;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, currentRadius, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Latitude / Longitude lines
-        const lines = 8;
-        for (let j = 0; j < lines; j++) {
-          // Horizontal slices
-          const yOffset = Math.sin((j / lines - 0.5) * Math.PI) * currentRadius;
-          const sliceRad = Math.cos((j / lines - 0.5) * Math.PI) * currentRadius;
-          ctx.beginPath();
-          ctx.ellipse(centerX, centerY + yOffset, sliceRad, sliceRad * 0.25, 0, 0, Math.PI * 2);
-          ctx.stroke();
-
-          // Vertical slices
-          ctx.beginPath();
-          ctx.ellipse(centerX, centerY, currentRadius * 0.25, currentRadius, rotY + (j / lines) * Math.PI, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-
-        // Radar target sweeps
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, currentRadius, rotY, rotY + 0.5);
-        ctx.fillStyle = 'rgba(6, 182, 212, 0.03)';
-        ctx.fill();
-      } else {
-        // Spatial coordinates mapping focus
-        ctx.lineWidth = 1.5;
-        const opacity = 1 - (scanProgress - 0.7) / 0.3;
-        ctx.strokeStyle = 'rgba(16, 185, 129, ' + opacity + ')'; // green lock-on color
-
-        // Focused radar rings
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 150 + Math.sin(frame * 0.1) * 8, 0, Math.PI * 2);
-        ctx.stroke();
-
-        // Crosshairs
-        ctx.beginPath();
-        ctx.moveTo(centerX - 250, centerY);
-        ctx.lineTo(centerX - 30, centerY);
-        ctx.moveTo(centerX + 30, centerY);
-        ctx.lineTo(centerX + 250, centerY);
-        ctx.moveTo(centerX, centerY - 200);
-        ctx.lineTo(centerX, centerY - 30);
-        ctx.moveTo(centerX, centerY + 30);
-        ctx.lineTo(centerX, centerY + 200);
-        ctx.stroke();
-
-        // Retrieve coordinates from window config
-        const lat = config.latitude !== undefined && config.latitude !== null ? config.latitude : -6.8830;
-        const lon = config.longitude !== undefined && config.longitude !== null ? config.longitude : 107.6130;
-        
-        const alt = config.altitude !== undefined && config.altitude !== null ? config.altitude : '832';
-
-        const latSign = lat < 0 ? 'S' : 'N';
-        const lonSign = lon < 0 ? 'W' : 'E';
-
-        ctx.fillStyle = 'rgba(255, 255, 255, ' + opacity * 0.8 + ')';
-        ctx.font = '10px monospace';
-        ctx.fillText('LAT: ' + Math.abs(lat).toFixed(4) + '° ' + latSign, centerX + 60, centerY - 40);
-        ctx.fillText('LON: ' + Math.abs(lon).toFixed(4) + '° ' + lonSign, centerX + 60, centerY - 20);
-        ctx.fillText('ALT: ' + alt + 'm [MSL]', centerX + 60, centerY);
-        ctx.fillText('BEARING: 122.4° SE', centerX + 60, centerY + 20);
-      }
-
-      if (scanProgress < 1.0) {
-        requestID = window.requestAnimationFrame(drawScanner);
-      } else {
-        closeScanner();
-      }
-    }
-
-    function closeScanner() {
-      if (requestID) window.cancelAnimationFrame(requestID);
-      safeStorage.setItem(sessionKey, 'true');
-      overlay.style.opacity = '0';
-      overlay.style.transform = 'scale(1.05)';
-      setTimeout(() => {
-        overlay.remove();
-        // Trigger page counter reveals
-        const activePanel = document.querySelector('.day-panel.active');
-        if (activePanel) triggerCounters(activePanel);
-      }, 800);
-    }
-
-    skipBtn.addEventListener('click', closeScanner);
-    drawScanner();
-  }
-
-  // Auto-run Spatial Scan overlay sequence on launch
-  runSpatialZoomScanner();
+  // Static forecast content is available immediately; no simulated telemetry.
 
   // --- Hamburger Menu Toggle ---
   const navToggle = document.querySelector('.nav-toggle');
@@ -3211,7 +2963,7 @@ JS_V65 = r'''
 # ---------------------------------------------------------------------------
 
 def asset_name(kind: str) -> str:
-    source = CSS_V65 if kind == "css" else JS_V65
+    source = {"css": CSS_V65, "js": JS_V65, "data.js": DATA_JS}[kind]
     digest = hashlib.sha256(source.encode("utf-8")).hexdigest()[:12]
     return f"langit-{digest}.{kind}"
 
@@ -3241,8 +2993,8 @@ def v65_nav(api: Dict[str, Any], active: str, root: bool = False) -> str:
     <span class="nav-logo"></span>
     <span><span class="nav-title">{BRAND}</span><span class="nav-sub">{esc(subtitle)}</span></span>
   </a>
-  <button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
-  <nav class="nav-links">{links}</nav>
+  <button class="nav-toggle" aria-label="Menu" aria-controls="site-navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+  <nav class="nav-links" id="site-navigation">{links}</nav>
 </header>'''
 
 
@@ -3259,23 +3011,18 @@ def v65_document(api: Dict[str, Any], active: str, title: str, body: str, root: 
     # Inject dynamic metadata config for client-side spatial scripts
     import json
     slug = api.get("location_slug", "portal")
-    alt = 832
-    if "dago" in slug:
-        alt = 760
-    elif "jatinangor" in slug:
-        alt = 725
-    elif "arjawinangun" in slug:
-        alt = 10
     config = {
         "location_name": api.get("location_name", "ITB Bandung"),
         "location_slug": slug,
         "latitude": api.get("latitude"),
         "longitude": api.get("longitude"),
-        "altitude": alt,
         "risk_class": api.get("today", {}).get("risk_class", "watch") if api.get("today") else "watch",
         "condition": api.get("today", {}).get("condition", "Berawan") if api.get("today") else "Berawan",
         "is_portal": root
     }
+    issue = api.get("today", {}).get("issued_at") or api.get("generated_at_iso")
+    config["forecast_issued_at"] = issue
+    config["stale_after_hours"] = 18
     config_js = f"window.LANGIT_CONFIG = {inline_json(config)};"
     asset_dir = "assets/" if root else "../assets/"
 
@@ -3286,11 +3033,13 @@ def v65_document(api: Dict[str, Any], active: str, title: str, body: str, root: 
 <meta name="description" content="{esc(title)} — Prakiraan cuaca premium untuk Indonesia">
 <link rel="stylesheet" href="{asset_dir}{asset_name('css')}">
 </head><body class="theme-noon">
+<a class="skip-link" href="#main-content">Langsung ke prakiraan</a>
 <div class="atmo">
   <canvas id="atmo-canvas"></canvas>
 </div>
 {v65_nav(api, active, root=root)}
-<main class="page">
+<main class="page" id="main-content" tabindex="-1">
+<div class="container"><p class="freshness-note" role="status" data-issued-at="{esc(issue)}">Waktu terbit prakiraan: {esc(fmt_update(issue))}. Waktu berlaku tercantum pada setiap hari dan jam.</p></div>
 {body}
 <footer class="footer">
   <div class="container">
@@ -3301,6 +3050,7 @@ def v65_document(api: Dict[str, Any], active: str, title: str, body: str, root: 
 </footer>
 </main>
 <script>{config_js}</script>
+<script defer src="{asset_dir}{asset_name('data.js')}"></script>
 <script defer src="{asset_dir}{asset_name('js')}"></script>
 </body></html>'''
 
@@ -3344,7 +3094,7 @@ def v65_hero(api: Dict[str, Any], heading: str, subtitle: str, day: Dict[str, An
 
 
 def v65_notice() -> str:
-    return f'<div class="container"><div class="notice reveal">{esc(DISCLAIMER)}</div></div>'
+    return f'<div class="container"><div class="notice reveal">{esc(DISCLAIMER)} Indeks aktivitas adalah panduan heuristik tentang potensi gangguan, bukan peluang cuaca berbahaya. Peluang hujan tidak menyatakan intensitasnya.</div></div>'
 
 
 def _accent_glow(cls: str) -> str:
@@ -3366,7 +3116,7 @@ def v65_decision(api: Dict[str, Any], day: Dict[str, Any]) -> str:
         <p class="decision-desc">{esc(day.get("date_label"))}. {esc(rain_phrase(day))}. Jam nyaman: {esc(windows)}.</p>
       </article>
       <aside class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-label">Risiko</div><div class="kpi-value" data-animate-value="{round(clamp(day.get("risk_score"))):.0f}" data-animate-suffix="/100">{round(clamp(day.get("risk_score"))):.0f}<span style="font-size:16px;color:var(--mist)">/100</span></div><div class="kpi-sub">{esc(day.get("risk_label"))}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Indeks aktivitas</div><div class="kpi-value" data-animate-value="{score_text(day.get("risk_score"))}" data-animate-suffix="/100">{score_text(day.get("risk_score"))}<span style="font-size:16px;color:var(--mist)">/100</span></div><div class="kpi-sub">{esc(day.get("risk_label"))}</div></div>
         <div class="kpi-card"><div class="kpi-label">Puncak hujan</div><div class="kpi-value" data-animate-value="{prob(day.get("peak_rain_probability"), 0)}" data-animate-suffix="%">{pct(day.get("peak_rain_probability"))}</div><div class="kpi-sub">{esc(day.get("peak_rain_hour","—"))}</div></div>
         <div class="kpi-card"><div class="kpi-label">Jam nyaman</div><div class="kpi-value" style="font-size:16px">{esc(windows)}</div><div class="kpi-sub">aktivitas</div></div>
         <div class="kpi-card"><div class="kpi-label">Panas terasa</div><div class="kpi-value" data-animate-value="{num(day.get("max_heat_c"), 0)}" data-animate-suffix="°C" data-animate-decimals="1">{deg(day.get("max_heat_c"))}</div><div class="kpi-sub">maksimum</div></div>
@@ -3377,7 +3127,9 @@ def v65_decision(api: Dict[str, Any], day: Dict[str, Any]) -> str:
 
 def v65_timeline(hours: List[Dict[str, Any]], title: str = "Timeline prakiraan", note: str = "") -> str:
     import json
-    data_str = esc(json.dumps(hours, ensure_ascii=False))
+    fields = ("hour", "temp_c", "humidity_pct", "rain_probability", "wind_kmh", "condition")
+    data_str = esc(json.dumps([{key: row.get(key) for key in fields} for row in hours],
+                             ensure_ascii=False, separators=(",", ":")))
     return f'''<section class="section-compact"><div class="container">
     <div class="chart-wrapper reveal">
       <div class="section-header">
@@ -3388,17 +3140,19 @@ def v65_timeline(hours: List[Dict[str, Any]], title: str = "Timeline prakiraan",
       
       <!-- Multi-Variable Switches -->
       <div class="chart-selector">
-        <button class="chart-chip active" data-var="rain">Peluang Hujan</button>
-        <button class="chart-chip" data-var="temp">Suhu</button>
-        <button class="chart-chip" data-var="humidity">Kelembapan</button>
-        <button class="chart-chip" data-var="wind">Kecepatan Angin</button>
+        <button class="chart-chip active" aria-pressed="true" data-var="rain">Peluang Hujan</button>
+        <button class="chart-chip" aria-pressed="false" data-var="temp">Suhu</button>
+        <button class="chart-chip" aria-pressed="false" data-var="humidity">Kelembapan</button>
+        <button class="chart-chip" aria-pressed="false" data-var="wind">Kecepatan Angin</button>
       </div>
       
+      <p class="chart-status" role="status"></p>
+      <p class="section-desc">Garis terputus menandai data kosong atau jeda waktu. Seluruh jam tersedia pada detail per jam.</p>
       <div class="chart-svg-container" data-points="{data_str}">
-        <svg class="rain-curve" viewBox="0 0 900 200" preserveAspectRatio="none"></svg>
+        <svg class="rain-curve" viewBox="0 0 900 200" role="img" aria-label="Grafik prakiraan; detail angka tersedia pada tabel per jam" preserveAspectRatio="none"></svg>
         <div class="chart-tooltip">
-          <div class="chart-tooltip-time">00:00</div>
-          <div class="chart-tooltip-value">0%</div>
+          <div class="chart-tooltip-time"></div>
+          <div class="chart-tooltip-value"></div>
         </div>
       </div>
     </div>
@@ -3440,7 +3194,7 @@ def v65_activities(day: Dict[str, Any]) -> str:
     return f'''<section class="section-compact"><div class="container">
     <div class="section-header reveal">
       <div class="section-overline">Aktivitas</div>
-      <h2 class="section-title">Saran hari ini</h2>
+      <h2 class="section-title">Saran aktivitas</h2>
       <p class="section-desc">Ringkas dan praktis.</p>
     </div>
     <div class="activity-grid">{"".join(cards)}</div>
@@ -3471,11 +3225,11 @@ def v65_hours(day: Dict[str, Any]) -> str:
     </details>
     
     <!-- Mobile Bottom Sheet (Sliding Panel fallback) -->
-    <div class="mobile-bottom-sheet">
-      <div class="mobile-bottom-sheet-handle"></div>
+    <dialog class="mobile-bottom-sheet" aria-label="Detail prakiraan per jam">
+      <button type="button" class="sheet-close">Tutup detail per jam</button>
       <h3 style="font-family:var(--font-display);font-weight:800;font-size:18px;margin-bottom:16px;text-align:center;color:var(--white)">Prakiraan Per Jam</h3>
       <div class="hourly-list">{rows_html}</div>
-    </div>
+    </dialog>
   </div></section>'''
 
 
@@ -3490,7 +3244,7 @@ def v65_command_center(api: Dict[str, Any]) -> str:
     <div class="command-center reveal">
       <!-- Left: Map Frame wrapper -->
       <div class="map-wrapper">
-        <iframe class="map-frame" src="langit_map_room.html" loading="lazy"></iframe>
+        <iframe class="map-frame" title="Peta titik prakiraan cuaca LANGIT" src="langit_map_room.html" loading="lazy"></iframe>
       </div>
       
       <!-- Right: Controls & Diagnostics -->
@@ -3531,7 +3285,7 @@ def v65_map_embed(href: str = "langit_map_room.html") -> str:
       <p class="section-desc">Warna berubah mengikuti jam.</p>
     </div>
     <div class="map-wrapper reveal">
-      <iframe class="map-frame" src="{esc(href)}" loading="lazy"></iframe>
+      <iframe class="map-frame" title="Peta titik prakiraan cuaca LANGIT" src="{esc(href)}" loading="lazy"></iframe>
       <div class="map-actions">
         <a class="btn btn-primary" href="{esc(href)}">Buka peta penuh</a>
         <a class="btn" href="langit_location.geojson">GeoJSON</a>
@@ -3547,7 +3301,7 @@ def v65_share(api: Dict[str, Any], day: Dict[str, Any]) -> str:
       <div class="glass glass-static">
         <div class="section-overline">Bagikan</div>
         <h3 style="font-size:18px;font-weight:700;margin:8px 0 12px">Format singkat</h3>
-        <textarea class="share-text" readonly>{esc(msg)}</textarea>
+        <textarea class="share-text" aria-label="Ringkasan prakiraan untuk dibagikan" readonly>{esc(msg)}</textarea>
       </div>
       <div class="glass glass-static">
         <div class="section-overline">Pemberitahuan</div>
@@ -3569,7 +3323,7 @@ def v65_day_cards(days: List[Dict[str, Any]]) -> str:
         <div class="location-stats">
           <div class="location-stat"><div class="location-stat-value">{pct(d.get("peak_rain_probability"))}</div><div class="location-stat-label">Peluang hujan</div></div>
           <div class="location-stat"><div class="location-stat-value">{esc(d.get("peak_rain_hour"))}</div><div class="location-stat-label">Waktu</div></div>
-          <div class="location-stat"><div class="location-stat-value">{round(clamp(d.get("risk_score"))):.0f}</div><div class="location-stat-label">Risiko</div></div>
+          <div class="location-stat"><div class="location-stat-value">{score_text(d.get("risk_score"))}</div><div class="location-stat-label">Indeks aktivitas</div></div>
         </div>
       </div>''')
     return f'''<section class="section"><div class="container">
@@ -3607,25 +3361,44 @@ def v65_geo_for_api(api: Dict[str, Any]) -> Dict[str, Any]:
                     "wind_kmh": num(h.get("wind_kmh")),
                     "wind_dir": num(h.get("wind_dir")),
                     "cloud_pct": num(h.get("cloud_pct")),
+                    "issued_at": day.get("issued_at"),
+                    "data_quality": h.get("data_quality"),
+                    "probability_basis": h.get("probability_basis"),
+                    "calibration_status": h.get("calibration_status"),
+                    "risk_score_basis": h.get("risk_score_basis"),
                 },
             })
     return {"type": "FeatureCollection", "features": features}
 def v65_map_page(title: str, geojson: Dict[str, Any], back_href: str) -> str:
-    data = inline_json(geojson)
+    fields = {"location_name", "slug", "date", "date_iso", "hour", "rain_probability",
+              "risk_score", "risk_class", "risk_label", "condition", "temp_c",
+              "humidity_pct", "wind_kmh", "wind_dir", "cloud_pct", "issued_at"}
+    map_data = {**geojson, "features": [
+        {**feature, "properties": {key: value for key, value in feature["properties"].items() if key in fields}}
+        for feature in geojson.get("features", [])]}
+    data = inline_json(map_data)
+    asset_prefix = "assets/" if back_href == "index.html" else "../assets/"
     css = r'''html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
+a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid #67e8f9;outline-offset:3px}
+#map-location{width:100%;padding:8px;background:#0b1932;color:#fff;border:1px solid #94a3b8;border-radius:8px}
+.map-fallback{position:absolute;left:12px;bottom:96px;z-index:1100;max-width:calc(100% - 48px);padding:12px;background:#15294a;color:#fff;border-radius:12px;font-size:12px}
+.map-fallback[hidden]{display:none}
+.map-fallback a{text-decoration:underline}
+.leaflet-bottom.leaflet-left{bottom:96px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 #particle-canvas{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800}
-.hud{position:absolute;z-index:1000;left:24px;top:24px;width:min(340px,calc(100% - 48px));padding:24px;border-radius:24px;background:rgba(7,14,30,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);box-shadow:0 24px 80px rgba(0,0,0,0.5),inset 0 1px 1px rgba(255,255,255,0.1);animation:slideIn 0.6s cubic-bezier(0.16,1,0.3,1) both}
+.hud{max-height:calc(100% - 152px);overflow-y:auto;position:absolute;z-index:1000;left:24px;top:24px;width:min(340px,calc(100% - 48px));padding:24px;border-radius:24px;background:rgba(7,14,30,0.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.08);box-shadow:0 24px 80px rgba(0,0,0,0.5),inset 0 1px 1px rgba(255,255,255,0.1);animation:slideIn 0.6s cubic-bezier(0.16,1,0.3,1) both}
 .hud-brand{font-family:'Outfit',sans-serif;font-weight:800;font-size:10px;letter-spacing:0.1em;color:#32b7ff;text-transform:uppercase}
 .hud-version{font-family:'Outfit',sans-serif;font-weight:600;font-size:10px;color:rgba(255,255,255,0.3)}
 .hud h1{font-family:'Outfit',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.02em;line-height:1.2;margin:12px 0 4px;color:#fff}
-.hud-meta{color:#6b8ab5;font-size:13px;font-weight:500}
+.hud-meta{color:#94a3b8;font-size:13px;font-weight:500}
 .hud-divider{height:1px;background:linear-gradient(90deg,rgba(255,255,255,0.08) 0%,rgba(255,255,255,0) 100%);margin:16px 0}
 .hud-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .hud-stat-box{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:10px 14px;border-radius:14px;display:flex;flex-direction:column;gap:2px}
 .hud-stat-val{font-family:'Outfit',sans-serif;font-size:18px;font-weight:800;color:#fff}
-.hud-stat-lbl{font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em}
+.hud-stat-lbl{font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em}
 .parameter-tabs{display:flex;gap:4px;margin-top:16px;background:rgba(3,7,18,0.6);padding:3px;border-radius:12px;border:1px solid rgba(255,255,255,0.05)}
-.param-tab{flex:1;border:none;background:none;color:#6b8ab5;font-family:inherit;font-size:10px;font-weight:700;padding:8px 0;border-radius:9px;cursor:pointer;transition:all 0.2s ease;text-align:center}
+.param-tab{flex:1;border:none;background:none;color:#94a3b8;font-family:inherit;font-size:10px;font-weight:700;padding:8px 0;border-radius:9px;cursor:pointer;transition:all 0.2s ease;text-align:center}
 .param-tab:hover{color:#fff;background:rgba(255,255,255,0.04)}
 .param-tab.active{background:rgba(255,255,255,0.08);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
 .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 24px;border-radius:999px;background:rgba(50,183,255,0.12);border:1px solid rgba(50,183,255,0.25);color:#32b7ff;text-decoration:none;font-weight:700;font-size:13px;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);cursor:pointer;font-family:inherit}
@@ -3637,13 +3410,13 @@ def v65_map_page(title: str, geojson: Dict[str, Any], back_href: str) -> str:
 .time-scrubber::-webkit-scrollbar{display:none}
 .time-pill{flex-shrink:0;padding:8px 16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:14px;color:#8fa0dd;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s ease;display:flex;flex-direction:column;align-items:center;gap:2px}
 .time-pill:hover{background:rgba(255,255,255,0.06)}
-.time-pill span.day-label{font-size:9px;color:#64748b;text-transform:uppercase;font-weight:600}
+.time-pill span.day-label{font-size:9px;color:#94a3b8;text-transform:uppercase;font-weight:600}
 .time-pill.active{background:linear-gradient(135deg,rgba(50,183,255,0.2) 0%,rgba(50,183,255,0.05) 100%);border-color:rgba(50,183,255,0.4);color:#32b7ff;box-shadow:0 4px 12px rgba(50,183,255,0.15)}
-.legend{position:absolute;right:24px;bottom:24px;z-index:1000;background:rgba(7,14,30,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:16px;font-size:11px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 12px 40px rgba(0,0,0,0.4);width:150px;animation:slideIn 0.6s cubic-bezier(0.16,1,0.3,1) both}
+.legend{max-height:28vh;overflow-y:auto;position:absolute;right:24px;bottom:110px;z-index:1000;background:rgba(7,14,30,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:16px;font-size:11px;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 12px 40px rgba(0,0,0,0.4);width:150px;animation:slideIn 0.6s cubic-bezier(0.16,1,0.3,1) both}
 .legend-title{font-family:'Outfit',sans-serif;font-weight:800;color:#fff;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;font-size:9px}
 .legend div{display:flex;gap:10px;align-items:center;margin:8px 0;color:#a8c4e0;font-weight:500}
 .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.leaflet-control-attribution{background:rgba(3,7,12,0.85)!important;color:#6b8ab5!important;font-size:10px!important}
+.leaflet-control-attribution{background:rgba(3,7,12,0.85)!important;color:#94a3b8!important;font-size:10px!important}
 .leaflet-popup-content-wrapper{background:rgba(7,14,30,0.92)!important;color:#f8fbff!important;border-radius:20px!important;border:1px solid rgba(255,255,255,0.08)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 20px 50px rgba(0,0,0,0.6)!important}
 .leaflet-popup-tip{background:rgba(7,14,30,0.92)!important;border-left:1px solid rgba(255,255,255,0.08)!important;border-bottom:1px solid rgba(255,255,255,0.08)!important}
 .leaflet-popup-content{margin:16px 20px!important;width:200px!important}
@@ -3671,7 +3444,7 @@ def v65_map_page(title: str, geojson: Dict[str, Any], back_href: str) -> str:
     js = r'''
 const geojson = __DATA__;
 const colors = {safe:'#10b981', watch:'#f59e0b', rain:'#ff9d42', danger:'#ef4444', limited:'#94a3b8'};
-const features = (geojson && geojson.features) ? geojson.features : [];
+const features = ((geojson && geojson.features) || []).filter(f => f.geometry && f.geometry.type === 'Point' && f.geometry.coordinates.length === 2 && f.geometry.coordinates.every(Number.isFinite));
 
 // Find first coordinate center
 const first = features[0] || {geometry:{coordinates:[106.8,-6.2]}, properties:{location_name:'Lokasi'}};
@@ -3679,11 +3452,11 @@ const center = first.geometry && first.geometry.coordinates ? [first.geometry.co
 
 // Particle Engine live states
 const state = {
-  windSpeed: 2.0,
-  cloudPct: 40.0,
-  tempC: 22.0,
-  humidityPct: 70.0,
-  rainProb: 0.0,
+  windSpeed: null,
+  cloudPct: null,
+  tempC: null,
+  humidityPct: null,
+  rainProb: null,
   activeLayer: 'risiko'
 };
 
@@ -3717,9 +3490,10 @@ function getWindColor(w) {
 
 function updateHUDValues(p) {
   document.getElementById('hud-location-name').textContent = p.location_name || 'Lokasi';
-  document.getElementById('hud-time-label').textContent = `${p.relative || 'Prakiraan'} · ${p.hour || ''}`;
+  document.getElementById('hud-time-label').textContent = `${p.date_iso || ''} · ${p.hour || ''} WIB`;
+  document.getElementById('hud-issue').textContent = p.issued_at ? 'Terbit prakiraan: '+p.issued_at.replace('T',' ') : 'Waktu terbit belum tersedia';
   document.getElementById('val-temp').textContent = p.temp_c != null ? `${Math.round(p.temp_c)}°C` : '—';
-  document.getElementById('val-rain').textContent = p.rain_probability != null ? `${Math.round(p.rain_probability)}%` : '—';
+  document.getElementById('val-rain').textContent = p.rain_probability != null ? LangitPublicData.format(p.rain_probability,'%') : '—';
   document.getElementById('val-wind').textContent = p.wind_kmh != null ? `${p.wind_kmh.toFixed(1)} km/jam` : '—';
   document.getElementById('val-humidity').textContent = p.humidity_pct != null ? `${Math.round(p.humidity_pct)}%` : '—';
 }
@@ -3751,7 +3525,7 @@ function makeSparkline(locationSlug, dateIso, activeHour) {
   }
   return `
     <div class="sparkline-wrap" style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)">
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:#64748b;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px">
         <span>Tren Temp Hari Ini</span>
         <span>${minTemp}°–${maxTemp}°C</span>
       </div>
@@ -3775,22 +3549,22 @@ function ptxt(p) {
         <b style="font-family:'Outfit'; font-size:14px; color:#fff">${p.location_name}</b>
         <span class="popup-badge" style="background:${riskColor}20; color:${riskColor}; border:1px solid ${riskColor}30">${p.risk_label || '—'}</span>
       </div>
-      <div style="font-size:11px; color:#6b8ab5; margin-bottom:10px">${p.date} · ${p.hour} WIB</div>
+      <div style="font-size:11px; color:#94a3b8; margin-bottom:10px">${p.date} · ${p.hour} WIB</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:11px">
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
-          <div style="color:#64748b; font-size:9px">SUHU</div>
+          <div style="color:#94a3b8; font-size:9px">SUHU</div>
           <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.temp_c != null ? p.temp_c + '°C' : '—'}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
-          <div style="color:#64748b; font-size:9px">HUJAN</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.rain_probability != null ? p.rain_probability + '%' : '—'}</div>
+          <div style="color:#94a3b8; font-size:9px">HUJAN</div>
+          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.rain_probability != null ? LangitPublicData.format(p.rain_probability,'%') : '—'}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
-          <div style="color:#64748b; font-size:9px">LEMBAP</div>
+          <div style="color:#94a3b8; font-size:9px">LEMBAP</div>
           <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.humidity_pct != null ? p.humidity_pct + '%' : '—'}</div>
         </div>
         <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
-          <div style="color:#64748b; font-size:9px">ANGIN</div>
+          <div style="color:#94a3b8; font-size:9px">ANGIN</div>
           <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.wind_kmh != null ? p.wind_kmh + ' km/jam' : '—'}</div>
         </div>
       </div>
@@ -3807,11 +3581,11 @@ function updateLegend() {
   let legendHtml = '';
   if (state.activeLayer === 'risiko') {
     legendHtml = `
-      <div class="legend-title">Indeks Risiko</div>
-      <div><i class="dot" style="background:#10b981"></i>Aman</div>
+      <div class="legend-title">Indeks aktivitas</div>
+      <div><i class="dot" style="background:#10b981"></i>Gangguan rendah</div>
       <div><i class="dot" style="background:#f59e0b"></i>Dipantau</div>
       <div><i class="dot" style="background:#ff9d42"></i>Waspada</div>
-      <div><i class="dot" style="background:#ef4444"></i>Bahaya</div>
+      <div><i class="dot" style="background:#ef4444"></i>Gangguan tinggi</div>
     `;
   } else if (state.activeLayer === 'temp') {
     legendHtml = `
@@ -3835,7 +3609,7 @@ function updateLegend() {
       <div><i class="dot" style="background:#10b981"></i>&le; 5 km/jam (Teduh)</div>
       <div><i class="dot" style="background:#3b82f6"></i>6 - 12 km/jam (Sepoi)</div>
       <div><i class="dot" style="background:#f59e0b"></i>13 - 20 km/jam (Kencang)</div>
-      <div><i class="dot" style="background:#ef4444"></i>&gt; 20 km/jam (Bahaya)</div>
+      <div><i class="dot" style="background:#ef4444"></i>&gt; 20 km/jam</div>
     `;
   } else if (state.activeLayer === 'humidity') {
     legendHtml = `
@@ -3853,24 +3627,26 @@ function updateLegend() {
       <div><i class="dot" style="background:#f1f5f9"></i>Mendung (&gt; 60%)</div>
     `;
   }
-  legendEl.innerHTML = legendHtml;
+  legendEl.innerHTML = legendHtml + '<div><i class="dot" style="background:#94a3b8"></i>Data terbatas</div>';
 }
 
 let activeTimeIndex = 0;
 
 function drawForTime(dateIso, activeHour) {
-  layer.clearLayers();
+  if (layer) layer.clearLayers();
   const selected = features.filter(f => f.properties.date_iso === dateIso && f.properties.hour === activeHour);
-  if (!selected.length) return;
-
-  const activeLoc = selected[0].properties;
-  state.windSpeed = activeLoc.wind_kmh || 2.0;
-  state.cloudPct = activeLoc.cloud_pct || 40.0;
-  state.tempC = activeLoc.temp_c || 24.0;
-  state.humidityPct = activeLoc.humidity_pct || 70.0;
-  state.rainProb = activeLoc.rain_probability || 0.0;
+  const activeLoc = (selected.find(f=>f.properties.slug===selectedSlug) || {}).properties || {
+    location_name: (features.find(f=>f.properties.slug===selectedSlug)||first).properties.location_name,
+    date_iso:dateIso, hour:activeHour, risk_class:'limited', condition:'Data jam ini belum tersedia'
+  };
+  state.windSpeed = activeLoc.wind_kmh ?? null;
+  state.cloudPct = activeLoc.cloud_pct ?? null;
+  state.tempC = activeLoc.temp_c ?? null;
+  state.humidityPct = activeLoc.humidity_pct ?? null;
+  state.rainProb = activeLoc.rain_probability ?? null;
 
   updateHUDValues(activeLoc);
+  if (!layer) return;
 
   selected.forEach(f => {
     const p = f.properties;
@@ -3894,13 +3670,14 @@ function drawForTime(dateIso, activeHour) {
         </div>
       `;
       L.marker(latlng, {
+        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [size * 3, size * 3],
           iconAnchor: [size * 1.5, size * 1.5]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
 
     } else if (state.activeLayer === 'temp') {
       const temp = p.temp_c;
@@ -3911,13 +3688,14 @@ function drawForTime(dateIso, activeHour) {
         </div>
       `;
       L.marker(latlng, {
+        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [45, 24],
           iconAnchor: [22, 12]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
 
     } else if (state.activeLayer === 'rain') {
       const rain = p.rain_probability;
@@ -3929,18 +3707,19 @@ function drawForTime(dateIso, activeHour) {
         </div>
       `;
       L.marker(latlng, {
+        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [60, 60],
           iconAnchor: [30, 30]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
 
     } else if (state.activeLayer === 'wind') {
       const wind = p.wind_kmh;
       const color = getWindColor(wind);
-      const rotation = p.wind_dir == null ? null : (p.wind_dir + 90) % 360;
+      const rotation = LangitPublicData.windRotation(p.wind_dir,wind);
       const iconHtml = `
         <div class="wind-badge" style="background:${color}; box-shadow:0 0 15px ${color}80; display:flex; align-items:center; gap:4px; padding:4px 8px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); color:#fff; font-family:'Outfit',sans-serif; font-size:11px; font-weight:800; white-space:nowrap;">
           ${rotation == null ? "" : `<span title="Arah aliran angin" style="display:inline-block; transform:rotate(${rotation}deg);">➔</span>`}
@@ -3948,13 +3727,14 @@ function drawForTime(dateIso, activeHour) {
         </div>
       `;
       L.marker(latlng, {
+        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [80, 24],
           iconAnchor: [40, 12]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
 
     } else if (state.activeLayer === 'humidity') {
       const hum = p.humidity_pct;
@@ -3966,13 +3746,14 @@ function drawForTime(dateIso, activeHour) {
         </div>
       `;
       L.marker(latlng, {
+        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [size, size],
           iconAnchor: [size/2, size/2]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
 
     } else if (state.activeLayer === 'cloud') {
       const cld = p.cloud_pct;
@@ -3984,13 +3765,14 @@ function drawForTime(dateIso, activeHour) {
         </div>
       `;
       L.marker(latlng, {
+        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
         icon: L.divIcon({
           html: iconHtml,
           className: 'custom-leaflet-marker',
           iconSize: [32, 32],
           iconAnchor: [16, 16]
         })
-      }).bindPopup(ptxt(p)).addTo(layer);
+      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
     }
   });
 }
@@ -3998,6 +3780,7 @@ function drawForTime(dateIso, activeHour) {
 function switchLayer(layerName) {
   if (!['risiko', 'temp', 'rain', 'wind', 'humidity', 'cloud'].includes(layerName)) return;
   state.activeLayer = layerName;
+  document.querySelectorAll('.param-tab').forEach(tab=>tab.setAttribute('aria-pressed',String(tab.dataset.layer===layerName)));
   document.querySelectorAll('.param-tab').forEach(tab => {
     if (tab.getAttribute('data-layer') === layerName) {
       tab.classList.add('active');
@@ -4020,6 +3803,9 @@ function switchLayer(layerName) {
 let playInterval = null;
 function togglePlay() {
   const playBtn = document.getElementById('play-btn');
+  if (!document.querySelectorAll('.time-pill').length) return;
+  playBtn.setAttribute('aria-label',playInterval ? 'Putar timeline' : 'Jeda timeline');
+  playBtn.setAttribute('aria-pressed',String(!playInterval));
   if (playInterval) {
     clearInterval(playInterval);
     playInterval = null;
@@ -4035,119 +3821,99 @@ function togglePlay() {
   }
 }
 
-let map;
-try {
-  map = L.map('map',{
-    scrollWheelZoom:true,
-    worldCopyJump:false,
-    maxBounds:[[-11.25,94],[6.45,141.25]],
-    maxBoundsViscosity:.8,
-    minZoom:5,
-    zoomControl:false
-  });
-  
-  const baseTile = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-    maxZoom:19,
-    attribution:'&copy; OpenStreetMap & CARTO'
-  });
-  
-  baseTile.on('tileerror', function() {
-    console.warn("Tile loading failed.");
-    if (!document.getElementById('tile-warning')) {
-      document.body.insertAdjacentHTML('beforeend', '<div id="tile-warning" style="position:absolute; bottom:80px; left:24px; z-index:1001; background:rgba(239,68,68,0.85); color:#fff; padding:8px 16px; border-radius:12px; font-size:12px; font-family:sans-serif;">Peta dasar belum dapat dimuat. Data lokasi tetap tersedia.</div>');
-      setTimeout(() => {
-        const warn = document.getElementById('tile-warning');
-        if (warn) warn.remove();
-      }, 5000);
-    }
-  });
-  baseTile.addTo(map);
-  
-  L.control.zoom({ position: 'topright' }).addTo(map);
-  
-  var layer = L.layerGroup().addTo(map);
-  
-  // Sort and build timeline
-  features.sort((a,b) => {
-    const da = (a.properties && a.properties.date_iso) || '';
-    const db = (b.properties && b.properties.date_iso) || '';
-    if (da !== db) {
-      return da.localeCompare(db);
-    }
-    const ha = (a.properties && a.properties.hour) || '';
-    const hb = (b.properties && b.properties.hour) || '';
-    return ha.localeCompare(hb);
-  });
-  
-  // Filter to get a single unique location's time slots
-  const firstLocSlug = (first.properties && first.properties.slug) || '';
-  const locTimeline = features.filter(f => f.properties && f.properties.slug === firstLocSlug);
-  const scrubber = document.getElementById('time-scrubber');
-  
-  locTimeline.forEach((tFeature, idx) => {
-    const p = tFeature.properties;
-    const pill = document.createElement('button');
-    pill.className = 'time-pill' + (idx === 0 ? ' active' : '');
-    pill.setAttribute('data-date', p.date_iso);
-    pill.setAttribute('data-hour', p.hour);
-    pill.innerHTML = `
-      <span class="day-label">${p.relative}</span>
-      <strong>${p.hour}</strong>
-    `;
-    pill.onclick = () => {
-      document.querySelectorAll('.time-pill').forEach(x => x.classList.remove('active'));
-      pill.classList.add('active');
-      activeTimeIndex = idx;
-      drawForTime(p.date_iso, p.hour);
-    };
-    scrubber.appendChild(pill);
-  });
-  
-  updateLegend();
-  if (locTimeline.length) {
-    drawForTime(locTimeline[0].properties.date_iso, locTimeline[0].properties.hour);
-  } else {
-    document.getElementById('hud-location-name').textContent = 'Peta Prakiraan Cuaca';
-    document.getElementById('hud-time-label').textContent = 'Data prakiraan tidak tersedia';
-    document.getElementById('val-temp').textContent = '—';
-    document.getElementById('val-rain').textContent = '—';
-    document.getElementById('val-wind').textContent = '—';
-    document.getElementById('val-humidity').textContent = '—';
-  }
-
-  // Fit map bounds to show all markers automatically
-  if (features.length) {
-    const coordsList = features.map(f => [f.geometry.coordinates[1], f.geometry.coordinates[0]]);
-    const bounds = L.latLngBounds(coordsList);
-    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
-  } else {
-    map.setView(center, 12);
-  }
-
-  // Keyboard controls
-  document.addEventListener('keydown', (e) => {
-    const pills = document.querySelectorAll('.time-pill');
-    if (!pills.length) return;
-    if (e.key === 'ArrowRight') {
-      activeTimeIndex = (activeTimeIndex + 1) % pills.length;
-      pills[activeTimeIndex].click();
-      pills[activeTimeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    } else if (e.key === 'ArrowLeft') {
-      activeTimeIndex = (activeTimeIndex - 1 + pills.length) % pills.length;
-      pills[activeTimeIndex].click();
-      pills[activeTimeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
-  });
-
-} catch(e) {
-  console.error("Map initialization failed", e);
-  document.body.insertAdjacentHTML('beforeend','<div style="position:absolute;inset:0;display:grid;place-items:center;color:#6b8ab5;background:#030712;z-index:9999;font-family:sans-serif;padding:20px;text-align:center;">Peta dasar belum dapat dimuat. Data lokasi tetap tersedia.</div>');
+let map = null, layer = null;
+let selectedSlug = first.properties.slug || '';
+const timeline = LangitPublicData.timeline(features);
+const scrubber = document.getElementById('time-scrubber');
+const locationSelect = document.getElementById('map-location');
+const seenLocations = new Set();
+features.forEach(f => {
+  const p = f.properties;
+  if (seenLocations.has(p.slug)) return;
+  seenLocations.add(p.slug);
+  const option = document.createElement('option');
+  option.value = p.slug;
+  option.textContent = p.location_name;
+  locationSelect.appendChild(option);
+});
+function selectForecast(p) {
+  selectedSlug = p.slug;
+  locationSelect.value = selectedSlug;
+  updateHUDValues(p);
 }
+locationSelect.addEventListener('change',()=>{
+  selectedSlug = locationSelect.value;
+  const slot = timeline[activeTimeIndex];
+  if (slot) drawForTime(slot.date_iso,slot.hour);
+});
+const nowParts = new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date()).replace(' ','T');
+const nextIndex = timeline.findIndex(p=>p.date_iso+'T'+p.hour>=nowParts);
+activeTimeIndex = Math.max(0,nextIndex);
+timeline.forEach((slot,index)=>{
+  const pill = document.createElement('button');
+  pill.className = 'time-pill';
+  pill.dataset.date = slot.date_iso;
+  pill.dataset.hour = slot.hour;
+  pill.type = 'button';
+  const label = document.createElement('span');
+  label.className = 'day-label';
+  label.textContent = slot.date_iso;
+  const clock = document.createElement('strong');
+  clock.textContent = slot.hour;
+  pill.append(label,clock);
+  pill.onclick = ()=>{
+    document.querySelectorAll('.time-pill').forEach(button=>{
+      button.classList.remove('active'); button.setAttribute('aria-pressed','false');
+    });
+    pill.classList.add('active'); pill.setAttribute('aria-pressed','true');
+    activeTimeIndex=index;
+    drawForTime(slot.date_iso,slot.hour);
+  };
+  scrubber.appendChild(pill);
+});
+function renderSelectedTime() {
+  const pills = document.querySelectorAll('.time-pill');
+  if (pills.length) pills[activeTimeIndex].click();
+  else {
+    document.getElementById('hud-location-name').textContent = 'Data prakiraan belum tersedia';
+    document.getElementById('hud-time-label').textContent = 'Gunakan tautan prakiraan atau data di bawah.';
+    document.getElementById('play-btn').disabled = true;
+  }
+}
+updateLegend();
+renderSelectedTime();
+try {
+  map = L.map('map',{scrollWheelZoom:true,maxBounds:[[-11.25,94],[6.45,141.25]],maxBoundsViscosity:.8,minZoom:5,zoomControl:false});
+  const tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    maxZoom:19,attribution:'&copy; OpenStreetMap & CARTO'});
+  tiles.on('tileerror',()=>{
+    const warning = document.getElementById('map-fallback');
+    warning.hidden=false;
+    warning.querySelector('span').textContent='Peta dasar belum dapat dimuat. Data titik prakiraan tetap tersedia.';
+  });
+  tiles.addTo(map);
+  L.control.zoom({position:'bottomleft'}).addTo(map);
+  layer = L.layerGroup().addTo(map);
+  if (features.length) map.fitBounds(L.latLngBounds(features.map(f=>[f.geometry.coordinates[1],f.geometry.coordinates[0]])),{padding:[50,50],maxZoom:13});
+  else map.setView(center,12);
+  renderSelectedTime();
+} catch(error) {
+  console.error('Map initialization failed',error);
+  document.getElementById('map-fallback').hidden=false;
+}
+document.addEventListener('keydown',event=>{
+  if (!event.target.closest('.timeline-container') || !timeline.length) return;
+  if (!['ArrowLeft','ArrowRight'].includes(event.key)) return;
+  event.preventDefault();
+  activeTimeIndex=(activeTimeIndex+(event.key==='ArrowRight'?1:timeline.length-1))%timeline.length;
+  renderSelectedTime();
+});
+window.addEventListener('pagehide',()=>{if(playInterval) clearInterval(playInterval);});
 
 // Sync with postMessage from parent dashboard window
 window.addEventListener('message', (e) => {
   if (e.origin !== window.location.origin || e.source !== window.parent) return;
-  if (e.data && e.data.type === 'invalidateSize' && typeof map !== 'undefined') map.invalidateSize();
+  if (e.data && e.data.type === 'invalidateSize' && map) map.invalidateSize();
   if (e.data && e.data.type === 'switchLayer') {
     switchLayer(e.data.layer);
   }
@@ -4165,8 +3931,12 @@ if (window.self !== window.top) {
       <span class="hud-brand">{BRAND} Cuaca</span>
       <span class="hud-version">Peta Prakiraan</span>
     </div>
+    <label for="map-location" class="hud-meta">Lokasi prakiraan</label>
+    <select id="map-location" aria-label="Lokasi prakiraan"></select>
     <h1 id="hud-location-name">Memuat...</h1>
     <div class="hud-meta" id="hud-time-label">Memuat data prakiraan cuaca.</div>
+    <div class="hud-meta" id="hud-issue"></div>
+    <p class="hud-meta">Titik prakiraan lokasi, bukan medan cuaca kontinu.</p>
     
     <div class="hud-divider"></div>
     
@@ -4192,12 +3962,12 @@ if (window.self !== window.top) {
     <div class="hud-divider"></div>
 
     <div class="parameter-tabs">
-      <button class="param-tab active" data-layer="risiko" onclick="switchLayer('risiko')">Risiko</button>
-      <button class="param-tab" data-layer="temp" onclick="switchLayer('temp')">Suhu</button>
-      <button class="param-tab" data-layer="rain" onclick="switchLayer('rain')">Hujan</button>
-      <button class="param-tab" data-layer="wind" onclick="switchLayer('wind')">Angin</button>
-      <button class="param-tab" data-layer="humidity" onclick="switchLayer('humidity')">Lembap</button>
-      <button class="param-tab" data-layer="cloud" onclick="switchLayer('cloud')">Awan</button>
+      <button class="param-tab active" aria-pressed="true" data-layer="risiko" onclick="switchLayer('risiko')">Aktivitas</button>
+      <button class="param-tab" aria-pressed="false" data-layer="temp" onclick="switchLayer('temp')">Suhu</button>
+      <button class="param-tab" aria-pressed="false" data-layer="rain" onclick="switchLayer('rain')">Hujan</button>
+      <button class="param-tab" aria-pressed="false" data-layer="wind" onclick="switchLayer('wind')">Angin</button>
+      <button class="param-tab" aria-pressed="false" data-layer="humidity" onclick="switchLayer('humidity')">Lembap</button>
+      <button class="param-tab" aria-pressed="false" data-layer="cloud" onclick="switchLayer('cloud')">Awan</button>
     </div>
 
     <div style="margin-top:20px; display:flex">
@@ -4206,7 +3976,7 @@ if (window.self !== window.top) {
   </section>'''
 
     timeline_html = '''  <div class="timeline-container">
-    <button class="play-btn" id="play-btn" onclick="togglePlay()">&#9654;</button>
+    <button class="play-btn" id="play-btn" aria-label="Putar timeline" aria-pressed="false" onclick="togglePlay()">&#9654;</button>
     <div class="time-scrubber" id="time-scrubber"></div>
   </div>'''
 
@@ -4227,7 +3997,10 @@ if (window.self !== window.top) {
   {hud_html}
   {timeline_html}
   {legend_html}
+  <div id="map-fallback" class="map-fallback" role="alert" hidden><span>Peta interaktif belum tersedia. Data prakiraan tetap dapat dibaca.</span> <a href="{esc(back_href)}">Buka prakiraan</a> · <a href="{'langit_all_locations.geojson' if back_href == 'index.html' else 'langit_location.geojson'}">Data GeoJSON</a></div>
+  <noscript><p class="map-fallback">Aktifkan JavaScript untuk peta, atau <a href="{esc(back_href)}">buka prakiraan tertulis</a>.</p></noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="{asset_prefix}{asset_name('data.js')}"></script>
   <script>{js}</script>
 </body>
 </html>'''
@@ -4238,33 +4011,19 @@ def v65_today_page(api: Dict[str, Any]) -> str:
     body = v65_hero(api, heading, sub, day)
     body += v65_notice()
     
-    # High-Tech Stepper Timeline Morph Navigation
-    body += f'''<section class="section-compact"><div class="container">
-    <div class="day-tabs-container reveal">
-      <div class="timeline-progress-container">
-        <div class="timeline-progress-bar"></div>
-        <div class="timeline-progress-fill"></div>
-        
-        <button class="timeline-node active" data-target="day-0">
-          <div class="timeline-node-dot"></div>
-          <span class="timeline-node-label">Hari ini</span>
-        </button>
-        <button class="timeline-node" data-target="day-1">
-          <div class="timeline-node-dot"></div>
-          <span class="timeline-node-label">Besok</span>
-        </button>
-        <button class="timeline-node" data-target="day-2">
-          <div class="timeline-node-dot"></div>
-          <span class="timeline-node-label">Lusa</span>
-        </button>
-      </div>
-    </div>
-  </div></section>'''
+    active_index = next((i for i, item in enumerate(api["days"]) if item["date_iso"] == day["date_iso"]), 0)
+    tabs = "".join(
+        f'<button class="timeline-node {"active" if i == active_index else ""}" aria-pressed="{str(i == active_index).lower()}" data-target="day-{i}">'
+        f'<div class="timeline-node-dot"></div><span class="timeline-node-label">{esc(item["relative"])}</span>'
+        f'<small>{esc(item["date_short"])}</small></button>' for i, item in enumerate(api["days"]))
+    body += f'''<section class="section-compact"><div class="container"><div class="day-tabs-container reveal">
+      <div class="timeline-progress-container"><div class="timeline-progress-bar"></div><div class="timeline-progress-fill"></div>{tabs}</div>
+    </div></div></section>'''
 
     # Panels containing details for each day
     body += '<div class="day-panels">'
     for i, d in enumerate(api["days"]):
-        active_class = "active" if i == 0 else ""
+        active_class = "active" if i == active_index else ""
         panel_body = v65_decision(api, d)
         panel_body += v65_timeline(d["hours"], f"Timeline {d['relative'].lower()}", d["date_label"])
         panel_body += v65_periods(d)
@@ -4300,7 +4059,7 @@ def v65_activity_page(api: Dict[str, Any]) -> str:
     body += v65_notice()
     body += v65_decision(api, day)
     body += v65_activities(day)
-    body += v65_timeline(day["hours"], "Jam rawan", "Lihat kurva, bukan tabel.")
+    body += v65_timeline(day["hours"], "Jam yang perlu dipantau", "Nilai juga tersedia pada detail per jam.")
     body += v65_periods(day)
     body += v65_hours(day)
     body += '<div class="divider"></div>'
@@ -4321,17 +4080,17 @@ def v65_planner_page(api: Dict[str, Any]) -> str:
         <div class="section-overline">Planner</div>
         <h2 style="font-size:24px;font-weight:800">Cek jam terbaik</h2>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;margin-bottom:24px">
-        <select id="act" class="btn" style="background:var(--glass);text-align:left;min-height:48px">
+      <div class="planner-controls">
+        <select id="act" aria-label="Aktivitas" class="btn" style="background:var(--glass);text-align:left;min-height:48px">
           <option>Motor</option><option>Jalan kaki</option><option>Jemur</option><option>Outdoor</option><option>Olahraga</option><option>Foto</option>
         </select>
-        <select id="hh" class="btn" style="background:var(--glass);text-align:left;min-height:48px">{options}</select>
+        <select id="hh" aria-label="Jam prakiraan dalam WIB" class="btn" style="background:var(--glass);text-align:left;min-height:48px">{options}</select>
         <button class="btn btn-primary" type="button" onclick="decidePlanner()" style="min-height:48px">Cek</button>
       </div>
       <div class="decision-main" style="min-height:140px;margin:0;--accent-glow:rgba(50,183,255,0.06)">
         <div>
           <span id="plannerBadge" class="status-badge status-watch">Pilih jam</span>
-          <h2 id="plannerOut" class="decision-title" style="font-size:clamp(24px,4vw,40px)">Cek sebelum berangkat.</h2>
+          <h2 id="plannerOut" role="status" aria-live="polite" class="decision-title" style="font-size:clamp(24px,4vw,40px)">Cek sebelum berangkat.</h2>
         </div>
         <p id="plannerWhy" class="decision-desc">Pilih aktivitas dan jam. Sistem akan pakai peluang hujan, risiko, dan panas terasa.</p>
       </div>
@@ -4339,7 +4098,7 @@ def v65_planner_page(api: Dict[str, Any]) -> str:
   </div></section>
 <script>
 const plannerDay={data};
-function plannerRiskClass(x){{return x==='danger'?'Tinggi':x==='rain'?'Waspada':x==='watch'?'Pantau':x==='safe'?'Aman':'Terbatas';}}
+function plannerRiskClass(x){{return x==='danger'?'Tinggi':x==='rain'?'Waspada':x==='watch'?'Pantau':x==='safe'?'Gangguan lebih rendah':'Terbatas';}}
 function decidePlanner(){{
   const act=document.getElementById('act').value;
   const val=document.getElementById('hh').value;
@@ -4356,16 +4115,16 @@ function decidePlanner(){{
   const hi=Number(h.heat_index_c||h.temp_c||0);
   let msg='Bisa', cls='safe';
   let why='Tetap lihat kondisi sekitar.';
-  if(r>=78 || p>=70){{msg='Tunda'; cls='danger'; why='Risiko tinggi pada jam ini.';}}
+  if(r>=78 || p>=70){{msg='Tunda'; cls='danger'; why='Potensi gangguan aktivitas tinggi pada jam ini; bukan peringatan cuaca ekstrem.';}}
   else if(r>=55 || p>=45){{msg='Siapkan plan B'; cls='rain'; why='Awan/hujan perlu diwaspadai.';}}
   else if(r>=25 || p>=25){{msg='Masih bisa, pantau'; cls='watch'; why='Masih aman bersyarat.';}}
   if((act==='Jemur'||act==='Foto') && p>=25){{msg='Pilih jam lain'; cls='watch'; why='Hujan/awan bisa mengganggu.';}}
   if((act==='Olahraga'||act==='Jalan kaki') && hi>=36){{msg='Cari jam lebih teduh'; cls='watch'; why='Panas terasa tinggi.';}}
   const badge=document.getElementById('plannerBadge');
   badge.className='status-badge status-'+cls;
-  badge.textContent=plannerRiskClass(h.risk_class||cls);
+  badge.textContent=plannerRiskClass(cls);
   document.getElementById('plannerOut').textContent=act+' '+val+': '+msg;
-  document.getElementById('plannerWhy').textContent=why+' Hujan '+p+'%, risiko '+r+'/100, kondisi '+(h.condition||'-')+'.';
+  document.getElementById('plannerWhy').textContent=why+' Hujan '+p+'%, indeks aktivitas '+r+'/100, kondisi '+(h.condition||'-')+'.';
 }}
 </script>'''
     body += v65_timeline(day["hours"], "Timeline hari ini", day["date_label"])
@@ -4384,7 +4143,7 @@ def v65_data_page(api: Dict[str, Any]) -> str:
         for r in sources
     ) or '<tr><td colspan="4" style="color:var(--mist)">Belum ada tabel sumber.</td></tr>'
 
-    body = v65_hero(api, "Keandalan\ndata", f"{day['date_label']}. Ringkasan sumber prakiraan.", day, show_metrics=False)
+    body = v65_hero(api, "Keandalan\ndata", f"{day['date_label']}. Status sumber untuk tanggal berlaku ini; sumber dapat memiliki jam yang kosong.", day, show_metrics=False)
     body += v65_notice()
     body += f'''<section class="section-compact"><div class="container">
     <div class="glass glass-static reveal">
@@ -4537,7 +4296,7 @@ def v65_portal_page(apis: List[Dict[str, Any]], root: Path) -> str:
         <div class="location-stats">
           <div class="location-stat"><div class="location-stat-value">{pct(d.get("peak_rain_probability"))}</div><div class="location-stat-label">Hujan</div></div>
           <div class="location-stat"><div class="location-stat-value">{esc(d.get("peak_rain_hour"))}</div><div class="location-stat-label">Puncak</div></div>
-          <div class="location-stat"><div class="location-stat-value">{round(clamp(d.get("risk_score"))):.0f}</div><div class="location-stat-label">Risiko</div></div>
+          <div class="location-stat"><div class="location-stat-value">{score_text(d.get("risk_score"))}</div><div class="location-stat-label">Indeks aktivitas</div></div>
         </div>
         <div class="location-actions">
           <span class="btn btn-primary">Buka</span>
@@ -4562,7 +4321,7 @@ def v65_portal_page(apis: List[Dict[str, Any]], root: Path) -> str:
       <p class="section-desc">Warna mengikuti risiko hari ini.</p>
     </div>
     <div class="map-wrapper reveal">
-      <iframe class="map-frame" src="langit_portal_map.html" loading="lazy"></iframe>
+      <iframe class="map-frame" title="Peta titik prakiraan cuaca LANGIT" src="langit_portal_map.html" loading="lazy"></iframe>
       <div class="map-actions">
         <a class="btn btn-primary" href="langit_portal_map.html">Buka peta penuh</a>
         <a class="btn" href="langit_all_locations.geojson">GeoJSON</a>
@@ -4589,30 +4348,8 @@ def v65_portal_page(apis: List[Dict[str, Any]], root: Path) -> str:
 
 
 def v65_portal_geo(apis: List[Dict[str, Any]]) -> Dict[str, Any]:
-    features = []
-    for api in apis:
-        lat = num(api.get("latitude"), None)
-        lon = num(api.get("longitude"), None)
-        if lat is None or lon is None:
-            continue
-        for day in api.get("days", [])[:3]:
-            for h in day.get("hours", []):
-                features.append({
-                    "type": "Feature",
-                    "geometry": {"type": "Point", "coordinates": [lon, lat]},
-                    "properties": {
-                        "location_name": api.get("location_name"), "slug": api.get("location_slug"),
-                        "date": day.get("date_label"), "date_iso": day.get("date_iso"),
-                        "relative": day.get("relative"), "hour": h.get("hour"),
-                        "rain_probability": h.get("rain_probability"), "risk_score": h.get("risk_score"),
-                        "risk_class": h.get("risk_class"), "risk_label": h.get("risk_label"),
-                        "condition": h.get("condition"), "temp_c": h.get("temp_c"),
-                        "humidity_pct": h.get("humidity_pct"), "heat_index_c": h.get("heat_index_c"),
-                        "wind_kmh": num(h.get("wind_kmh"), 0.0),
-                        "wind_dir": num(h.get("wind_dir"), 0.0),
-                        "cloud_pct": num(h.get("cloud_pct"), 0.0),
-                    },
-                })
+    # Use the same null and coordinate contract as individual location maps.
+    features = [feature for api in apis for feature in v65_geo_for_api(api)["features"]]
     return {"type": "FeatureCollection", "features": features}
 
 
@@ -4659,18 +4396,21 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
         return 2
     write_text(root / "assets" / asset_name("css"), CSS_V65)
     write_text(root / "assets" / asset_name("js"), JS_V65)
+    write_text(root / "assets" / asset_name("data.js"), DATA_JS)
     apis: List[Dict[str, Any]] = []
     for d in dirs:
         api = load_location_api(d, meta.get(d.name, {"slug": d.name}))
         apis.append(api)
         gj = v65_geo_for_api(api)
         write_json(d / "langit_api_v1.json", api)
+        write_public_tables(d, api)
         write_json(d / "langit_location.geojson", gj)
         write_json(d / "langit_map_layers.json", {"brand": BRAND, "version": VERSION, "geojson": gj})
         # Main pages
         write_text(d / "langit_app.html", v65_today_page(api))
         write_text(d / "langit_3day.html", v65_three_day_page(api))
         write_text(d / "langit_activity.html", v65_activity_page(api))
+        write_text(d / "offline.html", '<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LANGIT — koneksi tidak tersedia</title></head><body><h1>LANGIT</h1><p>Periksa koneksi untuk mendapatkan prakiraan terbaru. Perhatikan waktu terbit dan waktu berlaku data yang tersimpan.</p><a href="langit_app.html">Buka prakiraan lokasi</a></body></html>')
         write_text(d / "keandalan_data.html", v65_data_page(api))
         acc_html = v65_accuracy_page(api, d)
         write_text(d / "akurasi_data.html", acc_html)
@@ -4694,7 +4434,15 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
 
     pgeo = v65_portal_geo(apis)
     write_json(root / "langit_all_locations.geojson", pgeo)
-    write_json(root / "langit_portal_manifest.json", {"brand": BRAND, "version": VERSION, "generated_at": latest_issue(apis), "public_base_url": public_base_url, "locations": [{"slug": a["location_slug"], "name": a["location_name"]} for a in apis]})
+    source_revision = os.environ.get("LANGIT_SOURCE_SHA") or None
+    if source_revision and not re.fullmatch(r"[0-9a-f]{40}", source_revision):
+        raise ValueError("LANGIT_SOURCE_SHA must be a full Git commit SHA")
+    write_json(root / "langit_portal_manifest.json", {
+        "brand": BRAND, "version": VERSION, "generated_at": latest_issue(apis),
+        "built_at": dt.datetime.now(dt.timezone.utc).isoformat(), "source_revision": source_revision,
+        "public_base_url": public_base_url,
+        "locations": [{"slug": a["location_slug"], "name": a["location_name"],
+                       "forecast_issued_at": a["today"].get("issued_at")} for a in apis]})
     write_text(root / "langit_portal_map.html", v65_map_page("LANGIT Portal Map", pgeo, "index.html"))
     write_text(root / "index.html", v65_portal_page(apis, root))
     print(f"OK: {VERSION} rebuild selesai. lokasi={len(apis)}")
@@ -4715,4 +4463,5 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
 

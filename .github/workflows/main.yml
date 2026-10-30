@@ -140,7 +140,7 @@ jobs:
 
       - name: Rebuild LANGIT public product layer
         run: |
-          python langit_v65_cinematic_rebuild.py \
+          LANGIT_SOURCE_SHA="$(git rev-parse HEAD)" python langit_v65_cinematic_rebuild.py \
             --root outputs \
             --public-base-url "$PUBLIC_BASE_URL"
 
@@ -185,4 +185,5 @@ jobs:
           publish_branch: gh-pages
           force_orphan: true
           commit_message: "deploy: validated LANGIT public site"
+
 
