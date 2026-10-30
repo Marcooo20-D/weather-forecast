@@ -43,6 +43,9 @@ class WeatherContracts(unittest.TestCase):
                 self.assertNotEqual(row["hour"], "00:00")
 
     def test_physical_ranges_are_flagged_without_fabrication(self):
+        self.assertIsNone(engine.validate_point_values(True, 80, 0, 0)[0])
+        self.assertIn("temp_invalid_type", engine.validate_point_values(True, 80, 0, 0)[-1])
+        self.assertIsNone(engine._quality_array_value({"temperature_2m": [True]}, "temperature_2m", 0))
         row = ui.row_to_hour({"hour": "09:00", "date": "2026-10-30",
                               "temp_c": 999, "wind_kmh": -3, "rain_probability": 120,
                               "humidity_pct": 130, "cloud_pct": -4})

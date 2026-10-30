@@ -1230,11 +1230,14 @@ def category_from_metno_symbol(symbol_code, rain_mm, rh):
 
 
 def validate_point_values(temp_c, rh_pct, rain_mm, wind_kmh):
-    values = [safe_float(v) for v in (temp_c, rh_pct, rain_mm, wind_kmh)]
+    raw_values = (temp_c, rh_pct, rain_mm, wind_kmh)
+    values = [None if isinstance(v, bool) else safe_float(v) for v in raw_values]
     flags = []
     for idx, (name, low, high) in enumerate((("temp", -80, 60), ("rh", 0, 100), ("rain", 0, 1000), ("wind", 0, 500))):
         value = values[idx]
-        if value is not None and not low <= value <= high:
+        if isinstance(raw_values[idx], bool):
+            flags.append(name + "_invalid_type")
+        elif value is not None and not low <= value <= high:
             values[idx] = None
             flags.append(name + "_out_of_range")
     return *values, flags
@@ -10117,7 +10120,8 @@ def point_variable_weight(point, variable):
 
 def _quality_array_value(hourly, field, index):
     array = hourly.get(field) or []
-    return safe_float(array[index]) if index < len(array) else None
+    value = array[index] if index < len(array) else None
+    return None if isinstance(value, bool) else safe_float(value)
 
 def _quality_native_step(times):
     differences = sorted((b - a).total_seconds() / 60 for a, b in zip(times, times[1:]) if b > a)
