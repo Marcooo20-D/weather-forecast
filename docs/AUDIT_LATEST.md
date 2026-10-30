@@ -10,11 +10,11 @@ sebagai [draft PR #3](https://github.com/Marcooo20-D/weather-forecast/pull/3).
 | --- | --- |
 | Baseline sumber | `main`: `7224aed537f83614f64d9933da63004a4a2aee18` |
 | Baseline publik | `gh-pages`: `2befb601aca07fa9bdaa872b481e6d0b261369c4`; v65.2 |
-| Kandidat kode | `154289fd56a34c55c6177bbb09985ab1f6e551d3`; v65.3 |
+| Kandidat kode | `6754eba6ef5e00c27432ad4335fda4008f95acb4`; v65.3 |
 | Cabang | `codex/langit-audit-20261030` |
 | Temuan | 26 kelompok temuan terkonfirmasi, seluruhnya mendapat implementasi perbaikan |
 | Tes | 55/55 tes Python lulus, termasuk enam subtes Node dan eksekusi skrip pada fixture DOM |
-| CI | [Offline checks berhasil](https://github.com/Marcooo20-D/weather-forecast/actions/runs/41036686288), 55 tes dalam 1,876 detik |
+| CI | [Offline checks berhasil](https://github.com/Marcooo20-D/weather-forecast/actions/runs/41039157627); tes dan sintaks berhasil |
 | Penerapan | Belum merge dan belum deploy; produksi yang diperiksa tetap v65.2 |
 
 Masalah utama menyangkut makna dan integritas data: peluang hujan dapat
@@ -179,7 +179,7 @@ dijalankan di dalam suite. Seluruh 29 blok JS inline (11 unik) dan dua aset
 JS bersama hasil build lolos `node --check`. CI commit kode juga lulus.
 
 ```bash
-LANGIT_SOURCE_SHA=154289fd56a34c55c6177bbb09985ab1f6e551d3 \
+LANGIT_SOURCE_SHA=6754eba6ef5e00c27432ad4335fda4008f95acb4 \
   python langit_v65_cinematic_rebuild.py --root outputs \
   --public-base-url https://marcooo20-d.github.io/weather-forecast
 python -m site_tools.public_site --source outputs --destination _site
@@ -197,8 +197,8 @@ dimilikinya sendiri dan tidak meregenerasi sumber.
 | Paket | 3.571.470 byte | 3.671.507 byte |
 | JS bersama | 31.930 byte | 26.306 byte |
 | Seluruh HTML | 1.865.230 byte | 1.553.981 byte |
-| Rebuild, satu pengukuran | 0,894 detik | 0,941 detik |
-| Staging/validasi, satu pengukuran | 0,208 detik | 0,359 detik |
+| Rebuild, satu pengukuran | 0,894 detik | 0,921 detik |
+| Staging/validasi, satu pengukuran | 0,208 detik | 0,353 detik |
 
 Total bertambah sekitar 2,8% karena provenance/data konsisten bertambah.
 HTML/JS mengecil, sementara gate memeriksa lebih banyak hal. Pengukuran

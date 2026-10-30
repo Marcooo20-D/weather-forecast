@@ -3,10 +3,10 @@
   "timezone": "Asia/Jakarta",
   "source_baseline": "7224aed537f83614f64d9933da63004a4a2aee18",
   "pages_baseline": "2befb601aca07fa9bdaa872b481e6d0b261369c4",
-  "tested_code_commit": "154289fd56a34c55c6177bbb09985ab1f6e551d3",
+  "tested_code_commit": "6754eba6ef5e00c27432ad4335fda4008f95acb4",
   "branch": "codex/langit-audit-20261030",
   "pull_request": "https://github.com/Marcooo20-D/weather-forecast/pull/3",
-  "ci_run": "https://github.com/Marcooo20-D/weather-forecast/actions/runs/41036686288",
+  "ci_run": "https://github.com/Marcooo20-D/weather-forecast/actions/runs/41039157627",
   "python_tests": {
     "passed": 55,
     "failed": 0,
@@ -128,13 +128,13 @@
       "html_bytes": 1865230
     },
     "candidate": {
-      "build_seconds": 0.9413498249996337,
-      "stage_seconds": 0.35870572900057596,
+      "build_seconds": 0.9205318570002419,
+      "stage_seconds": 0.35333593700033816,
       "stats": {
         "files": 129,
         "bytes": 3671507
       },
-      "source_revision": "154289fd56a34c55c6177bbb09985ab1f6e551d3",
+      "source_revision": "6754eba6ef5e00c27432ad4335fda4008f95acb4",
       "shared_js_bytes": 26306,
       "css_bytes": 40922,
       "html_bytes": 1553981
@@ -181,7 +181,11 @@
       "implemented_change": "Validasi rentang dan boolean.",
       "implementation_status": "implemented",
       "verification_scope": "source, offline/integration tests or output checks; candidate browser is not verified",
-      "production_status": "not_deployed"
+      "production_status": "not_deployed",
+      "related_provider_checks": [
+        "validate_point_values",
+        "_quality_array_value"
+      ]
     },
     {
       "id": "A03",
@@ -216,7 +220,7 @@
       "severity": "P1",
       "file": "weather_ensemble_multi_location.py",
       "function": "v61_parse_ensemble_payload",
-      "line": 11216,
+      "line": 11220,
       "observed_behavior_and_root_cause": "Duplikat timestamp dapat menimpa jam atau menggandakan anggota.",
       "expected_behavior": "Timestamp unik dan meningkat.",
       "reproduction_or_regression_evidence": "WeatherContracts.test_ensemble_duplicate_times_reject_all_variables; PackageContracts.test_conflicting_duplicate_hours_fail_rebuild",
@@ -244,7 +248,7 @@
       "severity": "P1",
       "file": "weather_ensemble_multi_location.py",
       "function": "aether_build_rows",
-      "line": 12561,
+      "line": 4304,
       "observed_behavior_and_root_cause": "Persen awan diisi dari kategori cuaca.",
       "expected_behavior": "Tidak ada persen awan tanpa data sumber.",
       "reproduction_or_regression_evidence": "WeatherContracts.test_missing_cloud_not_derived_from_weather_category",
@@ -258,7 +262,7 @@
       "severity": "P2",
       "file": "weather_ensemble_multi_location.py",
       "function": "_weighted_wind_direction",
-      "line": 7007,
+      "line": 7010,
       "observed_behavior_and_root_cause": "Bearing pada angin tenang tetap dihitung.",
       "expected_behavior": "Angin nol tidak memiliki arah/panah.",
       "reproduction_or_regression_evidence": "WeatherContracts.test_calm_wind_has_no_direction; Node windRotation",
@@ -314,7 +318,7 @@
       "severity": "P1",
       "file": "weather_ensemble_multi_location.py",
       "function": "write_combined_csv",
-      "line": 3298,
+      "line": 3301,
       "observed_behavior_and_root_cause": "Run parsial menulis gabungan/dimensi hanya lokasi terpilih.",
       "expected_behavior": "Lokasi lain pada tanggal berlaku dipertahankan.",
       "reproduction_or_regression_evidence": "WeatherContracts.test_partial_combined_export_preserves_other_locations",
