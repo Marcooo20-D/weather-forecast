@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-30T00:58:28.295191+07:00",
+  "generated_at": "2026-10-30T08:30:18.633863+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "matched_cases": 0,
@@ -90,7 +90,7 @@
   ],
   "probabilistic_verification": {
     "schema": "langit-probabilistic-verification-1",
-    "generated_at": "2026-10-30T00:58:45.839797+07:00",
+    "generated_at": "2026-10-30T08:30:37.157807+07:00",
     "status": "insufficient_matching_observations",
     "nominal_interval_coverage": 0.8,
     "calibration_status": "NOT_CERTIFIED",
@@ -105,8 +105,8 @@
     },
     "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
     "rejected": {
-      "not_pre_event": 1241,
-      "missing_qc_observation": 3295,
+      "not_pre_event": 1266,
+      "missing_qc_observation": 3342,
       "rain_interval_mismatch": 0,
       "unknown_observation_location": 0,
       "observation_outside_local_radius": 0
@@ -116,17 +116,17 @@
   "activity_verification": {
     "activities": {
       "motor": {
-        "recommended_windows": 41,
+        "recommended_windows": 42,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 41,
+        "unknown_windows": 42,
         "disruption_rate": null
       },
       "walking": {
-        "recommended_windows": 32,
+        "recommended_windows": 33,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 32,
+        "unknown_windows": 33,
         "disruption_rate": null
       },
       "sport": {
@@ -151,10 +151,10 @@
         "disruption_rate": null
       },
       "photography": {
-        "recommended_windows": 24,
+        "recommended_windows": 25,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 24,
+        "unknown_windows": 25,
         "disruption_rate": null
       }
     },

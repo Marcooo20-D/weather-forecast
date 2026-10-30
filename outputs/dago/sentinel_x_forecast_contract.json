@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-10-30T00:59:21.503465+07:00",
+  "generated_at": "2026-10-30T08:31:14.794496+07:00",
   "location": "Dago, Bandung",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,18 +25,22 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-10-30T00:58:09.354809+07:00",
-    "issued_at": "2026-10-30T00:58:09.354809+07:00",
+    "generated_at": "2026-10-30T08:29:58.806220+07:00",
+    "issued_at": "2026-10-30T08:29:58.806220+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Dago, Bandung",
     "mission": "safety_first",
     "daily_operational_status": "GREEN",
     "data_quality": "limited",
-    "best_general_activity_window": [],
+    "best_general_activity_window": [
+      "06:00",
+      "07:00",
+      "08:00"
+    ],
     "peak_rain_threat_hour": "16:00",
-    "peak_rain_threat_score": 45.6,
+    "peak_rain_threat_score": 42.9,
     "peak_heavy_rain_threat_hour": "16:00",
-    "peak_heavy_rain_threat_score": 10.2,
+    "peak_heavy_rain_threat_score": 11.2,
     "summary_text": "Dago, Bandung: data prakiraan belum lengkap atau sudah usang. Rekomendasi waktu aktivitas belum tersedia.",
     "risk_window": [],
     "location_personality": {
@@ -47,8 +51,8 @@
       "forecast_difficulty": "unknown",
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
-    "dominant_atmospheric_mode": "RAIN_TRANSITION",
-    "peak_rain_probability": 54.290533417668144
+    "dominant_atmospheric_mode": "MIXED_LOCAL_ATMOSPHERE",
+    "peak_rain_probability": 49.56778410288847
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
