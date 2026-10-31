@@ -1661,7 +1661,7 @@ if (window.self !== window.top) {
     hud_html = f'''  <section class="hud">
     <div style="display:flex; justify-content:space-between; align-items:center">
       <span class="hud-brand">{BRAND} Cuaca</span>
-      <span class="hud-version">Peta Prakiraan</span>
+      <a class="hud-back-link" id="hud-back-btn" href="{esc(back_href)}">← Kembali</a>
     </div>
     <label for="map-location" class="hud-meta">Lokasi prakiraan</label>
     <select id="map-location" aria-label="Lokasi prakiraan"></select>
@@ -1702,9 +1702,11 @@ if (window.self !== window.top) {
       <button class="param-tab" aria-pressed="false" data-layer="cloud" onclick="switchLayer('cloud')">Awan</button>
     </div>
 
-    <div style="margin-top:20px; display:flex">
-      <a class="btn" id="hud-back-btn" style="flex:1; margin-top:0" href="{esc(back_href)}">Kembali</a>
-    </div>
+    <details class="map-legend-details">
+      <summary>Arti warna peta</summary>
+      <div class="legend" id="map-legend"></div>
+    </details>
+
   </section>'''
 
     timeline_html = '''  <div class="timeline-container">
@@ -1712,7 +1714,7 @@ if (window.self !== window.top) {
     <div class="time-scrubber" id="time-scrubber"></div>
   </div>'''
 
-    legend_html = '<div class="legend" id="map-legend"></div>'
+    legend_html = ''
 
     return f'''<!doctype html>
 <html lang="id">

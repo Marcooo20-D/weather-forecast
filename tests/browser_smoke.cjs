@@ -195,6 +195,15 @@ async function main() {
       assert.equal(await page.locator('#play-btn').getAttribute('aria-pressed'), 'true');
       await page.locator('#play-btn').click();
       assert.equal(await page.locator('#play-btn').getAttribute('aria-pressed'), 'false');
+      await page.locator('.map-legend-details summary').click();
+      assert.ok((await page.locator('#map-legend').textContent()).includes('Tutupan Awan'));
+      await page.locator('#map-legend').scrollIntoViewIfNeeded();
+      const legendFits=await page.locator('#map-legend').evaluate(element=>{
+        const r=element.getBoundingClientRect(),hud=element.closest('.hud').getBoundingClientRect();
+        return r.left>=hud.left&&r.right<=hud.right&&r.bottom<=hud.bottom;
+      });
+      assert.equal(legendFits,true,'expanded legend stays within the scrollable map controls');
+      await page.locator('.map-legend-details summary').click();
       const bounds = await page.locator('.hud, .timeline-container').evaluateAll(elements => elements.map(element => {
         const r = element.getBoundingClientRect();
         return {left: r.left, right: r.right, width: innerWidth};

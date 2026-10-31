@@ -56,3 +56,13 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:3px solid #237
 .legend div{font-size:11px}
 @media(max-width:768px){.hud{left:12px;top:12px;width:calc(100% - 24px);padding:16px;border-radius:16px;max-height:calc(100% - 142px)}.hud h1{font-size:20px;margin-block:12px 6px}.hud>label{margin-top:12px}.hud-meta{font-size:9px;line-height:1.6}.hud-divider{margin-block:13px}.hud-stats-grid{gap:7px}.hud-stat-box{padding:9px 10px;border-radius:9px}.hud-stat-val{font-size:18px}.parameter-tabs{margin-top:12px}.param-tab{padding-block:9px;font-size:9px}.timeline-container{bottom:14px;width:calc(100% - 24px);padding:9px;gap:8px;border-radius:13px}.time-pill{padding:8px 11px;min-width:61px;font-size:11px}.legend{width:126px;right:12px;bottom:94px;padding:11px;border-radius:12px;max-height:23vh}.legend div{font-size:9px;gap:6px}.legend-title{font-size:8px}.map-fallback{bottom:94px;font-size:10px;max-width:calc(100% - 24px)}.leaflet-control-attribution{font-size:8px!important}}
 @media(max-width:768px){.hud-meta{font-size:10px}.hud-stat-lbl{font-size:10px}.param-tab{font-size:11px;min-height:40px}.legend-title,.legend div{font-size:10px}.time-pill span.day-label{font-size:10px}}
+.map-legend-details{margin-top:12px;border:1px solid #dce7ef;border-radius:9px;background:#f8fafc}
+.map-legend-details summary{min-height:40px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;cursor:pointer;color:#375970;font-size:11px;font-weight:600;list-style:none}
+.map-legend-details summary::-webkit-details-marker{display:none}
+.map-legend-details summary::after{content:'+';font-size:17px;font-weight:400}
+.map-legend-details[open] summary::after{content:'−'}
+.map-legend-details .legend{position:static;max-height:none;width:auto;margin:0;padding:0 12px 8px;background:none;border:0;border-radius:0;box-shadow:none;overflow:visible}
+.map-legend-details .legend-title{font-size:11px}
+.map-legend-details .legend div{font-size:11px}
+.hud-back-link{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 11px;background:#eaf3fa;border:1px solid #d4e4ef;border-radius:8px;color:#07588e;font-size:11px;font-weight:600;text-decoration:none}
+.hud-back-link:hover{background:#dfeef9}
