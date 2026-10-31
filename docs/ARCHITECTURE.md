@@ -65,6 +65,15 @@ Perintah reproduksi ada pada README dan [audit terakhir](AUDIT_LATEST.md).
 `check_fixes.py` adalah gate paket yang tidak mengubah sumber. Tes Node
 memakai pustaka bawaan.
 
+`Browser release checks` memakai Playwright 1.62.1 dan Chromium headless
+serta Leaflet 1.9.4 asli. Checkout hanya mengambil kode dan snapshot publik
+ringkas; arsip anggota dan pengambilan ulang provider tidak dibutuhkan.
+Tes memeriksa navigasi tiga lokasi, tab hari, grafik, detail jam, planner,
+timeline/pemilihan lokasi/lapisan peta, dan fallback kegagalan Leaflet.
+Browser memakai ukuran 1440×900 serta 390×844. Screenshot dan trace adalah
+artifact CI, bukan isi publikasi. Font/tile eksternal diuji terpisah pada
+website langsung; hasil tes ini tidak mengklaim kompatibilitas lintas browser.
+
 Arsip tidak ditulis ulang agar metrik tampak lebih baik. Kalibrasi/skill
 memerlukan verifikasi terpisah. Builder warisan dan strategi trading berada
 di luar jalur publikasi aktif yang dijelaskan di sini.

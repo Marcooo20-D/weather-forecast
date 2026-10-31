@@ -2152,11 +2152,15 @@ a:focus-visible, button:focus-visible, select:focus-visible, summary:focus-visib
     padding: 16px;
     gap: 8px;
     transform: translateY(-110%);
+    visibility: hidden;
+    pointer-events: none;
     transition: transform 0.35s var(--ease-out);
     z-index: 999;
   }
   .nav-links.open {
     transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
   }
   .nav-link {
     padding: 14px 20px;

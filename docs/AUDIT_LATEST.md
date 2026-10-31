@@ -1,5 +1,11 @@
 # Audit LANGIT — 30 Oktober 2026
 
+> Bagian A–L berikut merekam hasil audit awal pada 30 Oktober. Pemeriksaan
+> rilis 31 Oktober menambahkan workflow Chromium dan perbaikan menu/panel
+> ponsel. Lihat [catatan rilis](RELEASE_NOTES.md), pemeriksaan akhir PR #3,
+> serta manifest/workflow publikasi untuk status rilis terkini. Status
+> “belum merge/deploy” di bawah adalah status saat audit awal tersebut.
+
 ## A. Ringkasan operasional
 
 **Kode diperbaiki dan CI lulus; kandidat belum dinyatakan siap produksi.**

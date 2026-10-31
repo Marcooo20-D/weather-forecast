@@ -37,6 +37,11 @@ tidak masuk ke paket publik.
 
 - `Offline checks`: memeriksa perubahan PR dengan izin baca dan checkout kode
   saja, tanpa mengunduh arsip `outputs/` yang besar.
+- `Browser release checks`: membangun kandidat dari snapshot API publik di
+  repositori dan menguji interaksi Chromium pada 1440×900 dan 390×844.
+  Screenshot, trace, dan laporan tersedia sebagai artifact run. Pustaka
+  Leaflet asli dipasang dari npm; font eksternal dan tile sengaja diblokir
+  agar pemeriksaan interaksi tidak bergantung pada layanan tersebut.
 - `LANGIT Forecast and Pages`: berjalan pada jadwal yang ada, pemicu manual,
   atau perubahan kode produksi di `main`. Input lokasi: `all`, `dago`,
   `jatinangor`, `arjawinangun`, atau kombinasi dipisahkan koma.
@@ -53,8 +58,9 @@ tetap tersimpan dalam JSON dan arsip immutable.
 
 Lihat [audit terbaru](docs/AUDIT_LATEST.md) dan
 [arsitektur/kontrak data](docs/ARCHITECTURE.md) untuk temuan, reproduksi dan
-batas pemeriksaan. Kandidat v65.3 pada PR #3 belum diterbitkan; pengujian
-browser kandidat masih menjadi gate rilis.
+batas pemeriksaan. [Catatan v65.3](docs/RELEASE_NOTES.md) menjelaskan
+pemeriksaan browser dan perbaikan tambahan. Status publikasi aktual
+ditentukan dari workflow produksi/Pages dan manifest website.
 
 [Audit 24 Oktober 2026](docs/AUDIT_2026-10-24.md) tetap disimpan sebagai
 riwayat. Metrik akurasi membutuhkan observasi lokal
