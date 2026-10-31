@@ -1,0 +1,48 @@
+{
+  "activities": {
+    "motor": {
+      "recommended_windows": 43,
+      "evaluated_windows": 0,
+      "disrupted_windows": 0,
+      "unknown_windows": 43,
+      "disruption_rate": null
+    },
+    "walking": {
+      "recommended_windows": 34,
+      "evaluated_windows": 0,
+      "disrupted_windows": 0,
+      "unknown_windows": 34,
+      "disruption_rate": null
+    },
+    "sport": {
+      "recommended_windows": 18,
+      "evaluated_windows": 0,
+      "disrupted_windows": 0,
+      "unknown_windows": 18,
+      "disruption_rate": null
+    },
+    "drying": {
+      "recommended_windows": 25,
+      "evaluated_windows": 0,
+      "disrupted_windows": 0,
+      "unknown_windows": 25,
+      "disruption_rate": null
+    },
+    "outdoor_event": {
+      "recommended_windows": 14,
+      "evaluated_windows": 0,
+      "disrupted_windows": 0,
+      "unknown_windows": 14,
+      "disruption_rate": null
+    },
+    "photography": {
+      "recommended_windows": 26,
+      "evaluated_windows": 0,
+      "disrupted_windows": 0,
+      "unknown_windows": 26,
+      "disruption_rate": null
+    }
+  },
+  "gust_verification": "Unavailable unless observed gust data is supplied; rates do not certify gust safety.",
+  "policy": "Only complete QC-passed local observation windows scored. Unknown is not counted as success."
+}
