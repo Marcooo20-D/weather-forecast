@@ -51,7 +51,7 @@ async function main() {
       await route.fulfill({body: await fs.readFile(require.resolve('leaflet/dist/' + name)),
         contentType: name.endsWith('.js') ? 'text/javascript' : 'text/css'});
     });
-    await context.route(/https:\/\/(?:fonts\.(?:googleapis|gstatic)\.com|[^/]*basemaps\.cartocdn\.com)\//,
+    await context.route(/https:\/\/(?:fonts\.(?:googleapis|gstatic)\.com|tile\.openstreetmap\.org|[^/]*basemaps\.cartocdn\.com)\//,
       route => route.abort());
     await context.tracing.start({screenshots: true, snapshots: true});
     const page = await context.newPage();

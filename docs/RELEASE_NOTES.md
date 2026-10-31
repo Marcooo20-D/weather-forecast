@@ -1,5 +1,22 @@
 # LANGIT v65.3 — catatan rilis
 
+## v65.3.1 — peta dasar
+
+Pemeriksaan visual pada publikasi v65.3 menemukan basemap CARTO mengirim
+gambar bertuliskan “API key required”. PNG tersebut berhasil dimuat, sehingga
+jumlah tile yang selesai dimuat bukan bukti bahwa peta geografis tampil.
+[CARTO mengharuskan kunci milik pengguna](https://www.carto.com/basemaps/apikey/index.html).
+
+Basemap diganti dengan tile standar OpenStreetMap melalui URL HTTPS resmi.
+Atribusi lisensi terlihat dan tertaut pada peta. Browser memakai cache dan
+Referer normal; aplikasi tidak menyediakan unduhan/prefetch/offline tile.
+CI tetap memblokir permintaan tile, sesuai batas pengujian di bawah.
+Lihat [kebijakan tile OSM](https://operations.osmfoundation.org/policies/tiles/).
+Pemeriksaan rilis harus mengamati nama wilayah/jalan pada screenshot peta
+langsung, selain marker, kontrol, dan status HTTP.
+
+## v65.3 — integritas data dan antarmuka
+
 Data kosong, waktu berlaku, dan peluang hujan kini dipertahankan secara
 konsisten antara API, CSV, grafik, serta peta. Peluang hujan dipisahkan dari
 intensitas dan indeks gangguan aktivitas. Rincian 26 kelompok perbaikan

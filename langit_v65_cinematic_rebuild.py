@@ -27,7 +27,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 BRAND = "LANGIT"
-VERSION = "LANGIT v65.3"
+VERSION = "LANGIT v65.3.1"
 TZ_NAME = "Asia/Jakarta"
 DISCLAIMER = "Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat."
 ID_BOUNDS = [[-11.25, 94.0], [6.45, 141.25]]
@@ -3889,8 +3889,8 @@ updateLegend();
 renderSelectedTime();
 try {
   map = L.map('map',{scrollWheelZoom:true,maxBounds:[[-11.25,94],[6.45,141.25]],maxBoundsViscosity:.8,minZoom:5,zoomControl:false});
-  const tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-    maxZoom:19,attribution:'&copy; OpenStreetMap & CARTO'});
+  const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'});
   tiles.on('tileerror',()=>{
     const warning = document.getElementById('map-fallback');
     warning.hidden=false;
