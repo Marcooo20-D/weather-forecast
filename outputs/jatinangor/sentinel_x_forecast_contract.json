@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-10-31T10:44:23.472155+07:00",
+  "generated_at": "2026-10-31T14:21:25.331491+07:00",
   "location": "Jatinangor, Sumedang",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,23 +25,23 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-10-31T10:43:01.586812+07:00",
-    "issued_at": "2026-10-31T10:43:01.586812+07:00",
+    "generated_at": "2026-10-31T14:20:35.968238+07:00",
+    "issued_at": "2026-10-31T14:20:35.968238+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Jatinangor, Sumedang",
     "mission": "safety_first",
     "daily_operational_status": "YELLOW",
-    "data_quality": "usable",
+    "data_quality": "limited",
     "best_general_activity_window": [
       "06:00",
       "07:00",
       "08:00"
     ],
     "peak_rain_threat_hour": "16:00",
-    "peak_rain_threat_score": 59.0,
+    "peak_rain_threat_score": 62.2,
     "peak_heavy_rain_threat_hour": "16:00",
-    "peak_heavy_rain_threat_score": 15.8,
-    "summary_text": "Jatinangor, Sumedang: peluang hujan per jam tertinggi 71.9118% sekitar 14:00. Rentang dengan risiko relatif lebih rendah: 06:00 · 07:00 · 08:00. Tetap pantau kondisi setempat.",
+    "peak_heavy_rain_threat_score": 14.8,
+    "summary_text": "Jatinangor, Sumedang: data prakiraan belum lengkap atau sudah usang. Rekomendasi waktu aktivitas belum tersedia.",
     "risk_window": [],
     "location_personality": {
       "personality": "unspecified_local_conditions",
@@ -52,7 +52,7 @@
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
     "dominant_atmospheric_mode": "HEAVY_RAIN_WATCH",
-    "peak_rain_probability": 71.91176470588235
+    "peak_rain_probability": 76.07843137254903
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
