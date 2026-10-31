@@ -1,0 +1,61 @@
+name: Browser release checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - 'langit_v65_cinematic_rebuild.py'
+      - 'site_tools/**'
+      - 'tests/browser_smoke.cjs'
+      - '.github/workflows/browser.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chromium:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*.py
+            /site_tools/
+            /tests/
+            /.github/
+            /outputs/dim_locations.csv
+            /outputs/forecast_all_locations.csv
+            /outputs/source_status_all_locations.csv
+            /outputs/*/langit_api_v1.json
+            /outputs/*/sentinel_x_verification_summary.json
+            /outputs/*/sentinel_x_reliability.csv
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Rebuild candidate from committed public input snapshots
+        env:
+          LANGIT_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python langit_v65_cinematic_rebuild.py --root outputs
+          python -m site_tools.public_site --source outputs --destination _site-browser
+      - name: Install pinned browser test runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/langit-browser" --no-audit --no-fund --no-package-lock playwright@1.62.1
+          node "$RUNNER_TEMP/langit-browser/node_modules/playwright/cli.js" install --with-deps --only-shell chromium
+      - name: Exercise desktop and mobile browser interactions
+        run: NODE_PATH="$RUNNER_TEMP/langit-browser/node_modules" node tests/browser_smoke.cjs _site-browser browser-evidence
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: langit-browser-evidence
+          path: browser-evidence
+          if-no-files-found: warn
+          retention-days: 7
