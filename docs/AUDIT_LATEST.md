@@ -1,5 +1,8 @@
 # Audit LANGIT — 30 Oktober 2026
 
+> **Status rilis 31 Oktober: v65.3.1 sudah tayang dan diverifikasi.**
+> Lihat [verifikasi rilis](RELEASE_VERIFICATION_2026-10-31.md) untuk bukti final.
+
 > Bagian A–L berikut merekam hasil audit awal pada 30 Oktober. Pemeriksaan
 > rilis 31 Oktober menambahkan workflow Chromium dan perbaikan menu/panel
 > ponsel. Lihat [catatan rilis](RELEASE_NOTES.md), pemeriksaan akhir PR #3,

@@ -1,0 +1,1253 @@
+{
+  "status": "deployed_and_verified_in_tested_scope",
+  "date": "2026-10-31",
+  "timezone": "Asia/Jakarta",
+  "source_sha": "3a97819cd584b12e1b13a6a9a07b933a5ce9c55a",
+  "pages_sha": "9a07a8e6fb30ff3ccdc2d6be8f4d61929ab67c29",
+  "pages_run": 41182602315,
+  "production_run": 41181325643,
+  "main_output_commit": "e161b92f58119094d4158f9471b847ae1f689f33",
+  "pull_requests": [
+    3,
+    4
+  ],
+  "offline_tests": {
+    "count": 55,
+    "run": 41181203704,
+    "conclusion": "success"
+  },
+  "chromium": {
+    "checks": 48,
+    "run": 41181203633,
+    "viewports": [
+      [
+        1440,
+        900
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "conclusion": "success",
+    "tiles_and_fonts_blocked_in_ci": true
+  },
+  "production_conclusion": "success",
+  "pages_conclusion": "success",
+  "public_http": {
+    "checked_at": "2026-10-31T07:59:33.167430+00:00",
+    "manifest": {
+      "brand": "LANGIT",
+      "version": "LANGIT v65.3.1",
+      "generated_at": "2026-10-31T14:52:20.851055+07:00",
+      "built_at": "2026-10-31T07:56:48.310029+00:00",
+      "source_revision": "3a97819cd584b12e1b13a6a9a07b933a5ce9c55a",
+      "public_base_url": "https://marcooo20-d.github.io/weather-forecast",
+      "locations": [
+        {
+          "slug": "arjawinangun",
+          "name": "Arjawinangun, Cirebon",
+          "forecast_issued_at": "2026-10-31T14:49:43.086994+07:00"
+        },
+        {
+          "slug": "dago",
+          "name": "Dago, Bandung",
+          "forecast_issued_at": "2026-10-31T14:41:41.577661+07:00"
+        },
+        {
+          "slug": "jatinangor",
+          "name": "Jatinangor, Sumedang",
+          "forecast_issued_at": "2026-10-31T14:45:43.477497+07:00"
+        }
+      ]
+    },
+    "contract": {
+      "files": 128,
+      "bytes": 3670222
+    },
+    "checks": [
+      {
+        "path": "arjawinangun/activity_verification.json",
+        "status": 200,
+        "bytes": 1300,
+        "sha": "bd2aad065ecb5d563aa28f6338d7af8d55db8726",
+        "expected_sha": "bd2aad065ecb5d563aa28f6338d7af8d55db8726",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/akurasi_data.html",
+        "status": 200,
+        "bytes": 4287,
+        "sha": "4a62078318ebbf60bc79018148890df1bbdc03dc",
+        "expected_sha": "4a62078318ebbf60bc79018148890df1bbdc03dc",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/anemos_3day.html",
+        "status": 200,
+        "bytes": 338,
+        "sha": "ede8c87249ee31cd31eac5b9f3939fb6c772f0a0",
+        "expected_sha": "ede8c87249ee31cd31eac5b9f3939fb6c772f0a0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/anemos_activity.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "expected_sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/anemos_app.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/anemos_commute_advice.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "expected_sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/anemos_laundry_advice.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "expected_sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/anemos_map.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "expected_sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/anemos_public_landing.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/anemos_today.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/bmkg.csv",
+        "status": 200,
+        "bytes": 980,
+        "sha": "9fe4620ac109064d951ed64d584c82e3332cc46e",
+        "expected_sha": "9fe4620ac109064d951ed64d584c82e3332cc46e",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/command_center_sentinel_x.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/ensemble.csv",
+        "status": 200,
+        "bytes": 5733,
+        "sha": "ed03660cddb0ff4284ccad2e47bf340323ecfa26",
+        "expected_sha": "ed03660cddb0ff4284ccad2e47bf340323ecfa26",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/forecast.csv",
+        "status": 200,
+        "bytes": 24539,
+        "sha": "e1d4dd687b0803df1b2632470cb248286b37dbdd",
+        "expected_sha": "e1d4dd687b0803df1b2632470cb248286b37dbdd",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/keandalan_data.html",
+        "status": 200,
+        "bytes": 5648,
+        "sha": "a56943062d795a8fe629791843963884d24ebaa2",
+        "expected_sha": "a56943062d795a8fe629791843963884d24ebaa2",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_3day.html",
+        "status": 200,
+        "bytes": 130907,
+        "sha": "353d91273535b1cf67fc801ea1dbb12618f67ca3",
+        "expected_sha": "353d91273535b1cf67fc801ea1dbb12618f67ca3",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_activity.html",
+        "status": 200,
+        "bytes": 53261,
+        "sha": "fb16df7675067b94a30e7cc2fb826a30c0ce476c",
+        "expected_sha": "fb16df7675067b94a30e7cc2fb826a30c0ce476c",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_activity_matrix.csv",
+        "status": 200,
+        "bytes": 2578,
+        "sha": "d94a2ca16554a329f3772fddea8366a966b50596",
+        "expected_sha": "d94a2ca16554a329f3772fddea8366a966b50596",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_api_v1.json",
+        "status": 200,
+        "bytes": 143121,
+        "sha": "f0ba4dd8358a0a7ad1f450fdd6cbe326b88b148d",
+        "expected_sha": "f0ba4dd8358a0a7ad1f450fdd6cbe326b88b148d",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_app.html",
+        "status": 200,
+        "bytes": 153401,
+        "sha": "9b413f122bf534ea7e1cfcf01d7554f9c264cfe2",
+        "expected_sha": "9b413f122bf534ea7e1cfcf01d7554f9c264cfe2",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_daily_outlook.csv",
+        "status": 200,
+        "bytes": 923,
+        "sha": "2b6b7abe23c416e2796c75b36d3446970b4b9219",
+        "expected_sha": "2b6b7abe23c416e2796c75b36d3446970b4b9219",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_hourly_intelligence.csv",
+        "status": 200,
+        "bytes": 23851,
+        "sha": "7f5443df99542c6a0411a1fcf5ff733c87a12ec2",
+        "expected_sha": "7f5443df99542c6a0411a1fcf5ff733c87a12ec2",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_location.geojson",
+        "status": 200,
+        "bytes": 76459,
+        "sha": "017b453dad0fbc218dfc09d383d8b3b00ec22909",
+        "expected_sha": "017b453dad0fbc218dfc09d383d8b3b00ec22909",
+        "match": true,
+        "content_type": "application/geo+json"
+      },
+      {
+        "path": "arjawinangun/langit_map.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "expected_sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_map_layers.json",
+        "status": 200,
+        "bytes": 81432,
+        "sha": "36e2f1cad7662c07d4383867f830e50c325fe12b",
+        "expected_sha": "36e2f1cad7662c07d4383867f830e50c325fe12b",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_map_room.html",
+        "status": 200,
+        "bytes": 72611,
+        "sha": "20a5be3d7c068d48d4bf0d974e75732999e8c260",
+        "expected_sha": "20a5be3d7c068d48d4bf0d974e75732999e8c260",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_model_court.html",
+        "status": 200,
+        "bytes": 347,
+        "sha": "e5248e95cbd07427b0ae4774c0a0c68248c7182d",
+        "expected_sha": "e5248e95cbd07427b0ae4774c0a0c68248c7182d",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_planer.html",
+        "status": 200,
+        "bytes": 347,
+        "sha": "01428deeaea367ff190b840521d6b373cf906ae0",
+        "expected_sha": "01428deeaea367ff190b840521d6b373cf906ae0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_planner.html",
+        "status": 200,
+        "bytes": 37931,
+        "sha": "b664782461b1a0c8b8b77a5ce93a176403c1ea74",
+        "expected_sha": "b664782461b1a0c8b8b77a5ce93a176403c1ea74",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_public_landing.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/langit_whatsapp_brief.txt",
+        "status": 200,
+        "bytes": 192,
+        "sha": "2fa77d7c3dd0cb21498136ea08d88087d8fd60cc",
+        "expected_sha": "2fa77d7c3dd0cb21498136ea08d88087d8fd60cc",
+        "match": true,
+        "content_type": "text/plain; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/offline.html",
+        "status": 200,
+        "bytes": 389,
+        "sha": "2794f26e2111f3b3d3c24ef683728a87ca70be19",
+        "expected_sha": "2794f26e2111f3b3d3c24ef683728a87ca70be19",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/probabilistic_verification.json",
+        "status": 200,
+        "bytes": 913,
+        "sha": "632f626e2aae19e13df77841ddfb0a31219fe2fe",
+        "expected_sha": "632f626e2aae19e13df77841ddfb0a31219fe2fe",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/sentinel_x_accuracy_public.html",
+        "status": 200,
+        "bytes": 4287,
+        "sha": "4a62078318ebbf60bc79018148890df1bbdc03dc",
+        "expected_sha": "4a62078318ebbf60bc79018148890df1bbdc03dc",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/sentinel_x_reliability.csv",
+        "status": 200,
+        "bytes": 180,
+        "sha": "288d2382378b3d8b38ebce2e7efdb92a5452492a",
+        "expected_sha": "288d2382378b3d8b38ebce2e7efdb92a5452492a",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/sentinel_x_report.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/sentinel_x_verification_summary.json",
+        "status": 200,
+        "bytes": 4822,
+        "sha": "0e087fd134e2e5ca3368d337e16ca3855a645365",
+        "expected_sha": "0e087fd134e2e5ca3368d337e16ca3855a645365",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "arjawinangun/source_status.csv",
+        "status": 200,
+        "bytes": 1868,
+        "sha": "6cc9f1e04ebc8398a988de6b4d0add70a510099c",
+        "expected_sha": "6cc9f1e04ebc8398a988de6b4d0add70a510099c",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "assets/langit-3f47e45d509b.js",
+        "status": 200,
+        "bytes": 22165,
+        "sha": "b13685a7c9e454b8e6dab722698f688de1ca70b5",
+        "expected_sha": "b13685a7c9e454b8e6dab722698f688de1ca70b5",
+        "match": true,
+        "content_type": "application/javascript; charset=utf-8"
+      },
+      {
+        "path": "assets/langit-46868cf99d14.css",
+        "status": 200,
+        "bytes": 41023,
+        "sha": "023f50ed3d272cd9baf662f045f38c8423041976",
+        "expected_sha": "023f50ed3d272cd9baf662f045f38c8423041976",
+        "match": true,
+        "content_type": "text/css; charset=utf-8"
+      },
+      {
+        "path": "assets/langit-4fc5e176dcd1.data.js",
+        "status": 200,
+        "bytes": 4141,
+        "sha": "6e835cb49de2c26dc76efed889878c102e733b2f",
+        "expected_sha": "6e835cb49de2c26dc76efed889878c102e733b2f",
+        "match": true,
+        "content_type": "application/javascript; charset=utf-8"
+      },
+      {
+        "path": "dago/activity_verification.json",
+        "status": 200,
+        "bytes": 1304,
+        "sha": "236dfbedbe80f30f3c1a58ffd739eab31aa24e81",
+        "expected_sha": "236dfbedbe80f30f3c1a58ffd739eab31aa24e81",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "dago/akurasi_data.html",
+        "status": 200,
+        "bytes": 4249,
+        "sha": "1cec8c4ef8ae250641fe4fd71c7f6c63a8b7fa8d",
+        "expected_sha": "1cec8c4ef8ae250641fe4fd71c7f6c63a8b7fa8d",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/anemos_3day.html",
+        "status": 200,
+        "bytes": 338,
+        "sha": "ede8c87249ee31cd31eac5b9f3939fb6c772f0a0",
+        "expected_sha": "ede8c87249ee31cd31eac5b9f3939fb6c772f0a0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/anemos_activity.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "expected_sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/anemos_app.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/anemos_commute_advice.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "expected_sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/anemos_laundry_advice.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "expected_sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/anemos_map.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "expected_sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/anemos_public_landing.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/anemos_today.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/bmkg.csv",
+        "status": 200,
+        "bytes": 1062,
+        "sha": "58d5f1e335abac9c1272adf1c491de5d037ce97c",
+        "expected_sha": "58d5f1e335abac9c1272adf1c491de5d037ce97c",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "dago/command_center_sentinel_x.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/ensemble.csv",
+        "status": 200,
+        "bytes": 5722,
+        "sha": "ca215028fe0ca820680f2f3ba0e6a1e9c880b751",
+        "expected_sha": "ca215028fe0ca820680f2f3ba0e6a1e9c880b751",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "dago/forecast.csv",
+        "status": 200,
+        "bytes": 24474,
+        "sha": "c8fa16bcf1225f518826ee670c7853012ea23d0d",
+        "expected_sha": "c8fa16bcf1225f518826ee670c7853012ea23d0d",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "dago/keandalan_data.html",
+        "status": 200,
+        "bytes": 5610,
+        "sha": "9b5a0afa428af672252664437415907a3a30709f",
+        "expected_sha": "9b5a0afa428af672252664437415907a3a30709f",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_3day.html",
+        "status": 200,
+        "bytes": 130744,
+        "sha": "0dddb720188c0e138d52da3b6e7cc7b0c9674d3d",
+        "expected_sha": "0dddb720188c0e138d52da3b6e7cc7b0c9674d3d",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_activity.html",
+        "status": 200,
+        "bytes": 53325,
+        "sha": "61c54e7d5728d5f12d1b0869518bee4085bb3cb8",
+        "expected_sha": "61c54e7d5728d5f12d1b0869518bee4085bb3cb8",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_activity_matrix.csv",
+        "status": 200,
+        "bytes": 2553,
+        "sha": "a385b51df2063d7a623eb4edb032a6d544678fc2",
+        "expected_sha": "a385b51df2063d7a623eb4edb032a6d544678fc2",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_api_v1.json",
+        "status": 200,
+        "bytes": 143004,
+        "sha": "0d87b0a7ef1016bada3bf03d0030beff830ff659",
+        "expected_sha": "0d87b0a7ef1016bada3bf03d0030beff830ff659",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_app.html",
+        "status": 200,
+        "bytes": 153166,
+        "sha": "e6996af0198ebd05d78ea31f79d690875d71857f",
+        "expected_sha": "e6996af0198ebd05d78ea31f79d690875d71857f",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_daily_outlook.csv",
+        "status": 200,
+        "bytes": 889,
+        "sha": "4859c22aff98ac1e167526d167e2a938172b16f0",
+        "expected_sha": "4859c22aff98ac1e167526d167e2a938172b16f0",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_hourly_intelligence.csv",
+        "status": 200,
+        "bytes": 23732,
+        "sha": "2f8641bcb491aa44fd18e015ee7f13761feb1c8d",
+        "expected_sha": "2f8641bcb491aa44fd18e015ee7f13761feb1c8d",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_location.geojson",
+        "status": 200,
+        "bytes": 74947,
+        "sha": "c37eed70da286b4361b89ae282461a994b013a13",
+        "expected_sha": "c37eed70da286b4361b89ae282461a994b013a13",
+        "match": true,
+        "content_type": "application/geo+json"
+      },
+      {
+        "path": "dago/langit_map.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "expected_sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_map_layers.json",
+        "status": 200,
+        "bytes": 79920,
+        "sha": "a7610a34bd3ca0443e6f80a9163ae7f6f00d25c1",
+        "expected_sha": "a7610a34bd3ca0443e6f80a9163ae7f6f00d25c1",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_map_room.html",
+        "status": 200,
+        "bytes": 71123,
+        "sha": "c11aecec16f8a96b5c225dc048fbd2f6b01fcd85",
+        "expected_sha": "c11aecec16f8a96b5c225dc048fbd2f6b01fcd85",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_model_court.html",
+        "status": 200,
+        "bytes": 347,
+        "sha": "e5248e95cbd07427b0ae4774c0a0c68248c7182d",
+        "expected_sha": "e5248e95cbd07427b0ae4774c0a0c68248c7182d",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_planer.html",
+        "status": 200,
+        "bytes": 347,
+        "sha": "01428deeaea367ff190b840521d6b373cf906ae0",
+        "expected_sha": "01428deeaea367ff190b840521d6b373cf906ae0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_planner.html",
+        "status": 200,
+        "bytes": 37991,
+        "sha": "741d51909bac7a97bfd4de549cfac1ef40aea3eb",
+        "expected_sha": "741d51909bac7a97bfd4de549cfac1ef40aea3eb",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_public_landing.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/langit_whatsapp_brief.txt",
+        "status": 200,
+        "bytes": 184,
+        "sha": "faa0255cfe78f776f18619d052ccde26c968fed9",
+        "expected_sha": "faa0255cfe78f776f18619d052ccde26c968fed9",
+        "match": true,
+        "content_type": "text/plain; charset=utf-8"
+      },
+      {
+        "path": "dago/offline.html",
+        "status": 200,
+        "bytes": 389,
+        "sha": "2794f26e2111f3b3d3c24ef683728a87ca70be19",
+        "expected_sha": "2794f26e2111f3b3d3c24ef683728a87ca70be19",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/probabilistic_verification.json",
+        "status": 200,
+        "bytes": 913,
+        "sha": "dc0fdd5715fbe62ecf65227056f639ef431e12eb",
+        "expected_sha": "dc0fdd5715fbe62ecf65227056f639ef431e12eb",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "dago/sentinel_x_accuracy_public.html",
+        "status": 200,
+        "bytes": 4249,
+        "sha": "1cec8c4ef8ae250641fe4fd71c7f6c63a8b7fa8d",
+        "expected_sha": "1cec8c4ef8ae250641fe4fd71c7f6c63a8b7fa8d",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/sentinel_x_reliability.csv",
+        "status": 200,
+        "bytes": 180,
+        "sha": "288d2382378b3d8b38ebce2e7efdb92a5452492a",
+        "expected_sha": "288d2382378b3d8b38ebce2e7efdb92a5452492a",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "dago/sentinel_x_report.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "dago/sentinel_x_verification_summary.json",
+        "status": 200,
+        "bytes": 4810,
+        "sha": "c237608b7827846e1f29375f9ad33cff52add02f",
+        "expected_sha": "c237608b7827846e1f29375f9ad33cff52add02f",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "dago/source_status.csv",
+        "status": 200,
+        "bytes": 1868,
+        "sha": "cdb2a623ab559a9c40f8a94422a275c66e820b99",
+        "expected_sha": "cdb2a623ab559a9c40f8a94422a275c66e820b99",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "dim_locations.csv",
+        "status": 200,
+        "bytes": 555,
+        "sha": "ea2094e163cbc47059d751450e864b6247ad46bc",
+        "expected_sha": "ea2094e163cbc47059d751450e864b6247ad46bc",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "dim_sources.csv",
+        "status": 200,
+        "bytes": 714,
+        "sha": "095ce8eefff82bb89c0b4b5bda695b03a3057b18",
+        "expected_sha": "095ce8eefff82bb89c0b4b5bda695b03a3057b18",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "ensemble_all_locations.csv",
+        "status": 200,
+        "bytes": 74556,
+        "sha": "e5eb43276eaeb06c415752034cbd2a556ceb9b37",
+        "expected_sha": "e5eb43276eaeb06c415752034cbd2a556ceb9b37",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "ensemble_fact_all_locations.csv",
+        "status": 200,
+        "bytes": 31616,
+        "sha": "5ff0530b0359911a4ee2ae293bd106c662f0951a",
+        "expected_sha": "5ff0530b0359911a4ee2ae293bd106c662f0951a",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "ensemble_long_all_locations.csv",
+        "status": 200,
+        "bytes": 82222,
+        "sha": "5c431561b0f5f62864ce1a8bb13ff0626b3988c5",
+        "expected_sha": "5c431561b0f5f62864ce1a8bb13ff0626b3988c5",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "forecast_all_locations.csv",
+        "status": 200,
+        "bytes": 506562,
+        "sha": "ef4af04cb49df1f25268a399f99ef1d4872c1d31",
+        "expected_sha": "ef4af04cb49df1f25268a399f99ef1d4872c1d31",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "index.html",
+        "status": 200,
+        "bytes": 8510,
+        "sha": "7b6aba1614e186dfa76d792b03707cfaef1a0a95",
+        "expected_sha": "7b6aba1614e186dfa76d792b03707cfaef1a0a95",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/activity_verification.json",
+        "status": 200,
+        "bytes": 1304,
+        "sha": "59fbbde64f4bfd712a836c541d08b247c3cc5bc4",
+        "expected_sha": "59fbbde64f4bfd712a836c541d08b247c3cc5bc4",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/akurasi_data.html",
+        "status": 200,
+        "bytes": 4287,
+        "sha": "c5162ccb3c5739d5edfb110e36cc2427129934e1",
+        "expected_sha": "c5162ccb3c5739d5edfb110e36cc2427129934e1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/anemos_3day.html",
+        "status": 200,
+        "bytes": 338,
+        "sha": "ede8c87249ee31cd31eac5b9f3939fb6c772f0a0",
+        "expected_sha": "ede8c87249ee31cd31eac5b9f3939fb6c772f0a0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/anemos_activity.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "expected_sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/anemos_app.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/anemos_commute_advice.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "expected_sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/anemos_laundry_advice.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "expected_sha": "03f283f0082ed8acf1d20d655c508d8753f7cf0a",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/anemos_map.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "expected_sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/anemos_public_landing.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/anemos_today.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/bmkg.csv",
+        "status": 200,
+        "bytes": 1002,
+        "sha": "6d37db743f9601cf8a334fff71c4da21474ff0fd",
+        "expected_sha": "6d37db743f9601cf8a334fff71c4da21474ff0fd",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/command_center_sentinel_x.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/ensemble.csv",
+        "status": 200,
+        "bytes": 5699,
+        "sha": "99fbe4c0a0b074f8054d45d8fc30d68276fe7dfb",
+        "expected_sha": "99fbe4c0a0b074f8054d45d8fc30d68276fe7dfb",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/forecast.csv",
+        "status": 200,
+        "bytes": 24348,
+        "sha": "d1e6b1f3dee65070311ad2e2bf232bff096772fc",
+        "expected_sha": "d1e6b1f3dee65070311ad2e2bf232bff096772fc",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/keandalan_data.html",
+        "status": 200,
+        "bytes": 5646,
+        "sha": "e46f9f4317687f96921c55469b13783fc2807a9f",
+        "expected_sha": "e46f9f4317687f96921c55469b13783fc2807a9f",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_3day.html",
+        "status": 200,
+        "bytes": 130470,
+        "sha": "8996a86cbc8b41f0623822325b60e64624878aa0",
+        "expected_sha": "8996a86cbc8b41f0623822325b60e64624878aa0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_activity.html",
+        "status": 200,
+        "bytes": 53076,
+        "sha": "d8dcd7567e40c28b5abdac6b97149dc9430bc724",
+        "expected_sha": "d8dcd7567e40c28b5abdac6b97149dc9430bc724",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_activity_matrix.csv",
+        "status": 200,
+        "bytes": 2538,
+        "sha": "9a0a64cd41bf510ffe6323f188d78ee5460eb050",
+        "expected_sha": "9a0a64cd41bf510ffe6323f188d78ee5460eb050",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_api_v1.json",
+        "status": 200,
+        "bytes": 142732,
+        "sha": "df2005318b2262bf83bca273cda191e1248a2f0c",
+        "expected_sha": "df2005318b2262bf83bca273cda191e1248a2f0c",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_app.html",
+        "status": 200,
+        "bytes": 152794,
+        "sha": "1aaebbc04cfb2e60fad7b86951690bf3214521c3",
+        "expected_sha": "1aaebbc04cfb2e60fad7b86951690bf3214521c3",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_daily_outlook.csv",
+        "status": 200,
+        "bytes": 865,
+        "sha": "24457d45a0b2a1c9e8a43ada5b2f678e27f70435",
+        "expected_sha": "24457d45a0b2a1c9e8a43ada5b2f678e27f70435",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_hourly_intelligence.csv",
+        "status": 200,
+        "bytes": 23596,
+        "sha": "91cede5739dc480c442a66502228740486816a96",
+        "expected_sha": "91cede5739dc480c442a66502228740486816a96",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_location.geojson",
+        "status": 200,
+        "bytes": 75911,
+        "sha": "7b24ac14018a2d6b12d5fd82755b4039ccb56bb0",
+        "expected_sha": "7b24ac14018a2d6b12d5fd82755b4039ccb56bb0",
+        "match": true,
+        "content_type": "application/geo+json"
+      },
+      {
+        "path": "jatinangor/langit_map.html",
+        "status": 200,
+        "bytes": 350,
+        "sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "expected_sha": "3b1d520352d0349ecc941e7085f8dae813359ad0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_map_layers.json",
+        "status": 200,
+        "bytes": 80884,
+        "sha": "cf5310517ed6f4aa158de483a80cb3d4cb9cf174",
+        "expected_sha": "cf5310517ed6f4aa158de483a80cb3d4cb9cf174",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_map_room.html",
+        "status": 200,
+        "bytes": 72096,
+        "sha": "62e5c73698aa6f42afbb8618780130eec3d023ef",
+        "expected_sha": "62e5c73698aa6f42afbb8618780130eec3d023ef",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_model_court.html",
+        "status": 200,
+        "bytes": 347,
+        "sha": "e5248e95cbd07427b0ae4774c0a0c68248c7182d",
+        "expected_sha": "e5248e95cbd07427b0ae4774c0a0c68248c7182d",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_planer.html",
+        "status": 200,
+        "bytes": 347,
+        "sha": "01428deeaea367ff190b840521d6b373cf906ae0",
+        "expected_sha": "01428deeaea367ff190b840521d6b373cf906ae0",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_planner.html",
+        "status": 200,
+        "bytes": 37812,
+        "sha": "97168a1307f358bfd4aa26e98df9b5960415da2b",
+        "expected_sha": "97168a1307f358bfd4aa26e98df9b5960415da2b",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_public_landing.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/langit_whatsapp_brief.txt",
+        "status": 200,
+        "bytes": 132,
+        "sha": "1c01917d31629f5c3588bdcfdddaa3d2019d378f",
+        "expected_sha": "1c01917d31629f5c3588bdcfdddaa3d2019d378f",
+        "match": true,
+        "content_type": "text/plain; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/offline.html",
+        "status": 200,
+        "bytes": 389,
+        "sha": "2794f26e2111f3b3d3c24ef683728a87ca70be19",
+        "expected_sha": "2794f26e2111f3b3d3c24ef683728a87ca70be19",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/probabilistic_verification.json",
+        "status": 200,
+        "bytes": 913,
+        "sha": "b9d214cf44b612e5f70103b8b8aabcdbdc3bf375",
+        "expected_sha": "b9d214cf44b612e5f70103b8b8aabcdbdc3bf375",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/sentinel_x_accuracy_public.html",
+        "status": 200,
+        "bytes": 4287,
+        "sha": "c5162ccb3c5739d5edfb110e36cc2427129934e1",
+        "expected_sha": "c5162ccb3c5739d5edfb110e36cc2427129934e1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/sentinel_x_reliability.csv",
+        "status": 200,
+        "bytes": 180,
+        "sha": "288d2382378b3d8b38ebce2e7efdb92a5452492a",
+        "expected_sha": "288d2382378b3d8b38ebce2e7efdb92a5452492a",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/sentinel_x_report.html",
+        "status": 200,
+        "bytes": 335,
+        "sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "expected_sha": "fed062596d8ab132dee5655f896cb8446b73efb1",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/sentinel_x_verification_summary.json",
+        "status": 200,
+        "bytes": 4823,
+        "sha": "aaf36da159af8195979eaa37dd68ffbbe4a8fd99",
+        "expected_sha": "aaf36da159af8195979eaa37dd68ffbbe4a8fd99",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "jatinangor/source_status.csv",
+        "status": 200,
+        "bytes": 1864,
+        "sha": "6a6396267c82db2ec544710e94d510ee168ddeee",
+        "expected_sha": "6a6396267c82db2ec544710e94d510ee168ddeee",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      },
+      {
+        "path": "langit_all_locations.geojson",
+        "status": 200,
+        "bytes": 227211,
+        "sha": "6429087714f00931773b4b061f76e3130e892fcb",
+        "expected_sha": "6429087714f00931773b4b061f76e3130e892fcb",
+        "match": true,
+        "content_type": "application/geo+json"
+      },
+      {
+        "path": "langit_portal_manifest.json",
+        "status": 200,
+        "bytes": 731,
+        "sha": "a55809fe1f1cbb681642205704c250a897ff2fce",
+        "expected_sha": "a55809fe1f1cbb681642205704c250a897ff2fce",
+        "match": true,
+        "content_type": "application/json; charset=utf-8"
+      },
+      {
+        "path": "langit_portal_map.html",
+        "status": 200,
+        "bytes": 147709,
+        "sha": "579bf504691f4ea0155d9b63577c6834e44c298d",
+        "expected_sha": "579bf504691f4ea0155d9b63577c6834e44c298d",
+        "match": true,
+        "content_type": "text/html; charset=utf-8"
+      },
+      {
+        "path": "source_status_all_locations.csv",
+        "status": 200,
+        "bytes": 22462,
+        "sha": "ab929950eda943bc393764ba81b2e50cf7438aff",
+        "expected_sha": "ab929950eda943bc393764ba81b2e50cf7438aff",
+        "match": true,
+        "content_type": "text/csv; charset=utf-8"
+      }
+    ],
+    "matches": 128,
+    "count": 128
+  },
+  "live_basemap": {
+    "provider": "OpenStreetMap",
+    "geographic_labels_visually_confirmed": [
+      "Bandung",
+      "Sumedang",
+      "Jatinangor",
+      "Arjawinangun"
+    ],
+    "loaded_tiles": 35,
+    "markers": 3,
+    "selector_locations_verified": [
+      "dago",
+      "jatinangor",
+      "arjawinangun"
+    ],
+    "fallback_visible": false
+  },
+  "live_scope": "All three main/three-day/activity products and Dago day/chart/source/accuracy plus six map layers, timeline and play/pause checked on v65.3; final v65.3.1 portal, geography and location selector checked; all final HTTP resources and API contracts checked.",
+  "followup_fixes": [
+    "Mobile map border-box sizing",
+    "Closed mobile navigation no longer intercepts Menu clicks",
+    "Replace CARTO API-key watermark tiles with official OSM standard tiles and linked attribution"
+  ],
+  "limits": [
+    "Firefox/WebKit, full WCAG, screen readers, physical devices and Core Web Vitals not verified",
+    "No field forecast skill or probability calibration claim; local observations insufficient",
+    "CI uses real Leaflet from npm with external fonts/tiles blocked; final geographic basemap checked live"
+  ]
+}

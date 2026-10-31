@@ -4,6 +4,10 @@ Prakiraan multi-sumber untuk Dago, Jatinangor, dan Arjawinangun. Mesin prakiraan
 dan evaluasi ada di `weather_ensemble_multi_location.py`; tampilan publik
 dibangun oleh `langit_v65_cinematic_rebuild.py`.
 
+**Status 31 Oktober 2026:** v65.3.1 sudah diterbitkan.
+[Bukti verifikasi rilis](docs/RELEASE_VERIFICATION_2026-10-31.md) mencatat
+CI, publikasi, pemeriksaan resource HTTP, dan peta langsung.
+
 ## Pemeriksaan lokal
 
 Python 3.12 dan Node.js diperlukan untuk menjalankan seluruh pemeriksaan.
