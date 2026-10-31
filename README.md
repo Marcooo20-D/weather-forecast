@@ -10,9 +10,9 @@ ponsel dan desktop. [Catatan desain](docs/ITB_CAMPUS_DESIGN.md) menjelaskan
 referensi, sumber foto dan preservasi fitur. Ini proyek independen mahasiswa,
 bukan layanan resmi ITB atau BMKG.
 
-[Verifikasi rilis sebelumnya](docs/RELEASE_VERIFICATION_2026-10-31.md)
-mencatat baseline v65.3.1. Status publikasi terkini harus diperiksa dari
-manifest website dan workflow Pages.
+**Status 31 Oktober 2026:** [LANGIT v66.0 sudah diterbitkan dan diperiksa](docs/RELEASE_VERIFICATION_CAMPUS_V66.md).
+[Verifikasi v65.3.1](docs/RELEASE_VERIFICATION_2026-10-31.md) tetap disimpan sebagai baseline.
+Status publikasi berikutnya ditentukan dari manifest website dan workflow Pages.
 
 ## Pemeriksaan lokal
 
