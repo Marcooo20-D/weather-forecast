@@ -1230,11 +1230,14 @@ def category_from_metno_symbol(symbol_code, rain_mm, rh):
 
 
 def validate_point_values(temp_c, rh_pct, rain_mm, wind_kmh):
-    values = [safe_float(v) for v in (temp_c, rh_pct, rain_mm, wind_kmh)]
+    raw_values = (temp_c, rh_pct, rain_mm, wind_kmh)
+    values = [None if isinstance(v, bool) else safe_float(v) for v in raw_values]
     flags = []
     for idx, (name, low, high) in enumerate((("temp", -80, 60), ("rh", 0, 100), ("rain", 0, 1000), ("wind", 0, 500))):
         value = values[idx]
-        if value is not None and not low <= value <= high:
+        if isinstance(raw_values[idx], bool):
+            flags.append(name + "_invalid_type")
+        elif value is not None and not low <= value <= high:
             values[idx] = None
             flags.append(name + "_out_of_range")
     return *values, flags
@@ -1275,6 +1278,8 @@ def extract_open_meteo_points(target_date, payload, config, args):
     times = [parse_open_meteo_time(t, args.timezone) for t in hourly.get("time") or []]
     if not times:
         raise ValueError("Open-Meteo response tidak memiliki hourly.time")
+    if any(b <= a for a, b in zip(times, times[1:])):
+        raise ValueError("Open-Meteo hourly timestamps must be unique and strictly increasing")
     units = payload.get("hourly_units") or {}
     if units.get("precipitation", "mm") != "mm" or units.get("temperature_2m", "°C") not in {"°C", "celsius"} or units.get("wind_speed_10m", "km/h") not in {"km/h", "kmh"}:
         raise ValueError("Unsupported units in Open-Meteo payload")
@@ -3296,6 +3301,16 @@ def collect_combined_source_status_rows(location_args, target_date, output_dir):
 def write_combined_csv(base_filename, fieldnames, rows):
     if not rows:
         return None, None
+    # A manual subset run must not remove other locations from public exports.
+    # Retain their actual rows, only within the dates requested by this update.
+    updated_locations = {row.get("location_slug") for row in rows}
+    updated_dates = {row.get("target_date") for row in rows}
+    previous = read_dict_csv(root_output_path(f"{base_filename}.csv"))
+    rows = list(rows) + [
+        row for row in previous
+        if row.get("location_slug") not in updated_locations
+        and row.get("target_date") in updated_dates
+    ]
 
     unique_dates = sorted({row["target_date"] for row in rows if row.get("target_date")})
     run_stamp = now_local(DEFAULT_TIMEZONE).strftime("%Y%m%d_%H%M%S")
@@ -3497,8 +3512,10 @@ def write_dim_locations(locations: list[LocationConfig], base_args):
                 "note": loc.note,
             }
         )
-    rows.sort(key=lambda r: r["location_slug"])
     path = root_output_path("dim_locations.csv")
+    updated = {row["location_slug"] for row in rows}
+    rows.extend(row for row in read_dict_csv(path) if row.get("location_slug") not in updated)
+    rows.sort(key=lambda r: r["location_slug"])
     write_dict_csv(
         path,
         [
@@ -4349,8 +4366,8 @@ def aether_build_rows(points, ensemble_rows, target_date, args):
         cape_p50 = q(cape_pairs, 0.50)
         visibility_p10 = q(visibility_pairs, 0.10)
         cloud_p50 = q(cloud_pairs, 0.50)
-        if cloud_p50 is None and bucket:
-            cloud_p50 = q([(aether_category_cloud_proxy(p.category), w) for p, w in weights], 0.50)
+        # Missing cloud cover stays missing. A weather category cannot supply a
+        # measured/modelled cloud percentage for the map or public dataset.
 
         analog_prob, analog_n = aether_analog_probability(target_date, jam, args, temp_p50, rh_p50, prob_rain)
         if analog_prob is not None:
@@ -6996,7 +7013,8 @@ def _weighted_wind_direction(points):
     for point in points or []:
         direction = safe_float(getattr(point, "wind_direction_deg", None))
         weight = point_weight(point)
-        if direction is None or weight <= 0:
+        speed = safe_float(getattr(point, "wind_kmh", None))
+        if direction is None or not 0 <= direction <= 360 or weight <= 0 or speed == 0:
             continue
         angle = math.radians(direction % 360)
         x += weight * math.cos(angle)
@@ -10102,7 +10120,8 @@ def point_variable_weight(point, variable):
 
 def _quality_array_value(hourly, field, index):
     array = hourly.get(field) or []
-    return safe_float(array[index]) if index < len(array) else None
+    value = array[index] if index < len(array) else None
+    return None if isinstance(value, bool) else safe_float(value)
 
 def _quality_native_step(times):
     differences = sorted((b - a).total_seconds() / 60 for a, b in zip(times, times[1:]) if b > a)
@@ -11225,6 +11244,8 @@ def v61_parse_ensemble_payload(payload, model, target_date, args, fetched_at=Non
         flags.append("duplicate_timestamp")
     if any(b <= a for a, b in zip(valid_times, valid_times[1:])):
         flags.append("non_monotonic_time")
+    if "duplicate_timestamp" in flags or "non_monotonic_time" in flags:
+        raise ValueError("Ensemble hourly timestamps must be unique and strictly increasing")
     if step_minutes is None:
         flags.append("unverifiable_interval")
     elif any(step != step_minutes for step in steps):
@@ -11260,7 +11281,7 @@ def v61_parse_ensemble_payload(payload, model, target_date, args, fetched_at=Non
                 if dt is None or dt.date() != target_date:
                     continue
                 raw = values[idx]
-                value = safe_float(raw)
+                value = None if isinstance(raw, bool) else safe_float(raw)
                 if value is None or value < lower or value > upper:
                     rejected += 1
                     continue
@@ -11350,6 +11371,7 @@ def v61_fetch_ensembles(target_date, args):
                     merged.setdefault("members", []).extend(distribution["members"])
     for slot in result["hourly"].values():
         for field, distribution in slot["variables"].items():
+            distribution["members"].sort(key=lambda member: (member["model"], member["member"]))
             # A sparse model does not gain equal family voting from one survivor.
             counts = {}
             for member in distribution["members"]:
@@ -12683,4 +12705,5 @@ def _lg_microclimate(args):
 
 if __name__ == "__main__":
     main()
+
 
