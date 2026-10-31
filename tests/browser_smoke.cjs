@@ -18,7 +18,7 @@ const report = {browser: 'chromium', source: 'committed public input snapshots',
 let browser, currentPage, currentContext;
 const mime = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript',
   '.css': 'text/css', '.json': 'application/json', '.geojson': 'application/geo+json',
-  '.csv': 'text/csv', '.txt': 'text/plain; charset=utf-8'};
+  '.csv': 'text/csv', '.txt': 'text/plain; charset=utf-8', '.webp': 'image/webp'};
 const server = http.createServer(async (req, res) => {
   try {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
@@ -40,7 +40,9 @@ async function main() {
   browser = await chromium.launch({headless: true});
   report.browserVersion = browser.version();
 
-  for (const viewport of [{width: 1440, height: 900}, {width: 390, height: 844}]) {
+  report.heroImages=[];
+  for (const viewport of [{width:1440,height:900},{width:768,height:1024},
+                          {width:390,height:844},{width:320,height:780}]) {
     report.viewports.push(viewport);
     const context = await browser.newContext({viewport, timezoneId: 'Asia/Jakarta', reducedMotion: 'reduce'});
     currentContext = context;
@@ -53,7 +55,7 @@ async function main() {
     });
     await context.route(/https:\/\/(?:fonts\.(?:googleapis|gstatic)\.com|tile\.openstreetmap\.org|[^/]*basemaps\.cartocdn\.com)\//,
       route => route.abort());
-    await context.tracing.start({screenshots: true, snapshots: true});
+    await context.tracing.start({screenshots: false, snapshots: true});
     const page = await context.newPage();
     currentPage = page;
     page.setDefaultTimeout(12000);
@@ -75,7 +77,18 @@ async function main() {
       await page.locator('h1').first().waitFor({state: 'visible'});
     }
     async function screenshot(name) {
-      await page.screenshot({path: path.join(artifacts, `${viewport.width}-${name}.png`), animations: 'disabled'});
+      await page.screenshot({path: path.join(artifacts, `${viewport.width}-${name}.jpg`),
+        type:'jpeg',quality:82,animations:'disabled'});
+    }
+    async function checkHero(expectedSlug){
+      const image=await page.locator('img.hero-image').evaluate(async image=>{
+        await image.decode();
+        return {source:image.currentSrc,width:image.naturalWidth,height:image.naturalHeight};
+      });
+      assert.ok(image.width>0&&image.height>0,'campus photograph decodes');
+      assert.ok(image.source.includes('campus-'+expectedSlug+'-'),'correct campus photograph');
+      assert.ok(image.source.includes(viewport.width>=768?'-large-':'-small-'),'responsive photograph variant');
+      report.heroImages.push({viewport:viewport.width,campus:expectedSlug,...image});
     }
     async function checkLayout(name) {
       const size = await page.evaluate(() => ({width: innerWidth, scroll: document.documentElement.scrollWidth}));
@@ -84,6 +97,7 @@ async function main() {
     }
     await go('index.html');
     assert.equal(await page.locator('a.location-card').count(), 3);
+    await checkHero('dago');
     await screenshot('portal');
     await checkLayout('portal');
 
@@ -91,6 +105,8 @@ async function main() {
       await go('index.html');
       await page.locator(`a.location-card[href="${slug}/langit_app.html"]`).click();
       await page.waitForURL(`**/${slug}/langit_app.html`);
+      await checkHero(slug);
+      await screenshot(`${slug}-hero`);
       assert.equal(await page.locator('.timeline-node').count(), 3);
       for (let day = 0; day < 3; day++) {
         await page.locator(`.timeline-node[data-target="day-${day}"]`).click();
@@ -122,6 +138,13 @@ async function main() {
       }
       await screenshot(`${slug}-today`);
       await checkLayout(`${slug}: day switching, four chart variables, hourly details`);
+      await page.locator('.campus-switch summary').click();
+      assert.equal(await page.locator('.campus-switch-menu a').count(),3);
+      await page.keyboard.press('Escape');
+      assert.equal(await page.locator('.campus-switch').evaluate(element=>element.open),false);
+      await page.getByRole('button',{name:'Salin ringkasan',exact:false}).click();
+      await page.waitForFunction(()=>document.querySelector('.copy-status')?.textContent.length>0);
+      await checkLayout(`${slug}: campus selector and forecast copy feedback`);
 
       if (viewport.width < 768) {
         await page.locator('.nav-toggle').click();
@@ -191,7 +214,7 @@ async function main() {
   assert.deepEqual(report.pageErrors, [], 'uncaught application errors');
   assert.deepEqual(report.localFailures, [], 'failed local assets');
   report.status = 'passed';
-  console.log(`PASS: ${report.checks.length} Chromium browser checks at desktop and mobile sizes`);
+  console.log(`PASS: ${report.checks.length} Chromium browser checks at four desktop, tablet and phone sizes`);
 }
 
 main().catch(error => {report.status = 'failed'; report.failure = error.stack; process.exitCode = 1; console.error(error);})

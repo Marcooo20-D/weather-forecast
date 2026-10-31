@@ -56,6 +56,11 @@ class Links(HTMLParser):
         for name, value in attrs:
             if name in {"href", "src"} and value:
                 self.urls.append(value)
+            elif name == "srcset" and value:
+                # Generated picture sources use plain local paths plus widths.
+                # Include every variant in both staging and link validation.
+                self.urls.extend(candidate.strip().split()[0]
+                                 for candidate in value.split(",") if candidate.strip())
 
 
 def reject_json_constant(value: str):
