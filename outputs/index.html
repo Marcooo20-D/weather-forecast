@@ -1,126 +1,50 @@
 <!doctype html><html lang="id"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>LANGIT Portal</title>
-<meta name="theme-color" content="#030712">
-<meta name="description" content="LANGIT Portal — Prakiraan cuaca premium untuk Indonesia">
-<link rel="stylesheet" href="assets/langit-46868cf99d14.css">
-</head><body class="theme-noon">
-<a class="skip-link" href="#main-content">Langsung ke prakiraan</a>
-<div class="atmo">
-  <canvas id="atmo-canvas"></canvas>
-</div>
-<header class="nav-bar">
-  <a class="nav-brand" href="index.html">
-    <span class="nav-logo"></span>
-    <span><span class="nav-title">LANGIT</span><span class="nav-sub">Portal · LANGIT v65.3.1</span></span>
-  </a>
-  <button class="nav-toggle" aria-label="Menu" aria-controls="site-navigation" aria-expanded="false"><span></span><span></span><span></span></button>
-  <nav class="nav-links" id="site-navigation"><a class="nav-link active" aria-current="page" href="index.html">Lokasi</a><a class="nav-link " href="langit_portal_map.html">Peta</a></nav>
-</header>
-<main class="page" id="main-content" tabindex="-1">
-<div class="container"><p class="freshness-note" role="status" data-issued-at="2026-10-31T17:18:40.110692+07:00">Waktu terbit prakiraan: Diperbarui 31 Oktober, 17:18 WIB. Waktu berlaku tercantum pada setiap hari dan jam.</p></div>
-<section class="hero">
-    <div class="hero-glow hero-glow-1"></div>
-    <div class="hero-glow hero-glow-2"></div>
-    <div class="hero-glow hero-glow-3"></div>
-    <div class="container">
-      <div class="hero-label reveal">
-        <span class="hero-dot"></span>
-        <span>Sabtu, 31 Oktober 2026</span>
-      </div>
-      <h1 class="hero-title reveal reveal-delay-1">LANGIT</h1>
-      <p class="hero-subtitle reveal reveal-delay-2">Prakiraan cuaca untuk wilayah Institut Teknologi Bandung.</p>
-      
-    </div>
-    <div class="hero-scroll">
-      <span>Scroll</span>
-      <div class="hero-scroll-line"></div>
-    </div>
-  </section><div class="container"><div class="notice reveal">Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat. Indeks aktivitas adalah panduan heuristik tentang potensi gangguan, bukan peluang cuaca berbahaya. Peluang hujan tidak menyatakan intensitasnya.</div></div><section class="section"><div class="container">
-    <div class="section-header reveal">
-      <div class="section-overline">Lokasi</div>
-      <h2 class="section-title">Pilih lokasi</h2>
-      <p class="section-desc">Diurutkan dari yang paling perlu dipantau.</p>
-    </div>
-    <div class="location-grid"><a class="location-card reveal reveal-delay-1" href="dago/langit_app.html" style="--accent-color:#ffd052;--accent-glow:rgba(245,158,11,0.08)">
-        <span class="status-badge status-watch">Perlu dipantau</span>
-        <h3 class="location-name">Dago, Bandung</h3>
-        <p class="location-desc">Sabtu, 31 Oktober 2026. Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul 17:00 WIB.</p>
-        <div class="location-stats">
-          <div class="location-stat"><div class="location-stat-value">41%</div><div class="location-stat-label">Hujan</div></div>
-          <div class="location-stat"><div class="location-stat-value">17:00</div><div class="location-stat-label">Puncak</div></div>
-          <div class="location-stat"><div class="location-stat-value">41</div><div class="location-stat-label">Indeks aktivitas</div></div>
-        </div>
-        <div class="location-actions">
-          <span class="btn btn-primary">Buka</span>
-          <span class="btn" onclick="event.preventDefault();window.location.href='dago/langit_3day.html'">3 hari</span>
-          <span class="btn" onclick="event.preventDefault();window.location.href='dago/langit_activity.html'">Aktivitas</span>
-        </div>
-      </a><a class="location-card reveal reveal-delay-2" href="arjawinangun/langit_app.html" style="--accent-color:#ffd052;--accent-glow:rgba(245,158,11,0.08)">
-        <span class="status-badge status-watch">Perlu dipantau</span>
-        <h3 class="location-name">Arjawinangun, Cirebon</h3>
-        <p class="location-desc">Sabtu, 31 Oktober 2026. Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul 17:00 WIB.</p>
-        <div class="location-stats">
-          <div class="location-stat"><div class="location-stat-value">17%</div><div class="location-stat-label">Hujan</div></div>
-          <div class="location-stat"><div class="location-stat-value">17:00</div><div class="location-stat-label">Puncak</div></div>
-          <div class="location-stat"><div class="location-stat-value">38</div><div class="location-stat-label">Indeks aktivitas</div></div>
-        </div>
-        <div class="location-actions">
-          <span class="btn btn-primary">Buka</span>
-          <span class="btn" onclick="event.preventDefault();window.location.href='arjawinangun/langit_3day.html'">3 hari</span>
-          <span class="btn" onclick="event.preventDefault();window.location.href='arjawinangun/langit_activity.html'">Aktivitas</span>
-        </div>
-      </a><a class="location-card reveal reveal-delay-3" href="jatinangor/langit_app.html" style="--accent-color:#ffd052;--accent-glow:rgba(245,158,11,0.08)">
-        <span class="status-badge status-watch">Perlu dipantau</span>
-        <h3 class="location-name">Jatinangor, Sumedang</h3>
-        <p class="location-desc">Sabtu, 31 Oktober 2026. Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul 17:00 WIB.</p>
-        <div class="location-stats">
-          <div class="location-stat"><div class="location-stat-value">33%</div><div class="location-stat-label">Hujan</div></div>
-          <div class="location-stat"><div class="location-stat-value">17:00</div><div class="location-stat-label">Puncak</div></div>
-          <div class="location-stat"><div class="location-stat-value">36</div><div class="location-stat-label">Indeks aktivitas</div></div>
-        </div>
-        <div class="location-actions">
-          <span class="btn btn-primary">Buka</span>
-          <span class="btn" onclick="event.preventDefault();window.location.href='jatinangor/langit_3day.html'">3 hari</span>
-          <span class="btn" onclick="event.preventDefault();window.location.href='jatinangor/langit_activity.html'">Aktivitas</span>
-        </div>
-      </a></div>
-  </div></section><section class="section-compact"><div class="container">
-    <div class="section-header reveal">
-      <div class="section-overline">Peta</div>
-      <h2 class="section-title">Peta lokasi</h2>
-      <p class="section-desc">Warna mengikuti risiko hari ini.</p>
-    </div>
-    <div class="map-wrapper reveal">
-      <iframe class="map-frame" title="Peta titik prakiraan cuaca LANGIT" src="langit_portal_map.html" loading="lazy"></iframe>
-      <div class="map-actions">
-        <a class="btn btn-primary" href="langit_portal_map.html">Buka peta penuh</a>
-        <a class="btn" href="langit_all_locations.geojson">GeoJSON</a>
-      </div>
-    </div>
-  </div></section><section class="section-compact"><div class="container">
-    <div class="glass glass-static reveal">
-      <div class="section-header">
-        <div class="section-overline">Data</div>
-        <h2 style="font-size:24px;font-weight:800">Data publik</h2>
-        <p style="font-size:14px;color:var(--mist);margin-top:4px">Untuk arsip dan integrasi.</p>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
-        <a class="btn" href="forecast_all_locations.csv">Forecast CSV</a>
-        <a class="btn" href="source_status_all_locations.csv">Sumber CSV</a>
-        <a class="btn" href="langit_portal_manifest.json">Manifest</a>
-      </div>
-    </div>
-  </div></section>
-<footer class="footer">
-  <div class="container">
-    <div class="footer-brand">LANGIT</div>
-    <div class="footer-version">LANGIT v65.3.1 · Diperbarui 31 Oktober, 17:21 WIB</div>
-    
-  </div>
-</footer>
-</main>
-<script>window.LANGIT_CONFIG = {"location_name": "Portal", "location_slug": "portal", "latitude": null, "longitude": null, "risk_class": "watch", "condition": "Cerah Berawan", "is_portal": true, "forecast_issued_at": "2026-10-31T17:18:40.110692+07:00", "stale_after_hours": 18};</script>
-<script defer src="assets/langit-4fc5e176dcd1.data.js"></script>
-<script defer src="assets/langit-3f47e45d509b.js"></script>
-</body></html>
+      <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>LANGIT — Cuaca Kampus ITB</title><meta name="theme-color" content="#ffffff">
+      <meta name="description" content="LANGIT — Cuaca Kampus ITB. Prakiraan, peluang hujan, angin, dan rencana aktivitas untuk komunitas kampus ITB.">
+      <link rel="stylesheet" href="assets/langit-3f5886ab34b0.css">
+    </head><body data-campus="dago">
+      <a class="skip-link" href="#main-content">Langsung ke prakiraan</a>
+      <header class="nav-bar">
+      <a class="nav-brand" href="index.html" aria-label="LANGIT, portal cuaca kampus ITB">
+        <span class="nav-logo"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 27 10 18l5 4 5-15 5 15 5-4 7 9M6 27v7h28v-7M11 27h18M17 27v7m6-7v7"/></svg></span>
+        <span class="nav-wordmark"><span class="nav-title">LANGIT</span><span class="nav-sub">Cuaca kampus ITB</span></span>
+      </a>
+      <nav class="nav-links" id="site-navigation" aria-label="Navigasi utama"><a class="nav-link active" aria-current="page" href="index.html">Lokasi</a><a class="nav-link " href="langit_portal_map.html">Peta</a></nav>
+      <details class="campus-switch"><summary>Kampus <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="campus-switch-menu"><a href="dago/langit_app.html"><span>Ganesha</span><small>Bandung</small></a><a href="jatinangor/langit_app.html"><span>Jatinangor</span><small>Sumedang</small></a><a href="arjawinangun/langit_app.html"><span>Cirebon</span><small>Arjawinangun</small></a></div></details>
+      <button class="nav-toggle" type="button" aria-label="Menu" aria-controls="site-navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+    </header>
+      <main class="page" id="main-content" tabindex="-1">
+        <div class="freshness-bar"><div class="container"><p class="freshness-note" role="status" data-issued-at="2026-10-31T19:31:29.309429+07:00">Waktu terbit prakiraan: Diperbarui 31 Oktober, 19:31 WIB.</p><span class="time-zone">Waktu Indonesia Barat · UTC+7</span></div></div>
+        <section class="hero hero-portal">
+      <picture><source media="(min-width: 768px)" srcset="assets/campus-dago-large-414d7f615a10.webp"><img class="hero-image" src="assets/campus-dago-small-8045ec34d7e2.webp" width="720" height="1279" alt="Aula Barat · Kampus Ganesha" loading="eager" fetchpriority="high" decoding="async" style="object-position:50% 45%"></picture>
+      <div class="container hero-layout"><div><div class="hero-label">ITB · Ganesha / Jatinangor / Cirebon</div><h1 class="hero-title">Langit kampus.
+Rencana hari ini.</h1><p class="hero-subtitle">Prakiraan Dago, Jatinangor, dan Arjawinangun untuk kuliah, perjalanan, dan aktivitas di luar ruang.</p><p class="hero-meta">Sabtu, 31 Oktober 2026 · Tiga lokasi prakiraan</p><div class="hero-actions"><a class="btn btn-primary" href="#kampus">Pilih kampus <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn btn-secondary" href="langit_portal_map.html">Jelajah peta</a></div></div><aside class="hero-campus-glance" aria-label="Ringkasan cuaca tiga lokasi"><div class="glance-label">Sekilas hari ini</div><p class="glance-note">Suhu rata-rata · peluang hujan tertinggi</p><a class="glance-row" href="dago/langit_app.html"><span><span class="glance-name">Ganesha</span><span class="glance-rain">Hujan 38% · Dago, Bandung</span></span><span class="glance-temp">22.8°C</span></a><a class="glance-row" href="jatinangor/langit_app.html"><span><span class="glance-name">Jatinangor</span><span class="glance-rain">Hujan 31% · Jatinangor, Sumedang</span></span><span class="glance-temp">21.7°C</span></a><a class="glance-row" href="arjawinangun/langit_app.html"><span><span class="glance-name">Cirebon</span><span class="glance-rain">Hujan 6% · Arjawinangun, Cirebon</span></span><span class="glance-temp">28.2°C</span></a></aside></div>
+      <p class="hero-photo-caption"><a href="https://commons.wikimedia.org/wiki/File:A2613-ITB-Aula_barat_5.jpg">Aula Barat · Kampus Ganesha</a> · Foto dokumentasi, bukan kondisi cuaca langsung</p>
+    </section><section class="section" id="kampus"><div class="container"><div class="section-heading-row"><div class="section-header"><div class="section-overline">Pilih kampus</div><h2 class="section-title">Tiga kampus. Satu pandangan.</h2><p class="section-desc">Lihat prakiraan di lokasi pilihanmu, lalu susun rencana hari ini.</p></div><span class="section-count">Sabtu, 31 Oktober 2026</span></div><div class="location-grid"><article class="campus-card"><a class="location-card" href="dago/langit_app.html">
+          <div class="campus-card-image"><picture><source media="(min-width: 768px)" srcset="assets/campus-dago-large-414d7f615a10.webp"><img src="assets/campus-dago-small-8045ec34d7e2.webp" width="720" height="1279" alt="Aula Barat · Kampus Ganesha" loading="lazy" decoding="async" style="object-position:50% 45%"></picture><span class="campus-card-number">01 / Bandung</span></div>
+          <div class="campus-card-body"><div class="campus-card-heading"><h3 class="location-name">Ganesha</h3><span class="campus-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+          <p class="campus-point">Titik prakiraan: Dago, Bandung</p><span class="status-badge status-watch">Perlu dipantau</span>
+          <p class="location-desc">Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul 19:00 WIB.</p>
+          <div class="location-stats"><div><div class="location-stat-value">22.8°C</div><div class="location-stat-label">Suhu rata-rata</div></div><div><div class="location-stat-value">38%</div><div class="location-stat-label">Peluang hujan tertinggi</div></div><div><div class="location-stat-value">19:00</div><div class="location-stat-label">Puncak · WIB</div></div></div></div>
+        </a><div class="campus-card-links"><a href="dago/langit_3day.html">3 hari ke depan <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a href="dago/langit_activity.html">Aktivitas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div></article><article class="campus-card"><a class="location-card" href="jatinangor/langit_app.html">
+          <div class="campus-card-image"><picture><source media="(min-width: 768px)" srcset="assets/campus-jatinangor-large-e16d4da6f73e.webp"><img src="assets/campus-jatinangor-small-84303b5eedc2.webp" width="720" height="540" alt="Gedung Utama · Kampus Jatinangor" loading="lazy" decoding="async" style="object-position:50% 52%"></picture><span class="campus-card-number">02 / Sumedang</span></div>
+          <div class="campus-card-body"><div class="campus-card-heading"><h3 class="location-name">Jatinangor</h3><span class="campus-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+          <p class="campus-point">Titik prakiraan: Jatinangor, Sumedang</p><span class="status-badge status-watch">Perlu dipantau</span>
+          <p class="location-desc">Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul 19:00 WIB.</p>
+          <div class="location-stats"><div><div class="location-stat-value">21.7°C</div><div class="location-stat-label">Suhu rata-rata</div></div><div><div class="location-stat-value">31%</div><div class="location-stat-label">Peluang hujan tertinggi</div></div><div><div class="location-stat-value">19:00</div><div class="location-stat-label">Puncak · WIB</div></div></div></div>
+        </a><div class="campus-card-links"><a href="jatinangor/langit_3day.html">3 hari ke depan <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a href="jatinangor/langit_activity.html">Aktivitas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div></article><article class="campus-card"><a class="location-card" href="arjawinangun/langit_app.html">
+          <div class="campus-card-image"><picture><source media="(min-width: 768px)" srcset="assets/campus-arjawinangun-large-f8f7c987641c.webp"><img src="assets/campus-arjawinangun-small-5245e317af56.webp" width="720" height="398" alt="Kampus Cirebon · Arjawinangun" loading="lazy" decoding="async" style="object-position:50% 52%"></picture><span class="campus-card-number">03 / Arjawinangun</span></div>
+          <div class="campus-card-body"><div class="campus-card-heading"><h3 class="location-name">Cirebon</h3><span class="campus-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+          <p class="campus-point">Titik prakiraan: Arjawinangun, Cirebon</p><span class="status-badge status-safe">Potensi gangguan rendah</span>
+          <p class="location-desc">Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: 20:00–23:00.</p>
+          <div class="location-stats"><div><div class="location-stat-value">28.2°C</div><div class="location-stat-label">Suhu rata-rata</div></div><div><div class="location-stat-value">6%</div><div class="location-stat-label">Peluang hujan tertinggi</div></div><div><div class="location-stat-value">23:00</div><div class="location-stat-label">Puncak · WIB</div></div></div></div>
+        </a><div class="campus-card-links"><a href="arjawinangun/langit_3day.html">3 hari ke depan <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a href="arjawinangun/langit_activity.html">Aktivitas <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div></article></div></div></section><div class="container"><div class="notice reveal">Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat. Indeks aktivitas adalah panduan heuristik tentang potensi gangguan, bukan peluang cuaca berbahaya. Peluang hujan tidak menyatakan intensitasnya.</div></div><section class="section"><div class="container"><div class="section-heading-row"><div class="section-header"><div class="section-overline">Jelajah lokasi</div><h2 class="section-title">Baca cuaca di peta.</h2><p class="section-desc">Titik prakiraan tiga lokasi. Pilih jam, lokasi, dan parameter yang ingin dilihat.</p></div></div><div class="map-wrapper"><iframe class="map-frame" title="Peta titik prakiraan cuaca LANGIT" src="langit_portal_map.html" loading="lazy"></iframe><div class="map-actions"><a class="btn btn-primary" href="langit_portal_map.html">Buka peta penuh <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a><a class="btn" href="langit_all_locations.geojson">GeoJSON</a></div></div></div></section><section class="section-compact"><div class="container"><div class="glass"><div class="section-header"><div class="section-overline">Transparansi</div><h2 class="section-title">Data yang bisa ditelusuri.</h2><p class="section-desc">Unduh prakiraan, periksa sumbernya, dan gunakan data sesuai waktu berlakunya.</p></div><div class="data-downloads"><a class="btn" href="forecast_all_locations.csv">Forecast CSV</a><a class="btn" href="source_status_all_locations.csv">Sumber CSV</a><a class="btn" href="langit_portal_manifest.json">Manifest</a></div></div></div></section>
+      </main>
+      <footer class="footer"><div class="container">
+        <div class="footer-main"><div><div class="footer-brand">LANGIT</div><p class="footer-tagline">Untuk hari-hari di kampus.</p><p class="footer-version">LANGIT v66.0 · Diperbarui 31 Oktober, 19:33 WIB<br>Proyek independen mahasiswa Meteorologi ITB. Bukan layanan resmi ITB atau BMKG.</p></div><div class="footer-links"><a class="footer-link" href="index.html#kampus">Pilih kampus</a><a class="footer-link" href="langit_portal_map.html">Peta lokasi</a></div></div>
+        <details class="photo-credits"><summary>Kredit foto kampus</summary><ul><li><a href="https://commons.wikimedia.org/wiki/File:A2613-ITB-Aula_barat_5.jpg">Aula Barat · Kampus Ganesha</a> — A2613 · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>. Ukuran dan format dioptimalkan; tampilan dipotong responsif.</li><li><a href="https://itb.ac.id/news/itb-jatinangor-campus-arranged-community-service-at-jungkang-and-cilembu-villages/58788">Gedung Utama · Kampus Jatinangor</a> — Dokumentasi ITB; hak foto tetap pada pemiliknya. Lisensi terbuka tidak dinyatakan pada sumber.</li><li><a href="https://itb.ac.id/berita/itb-resmikan-masjid-ibnu-firnas-di-kampus-cirebon/63160">Kampus Cirebon · Arjawinangun</a> — Dokumentasi ITB; hak foto tetap pada pemiliknya. Lisensi terbuka tidak dinyatakan pada sumber.</li></ul><a href="assets/campus-credits.json">Rincian sumber foto</a></details>
+      </div></footer>
+      <script>window.LANGIT_CONFIG={"location_name": "Portal", "location_slug": "portal", "latitude": null, "longitude": null, "is_portal": true, "forecast_issued_at": "2026-10-31T19:31:29.309429+07:00", "stale_after_hours": 18};</script>
+      <script defer src="assets/langit-4fc5e176dcd1.data.js"></script><script defer src="assets/langit-fa0eb4d5a3ba.js"></script>
+    </body></html>
