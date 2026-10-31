@@ -1,5 +1,5 @@
 /* Real Chromium release checks. Run against a generated, bounded public site.
- * npm install playwright@1.62.1 && npx playwright install --with-deps chromium
+ * npm install playwright@1.62.1 leaflet@1.9.4 && npx playwright install --with-deps chromium
  * node tests/browser_smoke.cjs _site browser-evidence
  * Public input snapshots test the UI; these tests do not establish forecast skill.
  */
@@ -13,8 +13,9 @@ const {chromium} = require('playwright');
 const site = path.resolve(process.argv[2] || '_site');
 const artifacts = path.resolve(process.argv[3] || 'browser-evidence');
 const report = {browser: 'chromium', source: 'committed public input snapshots',
+  externalAssets: 'Real Leaflet 1.9.4 from pinned npm package; fonts and basemap network intentionally blocked',
   viewports: [], checks: [], pageErrors: [], localFailures: [], externalFailures: []};
-let browser;
+let browser, currentPage, currentContext;
 const mime = {'.html': 'text/html; charset=utf-8', '.js': 'text/javascript',
   '.css': 'text/css', '.json': 'application/json', '.geojson': 'application/geo+json',
   '.csv': 'text/csv', '.txt': 'text/plain; charset=utf-8'};
@@ -42,8 +43,19 @@ async function main() {
   for (const viewport of [{width: 1440, height: 900}, {width: 390, height: 844}]) {
     report.viewports.push(viewport);
     const context = await browser.newContext({viewport, timezoneId: 'Asia/Jakarta', reducedMotion: 'reduce'});
+    currentContext = context;
+    // Keep application interactions independent of font/tile service availability.
+    await context.route('https://unpkg.com/leaflet@1.9.4/dist/*', async route => {
+      const name = new URL(route.request().url()).pathname.split('/').pop();
+      if (!['leaflet.js', 'leaflet.css'].includes(name)) { await route.abort(); return; }
+      await route.fulfill({body: await fs.readFile(require.resolve('leaflet/dist/' + name)),
+        contentType: name.endsWith('.js') ? 'text/javascript' : 'text/css'});
+    });
+    await context.route(/https:\/\/(?:fonts\.(?:googleapis|gstatic)\.com|[^/]*basemaps\.cartocdn\.com)\//,
+      route => route.abort());
     await context.tracing.start({screenshots: true, snapshots: true});
     const page = await context.newPage();
+    currentPage = page;
     page.setDefaultTimeout(12000);
     page.on('pageerror', error => report.pageErrors.push({url: page.url(), message: error.message}));
     page.on('response', response => {
@@ -52,11 +64,13 @@ async function main() {
     });
     page.on('requestfailed', request => {
       const entry = {url: request.url(), error: request.failure()?.errorText};
-      if (entry.url.startsWith(base)) report.localFailures.push(entry);
-      else report.externalFailures.push(entry);
+      if (entry.url.startsWith(base)) {
+        if (entry.error !== 'net::ERR_ABORTED') report.localFailures.push(entry);
+      } else report.externalFailures.push(entry);
     });
     async function go(route) {
       const response = await page.goto(base + '/' + route, {waitUntil: 'domcontentloaded', timeout: 30000});
+      console.log(`${viewport.width}: ${route}`);
       assert.equal(response.status(), 200, route);
       await page.locator('h1').first().waitFor({state: 'visible'});
     }
@@ -132,6 +146,7 @@ async function main() {
     for (const route of ['langit_portal_map.html', ...manifest.locations.map(x => `${x.slug}/langit_map_room.html`)]) {
       await go(route);
       assert.ok(await page.locator('.time-pill').count() > 0, 'map timeline exists');
+      assert.ok(await page.locator('.leaflet-marker-icon').count() > 0, 'real Leaflet forecast markers render');
       const options = await page.locator('#map-location option').evaluateAll(elements => elements.map(x => x.value));
       assert.equal(options.length, route === 'langit_portal_map.html' ? 3 : 1);
       await page.locator('.time-pill').first().click();
@@ -150,6 +165,11 @@ async function main() {
       assert.equal(await page.locator('#play-btn').getAttribute('aria-pressed'), 'true');
       await page.locator('#play-btn').click();
       assert.equal(await page.locator('#play-btn').getAttribute('aria-pressed'), 'false');
+      const bounds = await page.locator('.hud, .timeline-container').evaluateAll(elements => elements.map(element => {
+        const r = element.getBoundingClientRect();
+        return {left: r.left, right: r.right, width: innerWidth};
+      }));
+      assert.ok(bounds.every(r => r.left >= 0 && r.right <= r.width + 1), 'map controls fit the viewport');
       await screenshot(route.replaceAll('/', '-').replace('.html', ''));
       report.checks.push(`${viewport.width}: ${route}: timeline, locations, six layers, play/pause`);
     }
@@ -165,6 +185,8 @@ async function main() {
     report.checks.push(`${viewport.width}: Leaflet failure retains forecast data`);
     await context.tracing.stop({path: path.join(artifacts, `${viewport.width}-trace.zip`)});
     await context.close();
+    currentContext = null;
+    currentPage = null;
   }
   assert.deepEqual(report.pageErrors, [], 'uncaught application errors');
   assert.deepEqual(report.localFailures, [], 'failed local assets');
@@ -175,6 +197,10 @@ async function main() {
 main().catch(error => {report.status = 'failed'; report.failure = error.stack; process.exitCode = 1; console.error(error);})
   .finally(async () => {
     await fs.mkdir(artifacts, {recursive: true});
+    if (report.status === 'failed' && currentPage) {
+      await currentPage.screenshot({path: path.join(artifacts, 'failure.png')}).catch(() => {});
+      await currentContext.tracing.stop({path: path.join(artifacts, 'failure-trace.zip')}).catch(() => {});
+    }
     await fs.writeFile(path.join(artifacts, 'report.json'), JSON.stringify(report, null, 2));
     if (browser) await browser.close();
     server.close();

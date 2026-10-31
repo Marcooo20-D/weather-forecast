@@ -47,7 +47,7 @@ jobs:
           python -m site_tools.public_site --source outputs --destination _site-browser
       - name: Install pinned browser test runtime
         run: |
-          npm install --prefix "$RUNNER_TEMP/langit-browser" --no-audit --no-fund --no-package-lock playwright@1.62.1
+          npm install --prefix "$RUNNER_TEMP/langit-browser" --no-audit --no-fund --no-package-lock playwright@1.62.1 leaflet@1.9.4
           node "$RUNNER_TEMP/langit-browser/node_modules/playwright/cli.js" install --with-deps --only-shell chromium
       - name: Exercise desktop and mobile browser interactions
         run: NODE_PATH="$RUNNER_TEMP/langit-browser/node_modules" node tests/browser_smoke.cjs _site-browser browser-evidence

@@ -3378,7 +3378,8 @@ def v65_map_page(title: str, geojson: Dict[str, Any], back_href: str) -> str:
         for feature in geojson.get("features", [])]}
     data = inline_json(map_data)
     asset_prefix = "assets/" if back_href == "index.html" else "../assets/"
-    css = r'''html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
+    css = r'''*,*::before,*::after{box-sizing:border-box}
+html,body,#map{height:100%;margin:0;background:#030712;color:#f8fbff;font-family:'Inter',system-ui,-apple-system,sans-serif;overflow:hidden}
 a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid #67e8f9;outline-offset:3px}
 #map-location{width:100%;padding:8px;background:#0b1932;color:#fff;border:1px solid #94a3b8;border-radius:8px}
 .map-fallback{position:absolute;left:12px;bottom:96px;z-index:1100;max-width:calc(100% - 48px);padding:12px;background:#15294a;color:#fff;border-radius:12px;font-size:12px}
