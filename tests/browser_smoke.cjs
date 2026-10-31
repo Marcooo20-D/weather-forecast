@@ -100,6 +100,9 @@ async function main() {
     await checkHero('dago');
     await screenshot('portal');
     await checkLayout('portal');
+    assert.equal(await page.locator('.hero-campus-glance').isVisible(),true,'weather summary remains visible on phones');
+    await page.locator('#kampus').scrollIntoViewIfNeeded();
+    await screenshot('campuses');
 
     for (const {slug} of manifest.locations) {
       await go('index.html');
@@ -120,6 +123,10 @@ async function main() {
             box: svg.getAttribute('viewBox'), bad: /NaN|Infinity/.test(svg.innerHTML)}));
           assert.match(geometry.box, /^0 0 [1-9][\d.]* [1-9][\d.]*$/);
           assert.equal(geometry.bad, false);
+        }
+        if(day===0){
+          await panel.locator('.chart-wrapper').scrollIntoViewIfNeeded();
+          await screenshot(`${slug}-chart`);
         }
       }
       const active = page.locator('.day-panel.active');

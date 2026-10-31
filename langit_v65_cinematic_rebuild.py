@@ -1214,7 +1214,11 @@ function getWindColor(w) {
 
 function updateHUDValues(p) {
   document.getElementById('hud-location-name').textContent = p.location_name || 'Lokasi';
-  document.getElementById('hud-time-label').textContent = `${p.date_iso || ''} · ${p.hour || ''} WIB`;
+  const validDate = Date.parse((p.date_iso || '')+'T00:00:00+07:00');
+  const validLabel = Number.isFinite(validDate)
+    ? new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',weekday:'short',day:'numeric',month:'short',year:'numeric'}).format(new Date(validDate))
+    : (p.date_iso || '');
+  document.getElementById('hud-time-label').textContent = `${validLabel} · ${p.hour || ''} WIB`;
   const issueTime = Date.parse(p.issued_at);
   document.getElementById('hud-issue').textContent = Number.isFinite(issueTime)
     ? 'Terbit: '+new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(issueTime))+' WIB'

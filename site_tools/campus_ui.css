@@ -273,3 +273,14 @@ details[open]>.hourly-toggle .hourly-chevron{transform:rotate(180deg)}
 .btn{font-size:12px;min-height:44px}
 @media(max-width:767px){.hero-subtitle{font-size:14px}.hero-label{font-size:10px}.hero-meta{font-size:11px}.freshness-note{font-size:10px}.chart-selector{grid-template-columns:1fr 1fr}.hero-metric-label{font-size:10px}.notice{font-size:11px}.campus-switch summary,.nav-toggle{min-height:42px}.location-desc,.activity-advice,.decision-desc{font-size:12px}.activity-name{font-size:11px}.period-stat-label,.location-stat-label{font-size:10px}.hourly-toggle{font-size:12px}.chart-wrapper>.section-desc{font-size:10px}.chart-chip{font-size:12px}.hero-actions .btn{font-size:12px}.footer-tagline{font-size:11px}.footer-link{font-size:12px}}
 .glance-note{font-size:10px;line-height:1.5;color:var(--mist);margin:5px 0 2px}
+@media(max-width:767px){
+  .hero-portal .hero-campus-glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px;margin-top:26px;padding:16px;border-radius:13px;background:#fffffff2}
+  .hero-portal .glance-label,.hero-portal .glance-note{grid-column:1/-1}
+  .hero-portal .glance-label{font-size:10px;margin-bottom:1px}
+  .hero-portal .glance-note{font-size:10px;margin-bottom:10px}
+  .hero-portal .glance-row{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:7px;border:0;border-top:1px solid var(--line);padding:12px 0 0;min-width:0}
+  .hero-portal .glance-name{font-size:12px}
+  .hero-portal .glance-rain{font-size:10px;line-height:1.5;min-height:45px}
+  .hero-portal .glance-temp{font-size:21px}
+  .hero-portal .hero-actions{margin-top:20px}
+}

@@ -4,9 +4,15 @@ Prakiraan multi-sumber untuk Dago, Jatinangor, dan Arjawinangun. Mesin prakiraan
 dan evaluasi ada di `weather_ensemble_multi_location.py`; tampilan publik
 dibangun oleh `langit_v65_cinematic_rebuild.py`.
 
-**Status 31 Oktober 2026:** v65.3.1 sudah diterbitkan.
-[Bukti verifikasi rilis](docs/RELEASE_VERIFICATION_2026-10-31.md) mencatat
-CI, publikasi, pemeriksaan resource HTTP, dan peta langsung.
+Tampilan LANGIT Campus v66 memakai fotografi asli Ganesha, Jatinangor dan
+Cirebon, antarmuka putih dengan aksen kobalt, serta komponen responsif untuk
+ponsel dan desktop. [Catatan desain](docs/ITB_CAMPUS_DESIGN.md) menjelaskan
+referensi, sumber foto dan preservasi fitur. Ini proyek independen mahasiswa,
+bukan layanan resmi ITB atau BMKG.
+
+[Verifikasi rilis sebelumnya](docs/RELEASE_VERIFICATION_2026-10-31.md)
+mencatat baseline v65.3.1. Status publikasi terkini harus diperiksa dari
+manifest website dan workflow Pages.
 
 ## Pemeriksaan lokal
 
@@ -42,7 +48,8 @@ tidak masuk ke paket publik.
 - `Offline checks`: memeriksa perubahan PR dengan izin baca dan checkout kode
   saja, tanpa mengunduh arsip `outputs/` yang besar.
 - `Browser release checks`: membangun kandidat dari snapshot API publik di
-  repositori dan menguji interaksi Chromium pada 1440×900 dan 390×844.
+  repositori dan menguji interaksi Chromium pada 1440×900, 768×1024,
+  390×844 dan 320×780, termasuk dekode foto kampus responsif.
   Screenshot, trace, dan laporan tersedia sebagai artifact run. Pustaka
   Leaflet asli dipasang dari npm; font eksternal dan tile sengaja diblokir
   agar pemeriksaan interaksi tidak bergantung pada layanan tersebut.
