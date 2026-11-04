@@ -145,7 +145,10 @@ async function main() {
       });
       console.log(`${viewport.width}: ${route}`);
       assert.equal(response.status(), 200, route);
-      await page.locator("h1").first().waitFor({ state: "visible" });
+      await page
+        .locator(route.includes("map") ? "#map-panel-toggle" : "h1")
+        .first()
+        .waitFor({ state: "visible" });
     }
     async function screenshot(name) {
       await page.screenshot({
