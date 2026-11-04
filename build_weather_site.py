@@ -793,6 +793,7 @@ def write_public_tables(directory: Path, api: Dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 CSS_V65 = (Path(__file__).parent / "site_tools" / "campus_ui.css").read_text(encoding="utf-8") + (Path(__file__).parent / "site_tools" / "editorial.css").read_text(encoding="utf-8")
+CSS_V65 += (Path(__file__).parent / "site_tools" / "mobile.css").read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------

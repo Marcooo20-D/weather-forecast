@@ -249,7 +249,7 @@
     }
     const chips = container.querySelectorAll(".chart-chip"),
       tooltip = container.querySelector(".chart-tooltip");
-    let variable = "rain";
+    let variable = "rain", touchReadout = false;
     const colors = {
       rain: "#0868ab",
       temp: "#b36726",
@@ -277,11 +277,24 @@
     }
     function draw() {
       if (!hours.length || svg.clientWidth <= 0) return;
+      touchReadout = false;
+      hide();
       const w = Math.max(240, svg.clientWidth),
         h = Math.max(180, svg.clientHeight);
       svg.setAttribute("viewBox", "0 0 " + w + " " + h);
       const model = window.LangitPublicData.chart(hours, variable, w, h),
         color = colors[variable];
+      svg.onpointerdown = (event) => {
+        touchReadout = event.pointerType === "touch" || event.pointerType === "pen";
+      };
+      svg.onpointerup = (event) => {
+        if (!touchReadout || !model.points.length) return;
+        const rect = svg.getBoundingClientRect();
+        const x = (event.clientX - rect.left) * w / rect.width;
+        const nearest = model.points.reduce((a, b) => Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a);
+        if (nearest.val == null) hide();
+        else show(nearest, model.unit);
+      };
       svg.replaceChildren();
       function element(tag, attrs, value) {
         const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
@@ -375,8 +388,13 @@
         });
         dot.addEventListener("mouseenter", () => show(point, model.unit));
         dot.addEventListener("focus", () => show(point, model.unit));
-        dot.addEventListener("mouseleave", hide);
-        dot.addEventListener("blur", hide);
+        dot.addEventListener("pointerdown", () => show(point, model.unit));
+        dot.addEventListener("pointerleave", (event) => {
+          if (event.pointerType === "mouse") hide();
+        });
+        dot.addEventListener("blur", () => {
+          if (!touchReadout) hide();
+        });
         if (label)
           element(
             "text",
@@ -428,6 +446,49 @@
     );
   });
 
+  function openHourlySheet(sheet) {
+    sheet.showModal();
+    sheet.dataset.pageOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  }
+  document.querySelectorAll(".mobile-bottom-sheet").forEach((sheet) => {
+    sheet.addEventListener("close", () => {
+      document.body.style.overflow = sheet.dataset.pageOverflow || "";
+    });
+  });
+  {
+    document.querySelectorAll(".map-wrapper").forEach((wrapper, i) => {
+      const frame = wrapper.querySelector(".map-frame");
+      if (!frame) return;
+      frame.id = frame.id || "campus-map-" + i;
+      const cover = document.createElement("div");
+      cover.className = "mobile-map-cover";
+      const activate = document.createElement("button");
+      activate.className = "btn btn-primary";
+      activate.type = "button";
+      activate.textContent = "Jelajahi peta";
+      activate.setAttribute("aria-controls", frame.id);
+      const back = document.createElement("button");
+      back.type = "button";
+      back.className = "btn mobile-map-return";
+      back.textContent = "Kembali ke halaman";
+      back.hidden = true;
+      activate.addEventListener("click", () => {
+        wrapper.classList.add("is-interactive");
+        cover.hidden = true;
+        back.hidden = false;
+        back.focus();
+      });
+      back.addEventListener("click", () => {
+        wrapper.classList.remove("is-interactive");
+        back.hidden = true;
+        cover.hidden = false;
+        activate.focus();
+      });
+      cover.appendChild(activate);
+      wrapper.append(cover, back);
+    });
+  }
   document.querySelectorAll(".day-panel").forEach((panel) => {
     const sheet = panel.querySelector(".mobile-bottom-sheet"),
       trigger = panel.querySelector(".hourly-toggle");
@@ -435,7 +496,7 @@
     trigger.addEventListener("click", (event) => {
       if (window.innerWidth < 768 && typeof sheet.showModal === "function") {
         event.preventDefault();
-        sheet.showModal();
+        openHourlySheet(sheet);
       }
     });
     sheet
@@ -464,7 +525,7 @@
       trigger.addEventListener("click", (event) => {
         if (innerWidth < 768 && typeof sheet.showModal === "function") {
           event.preventDefault();
-          sheet.showModal();
+          openHourlySheet(sheet);
         }
       });
       sheet

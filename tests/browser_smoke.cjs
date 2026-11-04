@@ -82,10 +82,14 @@ async function main() {
     { width: 768, height: 1024 },
     { width: 390, height: 844 },
     { width: 320, height: 780 },
+    { width: 360, height: 800 },
+    { width: 430, height: 932 },
   ]) {
     report.viewports.push(viewport);
     const context = await browser.newContext({
       viewport,
+      isMobile: viewport.width < 768,
+      hasTouch: viewport.width < 768,
       timezoneId: "Asia/Jakarta",
       reducedMotion: "reduce",
     });
@@ -203,6 +207,16 @@ async function main() {
     await checkHero("dago");
     await screenshot("portal");
     await checkLayout("portal");
+    if (viewport.width < 768) {
+      assert.equal(await page.locator("#site-navigation").isVisible(), true);
+      assert.ok(await page.locator(".nav-link").evaluateAll(es => es.every(e => e.getBoundingClientRect().height >= 44)));
+      const activate = page.getByRole("button", {name: "Jelajahi peta", exact: true});
+      await activate.click();
+      assert.equal(await page.locator(".map-wrapper").first().evaluate(e => e.classList.contains("is-interactive")), true);
+      await page.getByRole("button", {name: "Kembali ke halaman", exact: true}).click();
+      assert.equal(await activate.isVisible(), true);
+      report.checks.push(`${viewport.width}: direct navigation, touch targets and opt-in map gestures`);
+    }
     assert.ok(await page.locator(".site-credit").textContent());
     await page.locator('.news-filter[data-news-region="jabar"]').click();
     assert.ok(
@@ -259,6 +273,10 @@ async function main() {
         }
         if (day === 0) {
           await panel.locator(".chart-wrapper").scrollIntoViewIfNeeded();
+          if (viewport.width < 768) {
+            await panel.locator(".curve-dot").first().tap();
+            assert.equal(await panel.locator(".chart-tooltip").evaluate(e => getComputedStyle(e).opacity), "1");
+          }
           await screenshot(`${slug}-chart`);
         }
       }
@@ -269,9 +287,13 @@ async function main() {
         const dialog = active.locator("dialog");
         await dialog.waitFor({ state: "visible" });
         assert.equal(await dialog.evaluate((element) => element.open), true);
+        assert.equal(await page.locator("body").evaluate(e => e.style.overflow), "hidden");
+        const metricWidths = await dialog.locator(".hour-box").first().evaluate(e => e.getBoundingClientRect().width);
+        assert.ok(metricWidths >= 100, "hourly metrics remain readable in two columns");
         await screenshot(`${slug}-hourly-dialog`);
         await dialog.locator(".sheet-close").click();
         assert.equal(await dialog.evaluate((element) => element.open), false);
+        assert.notEqual(await page.locator("body").evaluate(e => e.style.overflow), "hidden");
       } else {
         assert.equal(
           await hourly.evaluate((element) => element.parentElement.open),
@@ -301,11 +323,8 @@ async function main() {
       await checkLayout(`${slug}: campus selector and forecast copy feedback`);
 
       if (viewport.width < 768) {
-        await page.locator(".nav-toggle").click();
-        assert.equal(
-          await page.locator(".nav-toggle").getAttribute("aria-expanded"),
-          "true",
-        );
+        assert.equal(await page.locator("#site-navigation").isVisible(), true);
+        assert.equal(await page.locator(".nav-toggle").isVisible(), false);
       }
       await page.locator('#site-navigation a[href="langit_3day.html"]').click();
       await page.waitForURL(`**/${slug}/langit_3day.html`);
@@ -555,7 +574,7 @@ async function main() {
   assert.deepEqual(report.localFailures, [], "failed local assets");
   report.status = "passed";
   console.log(
-    `PASS: ${report.checks.length} Chromium browser checks at four desktop, tablet and phone sizes`,
+    `PASS: ${report.checks.length} Chromium browser checks at six desktop, tablet and touch-phone sizes`,
   );
 }
 
