@@ -1,17 +1,14 @@
 tanggal,source_id,provider,target_jam,source_datetime,suhu_C,RH_%,rain_mm,wind_kmh,gap_minutes,point_weight,kategori,raw_condition
-04-11-2026,BMKG,BMKG,11:00,2026-11-04 12:00:00,36.0,31.0,,17.2,60.0,1.0919,Berawan,Berawan
-04-11-2026,BMKG,BMKG,12:00,2026-11-04 12:00:00,36.0,31.0,,17.2,0.0,1.4558,Berawan,Berawan
-04-11-2026,BMKG,BMKG,13:00,2026-11-04 12:00:00,36.0,31.0,,17.2,60.0,1.0919,Berawan,Berawan
-04-11-2026,BMKG,BMKG,14:00,2026-11-04 15:00:00,35.0,40.0,,17.7,60.0,1.0919,Cerah Berawan,Cerah Berawan
-04-11-2026,BMKG,BMKG,15:00,2026-11-04 15:00:00,35.0,40.0,,17.7,0.0,1.4558,Cerah Berawan,Cerah Berawan
-04-11-2026,BMKG,BMKG,16:00,2026-11-04 15:00:00,35.0,40.0,,17.7,60.0,1.0919,Cerah Berawan,Cerah Berawan
-04-11-2026,BMKG,BMKG,17:00,2026-11-04 18:00:00,30.0,62.0,,9.8,60.0,1.0919,Berawan,Berawan
-04-11-2026,BMKG,BMKG,18:00,2026-11-04 18:00:00,30.0,62.0,,9.8,0.0,1.4558,Berawan,Berawan
-04-11-2026,BMKG,BMKG,19:00,2026-11-04 18:00:00,30.0,62.0,,9.8,60.0,1.0919,Berawan,Berawan
-04-11-2026,BMKG,BMKG,20:00,2026-11-04 21:00:00,29.0,72.0,,3.0,60.0,1.0919,Berawan,Berawan
-04-11-2026,BMKG,BMKG,21:00,2026-11-04 21:00:00,29.0,72.0,,3.0,0.0,1.4558,Berawan,Berawan
-04-11-2026,BMKG,BMKG,22:00,2026-11-04 21:00:00,29.0,72.0,,3.0,60.0,1.0919,Berawan,Berawan
-04-11-2026,BMKG,BMKG,23:00,2026-11-05 00:00:00,24.0,75.0,,6.7,60.0,1.0919,Berawan,Berawan
+04-11-2026,BMKG,BMKG,14:00,2026-11-04 15:00:00,35.0,40.0,,17.7,60.0,1.0945,Cerah Berawan,Cerah Berawan
+04-11-2026,BMKG,BMKG,15:00,2026-11-04 15:00:00,35.0,40.0,,17.7,0.0,1.4594,Cerah Berawan,Cerah Berawan
+04-11-2026,BMKG,BMKG,16:00,2026-11-04 15:00:00,35.0,40.0,,17.7,60.0,1.0945,Cerah Berawan,Cerah Berawan
+04-11-2026,BMKG,BMKG,17:00,2026-11-04 18:00:00,30.0,62.0,,9.8,60.0,1.0945,Berawan,Berawan
+04-11-2026,BMKG,BMKG,18:00,2026-11-04 18:00:00,30.0,62.0,,9.8,0.0,1.4594,Berawan,Berawan
+04-11-2026,BMKG,BMKG,19:00,2026-11-04 18:00:00,30.0,62.0,,9.8,60.0,1.0945,Berawan,Berawan
+04-11-2026,BMKG,BMKG,20:00,2026-11-04 21:00:00,29.0,72.0,,3.0,60.0,1.0945,Berawan,Berawan
+04-11-2026,BMKG,BMKG,21:00,2026-11-04 21:00:00,29.0,72.0,,3.0,0.0,1.4594,Berawan,Berawan
+04-11-2026,BMKG,BMKG,22:00,2026-11-04 21:00:00,29.0,72.0,,3.0,60.0,1.0945,Berawan,Berawan
+04-11-2026,BMKG,BMKG,23:00,2026-11-05 00:00:00,24.0,75.0,,6.7,60.0,1.0945,Berawan,Berawan
 04-11-2026,CMA,Open-Meteo / CMA GRAPES,00:00,2026-11-04 00:00:00,26.4,86.0,0.0,11.4,0.0,1.1466,Cerah,wmo:0.0
 04-11-2026,CMA,Open-Meteo / CMA GRAPES,01:00,2026-11-04 01:00:00,26.4,86.0,0.0,10.6,0.0,1.1466,Cerah,wmo:0.0
 04-11-2026,CMA,Open-Meteo / CMA GRAPES,02:00,2026-11-04 02:00:00,26.3,85.0,0.0,10.6,0.0,1.1466,Cerah,wmo:0.0
@@ -68,22 +65,22 @@ tanggal,source_id,provider,target_jam,source_datetime,suhu_C,RH_%,rain_mm,wind_k
 04-11-2026,GFS,Open-Meteo / NOAA GFS,05:00,2026-11-04 05:00:00,26.2,73.0,0.0,2.9,0.0,1.4089,Berawan,wmo:3.0
 04-11-2026,GFS,Open-Meteo / NOAA GFS,06:00,2026-11-04 06:00:00,26.8,70.0,0.0,3.1,0.0,1.4089,Berawan,wmo:3.0
 04-11-2026,GFS,Open-Meteo / NOAA GFS,07:00,2026-11-04 07:00:00,28.5,63.0,0.0,2.6,0.0,1.4089,Berawan,wmo:3.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,08:00,2026-11-04 08:00:00,30.6,55.0,0.0,2.2,0.0,1.4089,Cerah,wmo:0.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,09:00,2026-11-04 09:00:00,32.5,48.0,0.0,9.1,0.0,1.4089,Cerah Berawan,wmo:1.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,10:00,2026-11-04 10:00:00,34.5,41.0,0.0,16.3,0.0,1.4089,Cerah Berawan,wmo:1.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,11:00,2026-11-04 11:00:00,35.1,39.0,0.0,22.4,0.0,1.4089,Cerah Berawan,wmo:2.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,12:00,2026-11-04 12:00:00,35.0,40.0,0.0,21.1,0.0,1.4089,Cerah Berawan,wmo:2.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,13:00,2026-11-04 13:00:00,35.0,41.0,0.0,24.5,0.0,1.4089,Berawan,wmo:3.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,14:00,2026-11-04 14:00:00,34.2,44.0,0.0,25.3,0.0,1.4089,Cerah Berawan,wmo:2.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,15:00,2026-11-04 15:00:00,33.0,49.0,0.0,24.5,0.0,1.4089,Cerah Berawan,wmo:2.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,16:00,2026-11-04 16:00:00,31.8,53.0,0.0,22.9,0.0,1.4089,Cerah Berawan,wmo:2.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,17:00,2026-11-04 17:00:00,30.5,59.0,0.0,19.4,0.0,1.4089,Cerah Berawan,wmo:2.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,18:00,2026-11-04 18:00:00,29.1,67.0,0.0,12.8,0.0,1.4089,Berawan,wmo:3.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,19:00,2026-11-04 19:00:00,28.7,71.0,0.0,10.2,0.0,1.4089,Cerah Berawan,wmo:1.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,20:00,2026-11-04 20:00:00,28.6,72.0,0.0,8.5,0.0,1.4089,Cerah Berawan,wmo:1.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,21:00,2026-11-04 21:00:00,28.5,72.0,0.0,7.6,0.0,1.4089,Cerah Berawan,wmo:1.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,22:00,2026-11-04 22:00:00,28.4,73.0,0.0,6.3,0.0,1.4089,Cerah Berawan,wmo:1.0
-04-11-2026,GFS,Open-Meteo / NOAA GFS,23:00,2026-11-04 23:00:00,28.2,74.0,0.0,4.7,0.0,1.4089,Berawan,wmo:3.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,08:00,2026-11-04 08:00:00,30.6,55.0,0.0,1.8,0.0,1.4089,Cerah,wmo:0.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,09:00,2026-11-04 09:00:00,32.5,48.0,0.0,8.4,0.0,1.4089,Cerah Berawan,wmo:2.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,10:00,2026-11-04 10:00:00,34.5,41.0,0.0,15.2,0.0,1.4089,Cerah Berawan,wmo:1.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,11:00,2026-11-04 11:00:00,35.2,38.0,0.0,22.0,0.0,1.4089,Berawan,wmo:3.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,12:00,2026-11-04 12:00:00,35.1,39.0,0.0,21.1,0.0,1.4089,Cerah Berawan,wmo:2.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,13:00,2026-11-04 13:00:00,35.1,40.0,0.0,24.3,0.0,1.4089,Cerah Berawan,wmo:2.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,14:00,2026-11-04 14:00:00,34.4,44.0,0.0,25.3,0.0,1.4089,Cerah Berawan,wmo:2.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,15:00,2026-11-04 15:00:00,33.2,49.0,0.0,24.1,0.0,1.4089,Cerah,wmo:0.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,16:00,2026-11-04 16:00:00,31.8,53.0,0.0,22.9,0.0,1.4089,Cerah,wmo:0.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,17:00,2026-11-04 17:00:00,30.5,59.0,0.0,17.9,0.0,1.4089,Cerah,wmo:0.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,18:00,2026-11-04 18:00:00,29.2,67.0,0.0,11.5,0.0,1.4089,Cerah Berawan,wmo:1.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,19:00,2026-11-04 19:00:00,28.7,71.0,0.0,10.1,0.0,1.4089,Cerah,wmo:0.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,20:00,2026-11-04 20:00:00,28.7,72.0,0.0,8.3,0.0,1.4089,Cerah,wmo:0.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,21:00,2026-11-04 21:00:00,28.6,72.0,0.0,7.6,0.0,1.4089,Cerah Berawan,wmo:1.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,22:00,2026-11-04 22:00:00,28.5,73.0,0.0,6.8,0.0,1.4089,Cerah Berawan,wmo:2.0
+04-11-2026,GFS,Open-Meteo / NOAA GFS,23:00,2026-11-04 23:00:00,27.8,75.0,0.4,6.5,0.0,1.4089,Hujan Ringan,wmo:51.0
 04-11-2026,ICON,Open-Meteo / DWD ICON,00:00,2026-11-04 00:00:00,27.9,70.0,0.0,3.6,0.0,1.4711,Cerah Berawan,wmo:2.0
 04-11-2026,ICON,Open-Meteo / DWD ICON,01:00,2026-11-04 01:00:00,28.0,69.0,0.0,1.0,0.0,1.4711,Cerah Berawan,wmo:2.0
 04-11-2026,ICON,Open-Meteo / DWD ICON,02:00,2026-11-04 02:00:00,27.9,68.0,0.0,1.8,0.0,1.4711,Cerah Berawan,wmo:2.0
@@ -132,21 +129,6 @@ tanggal,source_id,provider,target_jam,source_datetime,suhu_C,RH_%,rain_mm,wind_k
 04-11-2026,METEOFRANCE,Open-Meteo / Meteo-France,21:00,2026-11-04 21:00:00,29.8,73.0,0.0,7.7,0.0,1.5573,Berawan,wmo:3.0
 04-11-2026,METEOFRANCE,Open-Meteo / Meteo-France,22:00,2026-11-04 22:00:00,29.7,72.0,0.0,9.2,0.0,1.5573,Berawan,wmo:3.0
 04-11-2026,METEOFRANCE,Open-Meteo / Meteo-France,23:00,2026-11-04 23:00:00,29.5,72.0,0.0,9.2,0.0,1.5573,Berawan,wmo:3.0
-04-11-2026,METNO,MET Norway,09:00,2026-11-04 11:00:00,36.2,35.0,,18.72,120.0,0.3505,,
-04-11-2026,METNO,MET Norway,10:00,2026-11-04 11:00:00,36.2,35.0,,18.72,60.0,0.478,,
-04-11-2026,METNO,MET Norway,11:00,2026-11-04 11:00:00,36.2,35.0,,18.72,0.0,0.6373,,
-04-11-2026,METNO,MET Norway,12:00,2026-11-04 12:00:00,36.6,33.9,0.0,21.6,0.0,0.6889,Cerah Berawan,partlycloudy_day
-04-11-2026,METNO,MET Norway,13:00,2026-11-04 13:00:00,36.8,33.6,0.0,20.52,0.0,0.6889,Cerah Berawan,partlycloudy_day
-04-11-2026,METNO,MET Norway,14:00,2026-11-04 14:00:00,36.1,38.1,0.0,20.16,0.0,0.6889,Cerah Berawan,partlycloudy_day
-04-11-2026,METNO,MET Norway,15:00,2026-11-04 15:00:00,35.1,40.7,0.0,20.52,0.0,0.6889,Cerah Berawan,partlycloudy_day
-04-11-2026,METNO,MET Norway,16:00,2026-11-04 16:00:00,33.6,45.1,0.0,20.88,0.0,0.6889,Cerah Berawan,partlycloudy_day
-04-11-2026,METNO,MET Norway,17:00,2026-11-04 17:00:00,31.8,55.3,0.0,19.08,0.0,0.6889,Cerah Berawan,partlycloudy_day
-04-11-2026,METNO,MET Norway,18:00,2026-11-04 18:00:00,30.2,64.6,0.0,15.84,0.0,0.6889,Cerah Berawan,partlycloudy_day
-04-11-2026,METNO,MET Norway,19:00,2026-11-04 19:00:00,29.7,68.2,0.0,12.96,0.0,0.6889,Cerah Berawan,partlycloudy_night
-04-11-2026,METNO,MET Norway,20:00,2026-11-04 20:00:00,29.6,68.7,0.0,10.8,0.0,0.6889,Cerah Berawan,partlycloudy_night
-04-11-2026,METNO,MET Norway,21:00,2026-11-04 21:00:00,29.4,69.3,0.0,11.16,0.0,0.6889,Cerah Berawan,partlycloudy_night
-04-11-2026,METNO,MET Norway,22:00,2026-11-04 22:00:00,29.1,71.4,0.0,10.44,0.0,0.6889,Cerah Berawan,partlycloudy_night
-04-11-2026,METNO,MET Norway,23:00,2026-11-04 23:00:00,28.7,72.6,0.0,9.72,0.0,0.6889,Cerah Berawan,partlycloudy_night
 04-11-2026,UKMO,Open-Meteo / UK Met Office,00:00,2026-11-04 00:00:00,27.3,71.0,0.0,10.4,0.0,1.3235,Cerah Berawan,wmo:1.0
 04-11-2026,UKMO,Open-Meteo / UK Met Office,01:00,2026-11-04 01:00:00,27.0,72.0,0.0,6.5,0.0,1.3235,Cerah Berawan,wmo:2.0
 04-11-2026,UKMO,Open-Meteo / UK Met Office,02:00,2026-11-04 02:00:00,26.7,75.0,0.0,5.0,0.0,1.3235,Cerah Berawan,wmo:1.0
@@ -195,3 +177,27 @@ tanggal,source_id,provider,target_jam,source_datetime,suhu_C,RH_%,rain_mm,wind_k
 04-11-2026,JMA_BACKUP,Open-Meteo / JMA,21:00,2026-11-04 21:00:00,28.6,74.0,0.0,9.4,0.0,1.0,Cerah Berawan,wmo:1.0
 04-11-2026,JMA_BACKUP,Open-Meteo / JMA,22:00,2026-11-04 22:00:00,28.5,74.0,0.0,8.1,0.0,1.0,Cerah Berawan,wmo:1.0
 04-11-2026,JMA_BACKUP,Open-Meteo / JMA,23:00,2026-11-04 23:00:00,28.3,74.0,0.0,7.8,0.0,1.0,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,00:00,2026-11-04 00:00:00,26.7,76.0,0.0,11.2,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,01:00,2026-11-04 01:00:00,26.6,76.0,0.0,10.4,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,02:00,2026-11-04 02:00:00,26.5,77.0,0.0,9.0,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,03:00,2026-11-04 03:00:00,26.2,78.0,0.0,7.9,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,04:00,2026-11-04 04:00:00,25.6,82.0,0.0,8.3,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,05:00,2026-11-04 05:00:00,25.1,84.0,0.0,9.0,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,06:00,2026-11-04 06:00:00,25.4,83.0,0.0,10.4,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,07:00,2026-11-04 07:00:00,27.7,72.0,0.0,9.4,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,08:00,2026-11-04 08:00:00,30.8,59.0,0.0,12.2,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,09:00,2026-11-04 09:00:00,32.9,52.0,0.0,15.5,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,10:00,2026-11-04 10:00:00,34.0,48.0,0.0,17.3,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,11:00,2026-11-04 11:00:00,34.3,48.0,0.0,19.4,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,12:00,2026-11-04 12:00:00,34.3,48.0,0.0,21.6,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,13:00,2026-11-04 13:00:00,34.1,48.0,0.0,22.3,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,14:00,2026-11-04 14:00:00,33.9,48.0,0.0,22.3,0.0,0.9754,Cerah,wmo:0.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,15:00,2026-11-04 15:00:00,33.5,48.0,0.0,20.9,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,16:00,2026-11-04 16:00:00,32.7,49.0,0.0,19.8,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,17:00,2026-11-04 17:00:00,31.5,55.0,0.0,17.6,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,18:00,2026-11-04 18:00:00,30.1,63.0,0.0,14.4,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,19:00,2026-11-04 19:00:00,29.2,71.0,0.0,13.3,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,20:00,2026-11-04 20:00:00,28.9,73.0,0.0,12.6,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,21:00,2026-11-04 21:00:00,28.4,74.0,0.0,11.5,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,22:00,2026-11-04 22:00:00,27.8,76.0,0.0,10.4,0.0,0.9754,Cerah Berawan,wmo:1.0
+04-11-2026,GEM_BACKUP,Open-Meteo / Environment Canada,23:00,2026-11-04 23:00:00,27.1,78.0,0.0,9.4,0.0,0.9754,Cerah,wmo:0.0
