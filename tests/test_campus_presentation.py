@@ -2,7 +2,7 @@
 import unittest
 from pathlib import Path
 
-import langit_v65_cinematic_rebuild as ui
+import build_weather_site as ui
 from site_tools import campus_components
 from site_tools.public_site import Links
 

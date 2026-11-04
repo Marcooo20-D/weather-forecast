@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - 'weather_ensemble_multi_location.py'
-      - 'langit_v65_cinematic_rebuild.py'
+      - 'build_weather_site.py'
       - 'site_tools/**'
       - '.github/workflows/main.yml'
   workflow_dispatch:
@@ -73,12 +73,12 @@ jobs:
           pwd
           ls -la
           test -f weather_ensemble_multi_location.py
-          test -f langit_v65_cinematic_rebuild.py
+          test -f build_weather_site.py
 
       - name: Syntax check scripts
         run: |
           python -m py_compile weather_ensemble_multi_location.py
-          python -m py_compile langit_v65_cinematic_rebuild.py
+          python -m py_compile build_weather_site.py
 
       - name: LANGIT generator doctor
         run: |
@@ -138,15 +138,20 @@ jobs:
             $DEBUG_FLAG \
             --no-save-raw-payloads
 
+      - name: Update regional map and headlines
+        run: |
+          python -m site_tools.weather_field --root outputs
+          python -m site_tools.weather_news --root outputs
+
       - name: Rebuild LANGIT public product layer
         run: |
-          LANGIT_SOURCE_SHA="$(git rev-parse HEAD)" python langit_v65_cinematic_rebuild.py \
+          LANGIT_SOURCE_SHA="$(git rev-parse HEAD)" python build_weather_site.py \
             --root outputs \
             --public-base-url "$PUBLIC_BASE_URL"
 
       - name: Verify public output
         run: |
-          python langit_v65_cinematic_rebuild.py --root outputs --verify-only
+          python build_weather_site.py --root outputs --verify-only
           test -f outputs/index.html
           test -f outputs/langit_portal_map.html
 

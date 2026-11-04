@@ -47,6 +47,7 @@ const parameterButtons=['risiko','temp','rain','wind','humidity','cloud'].map(la
 const mapEvents={};
 const mapDocument={
   getElementById:el,createElement:tag=>new Element(tag),
+  querySelector(selector){return selector==='.point-details'?el('point-details'):null;},
   querySelectorAll(selector) {
     if(selector==='.time-pill') return el('time-scrubber').children;
     if(selector==='.param-tab') return parameterButtons;

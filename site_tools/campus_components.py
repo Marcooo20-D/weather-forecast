@@ -37,7 +37,7 @@ def picture(u, meta: dict, prefix: str, *, hero: bool = False) -> str:
 
 def nav(u, api: dict, active: str, root: bool = False) -> str:
     if root:
-        items = [("Lokasi", "index.html", "locations"), ("Peta", "langit_portal_map.html", "map")]
+        items = [("Lokasi", "index.html", "locations"), ("Peta", "langit_portal_map.html", "map"), ("Berita", "index.html#berita", "news")]
         home, prefix = "index.html", ""
     else:
         items = [("Hari ini", "langit_app.html", "today"), ("3 hari ke depan", "langit_3day.html", "3day"),
@@ -97,12 +97,12 @@ def document(u, api: dict, active: str, title: str, body: str, root: bool = Fals
       <a class="skip-link" href="#main-content">Langsung ke prakiraan</a>
       {nav(u, api, active, root)}
       <main class="page" id="main-content" tabindex="-1">
-        <div class="freshness-bar"><div class="container"><p class="freshness-note" role="status" data-issued-at="{u.esc(issue)}">Waktu terbit prakiraan: {u.esc(u.fmt_update(issue))}.</p><span class="time-zone">Waktu Indonesia Barat · UTC+7</span></div></div>
+        <div class="freshness-bar"><div class="container"><p class="freshness-note" role="status" data-issued-at="{u.esc(issue)}">{u.esc(u.fmt_update(issue))}</p><span class="time-zone">Waktu Indonesia Barat · UTC+7</span></div></div>
         {body}
       </main>
       <footer class="footer"><div class="container">
         <div class="footer-main"><div><div class="footer-brand">LANGIT</div><p class="footer-tagline">Untuk hari-hari di kampus.</p><p class="footer-version">{u.VERSION} · {u.esc(api.get('generated_at', u.fmt_update()))}<br>Proyek independen mahasiswa Meteorologi ITB. Bukan layanan resmi ITB atau BMKG.</p></div><div class="footer-links">{footer_links}</div></div>
-        {photo_credits(u, prefix)}
+        {photo_credits(u, prefix)}<small class="site-credit">Gias Sabik</small>
       </div></footer>
       <script>window.LANGIT_CONFIG={u.inline_json(config)};</script>
       <script defer src="{prefix}{u.asset_name('data.js')}"></script><script defer src="{prefix}{u.asset_name('js')}"></script>
@@ -120,7 +120,7 @@ def hero(u, api: dict, heading: str, subtitle: str, day: dict, show_metrics: boo
     if show_metrics:
         metrics = f'''<div class="hero-metrics"><div class="hero-metric"><div class="hero-metric-value">{u.deg(day.get('avg_temp_c'))}</div><div class="hero-metric-label">Suhu rata-rata data tersedia</div></div>
         <div class="hero-metric"><div class="hero-metric-value">{u.pct(day.get('peak_rain_probability'))}</div><div class="hero-metric-label">Peluang hujan tertinggi</div></div>
-        <div class="hero-metric"><div class="hero-metric-value">{u.esc(day.get('risk_label'))}</div><div class="hero-metric-label">Potensi gangguan aktivitas</div></div></div>'''
+        <div class="hero-metric"><div class="hero-metric-value">{u.esc(day.get('risk_label'))}</div><div class="hero-metric-label">Potensi gangguan</div></div></div>'''
     glance = ""
     if is_root:
         rows = []
@@ -128,7 +128,7 @@ def hero(u, api: dict, heading: str, subtitle: str, day: dict, show_metrics: boo
             m = campus(a)
             rows.append(f'<a class="glance-row" href="{u.esc(a["location_slug"])}/langit_app.html"><span><span class="glance-name">{u.esc(m["campus"])}</span><span class="glance-rain">Hujan {u.pct(a["today"].get("peak_rain_probability"))} · {u.esc(a["location_name"])}</span></span><span class="glance-temp">{u.deg(a["today"].get("avg_temp_c"))}</span></a>')
         glance = f'<aside class="hero-campus-glance" aria-label="Ringkasan cuaca tiga lokasi"><div class="glance-label">Sekilas hari ini</div><p class="glance-note">Suhu rata-rata · peluang hujan tertinggi</p>{"".join(rows)}</aside>'
-    actions = f'<div class="hero-actions"><a class="btn btn-primary" href="#kampus">Pilih kampus {icon("arrow")}</a><a class="btn btn-secondary" href="langit_portal_map.html">Jelajah peta</a></div>' if is_root else ""
+    actions = f'<div class="hero-actions"><a class="btn btn-primary" href="#kampus">Pilih kampus {icon("arrow")}</a><a class="btn btn-secondary" href="langit_portal_map.html">Buka peta</a></div>' if is_root else ""
     point = (f'<p class="hero-meta">{u.esc(day.get("date_label"))} · Tiga lokasi prakiraan</p>' if is_root
              else f'<p class="hero-meta">Titik prakiraan: {u.esc(api.get("location_name"))} · {u.esc(day.get("date_label"))}</p>')
     kind = " hero-portal" if is_root else (" hero-compact" if not show_metrics else "")
@@ -145,7 +145,7 @@ def portal(u, apis: list, root: Path) -> str:
     apis = sorted(apis, key=lambda a: order.get(a["location_slug"], 99))
     dummy = {"location_name": "Portal", "location_slug": "portal", "generated_at": u.fmt_update(u.latest_issue(apis)), "today": today, "campus_apis": apis,
              "_campus_available_slugs": [a["location_slug"] for a in apis]}
-    body = hero(u, dummy, "Langit kampus.\nRencana hari ini.", "Prakiraan Dago, Jatinangor, dan Arjawinangun untuk kuliah, perjalanan, dan aktivitas di luar ruang.", today, False)
+    body = hero(u, dummy, "Cuaca\nkampus ITB", "Dago, Jatinangor, dan Arjawinangun.", today, False)
     cards = []
     for i, a in enumerate(apis):
         m, d, slug = campus(a), a["today"], a["location_slug"]
@@ -157,13 +157,30 @@ def portal(u, apis: list, root: Path) -> str:
           <p class="location-desc">{u.esc(u.decision_sentence(a['location_name'], d, short=True))}</p>
           <div class="location-stats"><div><div class="location-stat-value">{u.deg(d.get('avg_temp_c'))}</div><div class="location-stat-label">Suhu rata-rata</div></div><div><div class="location-stat-value">{u.pct(d.get('peak_rain_probability'))}</div><div class="location-stat-label">Peluang hujan tertinggi</div></div><div><div class="location-stat-value">{u.esc(d.get('peak_rain_hour'))}</div><div class="location-stat-label">Puncak · WIB</div></div></div></div>
         </a><div class="campus-card-links"><a href="{u.esc(slug)}/langit_3day.html">3 hari ke depan {icon('arrow')}</a><a href="{u.esc(slug)}/langit_activity.html">Aktivitas {icon('arrow')}</a></div></article>''')
-    body += f'''<section class="section" id="kampus"><div class="container"><div class="section-heading-row"><div class="section-header"><div class="section-overline">Pilih kampus</div><h2 class="section-title">Tiga kampus. Satu pandangan.</h2><p class="section-desc">Lihat prakiraan di lokasi pilihanmu, lalu susun rencana hari ini.</p></div><span class="section-count">{u.esc(today['date_label'])}</span></div><div class="location-grid">{"".join(cards)}</div></div></section>'''
+    body += f'''<section class="section" id="kampus"><div class="container"><div class="section-heading-row"><div class="section-header"><div class="section-overline">Pilih kampus</div><h2 class="section-title">Lokasi prakiraan</h2><p class="section-desc">Pilih lokasi untuk melihat prakiraan.</p></div><span class="section-count">{u.esc(today['date_label'])}</span></div><div class="location-grid">{"".join(cards)}</div></div></section>'''
+    body += news_section(u, root)
     body += u.v65_notice()
-    body += f'''<section class="section"><div class="container"><div class="section-heading-row"><div class="section-header"><div class="section-overline">Jelajah lokasi</div><h2 class="section-title">Baca cuaca di peta.</h2><p class="section-desc">Titik prakiraan tiga lokasi. Pilih jam, lokasi, dan parameter yang ingin dilihat.</p></div></div><div class="map-wrapper"><iframe class="map-frame" title="Peta titik prakiraan cuaca LANGIT" src="langit_portal_map.html" loading="lazy"></iframe><div class="map-actions"><a class="btn btn-primary" href="langit_portal_map.html">Buka peta penuh {icon('arrow')}</a><a class="btn" href="langit_all_locations.geojson">GeoJSON</a></div></div></div></section>'''
-    body += '''<section class="section-compact"><div class="container"><div class="glass"><div class="section-header"><div class="section-overline">Transparansi</div><h2 class="section-title">Data yang bisa ditelusuri.</h2><p class="section-desc">Unduh prakiraan, periksa sumbernya, dan gunakan data sesuai waktu berlakunya.</p></div><div class="data-downloads"><a class="btn" href="forecast_all_locations.csv">Forecast CSV</a><a class="btn" href="source_status_all_locations.csv">Sumber CSV</a><a class="btn" href="langit_portal_manifest.json">Manifest</a></div></div></div></section>'''
+    body += f'''<section class="section"><div class="container"><div class="section-heading-row"><div class="section-header"><div class="section-overline">Jelajah lokasi</div><h2 class="section-title">Peta cuaca</h2><p class="section-desc">Animasi angin dan lapisan cuaca GFS untuk Bandung–Cirebon.</p></div></div><div class="map-wrapper"><iframe class="map-frame" title="Peta titik prakiraan cuaca LANGIT" src="langit_portal_map.html" loading="lazy"></iframe><div class="map-actions"><a class="btn btn-primary" href="langit_portal_map.html">Buka peta penuh {icon('arrow')}</a><a class="btn" href="langit_all_locations.geojson">GeoJSON</a></div></div></div></section>'''
+    body += '''<section class="section-compact"><div class="container"><div class="glass"><div class="section-header"><div class="section-overline">Transparansi</div><h2 class="section-title">Unduh data</h2><p class="section-desc">Prakiraan dan status sumber dalam format terbuka.</p></div><div class="data-downloads"><a class="btn" href="forecast_all_locations.csv">Forecast CSV</a><a class="btn" href="source_status_all_locations.csv">Sumber CSV</a><a class="btn" href="langit_portal_manifest.json">Manifest</a></div></div></div></section>'''
     return document(u, dummy, "locations", "LANGIT — Cuaca Kampus ITB", body, True)
+
+
+def news_section(u, root: Path) -> str:
+    doc = u.read_json(root / "weather_news.json", {"items": []})
+    articles = []
+    for item in doc.get("items", []):
+        region = "Bandung & Jabar" if item["region"] == "jabar" else "Indonesia"
+        articles.append(f'''<article class="news-item" data-region="{u.esc(item['region'])}">
+          <div class="news-meta"><span class="news-source">{u.esc(item['source'])}</span><span>{region}</span><time datetime="{u.esc(item.get('published_at') or item['published_date'])}">{u.esc(item['published_date'])}</time></div>
+          <h3 class="news-title"><a href="{u.esc(item['url'])}">{u.esc(item['title'])}</a></h3></article>''')
+    return f'''<section class="section news-section" id="berita"><div class="container" data-news-url="weather_news.json">
+      <div class="news-header"><div class="section-header"><div class="section-overline">Informasi</div><h2 class="section-title">Berita meteorologi</h2><p class="news-status" id="news-status">{u.esc(u.fmt_update(doc.get('fetched_at'))) if doc.get('fetched_at') else 'Berita belum tersedia.'}</p></div>
+      <div class="news-filters" aria-label="Wilayah berita"><button class="news-filter" data-news-region="all" aria-pressed="true">Semua</button><button class="news-filter" data-news-region="jabar" aria-pressed="false">Bandung & Jabar</button><button class="news-filter" data-news-region="indonesia" aria-pressed="false">Indonesia</button></div></div>
+      <div class="news-list">{''.join(articles)}</div><p class="news-empty" {'hidden' if articles else ''}>Belum ada berita untuk wilayah ini.</p>
+      <p class="news-sources">Sumber: <a href="https://www.bmkg.go.id/berita/utama">BMKG</a>, <a href="https://jabar.antaranews.com/">ANTARA Jabar</a>, dan <a href="https://www.antaranews.com/">ANTARA</a>. Baca artikel lengkap di situs sumber.</p>
+    </div></section>'''
 
 
 def share(u, api: dict, day: dict) -> str:
     message = f"LANGIT — {api['location_name']}\n{day['date_label']}\n{u.decision_sentence(api['location_name'], day, short=True)}\nPeluang hujan tertinggi: {u.pct(day.get('peak_rain_probability'))} sekitar pukul {day.get('peak_rain_hour','—')} WIB."
-    return f'''<section class="section-compact"><div class="container"><div class="share-grid"><div class="glass"><div class="section-overline">Bagikan</div><h3 style="font-size:21px;margin:8px 0 16px">Ringkas, lalu kirim.</h3><textarea class="share-text" aria-label="Ringkasan prakiraan untuk dibagikan" readonly>{u.esc(message)}</textarea><div class="share-actions"><button type="button" class="btn" data-copy-forecast>{icon('copy')} Salin ringkasan</button><span class="copy-status" role="status" aria-live="polite"></span></div></div><div class="glass"><div class="section-overline">Sebelum berangkat</div><h3 style="font-size:21px;margin:8px 0 16px">Tetap lihat kondisi sekitar.</h3><p class="section-desc">Prakiraan dapat berubah. Perhatikan waktu terbit dan waktu berlakunya. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat.</p><p class="section-desc">Peluang hujan tidak menyatakan intensitas. Indeks aktivitas adalah panduan heuristik, bukan peringatan cuaca berbahaya.</p></div></div></div></section>'''
+    return f'''<section class="section-compact"><div class="container"><div class="share-grid"><div class="glass"><div class="section-overline">Bagikan</div><h3 style="font-size:21px;margin:8px 0 16px">Ringkasan prakiraan</h3><textarea class="share-text" aria-label="Ringkasan prakiraan untuk dibagikan" readonly>{u.esc(message)}</textarea><div class="share-actions"><button type="button" class="btn" data-copy-forecast>{icon('copy')} Salin ringkasan</button><span class="copy-status" role="status" aria-live="polite"></span></div></div><div class="glass"><div class="section-overline">Sebelum berangkat</div><h3 style="font-size:21px;margin:8px 0 16px">Catatan penggunaan</h3><p class="section-desc">Periksa waktu berlaku prakiraan. Untuk cuaca ekstrem, ikuti peringatan BMKG.</p><p class="section-desc">Peluang hujan bukan intensitas. Indeks aktivitas bukan peringatan bahaya.</p></div></div></div></section>'''

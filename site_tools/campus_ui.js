@@ -1,6 +1,45 @@
 /* LANGIT Campus interactions. Forecast numbers are supplied by public_data.js. */
 (function(){
   'use strict';
+  const news=document.querySelector('[data-news-url]');
+  if(news){
+    const list=news.querySelector('.news-list'),empty=news.querySelector('.news-empty'),status=news.querySelector('.news-status'),filters=news.querySelectorAll('.news-filter');
+    let region='all';
+    function filter(){
+      let count=0;
+      list.querySelectorAll('.news-item').forEach(article=>{article.hidden=region!=='all'&&article.dataset.region!==region;if(!article.hidden)count++;});
+      empty.hidden=count>0;
+      filters.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.newsRegion===region)));
+    }
+    filters.forEach(button=>button.addEventListener('click',()=>{region=button.dataset.newsRegion;filter();}));
+    function render(items){
+      list.replaceChildren();
+      for(const item of items){
+        let url;try{url=new URL(item.url);}catch{continue;}
+        if(url.protocol!=='https:'||!['antaranews.com','bmkg.go.id'].some(host=>url.hostname===host||url.hostname.endsWith('.'+host)))continue;
+        const published=Date.parse(item.published_at||item.published_date+'T00:00:00+07:00');
+        if(!Number.isFinite(published)||Date.now()-published>8*86400000||published>Date.now()+900000)continue;
+        const article=document.createElement('article');article.className='news-item';article.dataset.region=item.region;
+        const meta=document.createElement('div');meta.className='news-meta';
+        const source=document.createElement('span');source.className='news-source';source.textContent=item.source;
+        const area=document.createElement('span');area.textContent=item.region==='jabar'?'Bandung & Jabar':'Indonesia';
+        const time=document.createElement('time');time.dateTime=item.published_at||item.published_date;time.textContent=new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'numeric',month:'short',year:'numeric'}).format(new Date(published));
+        meta.append(source,area,time);
+        const heading=document.createElement('h3');heading.className='news-title';const link=document.createElement('a');link.href=url.href;link.textContent=item.title;heading.appendChild(link);article.append(meta,heading);list.appendChild(article);
+      }
+      filter();
+    }
+    async function refreshNews(){
+      try{
+        const response=await fetch(news.dataset.newsUrl,{cache:'no-cache'});if(!response.ok)throw Error('News unavailable');
+        const data=await response.json();if(data.schema_version!==1||!Array.isArray(data.items))throw Error('Invalid news');
+        render(data.items);
+        const fetched=Date.parse(data.fetched_at);
+        status.textContent=Number.isFinite(fetched)?(Date.now()-fetched>6*3600000?'Pembaruan tertunda · ':'Diperbarui ')+new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(fetched))+' WIB':'Berita belum tersedia.';
+      }catch{if(!status.textContent.includes('tertunda'))status.textContent+=' · Pembaruan tertunda.';}
+    }
+    filter();refreshNews();setInterval(()=>{if(!document.hidden)refreshNews();},900000);
+  }
   const config=window.LANGIT_CONFIG||{};
   const freshness=document.querySelector('.freshness-note');
   if(freshness){
@@ -34,7 +73,10 @@
     document.querySelectorAll('.map-frame').forEach(frame=>frame.contentWindow?.postMessage({type:'invalidateSize'},window.location.origin));
   }));
 
+  let sharedLayer='rain';
+  if(document.querySelector('.layer-btn'))document.querySelectorAll('.map-frame').forEach(frame=>frame.addEventListener('load',()=>frame.contentWindow?.postMessage({type:'switchLayer',layer:sharedLayer},window.location.origin)));
   function setSharedLayer(layer){
+    sharedLayer=layer;
     document.querySelectorAll('.layer-btn').forEach(button=>{
       const active=button.dataset.layer===layer;
       button.classList[active?'add':'remove']('active');button.setAttribute('aria-pressed',String(active));

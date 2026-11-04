@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-LANGIT v65 Cinematic Rebuild
+LANGIT public site builder
 =============================
 
 Public presentation layer for the forecast engine's existing output.
 Scientific quantities keep their source units, dates and missing values.
 
 Usage:
-  python langit_v65_cinematic_rebuild.py --root outputs --public-base-url https://marcooo20-d.github.io/weather-forecast
-  python langit_v65_cinematic_rebuild.py --root outputs --verify-only
+  python build_weather_site.py --root outputs --public-base-url https://marcooo20-d.github.io/weather-forecast
+  python build_weather_site.py --root outputs --verify-only
 """
 from __future__ import annotations
 
@@ -26,11 +26,12 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 from site_tools import campus_components as campus_ui
+from site_tools import weather_field, weather_news
 
 BRAND = "LANGIT"
-VERSION = "LANGIT v66.0"
+VERSION = "LANGIT v67.0"
 TZ_NAME = "Asia/Jakarta"
-DISCLAIMER = "Bukan informasi resmi BMKG. Untuk cuaca ekstrem, pantau peringatan dini BMKG dan kondisi setempat."
+DISCLAIMER = "Untuk cuaca ekstrem, ikuti peringatan resmi BMKG."
 ID_BOUNDS = [[-11.25, 94.0], [6.45, 141.25]]
 MONTH_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
 DAY_ID = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
@@ -494,12 +495,10 @@ def summarize_day(relative: str, date_value: dt.date, rows: List[Dict[str, Any]]
 
 
 def rain_phrase(day: Dict[str, Any]) -> str:
-    p = prob(day.get("peak_rain_probability"), 0) or 0
+    p = prob(day.get("peak_rain_probability"))
     h = text(day.get("peak_rain_hour"), "—")
-    if p >= 55: return f"hujan paling perlu diwaspadai sekitar {h}"
-    if p >= 25: return f"awan/hujan perlu dipantau sekitar {h}"
-    if p > 0: return f"peluang hujan kecil, puncaknya sekitar {h}"
-    return "peluang hujan rendah"
+    if p is None: return "Peluang hujan belum tersedia"
+    return f"Peluang hujan tertinggi {pct(p)} sekitar {h} WIB"
 
 
 def decision_sentence(location: str, day: Dict[str, Any], short: bool = False) -> str:
@@ -508,14 +507,14 @@ def decision_sentence(location: str, day: Dict[str, Any], short: bool = False) -
     peak = text(day.get("peak_rain_hour"), "—")
     win = ", ".join(day.get("safe_windows") or [])
     if c == "limited":
-        return "Data prakiraan belum lengkap. Pantau kondisi langit secara mandiri."
+        return "Data belum cukup. Periksa kondisi setempat."
     if c == "danger":
-        return f"Siapkan rencana cadangan untuk aktivitas luar ruang sekitar pukul {peak} WIB; peluang hujan {p}. Indeks aktivitas ini bukan peringatan cuaca ekstrem."
+        return "Potensi gangguan tinggi. Pertimbangkan aktivitas dalam ruang."
     if c == "rain":
-        return f"Potensi hujan terpantau cukup tinggi. Siapkan perlengkapan hujan jika beraktivitas luar ruang di sekitar pukul {peak} WIB (peluang {p})."
+        return "Siapkan rencana cadangan untuk aktivitas luar ruang."
     if c == "watch":
-        return f"Kondisi cuaca mendukung, tetap pantau potensi hujan sekitar pukul {peak} WIB." if short else f"Kondisi cuaca secara umum kondusif untuk beraktivitas, namun tetap pantau potensi hujan lokal di sekitar pukul {peak} WIB."
-    return f"Kondisi cuaca mendukung aktivitas luar ruang. Periode nyaman terpantau pada: {win or 'pagi hingga siang hari'}."
+        return f"Pantau peluang hujan sekitar {peak} WIB."
+    return "Cuaca mendukung aktivitas luar ruang." + (f" Pilihan waktu: {win} WIB." if win else "")
 
 
 def short_activity_advice(day: Dict[str, Any]) -> List[Tuple[str, str, str, str]]:
@@ -525,36 +524,36 @@ def short_activity_advice(day: Dict[str, Any]) -> List[Tuple[str, str, str, str]
     heat = num(day.get("max_heat_c"), 0) or 0
     if c in {"danger", "rain"}:
         return [
-            ("Perjalanan / Motor", "Bawa Jas Hujan", f"Hindari berkendara sekitar pukul {peak}.", "rain"),
-            ("Jalan Kaki", "Siapkan Payung", f"Antisipasi tempat berteduh di sekitar pukul {peak}.", "rain"),
-            ("Jemur Pakaian", "Periksa jam", "Pilih periode peluang hujan lebih rendah jika tersedia.", "watch"),
-            ("Aktivitas Outdoor", "Siapkan Rencana Cadangan", "Gunakan opsi ruangan tertutup.", "rain"),
-            ("Olahraga", "Sesuaikan Jadwal", f"Pilih jam alternatif: {win}.", "watch"),
-            ("Fotografi", "Gunakan Pelindung", "Lindungi peralatan elektronik dari kelembapan.", "watch"),
+            ("Berkendara", "Bawa jas hujan", f"Hindari berkendara sekitar pukul {peak}.", "rain"),
+            ("Jalan kaki", "Bawa payung", f"Antisipasi tempat berteduh di sekitar pukul {peak}.", "rain"),
+            ("Menjemur", "Periksa jam", "Pilih periode peluang hujan lebih rendah jika tersedia.", "watch"),
+            ("Luar ruang", "Siapkan cadangan", "Gunakan opsi ruangan tertutup.", "rain"),
+            ("Olahraga", "Sesuaikan waktu", f"Pilih jam alternatif: {win}.", "watch"),
+            ("Fotografi", "Lindungi peralatan", "Lindungi peralatan elektronik dari kelembapan.", "watch"),
         ]
     if c == "watch":
         return [
-            ("Perjalanan / Motor", "Cukup Kondusif", f"Tetap antisipasi potensi hujan sekitar pukul {peak}.", "watch"),
-            ("Jalan Kaki", "Aman Bersyarat", f"Periode nyaman: {win}.", "safe"),
-            ("Jemur Pakaian", "Pantau cuaca", "Pilih waktu dengan data lengkap dan peluang hujan lebih rendah.", "watch"),
-            ("Aktivitas Outdoor", "Kondusif", "Tetap pantau perkembangan awan.", "watch"),
-            ("Olahraga", "Hindari Terik", f"Periode nyaman: {win}.", "watch" if heat >= 34 else "safe"),
+            ("Berkendara", "Pantau kondisi", f"Tetap antisipasi potensi hujan sekitar pukul {peak}.", "watch"),
+            ("Jalan kaki", "Periksa kondisi", f"Periode nyaman: {win}.", "safe"),
+            ("Menjemur", "Pantau cuaca", "Pilih waktu dengan data lengkap dan peluang hujan lebih rendah.", "watch"),
+            ("Luar ruang", "Kondusif", "Tetap pantau perkembangan awan.", "watch"),
+            ("Olahraga", "Periksa waktu", f"Periode nyaman: {win}.", "watch" if heat >= 34 else "safe"),
             ("Fotografi", "Pantau Awan", f"Perhatikan perubahan intensitas cahaya sekitar pukul {peak}.", "watch"),
         ]
     if c == "limited":
         return [
-            ("Perjalanan / Motor", "Pantau Mandiri", "Data prakiraan belum lengkap.", "limited"),
-            ("Jalan Kaki", "Perhatikan Cuaca", "Lihat kondisi langit setempat secara berkala.", "limited"),
-            ("Jemur Pakaian", "Pantau Berkala", "Sebaiknya tidak ditinggalkan dalam waktu lama.", "limited"),
-            ("Aktivitas Outdoor", "Fleksibel", "Siapkan opsi berteduh yang memadai.", "limited"),
+            ("Berkendara", "Pantau Mandiri", "Data prakiraan belum lengkap.", "limited"),
+            ("Jalan kaki", "Perhatikan Cuaca", "Lihat kondisi langit setempat secara berkala.", "limited"),
+            ("Menjemur", "Pantau Berkala", "Sebaiknya tidak ditinggalkan dalam waktu lama.", "limited"),
+            ("Luar ruang", "Fleksibel", "Siapkan opsi berteduh yang memadai.", "limited"),
             ("Olahraga", "Durasi Singkat", "Periksa kondisi cuaca langsung di lokasi.", "limited"),
             ("Fotografi", "Cek Kondisi", "Tunggu hingga data prakiraan diperbarui.", "limited"),
         ]
     return [
-        ("Perjalanan / Motor", "Aman", "Kondisi cuaca mendukung perjalanan luar ruang.", "safe"),
-        ("Jalan Kaki", "Sangat Nyaman", f"Periode terbaik: {win}.", "safe"),
-        ("Jemur Pakaian", "Sangat Baik", "Pagi hingga siang hari sangat mendukung.", "safe"),
-        ("Aktivitas Outdoor", "Relatif mendukung", "Tetap pantau kondisi setempat.", "safe"),
+        ("Berkendara", "Mendukung", "Kondisi cuaca mendukung perjalanan luar ruang.", "safe"),
+        ("Jalan kaki", "Mendukung", f"Pilihan waktu: {win}.", "safe"),
+        ("Menjemur", "Periksa prakiraan", "Pilih jam dengan peluang hujan lebih rendah.", "safe"),
+        ("Luar ruang", "Relatif mendukung", "Tetap pantau kondisi setempat.", "safe"),
         ("Olahraga", "Pagi / Sore", f"Periode nyaman: {win}.", "safe"),
         ("Fotografi", "Periksa cahaya", "Peluang hujan rendah belum memastikan langit cerah.", "safe"),
     ]
@@ -786,14 +785,14 @@ def write_public_tables(directory: Path, api: Dict[str, Any]) -> None:
 
 
 # ---------------------------------------------------------------------------
-# v65 CINEMATIC DESIGN SYSTEM — CSS
+# Campus styles
 # ---------------------------------------------------------------------------
 
-CSS_V65 = (Path(__file__).parent / "site_tools" / "campus_ui.css").read_text(encoding="utf-8")
+CSS_V65 = (Path(__file__).parent / "site_tools" / "campus_ui.css").read_text(encoding="utf-8") + (Path(__file__).parent / "site_tools" / "editorial.css").read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
-# v65 CINEMATIC JAVASCRIPT
+# Browser interactions
 # ---------------------------------------------------------------------------
 
 DATA_JS = (Path(__file__).parent / 'site_tools' / 'public_data.js').read_text(encoding='utf-8')
@@ -806,8 +805,10 @@ JS_V65 = (Path(__file__).parent / "site_tools" / "campus_ui.js").read_text(encod
 # v65 HTML Components
 # ---------------------------------------------------------------------------
 
+FIELD_JS = (Path(__file__).parent / "site_tools" / "weather_field.js").read_text()
+
 def asset_name(kind: str) -> str:
-    source = {"css": CSS_V65, "js": JS_V65, "data.js": DATA_JS}[kind]
+    source = {"css": CSS_V65, "js": JS_V65, "data.js": DATA_JS, "field.js": FIELD_JS}[kind]
     digest = hashlib.sha256(source.encode("utf-8")).hexdigest()[:12]
     return f"langit-{digest}.{kind}"
 
@@ -830,7 +831,7 @@ def v65_hero(api, heading, subtitle, day, show_metrics=True):
 
 
 def v65_notice() -> str:
-    return f'<div class="container"><div class="notice reveal">{esc(DISCLAIMER)} Indeks aktivitas adalah panduan heuristik tentang potensi gangguan, bukan peluang cuaca berbahaya. Peluang hujan tidak menyatakan intensitasnya.</div></div>'
+    return f'<div class="container"><div class="notice reveal">{esc(DISCLAIMER)} Indeks aktivitas bukan peringatan bahaya. Peluang hujan bukan intensitas.</div></div>'
 
 
 def _accent_glow(cls: str) -> str:
@@ -849,13 +850,13 @@ def v65_decision(api: Dict[str, Any], day: Dict[str, Any]) -> str:
           <span class="status-badge status-{esc(cls)}">{esc(day.get("risk_label"))}</span>
           <h2 class="decision-title">{esc(decision_sentence(loc, day, short=False))}</h2>
         </div>
-        <p class="decision-desc">{esc(day.get("date_label"))}. {esc(rain_phrase(day))}. Jam nyaman: {esc(windows)}.</p>
+        <p class="decision-desc">{esc(day.get("date_label"))}. {esc(rain_phrase(day))}. Pilihan waktu: {esc(windows)}.</p>
       </article>
       <aside class="kpi-grid">
         <div class="kpi-card"><div class="kpi-label">Indeks aktivitas</div><div class="kpi-value" data-animate-value="{score_text(day.get("risk_score"))}" data-animate-suffix="/100">{score_text(day.get("risk_score"))}<span style="font-size:16px;color:var(--mist)">/100</span></div><div class="kpi-sub">{esc(day.get("risk_label"))}</div></div>
-        <div class="kpi-card"><div class="kpi-label">Puncak hujan</div><div class="kpi-value" data-animate-value="{prob(day.get("peak_rain_probability"), 0)}" data-animate-suffix="%">{pct(day.get("peak_rain_probability"))}</div><div class="kpi-sub">{esc(day.get("peak_rain_hour","—"))}</div></div>
-        <div class="kpi-card"><div class="kpi-label">Jam nyaman</div><div class="kpi-value" style="font-size:16px">{esc(windows)}</div><div class="kpi-sub">aktivitas</div></div>
-        <div class="kpi-card"><div class="kpi-label">Panas terasa</div><div class="kpi-value" data-animate-value="{num(day.get("max_heat_c"), 0)}" data-animate-suffix="°C" data-animate-decimals="1">{deg(day.get("max_heat_c"))}</div><div class="kpi-sub">maksimum</div></div>
+        <div class="kpi-card"><div class="kpi-label">Peluang hujan tertinggi</div><div class="kpi-value" data-animate-value="{prob(day.get("peak_rain_probability"), 0)}" data-animate-suffix="%">{pct(day.get("peak_rain_probability"))}</div><div class="kpi-sub">{esc(day.get("peak_rain_hour","—"))}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pilihan waktu</div><div class="kpi-value" style="font-size:16px">{esc(windows)}</div><div class="kpi-sub">aktivitas</div></div>
+        <div class="kpi-card"><div class="kpi-label">Terasa seperti</div><div class="kpi-value" data-animate-value="{num(day.get("max_heat_c"), 0)}" data-animate-suffix="°C" data-animate-decimals="1">{deg(day.get("max_heat_c"))}</div><div class="kpi-sub">maksimum</div></div>
       </aside>
     </div>
   </div></section>'''
@@ -873,17 +874,17 @@ def v65_timeline(hours: List[Dict[str, Any]], title: str = "Timeline prakiraan",
         <h2 class="section-title">{esc(title)}</h2>
         <p class="section-desc">{esc(note)}</p>
       </div>
-      
+
       <!-- Multi-Variable Switches -->
       <div class="chart-selector">
-        <button class="chart-chip active" aria-pressed="true" data-var="rain">Peluang Hujan</button>
+        <button class="chart-chip active" aria-pressed="true" data-var="rain">Peluang hujan</button>
         <button class="chart-chip" aria-pressed="false" data-var="temp">Suhu</button>
         <button class="chart-chip" aria-pressed="false" data-var="humidity">Kelembapan</button>
-        <button class="chart-chip" aria-pressed="false" data-var="wind">Kecepatan Angin</button>
+        <button class="chart-chip" aria-pressed="false" data-var="wind">Angin</button>
       </div>
-      
+
       <p class="chart-status" role="status"></p>
-      <p class="section-desc">Garis terputus menandai data kosong atau jeda waktu. Seluruh jam tersedia pada detail per jam.</p>
+      <p class="section-desc">Garis terputus: data tidak tersedia. Angka lengkap ada di rincian per jam.</p>
       <div class="chart-svg-container" data-points="{data_str}">
         <svg class="rain-curve" viewBox="0 0 900 200" role="img" aria-label="Grafik prakiraan; detail angka tersedia pada tabel per jam" preserveAspectRatio="none"></svg>
         <div class="chart-tooltip">
@@ -931,7 +932,7 @@ def v65_activities(day: Dict[str, Any]) -> str:
     <div class="section-header reveal">
       <div class="section-overline">Aktivitas</div>
       <h2 class="section-title">Saran aktivitas</h2>
-      <p class="section-desc">Ringkas dan praktis.</p>
+
     </div>
     <div class="activity-grid">{"".join(cards)}</div>
   </div></section>'''
@@ -949,7 +950,7 @@ def v65_hours(day: Dict[str, Any]) -> str:
         <div class="hour-box"><div class="hour-box-value">{deg(x.get("heat_index_c"))}</div><div class="hour-box-label">Indeks panas</div></div>
         <div class="hour-box hour-box-rain"><div class="hour-box-value">{pct(x.get("rain_probability"))}</div><div class="hour-box-label">Hujan</div></div>
       </div>''')
-    
+
     rows_html = "".join(rows)
     return f'''<section class="section-compact"><div class="container">
     <details class="hourly-section reveal">
@@ -959,11 +960,11 @@ def v65_hours(day: Dict[str, Any]) -> str:
       </summary>
       <div class="hourly-list">{rows_html}</div>
     </details>
-    
+
     <!-- Mobile Bottom Sheet (Sliding Panel fallback) -->
     <dialog class="mobile-bottom-sheet" aria-label="Detail prakiraan per jam">
       <button type="button" class="sheet-close">Tutup detail per jam</button>
-      <h3 style="font-family:var(--font-display);font-weight:800;font-size:18px;margin-bottom:16px;text-align:center;color:var(--white)">Prakiraan Per Jam</h3>
+      <h3 style="font-family:var(--font-display);font-weight:800;font-size:18px;margin-bottom:16px;text-align:center;color:var(--white)">Prakiraan per jam</h3>
       <div class="hourly-list">{rows_html}</div>
     </dialog>
   </div></section>'''
@@ -973,22 +974,22 @@ def v65_command_center(api: Dict[str, Any]) -> str:
     return f'''<section class="section-compact"><div class="container">
     <div class="section-header reveal">
       <div class="section-overline">Peta Cuaca</div>
-      <h2 class="section-title">Peta Prakiraan Cuaca</h2>
-      <p class="section-desc">Peta prakiraan wilayah Kampus ITB dengan kendali lapisan cuaca.</p>
+      <h2 class="section-title">Peta cuaca</h2>
+      <p class="section-desc">Lapisan GFS untuk wilayah Bandung–Cirebon.</p>
     </div>
-    
+
     <div class="command-center reveal">
       <!-- Left: Map Frame wrapper -->
       <div class="map-wrapper">
         <iframe class="map-frame" title="Peta titik prakiraan cuaca LANGIT" src="langit_map_room.html" loading="lazy"></iframe>
       </div>
-      
+
       <!-- Right: Controls & Diagnostics -->
       <div class="command-sidebar">
         <div class="glass glass-static">
-          <div class="section-overline">Lapisan Cuaca</div>
-          <h3 style="font-size:18px;font-weight:800;margin:8px 0 16px;font-family:var(--font-display);">Lapisan Cuaca</h3>
-          
+          <div class="section-overline">Lapisan peta</div>
+          <h3 style="font-size:18px;font-weight:800;margin:8px 0 16px;font-family:var(--font-display);">Lapisan peta</h3>
+
           <div class="layer-controls">
             <button class="layer-btn active" data-layer="rain" style="--active-bg:rgba(6,182,212,0.12); --active-color:var(--noon); --active-border:rgba(6,182,212,0.3);">Hujan</button>
             <button class="layer-btn" data-layer="temp" style="--active-bg:rgba(249,115,22,0.12); --active-color:var(--dawn); --active-border:rgba(249,115,22,0.3);">Suhu</button>
@@ -996,15 +997,15 @@ def v65_command_center(api: Dict[str, Any]) -> str:
             <button class="layer-btn" data-layer="cloud" style="--active-bg:rgba(148,190,235,0.12); --active-color:var(--cloud); --active-border:rgba(148,190,235,0.3);">Awan</button>
             <button class="layer-btn" data-layer="humidity" style="--active-bg:rgba(99,102,241,0.12); --active-color:var(--limited); --active-border:rgba(99,102,241,0.3);">Kelembapan</button>
           </div>
-          <p style="font-size:12px;color:var(--mist);line-height:1.6;margin-top:12px;">Memilih parameter di atas akan mengubah visualisasi cuaca pada peta secara langsung.</p>
+          <p style="font-size:12px;color:var(--mist);line-height:1.6;margin-top:12px;">Lapisan memakai GFS. Angka lokasi memakai prakiraan gabungan.</p>
         </div>
-        
+
         <div class="glass glass-static">
-          <div class="section-overline">Status Data</div>
-          <h3 style="font-size:18px;font-weight:800;margin:8px 0 12px;font-family:var(--font-display);">Keandalan Data</h3>
-          <p style="font-size:13px;color:var(--cloud);line-height:1.6;margin-bottom:16px;">Monitoring otomatis keandalan dan tingkat akurasi verifikasi data cuaca.</p>
+          <div class="section-overline">Data</div>
+          <h3 style="font-size:18px;font-weight:800;margin:8px 0 12px;font-family:var(--font-display);">Status sumber</h3>
+          <p style="font-size:13px;color:var(--cloud);line-height:1.6;margin-bottom:16px;">Periksa sumber dan hasil evaluasi.</p>
           <div style="display:flex;gap:12px;">
-            <a class="btn btn-primary" href="keandalan_data.html">Keandalan Data</a>
+            <a class="btn btn-primary" href="keandalan_data.html">Status sumber</a>
             <a class="btn" href="akurasi_data.html">Akurasi</a>
           </div>
         </div>
@@ -1017,8 +1018,8 @@ def v65_map_embed(href: str = "langit_map_room.html") -> str:
     return f'''<section class="section-compact"><div class="container">
     <div class="section-header reveal">
       <div class="section-overline">Peta</div>
-      <h2 class="section-title">Peta risiko</h2>
-      <p class="section-desc">Warna berubah mengikuti jam.</p>
+      <h2 class="section-title">Peta cuaca</h2>
+      <p class="section-desc">Pilih lapisan dan waktu prakiraan.</p>
     </div>
     <div class="map-wrapper reveal">
       <iframe class="map-frame" title="Peta titik prakiraan cuaca LANGIT" src="{esc(href)}" loading="lazy"></iframe>
@@ -1165,553 +1166,67 @@ a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid #67e
 }
 '''
     css += (Path(__file__).parent / 'site_tools' / 'campus_map.css').read_text(encoding='utf-8')
-    js = r'''
-const geojson = __DATA__;
-const colors = {safe:'#10b981', watch:'#f59e0b', rain:'#ff9d42', danger:'#ef4444', limited:'#94a3b8'};
-const features = ((geojson && geojson.features) || []).filter(f => f.geometry && f.geometry.type === 'Point' && f.geometry.coordinates.length === 2 && f.geometry.coordinates.every(Number.isFinite));
+    js = (Path(__file__).parent / "site_tools" / "forecast_map.js").read_text().replace("__DATA__", data)
 
-// Find first coordinate center
-const first = features[0] || {geometry:{coordinates:[106.8,-6.2]}, properties:{location_name:'Lokasi'}};
-const center = first.geometry && first.geometry.coordinates ? [first.geometry.coordinates[1], first.geometry.coordinates[0]] : [-6.2,106.8];
-
-// Particle Engine live states
-const state = {
-  windSpeed: null,
-  cloudPct: null,
-  tempC: null,
-  humidityPct: null,
-  rainProb: null,
-  activeLayer: 'risiko'
-};
-
-function getTempColor(t) {
-  if (t <= 18) return '#3b82f6';
-  if (t <= 22) return '#60a5fa';
-  if (t <= 25) return '#f59e0b';
-  if (t <= 28) return '#f97316';
-  return '#ef4444';
-}
-
-function getHumidityColor(h) {
-  if (h <= 55) return '#93c5fd';
-  if (h <= 70) return '#38bdf8';
-  if (h <= 85) return '#0ea5e9';
-  return '#0284c7';
-}
-
-function getCloudColor(c) {
-  if (c <= 30) return '#475569';
-  if (c <= 60) return '#94a3b8';
-  return '#f1f5f9';
-}
-
-function getWindColor(w) {
-  if (w <= 5) return '#10b981';
-  if (w <= 12) return '#3b82f6';
-  if (w <= 20) return '#f59e0b';
-  return '#ef4444';
-}
-
-function updateHUDValues(p) {
-  document.getElementById('hud-location-name').textContent = p.location_name || 'Lokasi';
-  const validDate = Date.parse((p.date_iso || '')+'T00:00:00+07:00');
-  const validLabel = Number.isFinite(validDate)
-    ? new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',weekday:'short',day:'numeric',month:'short',year:'numeric'}).format(new Date(validDate))
-    : (p.date_iso || '');
-  document.getElementById('hud-time-label').textContent = `${validLabel} · ${p.hour || ''} WIB`;
-  const issueTime = Date.parse(p.issued_at);
-  document.getElementById('hud-issue').textContent = Number.isFinite(issueTime)
-    ? 'Terbit: '+new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(issueTime))+' WIB'
-    : 'Waktu terbit belum tersedia';
-  document.getElementById('val-temp').textContent = p.temp_c != null ? `${Math.round(p.temp_c)}°C` : '—';
-  document.getElementById('val-rain').textContent = p.rain_probability != null ? LangitPublicData.format(p.rain_probability,'%') : '—';
-  document.getElementById('val-wind').textContent = p.wind_kmh != null ? `${p.wind_kmh.toFixed(1)} km/jam` : '—';
-  document.getElementById('val-humidity').textContent = p.humidity_pct != null ? `${Math.round(p.humidity_pct)}%` : '—';
-}
-
-function makeSparkline(locationSlug, dateIso, activeHour) {
-  const locFeatures = features.filter(f => f.properties.slug === locationSlug && f.properties.date_iso === dateIso);
-  if (locFeatures.length < 2) return '';
-  locFeatures.sort((a,b) => {
-    const ha = (a.properties && a.properties.hour) || '';
-    const hb = (b.properties && b.properties.hour) || '';
-    return ha.localeCompare(hb);
-  });
-  const temps = locFeatures.map(f => f.properties.temp_c).filter(t => t != null);
-  if (temps.length !== locFeatures.length) return "";
-  const minTemp = Math.min(...temps);
-  const maxTemp = Math.max(...temps);
-  const range = maxTemp - minTemp || 1;
-  const points = locFeatures.map((f, i) => {
-    const x = (i / (locFeatures.length - 1)) * 180;
-    const y = 25 - ((f.properties.temp_c - minTemp) / range) * 20;
-    return `${x},${y}`;
-  }).join(' ');
-  const activeIdx = locFeatures.findIndex(f => f.properties.hour === activeHour);
-  const activePt = activeIdx !== -1 ? `${(activeIdx / (locFeatures.length - 1)) * 180},${25 - ((locFeatures[activeIdx].properties.temp_c - minTemp) / range) * 20}` : '';
-  let activeMarker = '';
-  if (activePt) {
-    const [ax, ay] = activePt.split(',');
-    activeMarker = `<circle cx="${ax}" cy="${ay}" r="3" fill="#32b7ff" stroke="#fff" stroke-width="1.5" />`;
-  }
-  return `
-    <div class="sparkline-wrap" style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)">
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-bottom:4px">
-        <span>Tren Temp Hari Ini</span>
-        <span>${minTemp}°–${maxTemp}°C</span>
-      </div>
-      <svg width="180" height="30" style="overflow:visible">
-        <polyline fill="none" stroke="rgba(50, 183, 255, 0.4)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
-        ${activeMarker}
-      </svg>
-    </div>
-  `;
-}
-
-function ptxt(p) {
-  if (!p) return '';
-  const escapeText = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
-  p = {...p, location_name:escapeText(p.location_name), date:escapeText(p.date), hour:escapeText(p.hour), risk_label:escapeText(p.risk_label), condition:escapeText(p.condition)};
-  const sparklineHtml = makeSparkline(p.slug, p.date_iso, p.hour);
-  const riskColor = colors[p.risk_class || 'limited'];
-  return `
-    <div class="popup-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
-        <b style="font-family:'Outfit'; font-size:14px; color:#fff">${p.location_name}</b>
-        <span class="popup-badge" style="background:${riskColor}20; color:${riskColor}; border:1px solid ${riskColor}30">${p.risk_label || '—'}</span>
-      </div>
-      <div style="font-size:11px; color:#94a3b8; margin-bottom:10px">${p.date} · ${p.hour} WIB</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:11px">
-        <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
-          <div style="color:#94a3b8; font-size:9px">SUHU</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.temp_c != null ? p.temp_c + '°C' : '—'}</div>
-        </div>
-        <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
-          <div style="color:#94a3b8; font-size:9px">HUJAN</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.rain_probability != null ? LangitPublicData.format(p.rain_probability,'%') : '—'}</div>
-        </div>
-        <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
-          <div style="color:#94a3b8; font-size:9px">LEMBAP</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.humidity_pct != null ? p.humidity_pct + '%' : '—'}</div>
-        </div>
-        <div style="background:rgba(255,255,255,0.02); padding:5px; border-radius:8px; border:1px solid rgba(255,255,255,0.04)">
-          <div style="color:#94a3b8; font-size:9px">ANGIN</div>
-          <div style="font-weight:700; color:#f8fbff; margin-top:2px">${p.wind_kmh != null ? p.wind_kmh + ' km/jam' : '—'}</div>
-        </div>
-      </div>
-      <div style="margin-top:10px; font-size:11px; color:#a8c4e0; font-style:italic; line-height:1.4">
-        ${p.condition}
-      </div>
-      ${sparklineHtml}
-    </div>
-  `;
-}
-
-function updateLegend() {
-  const legendEl = document.getElementById('map-legend');
-  let legendHtml = '';
-  if (state.activeLayer === 'risiko') {
-    legendHtml = `
-      <div class="legend-title">Indeks aktivitas</div>
-      <div><i class="dot" style="background:#10b981"></i>Gangguan rendah</div>
-      <div><i class="dot" style="background:#f59e0b"></i>Dipantau</div>
-      <div><i class="dot" style="background:#ff9d42"></i>Waspada</div>
-      <div><i class="dot" style="background:#ef4444"></i>Gangguan tinggi</div>
-    `;
-  } else if (state.activeLayer === 'temp') {
-    legendHtml = `
-      <div class="legend-title">Temperatur</div>
-      <div><i class="dot" style="background:#3b82f6"></i>&le; 18°C (Sejuk)</div>
-      <div><i class="dot" style="background:#60a5fa"></i>19°C - 22°C</div>
-      <div><i class="dot" style="background:#f59e0b"></i>23°C - 25°C</div>
-      <div><i class="dot" style="background:#f97316"></i>26°C - 28°C</div>
-      <div><i class="dot" style="background:#ef4444"></i>&gt; 28°C (Hangat)</div>
-    `;
-  } else if (state.activeLayer === 'rain') {
-    legendHtml = `
-      <div class="legend-title">Peluang Hujan</div>
-      <div><i class="dot" style="background:#3b82f6"></i>Rendah (&le; 20%)</div>
-      <div><i class="dot" style="background:#f59e0b"></i>Sedang (21% - 50%)</div>
-      <div><i class="dot" style="background:#ef4444"></i>Tinggi (&gt; 50%)</div>
-    `;
-  } else if (state.activeLayer === 'wind') {
-    legendHtml = `
-      <div class="legend-title">Kecepatan Angin</div>
-      <div><i class="dot" style="background:#10b981"></i>&le; 5 km/jam (Teduh)</div>
-      <div><i class="dot" style="background:#3b82f6"></i>6 - 12 km/jam (Sepoi)</div>
-      <div><i class="dot" style="background:#f59e0b"></i>13 - 20 km/jam (Kencang)</div>
-      <div><i class="dot" style="background:#ef4444"></i>&gt; 20 km/jam</div>
-    `;
-  } else if (state.activeLayer === 'humidity') {
-    legendHtml = `
-      <div class="legend-title">Kelembapan Nisbi</div>
-      <div><i class="dot" style="background:#93c5fd"></i>Kering (&le; 55%)</div>
-      <div><i class="dot" style="background:#38bdf8"></i>Nyaman (56% - 70%)</div>
-      <div><i class="dot" style="background:#0ea5e9"></i>Lembap (71% - 85%)</div>
-      <div><i class="dot" style="background:#0284c7"></i>Sangat Lembap</div>
-    `;
-  } else if (state.activeLayer === 'cloud') {
-    legendHtml = `
-      <div class="legend-title">Tutupan Awan</div>
-      <div><i class="dot" style="background:#475569"></i>Cerah (&le; 30%)</div>
-      <div><i class="dot" style="background:#94a3b8"></i>Berawan (31% - 60%)</div>
-      <div><i class="dot" style="background:#f1f5f9"></i>Mendung (&gt; 60%)</div>
-    `;
-  }
-  legendEl.innerHTML = legendHtml + '<div><i class="dot" style="background:#94a3b8"></i>Data terbatas</div>';
-}
-
-let activeTimeIndex = 0;
-
-function drawForTime(dateIso, activeHour) {
-  if (layer) layer.clearLayers();
-  const selected = features.filter(f => f.properties.date_iso === dateIso && f.properties.hour === activeHour);
-  const activeLoc = (selected.find(f=>f.properties.slug===selectedSlug) || {}).properties || {
-    location_name: (features.find(f=>f.properties.slug===selectedSlug)||first).properties.location_name,
-    date_iso:dateIso, hour:activeHour, risk_class:'limited', condition:'Data jam ini belum tersedia'
-  };
-  state.windSpeed = activeLoc.wind_kmh ?? null;
-  state.cloudPct = activeLoc.cloud_pct ?? null;
-  state.tempC = activeLoc.temp_c ?? null;
-  state.humidityPct = activeLoc.humidity_pct ?? null;
-  state.rainProb = activeLoc.rain_probability ?? null;
-
-  updateHUDValues(activeLoc);
-  if (!layer) return;
-
-  selected.forEach(f => {
-    const p = f.properties;
-    const coords = f.geometry.coordinates;
-    const latlng = [coords[1], coords[0]];
-    const field = {temp:'temp_c', rain:'rain_probability', wind:'wind_kmh', humidity:'humidity_pct', cloud:'cloud_pct'}[state.activeLayer];
-    if (field && p[field] == null) {
-      L.circleMarker(latlng, {radius:8, color:colors.limited, fillOpacity:0.3})
-        .bindPopup(ptxt(p)).addTo(layer);
-      return;
-    }
-
-    if (state.activeLayer === 'risiko') {
-      const cls = p.risk_class || 'limited';
-      const color = colors[cls];
-      const size = 12 + (p.risk_score || 0) * 0.18;
-      const iconHtml = `
-        <div class="pulse-marker" style="--marker-color:${color}; --pulse-size:${size * 3}px">
-          <div class="pulse-dot" style="width:${size}px; height:${size}px"></div>
-          <div class="pulse-ring"></div>
-        </div>
-      `;
-      L.marker(latlng, {
-        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
-        icon: L.divIcon({
-          html: iconHtml,
-          className: 'custom-leaflet-marker',
-          iconSize: [size * 3, size * 3],
-          iconAnchor: [size * 1.5, size * 1.5]
-        })
-      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
-
-    } else if (state.activeLayer === 'temp') {
-      const temp = p.temp_c;
-      const color = getTempColor(temp);
-      const iconHtml = `
-        <div class="temp-badge" style="background:${color}; box-shadow:0 0 15px ${color}80">
-          ${Math.round(temp)}°C
-        </div>
-      `;
-      L.marker(latlng, {
-        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
-        icon: L.divIcon({
-          html: iconHtml,
-          className: 'custom-leaflet-marker',
-          iconSize: [45, 24],
-          iconAnchor: [22, 12]
-        })
-      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
-
-    } else if (state.activeLayer === 'rain') {
-      const rain = p.rain_probability;
-      const radarColor = rain > 50 ? '#ef4444' : (rain > 20 ? '#f59e0b' : '#3b82f6');
-      const iconHtml = `
-        <div class="radar-marker" style="--radar-color:${radarColor}">
-          <div class="radar-ping"></div>
-          <div class="radar-core"></div>
-        </div>
-      `;
-      L.marker(latlng, {
-        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
-        icon: L.divIcon({
-          html: iconHtml,
-          className: 'custom-leaflet-marker',
-          iconSize: [60, 60],
-          iconAnchor: [30, 30]
-        })
-      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
-
-    } else if (state.activeLayer === 'wind') {
-      const wind = p.wind_kmh;
-      const color = getWindColor(wind);
-      const rotation = LangitPublicData.windRotation(p.wind_dir,wind);
-      const iconHtml = `
-        <div class="wind-badge" style="background:${color}; box-shadow:0 0 15px ${color}80; display:flex; align-items:center; gap:4px; padding:4px 8px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); color:#fff; font-family:'Outfit',sans-serif; font-size:11px; font-weight:800; white-space:nowrap;">
-          ${rotation == null ? "" : `<span title="Arah aliran angin" style="display:inline-block; transform:rotate(${rotation}deg);">➔</span>`}
-          ${wind.toFixed(1)} km/jam
-        </div>
-      `;
-      L.marker(latlng, {
-        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
-        icon: L.divIcon({
-          html: iconHtml,
-          className: 'custom-leaflet-marker',
-          iconSize: [80, 24],
-          iconAnchor: [40, 12]
-        })
-      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
-
-    } else if (state.activeLayer === 'humidity') {
-      const hum = p.humidity_pct;
-      const color = getHumidityColor(hum);
-      const size = 15 + hum * 0.15;
-      const iconHtml = `
-        <div class="humidity-halo" style="background:${color}; opacity:${0.1 + (hum/200)}; width:${size}px; height:${size}px; filter:blur(4px)">
-          <div style="width:6px; height:6px; background:#fff; border-radius:50%; margin:auto; position:absolute; inset:0"></div>
-        </div>
-      `;
-      L.marker(latlng, {
-        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
-        icon: L.divIcon({
-          html: iconHtml,
-          className: 'custom-leaflet-marker',
-          iconSize: [size, size],
-          iconAnchor: [size/2, size/2]
-        })
-      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
-
-    } else if (state.activeLayer === 'cloud') {
-      const cld = p.cloud_pct;
-      const color = getCloudColor(cld);
-      const opacity = 0.2 + (cld / 150);
-      const iconHtml = `
-        <div class="cloud-glow" style="background:${color}; opacity:${opacity}; width:32px; height:32px; border-radius:50%; filter:blur(6px); box-shadow:0 0 10px ${color}">
-          <div style="width:4px; height:4px; background:#fff; border-radius:50%; margin:auto; position:absolute; inset:0"></div>
-        </div>
-      `;
-      L.marker(latlng, {
-        title:p.location_name+' '+p.date_iso+' '+p.hour+' WIB',
-        icon: L.divIcon({
-          html: iconHtml,
-          className: 'custom-leaflet-marker',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
-        })
-      }).bindPopup(ptxt(p)).on('click',()=>selectForecast(p)).addTo(layer);
-    }
-  });
-}
-
-function switchLayer(layerName) {
-  if (!['risiko', 'temp', 'rain', 'wind', 'humidity', 'cloud'].includes(layerName)) return;
-  state.activeLayer = layerName;
-  document.querySelectorAll('.param-tab').forEach(tab=>tab.setAttribute('aria-pressed',String(tab.dataset.layer===layerName)));
-  document.querySelectorAll('.param-tab').forEach(tab => {
-    if (tab.getAttribute('data-layer') === layerName) {
-      tab.classList.add('active');
-    } else {
-      tab.classList.remove('active');
-    }
-  });
-  
-  updateLegend();
-  
-  const pills = document.querySelectorAll('.time-pill');
-  if (pills.length && pills[activeTimeIndex]) {
-    const activePill = pills[activeTimeIndex];
-    const dateIso = activePill.getAttribute('data-date');
-    const hourVal = activePill.getAttribute('data-hour');
-    drawForTime(dateIso, hourVal);
-  }
-}
-
-let playInterval = null;
-function togglePlay() {
-  const playBtn = document.getElementById('play-btn');
-  if (!document.querySelectorAll('.time-pill').length) return;
-  playBtn.setAttribute('aria-label',playInterval ? 'Putar timeline' : 'Jeda timeline');
-  playBtn.setAttribute('aria-pressed',String(!playInterval));
-  if (playInterval) {
-    clearInterval(playInterval);
-    playInterval = null;
-    playBtn.innerHTML = '&#9654;';
-  } else {
-    playBtn.innerHTML = '&#10074;&#10074;';
-    const pills = document.querySelectorAll('.time-pill');
-    playInterval = setInterval(() => {
-      activeTimeIndex = (activeTimeIndex + 1) % pills.length;
-      pills[activeTimeIndex].click();
-      pills[activeTimeIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }, 2500);
-  }
-}
-
-let map = null, layer = null;
-let selectedSlug = first.properties.slug || '';
-const timeline = LangitPublicData.timeline(features);
-const scrubber = document.getElementById('time-scrubber');
-const locationSelect = document.getElementById('map-location');
-const seenLocations = new Set();
-features.forEach(f => {
-  const p = f.properties;
-  if (seenLocations.has(p.slug)) return;
-  seenLocations.add(p.slug);
-  const option = document.createElement('option');
-  option.value = p.slug;
-  option.textContent = p.location_name;
-  locationSelect.appendChild(option);
-});
-function selectForecast(p) {
-  selectedSlug = p.slug;
-  locationSelect.value = selectedSlug;
-  updateHUDValues(p);
-}
-locationSelect.addEventListener('change',()=>{
-  selectedSlug = locationSelect.value;
-  const slot = timeline[activeTimeIndex];
-  if (slot) drawForTime(slot.date_iso,slot.hour);
-});
-const nowParts = new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Jakarta',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date()).replace(' ','T');
-const nextIndex = timeline.findIndex(p=>p.date_iso+'T'+p.hour>=nowParts);
-activeTimeIndex = Math.max(0,nextIndex);
-timeline.forEach((slot,index)=>{
-  const pill = document.createElement('button');
-  pill.className = 'time-pill';
-  pill.dataset.date = slot.date_iso;
-  pill.dataset.hour = slot.hour;
-  pill.type = 'button';
-  const label = document.createElement('span');
-  label.className = 'day-label';
-  label.textContent = new Intl.DateTimeFormat('id-ID',{timeZone:'Asia/Jakarta',day:'numeric',month:'short'}).format(new Date(slot.date_iso+'T00:00:00+07:00'));
-  pill.setAttribute('aria-label',slot.date_iso+' '+slot.hour+' WIB');
-  const clock = document.createElement('strong');
-  clock.textContent = slot.hour;
-  pill.append(label,clock);
-  pill.onclick = ()=>{
-    document.querySelectorAll('.time-pill').forEach(button=>{
-      button.classList.remove('active'); button.setAttribute('aria-pressed','false');
-    });
-    pill.classList.add('active'); pill.setAttribute('aria-pressed','true');
-    activeTimeIndex=index;
-    drawForTime(slot.date_iso,slot.hour);
-  };
-  scrubber.appendChild(pill);
-});
-function renderSelectedTime() {
-  const pills = document.querySelectorAll('.time-pill');
-  if (pills.length) pills[activeTimeIndex].click();
-  else {
-    document.getElementById('hud-location-name').textContent = 'Data prakiraan belum tersedia';
-    document.getElementById('hud-time-label').textContent = 'Gunakan tautan prakiraan atau data di bawah.';
-    document.getElementById('play-btn').disabled = true;
-  }
-}
-updateLegend();
-renderSelectedTime();
-try {
-  map = L.map('map',{scrollWheelZoom:true,maxBounds:[[-11.25,94],[6.45,141.25]],maxBoundsViscosity:.8,minZoom:5,zoomControl:false});
-  const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'});
-  tiles.on('tileerror',()=>{
-    const warning = document.getElementById('map-fallback');
-    warning.hidden=false;
-    warning.querySelector('span').textContent='Peta dasar belum dapat dimuat. Data titik prakiraan tetap tersedia.';
-  });
-  tiles.addTo(map);
-  L.control.zoom({position:'bottomleft'}).addTo(map);
-  layer = L.layerGroup().addTo(map);
-  if (features.length) map.fitBounds(L.latLngBounds(features.map(f=>[f.geometry.coordinates[1],f.geometry.coordinates[0]])),{padding:[50,50],maxZoom:13});
-  else map.setView(center,12);
-  renderSelectedTime();
-} catch(error) {
-  console.error('Map initialization failed',error);
-  document.getElementById('map-fallback').hidden=false;
-}
-document.addEventListener('keydown',event=>{
-  if (!event.target.closest('.timeline-container') || !timeline.length) return;
-  if (!['ArrowLeft','ArrowRight'].includes(event.key)) return;
-  event.preventDefault();
-  activeTimeIndex=(activeTimeIndex+(event.key==='ArrowRight'?1:timeline.length-1))%timeline.length;
-  renderSelectedTime();
-});
-window.addEventListener('pagehide',()=>{if(playInterval) clearInterval(playInterval);});
-
-// Sync with postMessage from parent dashboard window
-window.addEventListener('message', (e) => {
-  if (e.origin !== window.location.origin || e.source !== window.parent) return;
-  if (e.data && e.data.type === 'invalidateSize' && map) map.invalidateSize();
-  if (e.data && e.data.type === 'switchLayer') {
-    switchLayer(e.data.layer);
-  }
-});
-
-// Hide the back button if embedded inside an iframe
-if (window.self !== window.top) {
-  const backBtn = document.getElementById('hud-back-btn');
-  if (backBtn) backBtn.style.display = 'none';
-}
-'''.replace("__DATA__", data)
-    
     hud_html = f'''  <section class="hud">
     <div style="display:flex; justify-content:space-between; align-items:center">
-      <span class="hud-brand">{BRAND} Cuaca</span>
+      <span class="hud-brand">{BRAND} Peta</span>
+      <button type="button" id="map-panel-toggle" class="map-panel-toggle" aria-expanded="true" aria-controls="map-controls">Panel</button>
       <a class="hud-back-link" id="hud-back-btn" href="{esc(back_href)}">← Kembali</a>
     </div>
+    <div id="map-controls">
     <label for="map-location" class="hud-meta">Lokasi prakiraan</label>
     <select id="map-location" aria-label="Lokasi prakiraan"></select>
     <h1 id="hud-location-name">Memuat...</h1>
     <div class="hud-meta" id="hud-time-label">Memuat data prakiraan cuaca.</div>
     <div class="hud-meta" id="hud-issue"></div>
-    <p class="hud-meta">Titik prakiraan lokasi, bukan medan cuaca kontinu.</p>
-    
+    <p class="hud-meta">Prakiraan lokasi: gabungan sumber.</p>
+
     <div class="hud-divider"></div>
-    
-    <div class="hud-stats-grid">
+
+    <details class="point-details" open><summary>Cuaca di lokasi</summary><div class="hud-stats-grid">
       <div class="hud-stat-box">
         <span class="hud-stat-val" id="val-temp">—</span>
         <span class="hud-stat-lbl">Suhu</span>
       </div>
       <div class="hud-stat-box">
         <span class="hud-stat-val" id="val-rain">—</span>
-        <span class="hud-stat-lbl">Peluang Hujan</span>
+        <span class="hud-stat-lbl">Peluang hujan</span>
       </div>
       <div class="hud-stat-box">
         <span class="hud-stat-val" id="val-wind">—</span>
-        <span class="hud-stat-lbl">Kecepatan Angin</span>
+        <span class="hud-stat-lbl">Angin</span>
       </div>
       <div class="hud-stat-box">
         <span class="hud-stat-val" id="val-humidity">—</span>
         <span class="hud-stat-lbl">Kelembapan</span>
       </div>
-    </div>
+    </div></details>
 
     <div class="hud-divider"></div>
 
     <div class="parameter-tabs">
-      <button class="param-tab active" aria-pressed="true" data-layer="risiko" onclick="switchLayer('risiko')">Aktivitas</button>
+      <button class="param-tab" aria-pressed="false" data-layer="risiko" onclick="switchLayer('risiko')">Aktivitas</button>
       <button class="param-tab" aria-pressed="false" data-layer="temp" onclick="switchLayer('temp')">Suhu</button>
       <button class="param-tab" aria-pressed="false" data-layer="rain" onclick="switchLayer('rain')">Hujan</button>
-      <button class="param-tab" aria-pressed="false" data-layer="wind" onclick="switchLayer('wind')">Angin</button>
+      <button class="param-tab active" aria-pressed="true" data-layer="wind" onclick="switchLayer('wind')">Angin</button>
       <button class="param-tab" aria-pressed="false" data-layer="humidity" onclick="switchLayer('humidity')">Lembap</button>
       <button class="param-tab" aria-pressed="false" data-layer="cloud" onclick="switchLayer('cloud')">Awan</button>
     </div>
 
+    <div class="field-tools"><p id="field-status" class="hud-meta" data-state="loading">Memuat grid GFS…</p><button type="button" id="wind-animation" class="wind-animation" aria-pressed="false" disabled>Animasi angin</button><p class="field-hint">Arah dan kecepatan relatif angin 10 m.</p></div>
     <details class="map-legend-details">
       <summary>Arti warna peta</summary>
       <div class="legend" id="map-legend"></div>
     </details>
 
+    <p class="field-credit">NOAA GFS via <a href="https://open-meteo.com/">Open-Meteo</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> · <a href="{'weather_field_v1.json' if back_href == 'index.html' else '../weather_field_v1.json'}">Data grid</a></p>
+    </div>
   </section>'''
 
     timeline_html = '''  <div class="timeline-container">
     <button class="play-btn" id="play-btn" aria-label="Putar timeline" aria-pressed="false" onclick="togglePlay()">&#9654;</button>
-    <div class="time-scrubber" id="time-scrubber"></div>
+    <div class="timeline-track"><input id="forecast-range" type="range" min="0" max="0" value="0" aria-label="Waktu prakiraan"><div class="time-scrubber" id="time-scrubber"></div></div>
   </div>'''
 
     legend_html = ''
@@ -1727,14 +1242,18 @@ if (window.self !== window.top) {
 </head>
 <body>
   <div id="map"></div>
-  <canvas id="particle-canvas"></canvas>
+
   {hud_html}
   {timeline_html}
   {legend_html}
+  <p class="field-inspector" id="field-inspector" role="status">Klik peta untuk nilai grid GFS.</p>
+  <small class="map-author">Gias Sabik</small>
   <div id="map-fallback" class="map-fallback" role="alert" hidden><span>Peta interaktif belum tersedia. Data prakiraan tetap dapat dibaca.</span> <a href="{esc(back_href)}">Buka prakiraan</a> · <a href="{'langit_all_locations.geojson' if back_href == 'index.html' else 'langit_location.geojson'}">Data GeoJSON</a></div>
   <noscript><p class="map-fallback">Aktifkan JavaScript untuk peta, atau <a href="{esc(back_href)}">buka prakiraan tertulis</a>.</p></noscript>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="{asset_prefix}{asset_name('data.js')}"></script>
+  <script src="{asset_prefix}{asset_name('field.js')}"></script>
+  <script>window.LANGIT_FIELD_URL={'"weather_field_v1.json"' if back_href == 'index.html' else '"../weather_field_v1.json"'};</script>
   <script>{js}</script>
 </body>
 </html>'''
@@ -1744,7 +1263,7 @@ def v65_today_page(api: Dict[str, Any]) -> str:
     sub = f"{day['date_label']}. {decision_sentence(api['location_name'], day, short=True)}"
     body = v65_hero(api, heading, sub, day)
     body += v65_notice()
-    
+
     active_index = next((i for i, item in enumerate(api["days"]) if item["date_iso"] == day["date_iso"]), 0)
     tabs = "".join(
         f'<button class="timeline-node {"active" if i == active_index else ""}" aria-pressed="{str(i == active_index).lower()}" data-target="day-{i}">'
@@ -1765,10 +1284,10 @@ def v65_today_page(api: Dict[str, Any]) -> str:
         panel_body += v65_hours(d)
         body += f'<div id="day-{i}" class="day-panel {active_class}">{panel_body}</div>'
     body += '</div>'
-    
+
     # Tactic Weather Command Center Console
     body += v65_command_center(api)
-    
+
     body += '<div class="divider"></div>'
     body += v65_share(api, day)
     return v65_document(api, "today", f"LANGIT — {api['location_name']}", body)
@@ -1789,11 +1308,11 @@ def v65_three_day_page(api: Dict[str, Any]) -> str:
 
 def v65_activity_page(api: Dict[str, Any]) -> str:
     day = api["today"]
-    body = v65_hero(api, "Saran\naktivitas", f"{day['date_label']}. Fokus pada jam yang perlu dipantau.", day)
+    body = v65_hero(api, "Saran\naktivitas", f"{day['date_label']}. Panduan berdasarkan prakiraan hari ini.", day)
     body += v65_notice()
     body += v65_decision(api, day)
     body += v65_activities(day)
-    body += v65_timeline(day["hours"], "Jam yang perlu dipantau", "Nilai juga tersedia pada detail per jam.")
+    body += v65_timeline(day["hours"], "Jam yang perlu dipantau", "Lihat rincian per jam untuk angka lengkap.")
     body += v65_periods(day)
     body += v65_hours(day)
     body += '<div class="divider"></div>'
@@ -1806,7 +1325,7 @@ def v65_planner_page(api: Dict[str, Any]) -> str:
     rows = day.get("hours") or []
     options = "".join(f'<option value="{esc(x.get("hour"))}">{esc(x.get("hour"))} · {esc(x.get("condition"))} · hujan {pct(x.get("rain_probability"))}</option>' for x in rows)
     data = inline_json(day)
-    body = v65_hero(api, "Planner\ncuaca", f"{day['date_label']}. Cek jam terbaik untuk aktivitas.", day, show_metrics=False)
+    body = v65_hero(api, "Rencana\naktivitas", f"{day['date_label']}. Periksa prakiraan sebelum beraktivitas.", day, show_metrics=False)
     body += v65_notice()
     body += f'''<section class="section-compact"><div class="container">
     <div class="glass glass-static reveal">
@@ -1877,7 +1396,7 @@ def v65_data_page(api: Dict[str, Any]) -> str:
         for r in sources
     ) or '<tr><td colspan="4" style="color:var(--mist)">Belum ada tabel sumber.</td></tr>'
 
-    body = v65_hero(api, "Keandalan\ndata", f"{day['date_label']}. Status sumber untuk tanggal berlaku ini; sumber dapat memiliki jam yang kosong.", day, show_metrics=False)
+    body = v65_hero(api, "Keandalan\ndata", f"{day['date_label']}. Ketersediaan sumber pada tanggal terpilih.", day, show_metrics=False)
     body += v65_notice()
     body += f'''<section class="section-compact"><div class="container">
     <div class="glass glass-static reveal">
@@ -1910,7 +1429,7 @@ def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
     pct_done = clamp(matched / max(1, target) * 100)
     enough = summary.get("sample_status") == "ENOUGH_TO_EVALUATE" and matched >= target
 
-    body = v65_hero(api, "Akurasi", f"{day['date_label']}. Skor muncul setelah data cukup.", day, show_metrics=False)
+    body = v65_hero(api, "Akurasi", f"{day['date_label']}. Evaluasi ditampilkan jika data pembanding cukup.", day, show_metrics=False)
     body += v65_notice()
     body += f'''<section class="section-compact"><div class="container">
     <div class="glass glass-static reveal">
@@ -1962,10 +1481,10 @@ def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
             n_cases = r.get("n", 0)
             mean_forecast = pick(r, "mean_forecast_probability", "mean_forecast_pct")
             obs_freq = pick(r, "observed_rain_frequency", "observed_frequency_pct")
-            
+
             mean_str = f"{float(mean_forecast):.1f}%" if mean_forecast not in (None, "", "—") else "—"
             obs_str = f"{float(obs_freq):.1f}%" if obs_freq not in (None, "", "—") else "—"
-            
+
             rel_rows += f'''<tr>
               <td><span style="font-weight:700">{esc(bin_label)}</span></td>
               <td>{esc(n_cases)}</td>
@@ -1981,7 +1500,7 @@ def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
         <div class="section-header">
           <div class="section-overline">Kalibrasi</div>
           <h2 class="section-title">Bukti Peluang Hujan (Reliability)</h2>
-          <p class="section-desc">Bandingkan seberapa sering prakiraan peluang hujan Sentinel X terbukti di dunia nyata.</p>
+          <p class="section-desc">Bandingkan peluang prakiraan dengan frekuensi hujan teramati.</p>
         </div>
         <div style="overflow-x:auto;margin-top:20px">
           <table class="source-table">
@@ -2057,6 +1576,8 @@ def verify(root: Path) -> int:
 
 
 def rebuild(root: Path, public_base_url: str = "") -> int:
+    weather_field.ensure(root)
+    weather_news.ensure(root)
     meta = metadata_by_slug(root)
     dirs = location_dirs(root)
     if not dirs:
@@ -2065,6 +1586,7 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
     write_text(root / "assets" / asset_name("css"), CSS_V65)
     write_text(root / "assets" / asset_name("js"), JS_V65)
     write_text(root / "assets" / asset_name("data.js"), DATA_JS)
+    write_text(root / "assets" / asset_name("field.js"), FIELD_JS)
     # Photography is a presentation asset; source forecast data is untouched.
     for asset in campus_ui.ASSET_ROOT.iterdir():
         if asset.suffix == ".webp":
@@ -2125,7 +1647,7 @@ def rebuild(root: Path, public_base_url: str = "") -> int:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(description="Rebuild LANGIT v65 cinematic public HTML layer.")
+    parser = argparse.ArgumentParser(description="Build the LANGIT public website.")
     parser.add_argument("--root", default="outputs", help="Output directory from forecast generator.")
     parser.add_argument("--public-base-url", default="", help="GitHub Pages base URL.")
     parser.add_argument("--verify-only", action="store_true", help="Only verify public files.")

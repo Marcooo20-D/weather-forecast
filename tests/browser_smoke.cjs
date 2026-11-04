@@ -57,6 +57,7 @@ async function main() {
       route => route.abort());
     await context.tracing.start({screenshots: false, snapshots: true});
     const page = await context.newPage();
+    let expectedFieldFailure=false;
     currentPage = page;
     page.setDefaultTimeout(12000);
     page.on('pageerror', error => report.pageErrors.push({url: page.url(), message: error.message}));
@@ -67,6 +68,7 @@ async function main() {
     page.on('requestfailed', request => {
       const entry = {url: request.url(), error: request.failure()?.errorText};
       if (entry.url.startsWith(base)) {
+        if(expectedFieldFailure&&entry.url.endsWith('/weather_field_v1.json')){(report.expectedFailures ||= []).push(entry);return;}
         if (entry.error !== 'net::ERR_ABORTED') report.localFailures.push(entry);
       } else report.externalFailures.push(entry);
     });
@@ -100,6 +102,14 @@ async function main() {
     await checkHero('dago');
     await screenshot('portal');
     await checkLayout('portal');
+    assert.ok(await page.locator('.site-credit').textContent());
+    await page.locator('.news-filter[data-news-region="jabar"]').click();
+    assert.ok(await page.locator('.news-item:not([hidden])').evaluateAll(items=>items.every(a=>a.dataset.region==='jabar')));
+    await page.locator('.news-filter[data-news-region="indonesia"]').click();
+    assert.ok(await page.locator('.news-item:not([hidden])').evaluateAll(items=>items.every(a=>a.dataset.region==='indonesia')));
+    await page.locator('.news-filter[data-news-region="all"]').click();
+    await screenshot('headlines');
+    await checkLayout('publisher headlines and region filters');
     assert.equal(await page.locator('.hero-campus-glance').isVisible(),true,'weather summary remains visible on phones');
     await page.locator('#kampus').scrollIntoViewIfNeeded();
     await screenshot('campuses');
@@ -175,6 +185,21 @@ async function main() {
 
     for (const route of ['langit_portal_map.html', ...manifest.locations.map(x => `${x.slug}/langit_map_room.html`)]) {
       await go(route);
+      await page.locator('#field-status[data-state="ready"]').waitFor({state:'visible'});
+      const motion=page.locator('#wind-animation');
+      assert.equal(await motion.getAttribute('aria-pressed'),'false','reduced motion is respected');
+      assert.ok(await page.locator('.weather-field-canvas').evaluate(c=>c.getContext('2d').getImageData(Math.floor(c.width/2),Math.floor(c.height/2),1,1).data[3]>0),'a real field shades the map');
+      await motion.click();
+      await page.waitForFunction(min=>Number(document.querySelector('.weather-wind-canvas')?.dataset.frame)>min,route==='langit_portal_map.html'?45:3);
+      if(route==='langit_portal_map.html')await screenshot('wind-field');
+      await motion.click();
+      const pausedFrame=await page.locator('.weather-wind-canvas').getAttribute('data-frame');
+      await page.waitForTimeout(150);
+      assert.equal(await page.locator('.weather-wind-canvas').getAttribute('data-frame'),pausedFrame,'wind animation pauses');
+      await page.locator('#map-panel-toggle').click();
+      assert.equal(await page.locator('#map-controls').evaluate(e=>e.hidden),true);
+      await page.locator('#map-panel-toggle').click();
+      report.checks.push(`${viewport.width}: ${route}: native GFS field, wind motion, pause and panel`);
       assert.ok(await page.locator('.time-pill').count() > 0, 'map timeline exists');
       assert.ok(await page.locator('.leaflet-marker-icon').count() > 0, 'real Leaflet forecast markers render');
       const options = await page.locator('#map-location option').evaluateAll(elements => elements.map(x => x.value));
@@ -196,7 +221,7 @@ async function main() {
       await page.locator('#play-btn').click();
       assert.equal(await page.locator('#play-btn').getAttribute('aria-pressed'), 'false');
       await page.locator('.map-legend-details summary').click();
-      assert.ok((await page.locator('#map-legend').textContent()).includes('Tutupan Awan'));
+      assert.match(await page.locator('#map-legend').textContent(),/Tutupan awan/i);
       await page.locator('#map-legend').scrollIntoViewIfNeeded();
       const legendFits=await page.locator('#map-legend').evaluate(element=>{
         const r=element.getBoundingClientRect(),hud=element.closest('.hud').getBoundingClientRect();
@@ -212,6 +237,17 @@ async function main() {
       await screenshot(route.replaceAll('/', '-').replace('.html', ''));
       report.checks.push(`${viewport.width}: ${route}: timeline, locations, six layers, play/pause`);
     }
+
+    // Regional data may fail while the campus forecasts remain usable.
+    expectedFieldFailure=true;
+    await page.route('**/weather_field_v1.json',route=>route.abort());
+    await go('langit_portal_map.html');
+    await page.locator('#field-status[data-state="unavailable"]').waitFor({state:'visible'});
+    assert.equal(await page.locator('#wind-animation').isDisabled(),true);
+    assert.ok(await page.locator('.time-pill').count()>0);
+    assert.equal(await page.locator('.weather-field-canvas').evaluate(c=>c.getContext('2d').getImageData(Math.floor(c.width/2),Math.floor(c.height/2),1,1).data[3]),0,'no fabricated field on failure');
+    report.checks.push(`${viewport.width}: missing grid disables fields and retains forecast controls`);
+    await page.unroute('**/weather_field_v1.json');expectedFieldFailure=false;
 
     // Deliberately fail the map library: forecast values and controls must survive.
     await page.route('**/leaflet.js', route => route.abort());

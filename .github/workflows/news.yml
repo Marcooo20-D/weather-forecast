@@ -1,0 +1,52 @@
+name: Meteorology headlines
+
+on:
+  schedule:
+    - cron: '27 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: langit-production
+  cancel-in-progress: false
+
+jobs:
+  headlines:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /site_tools/weather_news.py
+            /outputs/weather_news.json
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Update publisher headlines
+        run: python -m site_tools.weather_news --root outputs
+      - name: Save latest headlines
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -f outputs/weather_news.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Update meteorology headlines [skip ci]'
+            git push origin HEAD:main
+          fi
+          mkdir news-public
+          cp outputs/weather_news.json news-public/weather_news.json
+      - name: Publish headline data
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: news-public
+          publish_branch: gh-pages
+          keep_files: true
+          commit_message: 'Update public meteorology headlines'
