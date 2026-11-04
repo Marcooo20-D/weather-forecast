@@ -17,6 +17,8 @@ a,
 .glass,
 .campus-card,
 .chart-wrapper,
+.chart-tooltip,
+.hour-box,
 .decision-main,
 .kpi-card,
 .period-card,
@@ -427,6 +429,12 @@ body {
   }
   .mobile-bottom-sheet {
     padding: 20px;
+  }
+  .hour-box {
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    padding-inline: 0;
   }
   .footer-links {
     gap: 14px;
