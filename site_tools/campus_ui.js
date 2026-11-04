@@ -249,7 +249,7 @@
     }
     const chips = container.querySelectorAll(".chart-chip"),
       tooltip = container.querySelector(".chart-tooltip");
-    let variable = "rain";
+    let variable = "rain", touchReadout = false;
     const colors = {
       rain: "#0868ab",
       temp: "#b36726",
@@ -277,11 +277,24 @@
     }
     function draw() {
       if (!hours.length || svg.clientWidth <= 0) return;
+      touchReadout = false;
+      hide();
       const w = Math.max(240, svg.clientWidth),
         h = Math.max(180, svg.clientHeight);
       svg.setAttribute("viewBox", "0 0 " + w + " " + h);
       const model = window.LangitPublicData.chart(hours, variable, w, h),
         color = colors[variable];
+      svg.onpointerdown = (event) => {
+        touchReadout = event.pointerType === "touch" || event.pointerType === "pen";
+      };
+      svg.onpointerup = (event) => {
+        if (!touchReadout || !model.points.length) return;
+        const rect = svg.getBoundingClientRect();
+        const x = (event.clientX - rect.left) * w / rect.width;
+        const nearest = model.points.reduce((a, b) => Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a);
+        if (nearest.val == null) hide();
+        else show(nearest, model.unit);
+      };
       svg.replaceChildren();
       function element(tag, attrs, value) {
         const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
@@ -376,8 +389,12 @@
         dot.addEventListener("mouseenter", () => show(point, model.unit));
         dot.addEventListener("focus", () => show(point, model.unit));
         dot.addEventListener("pointerdown", () => show(point, model.unit));
-        dot.addEventListener("mouseleave", hide);
-        dot.addEventListener("blur", hide);
+        dot.addEventListener("pointerleave", (event) => {
+          if (event.pointerType === "mouse") hide();
+        });
+        dot.addEventListener("blur", () => {
+          if (!touchReadout) hide();
+        });
         if (label)
           element(
             "text",
