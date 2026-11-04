@@ -33,6 +33,7 @@ jobs:
       contents: write
     env:
       TZ: Asia/Jakarta
+      PUBLIC_BASE_URL: https://marcooo20-d.github.io/weather-forecast
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -69,7 +70,7 @@ jobs:
         run: python -m unittest discover -s tests -q
       - name: Build interface from the latest saved forecasts
         run: |
-          LANGIT_SOURCE_SHA="$(git rev-parse HEAD)" python build_weather_site.py --root outputs
+          LANGIT_SOURCE_SHA="$(git rev-parse HEAD)" python build_weather_site.py --root outputs --public-base-url "$PUBLIC_BASE_URL"
           python build_weather_site.py --root outputs --verify-only
           python -m site_tools.public_site --source outputs --destination _site
       - name: Upload public site

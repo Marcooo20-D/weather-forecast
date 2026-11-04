@@ -696,12 +696,16 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
     days = []
     sources_by_date = {}
     previous_sources = raw_api.get("sources_by_date") or {}
+    previous_days = {day.get("date_iso"): day for day in raw_api.get("days", [])}
     for i in range(3):
         date_value = base_date + dt.timedelta(days=i)
         stamp = date_value.strftime("%Y%m%d")
         payload = read_json(safe_find_file(directory, f"sentinel_x_{stamp}.json"), {}, strict=True) or {}
         rows = payload.get("hourly") or []
         issued = payload.get("issued_at") or (payload.get("daily") or {}).get("issued_at") or (payload.get("daily") or {}).get("generated_at")
+        previous_day = previous_days.get(date_value.isoformat(), {})
+        if not payload:
+            issued = previous_day.get("issued_at") or issued
         if not rows:
             rows = read_csv(safe_find_file(directory, f"sentinel_x_{stamp}.csv"))
         if not rows:
@@ -727,7 +731,7 @@ def load_location_api(directory: Path, meta: Dict[str, Any]) -> Dict[str, Any]:
         sources_by_date[date_value.isoformat()] = (
             read_csv(directory / f"source_status_{stamp}.csv") or
             payload.get("source_states") or previous_sources.get(date_value.isoformat()) or [])
-        ensemble = payload.get("ensemble_status") or {}
+        ensemble = (payload.get("ensemble_status") if payload else previous_day.get("ensemble_status")) or {}
         day["ensemble_status"] = {key: ensemble.get(key) for key in
                                   ("status", "requested_model_count", "successful_model_count", "calibration_status")}
         days.append(day)
