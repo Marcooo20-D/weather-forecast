@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-11-03T20:42:11.137939+07:00",
+  "generated_at": "2026-11-04T11:29:48.386416+07:00",
   "location": "Arjawinangun, Cirebon",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,18 +25,18 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-11-03T20:40:34.643425+07:00",
-    "issued_at": "2026-11-03T20:40:34.643425+07:00",
+    "generated_at": "2026-11-04T11:28:38.434120+07:00",
+    "issued_at": "2026-11-04T11:28:38.434120+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Arjawinangun, Cirebon",
     "mission": "safety_first",
     "daily_operational_status": "GREEN",
     "data_quality": "limited",
     "best_general_activity_window": [],
-    "peak_rain_threat_hour": "22:00",
-    "peak_rain_threat_score": 33.9,
-    "peak_heavy_rain_threat_hour": "22:00",
-    "peak_heavy_rain_threat_score": 14.1,
+    "peak_rain_threat_hour": "19:00",
+    "peak_rain_threat_score": 33.6,
+    "peak_heavy_rain_threat_hour": "19:00",
+    "peak_heavy_rain_threat_score": 14.0,
     "summary_text": "Arjawinangun, Cirebon: data prakiraan belum lengkap atau sudah usang. Rekomendasi waktu aktivitas belum tersedia.",
     "risk_window": [],
     "location_personality": {
@@ -48,7 +48,7 @@
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
     "dominant_atmospheric_mode": "MIXED_LOCAL_ATMOSPHERE",
-    "peak_rain_probability": 27.831541218637994
+    "peak_rain_probability": 28.422939068100362
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
