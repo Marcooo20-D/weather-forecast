@@ -44,7 +44,13 @@ jobs:
             /site_tools/
             /tests/
             /.github/
-            /outputs/*.csv
+            /outputs/dim_locations.csv
+            /outputs/dim_sources.csv
+            /outputs/ensemble_all_locations.csv
+            /outputs/ensemble_fact_all_locations.csv
+            /outputs/ensemble_long_all_locations.csv
+            /outputs/forecast_all_locations.csv
+            /outputs/source_status_all_locations.csv
             /outputs/weather_field_v1.json
             /outputs/weather_news.json
             /outputs/*/langit_api_v1.json
