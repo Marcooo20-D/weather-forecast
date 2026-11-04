@@ -503,8 +503,12 @@ select:focus-visible {
 .map-fallback,
 .legend,
 .leaflet-popup-content-wrapper,
-.leaflet-bar {
+.leaflet-bar,
+.wind-badge {
   border-radius: 0 !important;
+}
+.wind-badge {
+  box-shadow: none !important;
 }
 .hud {
   box-shadow: 0 4px 20px #183f5918;

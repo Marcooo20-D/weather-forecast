@@ -662,12 +662,17 @@ try {
   document.getElementById("field-status").textContent =
     "Lapisan peta tidak tersedia.";
 }
-document.getElementById("map-panel-toggle").addEventListener("click", () => {
+function setMapPanel(open) {
   const body = document.getElementById("map-controls");
-  body.hidden = !body.hidden;
+  body.hidden = !open;
   document
     .getElementById("map-panel-toggle")
-    .setAttribute("aria-expanded", String(!body.hidden));
+    .setAttribute("aria-expanded", String(open));
+}
+if (window.matchMedia && window.matchMedia("(max-width:768px)").matches)
+  setMapPanel(false);
+document.getElementById("map-panel-toggle").addEventListener("click", () => {
+  setMapPanel(document.getElementById("map-controls").hidden);
 });
 const forecastRange = document.getElementById("forecast-range");
 forecastRange.max = String(Math.max(0, timeline.length - 1));

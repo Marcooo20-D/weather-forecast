@@ -333,6 +333,14 @@ async function main() {
       ...manifest.locations.map((x) => `${x.slug}/langit_map_room.html`),
     ]) {
       await go(route);
+      if (viewport.width <= 768) {
+        assert.equal(
+          await page.locator("#map-controls").evaluate((e) => e.hidden),
+          true,
+          "mobile map opens with unobstructed geography",
+        );
+        await page.locator("#map-panel-toggle").click();
+      }
       await page
         .locator('#field-status[data-state="ready"]')
         .waitFor({ state: "visible" });
@@ -366,7 +374,13 @@ async function main() {
           ) > min,
         route === "langit_portal_map.html" ? 45 : 3,
       );
-      if (route === "langit_portal_map.html") await screenshot("wind-field");
+      if (route === "langit_portal_map.html") {
+        if (viewport.width <= 768)
+          await page.locator("#map-panel-toggle").click();
+        await screenshot("wind-field");
+        if (viewport.width <= 768)
+          await page.locator("#map-panel-toggle").click();
+      }
       await motion.click();
       const pausedFrame = await page
         .locator(".weather-wind-canvas")
@@ -479,6 +493,8 @@ async function main() {
     expectedFieldFailure = true;
     await page.route("**/weather_field_v1.json", (route) => route.abort());
     await go("langit_portal_map.html");
+    if (viewport.width <= 768)
+      await page.locator("#map-panel-toggle").click();
     await page
       .locator('#field-status[data-state="unavailable"]')
       .waitFor({ state: "visible" });
