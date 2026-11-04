@@ -375,6 +375,7 @@
         });
         dot.addEventListener("mouseenter", () => show(point, model.unit));
         dot.addEventListener("focus", () => show(point, model.unit));
+        dot.addEventListener("pointerdown", () => show(point, model.unit));
         dot.addEventListener("mouseleave", hide);
         dot.addEventListener("blur", hide);
         if (label)
@@ -428,6 +429,49 @@
     );
   });
 
+  function openHourlySheet(sheet) {
+    sheet.showModal();
+    sheet.dataset.pageOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  }
+  document.querySelectorAll(".mobile-bottom-sheet").forEach((sheet) => {
+    sheet.addEventListener("close", () => {
+      document.body.style.overflow = sheet.dataset.pageOverflow || "";
+    });
+  });
+  {
+    document.querySelectorAll(".map-wrapper").forEach((wrapper, i) => {
+      const frame = wrapper.querySelector(".map-frame");
+      if (!frame) return;
+      frame.id = frame.id || "campus-map-" + i;
+      const cover = document.createElement("div");
+      cover.className = "mobile-map-cover";
+      const activate = document.createElement("button");
+      activate.className = "btn btn-primary";
+      activate.type = "button";
+      activate.textContent = "Jelajahi peta";
+      activate.setAttribute("aria-controls", frame.id);
+      const back = document.createElement("button");
+      back.type = "button";
+      back.className = "btn mobile-map-return";
+      back.textContent = "Kembali ke halaman";
+      back.hidden = true;
+      activate.addEventListener("click", () => {
+        wrapper.classList.add("is-interactive");
+        cover.hidden = true;
+        back.hidden = false;
+        back.focus();
+      });
+      back.addEventListener("click", () => {
+        wrapper.classList.remove("is-interactive");
+        back.hidden = true;
+        cover.hidden = false;
+        activate.focus();
+      });
+      cover.appendChild(activate);
+      wrapper.append(cover, back);
+    });
+  }
   document.querySelectorAll(".day-panel").forEach((panel) => {
     const sheet = panel.querySelector(".mobile-bottom-sheet"),
       trigger = panel.querySelector(".hourly-toggle");
@@ -435,7 +479,7 @@
     trigger.addEventListener("click", (event) => {
       if (window.innerWidth < 768 && typeof sheet.showModal === "function") {
         event.preventDefault();
-        sheet.showModal();
+        openHourlySheet(sheet);
       }
     });
     sheet
@@ -464,7 +508,7 @@
       trigger.addEventListener("click", (event) => {
         if (innerWidth < 768 && typeof sheet.showModal === "function") {
           event.preventDefault();
-          sheet.showModal();
+          openHourlySheet(sheet);
         }
       });
       sheet

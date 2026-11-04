@@ -1,0 +1,98 @@
+/* Phone layouts. Desktop presentation remains in campus_ui.css/editorial.css. */
+.nav-label-short { display: none; }
+.mobile-map-cover, .mobile-map-return { display: none; }
+@media (max-width: 767px) {
+  :root { --nav-height: 112px; }
+  html { scroll-padding-top: 124px; }
+  .container { width: calc(100% - 40px); }
+  .nav-bar { height: auto; min-height: 112px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: max(8px,env(safe-area-inset-top)) 20px 0; }
+  .nav-brand { grid-column: 1; grid-row: 1; }
+  .campus-switch { grid-column: 2; grid-row: 1; font-size: 13px; }
+  .campus-switch summary { min-height: 44px; padding-inline: 14px; }
+  .campus-switch-menu { right: 0; top: calc(100% + 8px); width: min(280px,calc(100vw - 40px)); }
+  .campus-switch-menu a { min-height: 48px; font-size: 14px; }
+  .campus-switch-menu small { font-size: 12px; }
+  .nav-toggle { display: none; }
+  .nav-links, .nav-links.open { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; grid-column: 1/-1; grid-row: 2; position: static; margin: 0 -20px; padding: 0 12px; gap: 0; border: 0; box-shadow: none; background: #fff; }
+  .nav-link { min-height: 48px; justify-content: center; padding: 10px 5px; font-size: 12px; line-height: 1.3; text-align: center; }
+  .nav-label-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .nav-label-short { display: inline; }
+  .freshness-bar .container { padding-block: 9px; }
+  .freshness-note { font-size: 11px; }
+  .hero, .hero-portal { min-height: 0; align-items: center; }
+  .hero .container { padding-block: 30px 46px; }
+  .hero-title, .hero-compact .hero-title { font-size: clamp(30px,8.6vw,38px); line-height: 1.1; letter-spacing: -.035em; overflow-wrap: normal; }
+  .hero-label { font-size: 11px; margin-bottom: 18px; }
+  .hero-subtitle { font-size: 14px; line-height: 1.6; margin-top: 16px; }
+  .hero-meta { font-size: 12px; line-height: 1.6; margin-top: 12px; }
+  .hero-metrics { gap: 14px; margin-top: 22px; padding-top: 20px; }
+  .hero-metric-value { font-size: 28px; }
+  .hero-metric-label { font-size: 11px; line-height: 1.5; }
+  .hero-metric:last-child .hero-metric-value { font-size: 14px; }
+  .hero-photo-caption { font-size: 9px; bottom: 9px; right: 20px; max-width: calc(100% - 40px); }
+  .hero-portal .hero-campus-glance { margin-top: 26px; gap: 0 14px; }
+  .hero-portal .glance-temp { font-size: 24px; }
+  .hero-portal .glance-rain { font-size: 11px; line-height: 1.5; }
+  .hero-portal .glance-note, .hero-portal .glance-label { font-size: 11px; }
+  .hero-actions .btn { min-height: 46px; padding-inline: 16px; font-size: 13px; }
+  .section { padding-block: 32px; }
+  .section-compact { padding-block: 18px; }
+  .section-heading-row { flex-wrap: wrap; gap: 8px; }
+  .section-count { font-size: 11px; padding: 0; }
+  .section-desc, .location-desc, .decision-desc, .activity-advice { font-size: 14px; line-height: 1.65; }
+  .notice { font-size: 12px; line-height: 1.6; margin-top: 18px; padding-block: 13px; }
+  .campus-point, .location-stat-label, .period-stat-label, .kpi-label, .kpi-sub { font-size: 12px; }
+  .status-badge { font-size: 12px; }
+  .campus-card-links { gap: 24px; padding-block: 8px; }
+  .campus-card-links a { min-height: 44px; font-size: 13px; }
+  .timeline-node { min-height: 58px; font-size: 13px; }
+  .timeline-node small { font-size: 11px; }
+  .decision-main { gap: 16px; padding-block: 20px; }
+  .decision-title { font-size: 24px; margin-top: 12px; }
+  .kpi-grid { gap: 0 24px; }
+  .kpi-card { padding-block: 20px; }
+  .kpi-value { font-size: 28px; }
+  .chart-wrapper .section-header { padding: 0; }
+  .chart-selector { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding-block: 4px; margin-inline: -2px; scroll-snap-type: x proximity; }
+  .chart-chip { flex: 0 0 auto; min-height: 44px; padding: 10px 13px; font-size: 13px; scroll-snap-align: start; }
+  .chart-wrapper > .section-desc { font-size: 12px; line-height: 1.6; padding: 0; }
+  .chart-svg-container { height: 240px; }
+  .rain-curve text { font-size: 11px; }
+  .curve-dot { r: 4.5; }
+  .chart-tooltip-time { font-size: 11px; }
+  .chart-tooltip-value { font-size: 13px; }
+  .period-grid { gap: 0 22px; }
+  .period-condition { font-size: 17px; line-height: 1.4; }
+  .activity-grid { grid-template-columns: 1fr; gap: 0; }
+  .activity-card { padding-block: 19px; }
+  .activity-name { font-size: 12px; margin-bottom: 6px; }
+  .activity-status { font-size: 21px; }
+  .activity-advice { margin-top: 8px; }
+  .hourly-toggle { font-size: 14px; min-height: 56px; padding: 16px 12px; }
+  .mobile-bottom-sheet { position: fixed; inset: auto 0 0; margin: 0; width: 100%; max-width: none; max-height: calc(100dvh - 76px); padding: 16px 20px max(24px,env(safe-area-inset-bottom)); }
+  .sheet-close { position: sticky; top: 0; z-index: 3; min-height: 44px; font-size: 13px; margin-bottom: 12px; background: #fff; box-shadow: 0 0 0 8px #fff; }
+  .mobile-bottom-sheet h3 { text-align: left !important; font-size: 20px !important; }
+  .mobile-bottom-sheet .hour-row, .hour-row { grid-template-columns: 1fr 1fr; gap: 8px 20px; padding-block: 18px; }
+  .hour-time { font-size: 18px; }
+  .hour-condition { font-size: 14px; }
+  .hour-status { font-size: 11px; }
+  .hour-row .hour-box { grid-column: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding-block: 8px; }
+  .hour-row .hour-box-label { font-size: 12px; }
+  .hour-box-value { font-size: 18px; }
+  .map-frame, .command-center .map-frame { height: min(65svh,520px); min-height: 420px; }
+  .mobile-map-cover { position: absolute; inset: 0 0 auto; height: min(65svh,520px); min-height: 420px; z-index: 2; display: grid; place-items: center; background: #0b2b3c24; }
+  .map-wrapper:not(.is-interactive) .map-frame { pointer-events: none; }
+  .mobile-map-return { display: inline-flex; position: absolute; top: 12px; right: 12px; z-index: 3; box-shadow: 0 2px 12px #16344b22; }
+  .map-actions { padding: 14px 0; flex-wrap: wrap; }
+  .map-actions .btn, .layer-btn, .btn { min-height: 44px; font-size: 13px; }
+  .news-meta { font-size: 12px; }
+  .news-filter { font-size: 13px; min-height: 44px; }
+  .news-title { font-size: 20px; line-height: 1.45; }
+  .news-status, .news-sources, .news-empty { font-size: 12px; }
+  .planner-controls { grid-template-columns: 1fr; }
+  .planner-controls select { min-height: 48px; font-size: 16px; }
+  .share-text { font-size: 14px; }
+  .footer-version, .photo-credits { font-size: 11px; }
+  .footer-links { gap: 4px 20px; }
+  .footer-link { min-height: 44px; display: inline-flex; align-items: center; font-size: 13px; }
+}

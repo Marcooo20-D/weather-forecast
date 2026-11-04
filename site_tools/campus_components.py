@@ -44,9 +44,11 @@ def nav(u, api: dict, active: str, root: bool = False) -> str:
                  ("Panduan Aktivitas", "langit_activity.html", "activity"), ("Peta", "langit_map_room.html", "map")]
         home, prefix = "../index.html", "../"
     links = []
+    short_labels = {"3day": "3 hari", "activity": "Aktivitas"}
     for label, url, key in items:
         current = ' aria-current="page"' if key == active else ""
-        links.append(f'<a class="nav-link {"active" if key == active else ""}"{current} href="{url}">{label}</a>')
+        short = short_labels.get(key, label)
+        links.append(f'<a class="nav-link {"active" if key == active else ""}"{current} href="{url}"><span class="nav-label-full">{label}</span><span class="nav-label-short" aria-hidden="true">{short}</span></a>')
     links = "".join(links)
     available = api.get("_campus_available_slugs", [api.get("location_slug")])
     options = "".join(f'<a href="{prefix}{slug}/langit_app.html"><span>{m["campus"]}</span>'

@@ -407,6 +407,24 @@ select:focus-visible {
     font-size: 8px !important;
   }
 }
+@media (max-width: 767px) {
+  #map-location { font-size: 16px; }
+  .hud { max-height: min(60dvh,calc(100% - 160px)); }
+  .hud-meta, #field-status, .field-tools #field-status { font-size: 12px; line-height: 1.5; }
+  .hud-brand { font-size: 11px; }
+  .hud-back-link, .map-panel-toggle, .param-tab, .wind-animation { min-height: 44px; font-size: 12px; }
+  .parameter-tabs { gap: 4px; }
+  .field-hint, .field-credit { font-size: 11px; }
+  .point-details summary, .map-legend-details summary { min-height: 44px; font-size: 12px; }
+  .legend, .field-legend-note { font-size: 12px; }
+  .timeline-container { bottom: max(24px,env(safe-area-inset-bottom)); }
+  #forecast-range { height: 28px; }
+  .time-pill { min-height: 44px; font-size: 12px; }
+  .time-pill span.day-label { font-size: 10px; }
+  .field-inspector { left: 58px; max-width: calc(100% - 70px); font-size: 11px; bottom: 140px; }
+  .leaflet-bottom.leaflet-left { bottom: 140px; }
+  .map-fallback { bottom: 140px; font-size: 11px; }
+}
 @media (max-width: 768px) {
   .hud-meta {
     font-size: 10px;
