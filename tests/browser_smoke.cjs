@@ -88,6 +88,8 @@ async function main() {
     report.viewports.push(viewport);
     const context = await browser.newContext({
       viewport,
+      isMobile: viewport.width < 768,
+      hasTouch: viewport.width < 768,
       timezoneId: "Asia/Jakarta",
       reducedMotion: "reduce",
     });
@@ -271,6 +273,10 @@ async function main() {
         }
         if (day === 0) {
           await panel.locator(".chart-wrapper").scrollIntoViewIfNeeded();
+          if (viewport.width < 768) {
+            await panel.locator(".curve-dot").first().tap();
+            assert.equal(await panel.locator(".chart-tooltip").evaluate(e => getComputedStyle(e).opacity), "1");
+          }
           await screenshot(`${slug}-chart`);
         }
       }
@@ -568,7 +574,7 @@ async function main() {
   assert.deepEqual(report.localFailures, [], "failed local assets");
   report.status = "passed";
   console.log(
-    `PASS: ${report.checks.length} Chromium browser checks at four desktop, tablet and phone sizes`,
+    `PASS: ${report.checks.length} Chromium browser checks at six desktop, tablet and touch-phone sizes`,
   );
 }
 
