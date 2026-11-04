@@ -1,6 +1,7 @@
 # Pemeriksaan terbaru — LANGIT v67
 
 Versi v67 diterbitkan dan diperiksa pada 4 November 2026.
+Penyempurnaan ponsel tercatat pada [tata letak dan verifikasi mobile](MOBILE_LAYOUT.md).
 Hasil pengujian, sumber rilis, dan bukti publikasi tercatat dalam
 [verifikasi v67](RELEASE_VERIFICATION_V67.md).
 

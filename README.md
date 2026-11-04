@@ -65,8 +65,9 @@ python -m unittest discover -s tests -v
 node --test tests/public_data.test.js tests/weather_field.test.js
 ```
 
-GitHub Actions memeriksa kode serta interaksi Chromium pada lebar 1440, 768, 390,
-dan 320 piksel. Workflow produksi memperbarui prakiraan dan grid, mengevaluasi
+GitHub Actions memeriksa kode serta interaksi Chromium pada lebar 1440, 768,
+430, 390, 360, dan 320 piksel, termasuk emulasi sentuh pada ponsel.
+Workflow produksi memperbarui prakiraan dan grid, mengevaluasi
 data, lalu memvalidasi dan menerbitkan website ke `gh-pages`.
 
 Perubahan antarmuka memakai prakiraan tersimpan melalui workflow publikasi

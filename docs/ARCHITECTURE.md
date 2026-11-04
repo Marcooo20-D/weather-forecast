@@ -84,7 +84,8 @@ serta Leaflet 1.9.4 asli. Checkout hanya mengambil kode dan snapshot publik
 ringkas; arsip anggota dan pengambilan ulang provider tidak dibutuhkan.
 Tes memeriksa navigasi tiga lokasi, tab hari, grafik, detail jam, planner,
 timeline/pemilihan lokasi/lapisan peta, dan fallback kegagalan Leaflet.
-Browser memakai ukuran 1440×900, 768×1024, 390×844 dan 320×780.
+Browser memakai ukuran 1440×900, 768×1024, 430×932, 390×844, 360×800 dan 320×780.
+Empat ukuran ponsel menggunakan emulasi sentuh.
 Pemeriksaan mencakup animasi/jeda angin, slider waktu, panel ponsel,
 filter berita, dan kegagalan grid regional. Screenshot dan trace adalah
 artifact CI, bukan isi publikasi. Font/tile eksternal diuji terpisah pada
