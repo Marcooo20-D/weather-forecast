@@ -20,7 +20,6 @@ sebagai [draft PR #3](https://github.com/Marcooo20-D/weather-forecast/pull/3).
 | Baseline sumber | `main`: `7224aed537f83614f64d9933da63004a4a2aee18` |
 | Baseline publik | `gh-pages`: `2befb601aca07fa9bdaa872b481e6d0b261369c4`; v65.2 |
 | Kandidat kode | `6754eba6ef5e00c27432ad4335fda4008f95acb4`; v65.3 |
-| Cabang | `codex/langit-audit-20261030` |
 | Temuan | 26 kelompok temuan terkonfirmasi, seluruhnya mendapat implementasi perbaikan |
 | Tes | 55/55 tes Python lulus, termasuk enam subtes Node dan eksekusi skrip pada fixture DOM |
 | CI | [Offline checks berhasil](https://github.com/Marcooo20-D/weather-forecast/actions/runs/41039157627); tes dan sintaks berhasil |

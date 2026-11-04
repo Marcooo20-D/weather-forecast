@@ -14,7 +14,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
-import langit_v65_cinematic_rebuild as ui
+import build_weather_site as ui
 import weather_ensemble_multi_location as engine
 from site_tools.public_site import build_site, validate_site
 from site_tools.workflow_inputs import resolve

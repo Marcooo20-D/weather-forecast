@@ -17,6 +17,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 ROOT_DATA = {
+    "weather_field_v1.json", "weather_news.json",
     "langit_all_locations.geojson", "langit_portal_manifest.json",
     "dim_locations.csv", "dim_sources.csv", "ensemble_all_locations.csv",
     "ensemble_fact_all_locations.csv", "ensemble_long_all_locations.csv",
@@ -158,6 +159,10 @@ def validate_site(root: Path, *, max_bytes: int = 50 * 1024 * 1024) -> dict:
     if errors:
         raise ValueError("\n".join(errors))
     manifest = json.loads((root / "langit_portal_manifest.json").read_text())
+    from .weather_field import validate as validate_field
+    from .weather_news import validate as validate_news
+    for name, validator in [("weather_field_v1.json", validate_field), ("weather_news.json", validate_news)]:
+        if (root / name).exists(): validator(json.loads((root / name).read_text()))
     slugs = location_slugs(root)
     for slug in slugs:
         for name in REQUIRED_LOCATION:

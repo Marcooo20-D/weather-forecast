@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'langit_v65_cinematic_rebuild.py'
+      - 'build_weather_site.py'
       - 'site_tools/**'
       - 'tests/browser_smoke.cjs'
       - '.github/workflows/browser.yml'
@@ -31,6 +31,8 @@ jobs:
             /tests/
             /.github/
             /outputs/dim_locations.csv
+            /outputs/weather_field_v1.json
+            /outputs/weather_news.json
             /outputs/forecast_all_locations.csv
             /outputs/source_status_all_locations.csv
             /outputs/*/langit_api_v1.json
@@ -43,7 +45,7 @@ jobs:
         env:
           LANGIT_SOURCE_SHA: ${{ github.sha }}
         run: |
-          python langit_v65_cinematic_rebuild.py --root outputs
+          python build_weather_site.py --root outputs
           python -m site_tools.public_site --source outputs --destination _site-browser
       - name: Install pinned browser test runtime
         run: |
