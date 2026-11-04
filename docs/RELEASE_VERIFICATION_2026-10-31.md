@@ -45,5 +45,5 @@ klaim kalibrasi peluang atau skill prakiraan.
 
 [Catatan rilis](RELEASE_NOTES.md) menjelaskan perubahan.
 [Bukti terstruktur](release-evidence-20261031.json) memuat manifest dan
-hash seluruh resource. [Audit awal](AUDIT_LATEST.md) tetap disimpan sebagai
+hash seluruh resource. [Audit awal](AUDIT_2026-10-30.md) tetap disimpan sebagai
 riwayat pemeriksaan 30 Oktober.

@@ -20,7 +20,7 @@ langsung, selain marker, kontrol, dan status HTTP.
 Data kosong, waktu berlaku, dan peluang hujan kini dipertahankan secara
 konsisten antara API, CSV, grafik, serta peta. Peluang hujan dipisahkan dari
 intensitas dan indeks gangguan aktivitas. Rincian 26 kelompok perbaikan
-awal tercatat dalam [audit 30 Oktober](AUDIT_LATEST.md).
+awal tercatat dalam [audit 30 Oktober](AUDIT_2026-10-30.md).
 
 Pemeriksaan rilis 31 Oktober menambahkan dua perbaikan antarmuka:
 

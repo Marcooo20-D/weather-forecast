@@ -69,6 +69,10 @@ GitHub Actions memeriksa kode serta interaksi Chromium pada lebar 1440, 768, 390
 dan 320 piksel. Workflow produksi memperbarui prakiraan dan grid, mengevaluasi
 data, lalu memvalidasi dan menerbitkan website ke `gh-pages`.
 
+Perubahan antarmuka memakai prakiraan tersimpan melalui workflow publikasi
+terpisah. Waktu terbit dan status model tetap dipertahankan. Pembaruan prakiraan,
+antarmuka, dan berita memakai antrean publikasi yang sama.
+
 Arsip prakiraan, observasi, dan evaluasi tetap tersimpan di `main/outputs/`.
 Hanya halaman, aset, dan data publik terkini yang diterbitkan. Catatan audit dan
 verifikasi rilis tersimpan di `docs/`.

@@ -20,13 +20,23 @@ batas 50 MiB/1.000 berkas, tautan, JSON dan kontrak data. Hanya salinan itu
 diterbitkan. `main/outputs` mempertahankan bukti operasional/historis;
 `gh-pages` berisi hasil publikasi.
 
+`.github/workflows/presentation.yml` menerbitkan perubahan antarmuka dari
+snapshot publik terakhir. Checkout hanya memuat kode, aset, dan input publik;
+arsip anggota tidak diambil. Builder mempertahankan waktu terbit dan status
+ensemble per hari dari API tersimpan saat payload Sentinel tidak tersedia.
+Payload Sentinel yang tersedia tetap mendapat prioritas. Jalur ini tidak
+menjalankan model atau menulis ulang arsip prakiraan di `main`.
+
+Workflow prakiraan, antarmuka, dan berita memakai grup konkurensi yang sama
+agar publikasi berjalan bergantian.
+
 ## Sumber kebenaran
 
 | Produk | Sumber |
 | --- | --- |
 | Angka per jam | Sentinel JSON bertanggal; CSV/API lama sebagai fallback format yang diketahui |
 | Status provider | CSV/status payload dengan tanggal berlaku yang sama |
-| API, HTML dan CSV tampilan | Normalisasi akhir builder v65 |
+| API, HTML dan CSV tampilan | Normalisasi akhir `build_weather_site.py` |
 | GeoJSON portal | Gabungan serializer GeoJSON lokasi yang sama |
 | Grafik | Kolom minimum dari API, melalui `site_tools/public_data.js` |
 | Skill | Forecast sebelum kejadian dan observasi yang lolos QC/pencocokan |
@@ -55,9 +65,13 @@ Nol berbeda dari kosong. JSON memakai `null`, CSV sel kosong. Jam hilang
 tidak berubah menjadi 00.00. Duplikat timestamp dan JSON sumber rusak
 menghentikan build. Batas fisik salah tidak disamarkan dengan clipping.
 
-Peta menampilkan titik prakiraan, bukan medan kontinu. Panah menunjukkan
-arah aliran dari bearing meteorologis yang tersedia. Kegagalan tile/Leaflet
-harus tetap menyediakan angka teks dan tautan data/prakiraan.
+Peta menggabungkan titik prakiraan kampus dengan grid regional GFS 13 km
+yang terpisah. Medan warna memakai interpolasi bilinear; jejak angin memakai
+komponen u/v pada 10 m. Nilai di luar grid atau tanpa data tidak diisi.
+Hujan grid adalah akumulasi satu jam dalam mm, sedangkan peluang hujan
+lokasi dalam persen. [Konvensi peta dan sumber berita](REGIONAL_MAP_AND_NEWS.md)
+memuat satuan serta batas visualisasi. Kegagalan tile/Leaflet tetap
+menyediakan angka teks dan tautan data/prakiraan.
 
 ## Pengembangan
 
@@ -70,7 +84,9 @@ serta Leaflet 1.9.4 asli. Checkout hanya mengambil kode dan snapshot publik
 ringkas; arsip anggota dan pengambilan ulang provider tidak dibutuhkan.
 Tes memeriksa navigasi tiga lokasi, tab hari, grafik, detail jam, planner,
 timeline/pemilihan lokasi/lapisan peta, dan fallback kegagalan Leaflet.
-Browser memakai ukuran 1440×900 serta 390×844. Screenshot dan trace adalah
+Browser memakai ukuran 1440×900, 768×1024, 390×844 dan 320×780.
+Pemeriksaan mencakup animasi/jeda angin, slider waktu, panel ponsel,
+filter berita, dan kegagalan grid regional. Screenshot dan trace adalah
 artifact CI, bukan isi publikasi. Font/tile eksternal diuji terpisah pada
 website langsung; hasil tes ini tidak mengklaim kompatibilitas lintas browser.
 
