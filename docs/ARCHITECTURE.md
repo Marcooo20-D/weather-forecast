@@ -11,7 +11,7 @@ anggota ensemble, waktu, arsip dan evaluasi. Sinkronisasi referensi model
 tidak setara dengan pengamatan lokal untuk pembuktian skill.
 
 Mesin masih menghasilkan beberapa tampilan lama. Builder akhir
-`langit_v65_cinematic_rebuild.py` kemudian membangun publikasi dari produk
+`build_weather_site.py` kemudian membangun publikasi dari produk
 Sentinel bertanggal. Perbaikan tampilan publik dilakukan pada builder akhir
 tersebut, bukan hanya pada HTML yang akan ditimpa run berikutnya.
 

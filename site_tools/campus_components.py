@@ -172,7 +172,7 @@ def news_section(u, root: Path) -> str:
         region = "Bandung & Jabar" if item["region"] == "jabar" else "Indonesia"
         articles.append(f'''<article class="news-item" data-region="{u.esc(item['region'])}">
           <div class="news-meta"><span class="news-source">{u.esc(item['source'])}</span><span>{region}</span><time datetime="{u.esc(item.get('published_at') or item['published_date'])}">{u.esc(item['published_date'])}</time></div>
-          <h3 class="news-title"><a href="{u.esc(item['url'])}">{u.esc(item['title'])}</a></h3></article>''')
+          <h3 class="news-title"><a href="{u.esc(item['url'])}" target="_blank" rel="noopener noreferrer">{u.esc(item['title'])}</a></h3></article>''')
     return f'''<section class="section news-section" id="berita"><div class="container" data-news-url="weather_news.json">
       <div class="news-header"><div class="section-header"><div class="section-overline">Informasi</div><h2 class="section-title">Berita meteorologi</h2><p class="news-status" id="news-status">{u.esc(u.fmt_update(doc.get('fetched_at'))) if doc.get('fetched_at') else 'Berita belum tersedia.'}</p></div>
       <div class="news-filters" aria-label="Wilayah berita"><button class="news-filter" data-news-region="all" aria-pressed="true">Semua</button><button class="news-filter" data-news-region="jabar" aria-pressed="false">Bandung & Jabar</button><button class="news-filter" data-news-region="indonesia" aria-pressed="false">Indonesia</button></div></div>
