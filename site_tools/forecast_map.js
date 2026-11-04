@@ -596,7 +596,15 @@ timeline.forEach((slot, index) => {
 });
 function renderSelectedTime() {
   const pills = document.querySelectorAll(".time-pill");
-  if (pills.length) pills[activeTimeIndex].click();
+  if (pills.length) {
+    const pill = pills[activeTimeIndex];
+    pill.click();
+    if (typeof scrubber.scrollTo === "function")
+      scrubber.scrollTo({
+        left: pill.offsetLeft - scrubber.clientWidth / 2 + pill.clientWidth / 2,
+        behavior: "instant",
+      });
+  }
   else {
     document.getElementById("hud-location-name").textContent =
       "Data prakiraan belum tersedia";
@@ -676,6 +684,7 @@ document.getElementById("map-panel-toggle").addEventListener("click", () => {
 });
 const forecastRange = document.getElementById("forecast-range");
 forecastRange.max = String(Math.max(0, timeline.length - 1));
+forecastRange.value = String(activeTimeIndex);
 forecastRange.disabled = !timeline.length;
 forecastRange.addEventListener("input", () => {
   activeTimeIndex = Number(forecastRange.value);

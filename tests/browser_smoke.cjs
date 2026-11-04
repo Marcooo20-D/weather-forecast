@@ -336,6 +336,13 @@ async function main() {
       ...manifest.locations.map((x) => `${x.slug}/langit_map_room.html`),
     ]) {
       await go(route);
+      assert.equal(
+        Number(await page.locator("#forecast-range").inputValue()),
+        await page.locator(".time-pill").evaluateAll((es) =>
+          es.findIndex((e) => e.getAttribute("aria-pressed") === "true"),
+        ),
+        "initial time slider matches the selected forecast hour",
+      );
       if (viewport.width <= 768) {
         assert.equal(
           await page.locator("#map-controls").evaluate((e) => e.hidden),
