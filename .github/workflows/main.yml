@@ -5,9 +5,8 @@ on:
     branches: [main]
     paths:
       - 'weather_ensemble_multi_location.py'
-      - 'build_weather_site.py'
-      - 'site_tools/**'
-      - '.github/workflows/main.yml'
+      - 'site_tools/weather_field.py'
+      - 'site_tools/workflow_inputs.py'
   workflow_dispatch:
     inputs:
       locations:

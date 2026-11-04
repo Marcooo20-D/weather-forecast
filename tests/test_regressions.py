@@ -21,6 +21,33 @@ from site_tools.workflow_inputs import resolve
 
 
 class RenderingTests(unittest.TestCase):
+    def test_public_api_rebuild_preserves_daily_issue_and_ensemble_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            status = {"status": "usable", "requested_model_count": 3,
+                      "successful_model_count": 3, "calibration_status": "RAW_UNCALIBRATED"}
+            days = [{"date_iso": f"2026-10-{day}",
+                     "issued_at": f"2026-10-23T{day - 15:02d}:00:00+07:00",
+                     "ensemble_status": status,
+                     "hours": [{"date_iso": f"2026-10-{day}", "hour": "09:00",
+                                "temp_c": 25, "wind_kmh": 0, "rain_probability": 0}]}
+                    for day in (23, 24, 25)]
+            ui.write_json(root / "langit_api_v1.json", {
+                "location_name": "Test", "days": days,
+                "generated_at_iso": "2026-10-23T10:00:00+07:00"})
+            result = ui.load_location_api(root, {})
+            for expected, actual in zip(days, result["days"]):
+                self.assertEqual(actual["issued_at"], expected["issued_at"])
+                self.assertEqual(actual["ensemble_status"], status)
+                self.assertEqual(actual["hours"][0]["rain_probability"], 0)
+            # A newly available source snapshot takes priority over saved metadata.
+            ui.write_json(root / "sentinel_x_20261023.json", {
+                "issued_at": "2026-10-23T11:00:00+07:00",
+                "ensemble_status": {**status, "successful_model_count": 1}})
+            updated = ui.load_location_api(root, {})["days"][0]
+            self.assertEqual(updated["issued_at"], "2026-10-23T11:00:00+07:00")
+            self.assertEqual(updated["ensemble_status"]["successful_model_count"], 1)
+
     def test_probability_percent_is_not_guessed(self):
         self.assertEqual(ui.prob(0.6535947712418301), 0.6535947712418301)
         self.assertEqual(ui.prob(0), 0)
