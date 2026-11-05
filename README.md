@@ -77,3 +77,7 @@ antarmuka, dan berita memakai antrean publikasi yang sama.
 Arsip prakiraan, observasi, dan evaluasi tetap tersimpan di `main/outputs/`.
 Hanya halaman, aset, dan data publik terkini yang diterbitkan. Catatan audit dan
 verifikasi rilis tersimpan di `docs/`.
+
+## Observasi dan verifikasi
+
+Mesin prakiraan kini memiliki jalur pengukuran stasiun yang menyaring isian model serta evaluasi hujan terpisah terhadap referensi NOAA CPC CMORPH. Metode, batas penggunaan, dan perintah reproduksi tersedia di [dokumentasi observasi](docs/OBSERVATIONS.md). Referensi satelit tidak dinyatakan sebagai pengamatan stasiun kampus.

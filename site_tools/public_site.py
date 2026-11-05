@@ -30,6 +30,7 @@ LOCATION_DATA = {
     "forecast.csv", "ensemble.csv", "bmkg.csv", "source_status.csv",
     "sentinel_x_verification_summary.json", "sentinel_x_reliability.csv",
     "probabilistic_verification.json", "activity_verification.json",
+    "satellite_verification.json", "satellite_verification_pairs.csv", "station_source_status.json",
 }
 REQUIRED_ROOT = {"index.html", "langit_portal_map.html", "langit_portal_manifest.json"}
 REQUIRED_LOCATION = {

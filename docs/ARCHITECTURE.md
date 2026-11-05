@@ -94,3 +94,7 @@ website langsung; hasil tes ini tidak mengklaim kompatibilitas lintas browser.
 Arsip tidak ditulis ulang agar metrik tampak lebih baik. Kalibrasi/skill
 memerlukan verifikasi terpisah. Builder warisan dan strategi trading berada
 di luar jalur publikasi aktif yang dijelaskan di sini.
+
+## Referensi pengamatan
+
+`forecast_tools.observations` mengarsipkan pengukuran yang berlabel sumber serta subset sel CMORPH. `forecast_tools.verification` memasangkan interval hujan secara tepat dan menjaga evaluasi satelit terpisah dari pelatihan stasiun. Rinciannya ada di [OBSERVATIONS.md](OBSERVATIONS.md).
