@@ -1,8 +1,8 @@
 tanggal,source_id,provider,target_jam,source_datetime,suhu_C,RH_%,rain_mm,wind_kmh,gap_minutes,point_weight,kategori,raw_condition
-05-11-2026,BMKG,BMKG,20:00,2026-11-05 21:00:00,22.0,79.0,,2.9,60.0,1.0496,Berawan,Berawan
-05-11-2026,BMKG,BMKG,21:00,2026-11-05 21:00:00,22.0,79.0,,2.9,0.0,1.3994,Berawan,Berawan
-05-11-2026,BMKG,BMKG,22:00,2026-11-05 21:00:00,22.0,79.0,,2.9,60.0,1.0496,Berawan,Berawan
-05-11-2026,BMKG,BMKG,23:00,2026-11-06 00:00:00,20.0,90.0,,1.9,60.0,1.0496,Berawan,Berawan
+05-11-2026,BMKG,BMKG,20:00,2026-11-05 21:00:00,22.0,79.0,,2.9,60.0,1.0462,Berawan,Berawan
+05-11-2026,BMKG,BMKG,21:00,2026-11-05 21:00:00,22.0,79.0,,2.9,0.0,1.3949,Berawan,Berawan
+05-11-2026,BMKG,BMKG,22:00,2026-11-05 21:00:00,22.0,79.0,,2.9,60.0,1.0462,Berawan,Berawan
+05-11-2026,BMKG,BMKG,23:00,2026-11-06 00:00:00,20.0,90.0,,1.9,60.0,1.0462,Berawan,Berawan
 05-11-2026,CMA,Open-Meteo / CMA GRAPES,00:00,2026-11-05 00:00:00,23.0,91.0,0.0,3.2,0.0,1.1432,Cerah,wmo:0.0
 05-11-2026,CMA,Open-Meteo / CMA GRAPES,01:00,2026-11-05 01:00:00,22.9,89.0,0.0,3.2,0.0,1.1432,Cerah,wmo:0.0
 05-11-2026,CMA,Open-Meteo / CMA GRAPES,02:00,2026-11-05 02:00:00,22.8,87.0,0.0,4.2,0.0,1.1432,Cerah,wmo:0.0
@@ -123,12 +123,12 @@ tanggal,source_id,provider,target_jam,source_datetime,suhu_C,RH_%,rain_mm,wind_k
 05-11-2026,METEOFRANCE,Open-Meteo / Meteo-France,21:00,2026-11-05 21:00:00,27.6,72.0,0.0,5.6,0.0,1.4271,Cerah Berawan,wmo:2.0
 05-11-2026,METEOFRANCE,Open-Meteo / Meteo-France,22:00,2026-11-05 22:00:00,27.1,77.0,0.0,5.0,0.0,1.4271,Cerah Berawan,wmo:2.0
 05-11-2026,METEOFRANCE,Open-Meteo / Meteo-France,23:00,2026-11-05 23:00:00,26.8,79.0,0.0,4.7,0.0,1.4271,Cerah Berawan,wmo:2.0
-05-11-2026,METNO,MET Norway,18:00,2026-11-05 20:00:00,23.6,76.6,,5.4,120.0,0.3378,,
-05-11-2026,METNO,MET Norway,19:00,2026-11-05 20:00:00,23.6,76.6,,5.4,60.0,0.4606,,
-05-11-2026,METNO,MET Norway,20:00,2026-11-05 20:00:00,23.6,76.6,,5.4,0.0,0.6142,,
-05-11-2026,METNO,MET Norway,21:00,2026-11-05 21:00:00,22.9,79.9,0.0,4.68,0.0,0.664,Cerah Berawan,partlycloudy_night
-05-11-2026,METNO,MET Norway,22:00,2026-11-05 22:00:00,22.0,86.1,0.0,3.6,0.0,0.664,Cerah Berawan,partlycloudy_night
-05-11-2026,METNO,MET Norway,23:00,2026-11-05 23:00:00,21.3,90.8,0.0,2.88,0.0,0.664,Cerah Berawan,partlycloudy_night
+05-11-2026,METNO,MET Norway,18:00,2026-11-05 20:00:00,23.2,79.5,,5.04,120.0,0.3397,,
+05-11-2026,METNO,MET Norway,19:00,2026-11-05 20:00:00,23.2,79.5,,5.04,60.0,0.4632,,
+05-11-2026,METNO,MET Norway,20:00,2026-11-05 20:00:00,23.2,79.5,,5.04,0.0,0.6176,,
+05-11-2026,METNO,MET Norway,21:00,2026-11-05 21:00:00,22.5,84.2,0.0,4.32,0.0,0.6677,Berawan,cloudy
+05-11-2026,METNO,MET Norway,22:00,2026-11-05 22:00:00,21.4,91.2,0.0,4.32,0.0,0.6677,Cerah Berawan,partlycloudy_night
+05-11-2026,METNO,MET Norway,23:00,2026-11-05 23:00:00,20.8,95.6,0.0,5.76,0.0,0.6677,Cerah Berawan,partlycloudy_night
 05-11-2026,UKMO,Open-Meteo / UK Met Office,00:00,2026-11-05 00:00:00,20.3,99.0,0.0,2.9,0.0,1.3138,Cerah,wmo:0.0
 05-11-2026,UKMO,Open-Meteo / UK Met Office,01:00,2026-11-05 01:00:00,19.9,99.0,0.0,2.5,0.0,1.3138,Cerah Berawan,wmo:2.0
 05-11-2026,UKMO,Open-Meteo / UK Met Office,02:00,2026-11-05 02:00:00,19.4,99.0,0.0,1.1,0.0,1.3138,Cerah Berawan,wmo:2.0
