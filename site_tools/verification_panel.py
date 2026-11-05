@@ -29,7 +29,7 @@ def render(directory: Path) -> str:
             rows.append('<tr><td>' + html.escape(label) + '</td><td>' + str(int(data.get("cases", 0))) + '</td><td>' + number(data.get("brier_score")) + '</td><td>' + number(data.get("mae_mm")) + '</td><td>' + number(data.get("crps_mm")) + '</td></tr>')
         start, end = overall.get("period_start", ""), overall.get("period_end", "")
         details = f'''<p>{cases} kasus · {int(overall.get("unique_valid_hours", 0))} jam berlaku unik · {html.escape(start)} hingga {html.escape(end)} (UTC)</p>
-        <div class="table-wrap"><table><thead><tr><th>Lead time</th><th>Kasus</th><th>Brier Score</th><th>MAE (mm)</th><th>CRPS (mm)</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>'''
+        <div class="table-wrap" style="overflow-x:auto"><table class="source-table"><thead><tr><th>Lead time</th><th>Kasus</th><th>Brier Score</th><th>MAE (mm)</th><th>CRPS (mm)</th></tr></thead><tbody>{''.join(rows)}</tbody></table></div>'''
     return f'''<section class="section-compact"><div class="container"><div class="glass glass-static reveal">
       <div class="section-header"><div class="section-overline">Evaluasi terpisah</div><h2>Hujan dibandingkan dengan referensi satelit</h2></div>
       <p>NOAA CPC CMORPH ICDR ADJ · grid 0,25° · akumulasi satu jam. Kejadian hujan: lebih dari 0,1 mm per jam.</p>
