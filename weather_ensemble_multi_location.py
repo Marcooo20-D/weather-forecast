@@ -2023,7 +2023,7 @@ def import_external_observations(args):
     return rows
 
 
-def sync_observations(args):
+def sync_model_references(args):
     end_date = parse_iso_date(args.end_date) if args.end_date else now_local(args.timezone).date() - timedelta(days=5)
     start_date = parse_iso_date(args.start_date) if args.start_date else end_date - timedelta(days=args.lookback_days - 1)
     if start_date > end_date:
@@ -5448,9 +5448,9 @@ def build_arg_parser():
     )
     parser.add_argument(
         "--mode",
-        choices=["forecast", "sync-observations", "evaluate", "import-observations", "self-test", "doctor", "dashboard", "report", "feedback", "red-team", "autopsy", "skill-league", "constitution", "verify-public", "public-index", "serve", "dry-run"],
+        choices=["forecast", "sync-observations", "sync-references", "evaluate", "import-observations", "self-test", "doctor", "dashboard", "report", "feedback", "red-team", "autopsy", "skill-league", "constitution", "verify-public", "public-index", "serve", "dry-run"],
         default="forecast",
-        help="forecast = ambil prakiraan baru, sync-observations = sinkron data observasi historis, evaluate = hitung performa dan bobot sumber, import-observations = impor CSV observasi eksternal, self-test = assertion internal script",
+        help="forecast = ambil prakiraan baru, sync-observations = arsip pengukuran stasiun dan referensi hujan satelit; sync-references = arsip referensi model historis, evaluate = hitung performa dan bobot sumber, import-observations = impor CSV observasi eksternal, self-test = assertion internal script",
     )
     parser.add_argument(
         "--locations",
@@ -5751,6 +5751,9 @@ def main():
                 )
     elif args.mode == "sync-observations":
         sync_observations_for_locations(args, locations)
+    elif args.mode == "sync-references":
+        for location in locations:
+            execute_mode_for_location(args, location, sync_model_references)
     elif args.mode == "evaluate":
         evaluate_for_locations(args, locations)
     elif args.mode == "import-observations":
@@ -10811,6 +10814,9 @@ def v61_quality_control_observations(rows, args):
             metadata_flags.append("available_at_before_observation")
         for field in _V61_OBSERVATION_NUMERIC:
             value, flags = _v61_convert_observation(raw, field, station)
+            source_label = str(_quality_first(raw, field + "_source", "source_id", default="")).lower()
+            if source_label in {"metno_forecast", "dwd_mosmix", "open_meteo_archive", "era5", "era5_land", "cmorph", "cmorph_icdr"}:
+                flags.append("not_a_station_measurement:" + source_label)
             row[field] = value
             if value not in (None, ""):
                 numeric = safe_float(value)
@@ -10825,7 +10831,7 @@ def v61_quality_control_observations(rows, args):
         for field in _OBS_FIELDS:
             if row.get(field) not in (None, ""):
                 row[field + "_type"] = kind
-                row[field + "_source"] = row["source_id"]
+                row[field + "_source"] = _quality_first(raw, field + "_source", default=row["source_id"])
                 row[field + "_available_at"] = row["available_at"]
                 row[field + "_qc_computed_at"] = now_stamp
                 row[field + "_station_id"] = row["station_id"]
@@ -12701,6 +12707,27 @@ def sentinel_location_personality(args):
 def _lg_microclimate(args):
     accepted=any(section.get('accepted') is True for name,scopes in ((_QUALITY_SKILL or {}).get('variables') or {}).items() if name.startswith('local_') for section in scopes.values())
     return {'profile':getattr(args,'terrain_class','unknown'),'note':'Koreksi lokal diterapkan per variabel hanya jika kandidat diterima melalui evaluasi bergulir.' if accepted else 'Belum tersedia koreksi lokal yang diterima melalui evaluasi pengamatan.','zone_count':0,'engine':'validated_empirical_local_correction' if accepted else 'awaiting_observations','site_elevation_m':getattr(args,'site_elevation_m',None)}
+
+
+
+
+def sync_observations(args):
+    """Collect measured station fields and independent satellite references.
+
+    The former reanalysis fetcher remains available as sync-references. Satellite
+    estimates never enter the station QC/training path or claim local calibration.
+    """
+    import copy
+    from forecast_tools.observations import sync_location
+    result = sync_location(args, ACTIVE_OUTPUT_DIR)
+    if result["station"]["rows"]:
+        incoming = os.path.join(ACTIVE_OUTPUT_DIR, "observations", "station_incoming.csv")
+        imported_args = copy.copy(args)
+        imported_args.observations_csv = incoming
+        import_external_observations(imported_args)
+    if not result["reference"]["available_hours"]:
+        log_info("WARNING: Tidak ada referensi satelit yang dapat diambil; status kekosongan tetap diarsipkan.")
+    return result["reference"]["records"]
 
 
 if __name__ == "__main__":

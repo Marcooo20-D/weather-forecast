@@ -7,6 +7,8 @@ on:
       - 'weather_ensemble_multi_location.py'
       - 'site_tools/weather_field.py'
       - 'site_tools/workflow_inputs.py'
+      - 'forecast_tools/**'
+      - 'requirements.txt'
   workflow_dispatch:
     inputs:
       locations:
@@ -56,7 +58,7 @@ jobs:
 
       - name: Install runtime helpers
         run: |
-          python -m pip install certifi
+          python -m pip install -r requirements.txt
 
       - name: Resolve workflow inputs
         env:
@@ -88,6 +90,18 @@ jobs:
             $DEBUG_FLAG \
             --no-save-raw-payloads
 
+      - name: Collect independent observations and rainfall references
+        shell: bash
+        timeout-minutes: 12
+        run: |
+          python weather_ensemble_multi_location.py \
+            --mode sync-observations \
+            --locations "$LOCATIONS" \
+            --timezone Asia/Jakarta \
+            --lookback-days 14 \
+            --http-timeout 12 \
+            --no-save-raw-payloads
+
       - name: Run forecast engine
         id: forecast
         shell: bash
@@ -117,16 +131,6 @@ jobs:
             exit "$RC"
           fi
 
-      - name: Sync historical observations
-        shell: bash
-        run: |
-          python weather_ensemble_multi_location.py \
-            --mode sync-observations \
-            --locations "$LOCATIONS" \
-            --timezone Asia/Jakarta \
-            $DEBUG_FLAG \
-            --no-save-raw-payloads
-
       - name: Evaluate performance (backtesting)
         shell: bash
         run: |
@@ -136,6 +140,9 @@ jobs:
             --timezone Asia/Jakarta \
             $DEBUG_FLAG \
             --no-save-raw-payloads
+
+      - name: Verify archived rainfall against satellite reference
+        run: python -m forecast_tools.verification --root outputs --locations "$LOCATIONS"
 
       - name: Update regional map and headlines
         run: |

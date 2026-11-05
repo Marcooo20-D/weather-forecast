@@ -28,6 +28,8 @@ jobs:
           sparse-checkout: |
             /*.py
             /site_tools/
+            /forecast_tools/
+            /requirements.txt
             /tests/
             /.github/
             /outputs/dim_locations.csv

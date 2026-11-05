@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 from site_tools import campus_components as campus_ui
-from site_tools import weather_field, weather_news
+from site_tools import weather_field, weather_news, verification_panel
 
 BRAND = "LANGIT"
 VERSION = "LANGIT v67.0"
@@ -1434,12 +1434,12 @@ def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
     pct_done = clamp(matched / max(1, target) * 100)
     enough = summary.get("sample_status") == "ENOUGH_TO_EVALUATE" and matched >= target
 
-    body = v65_hero(api, "Akurasi", f"{day['date_label']}. Evaluasi ditampilkan jika data pembanding cukup.", day, show_metrics=False)
+    body = v65_hero(api, "Akurasi", f"{day['date_label']}. Pengamatan stasiun dan referensi satelit dinilai terpisah.", day, show_metrics=False)
     body += v65_notice()
     body += f'''<section class="section-compact"><div class="container">
     <div class="glass glass-static reveal">
       <div class="section-header">
-        <div class="section-overline">Verifikasi</div>
+        <div class="section-overline">Pengamatan stasiun</div>
         <h2 style="font-size:24px;font-weight:800">{"Data cukup untuk evaluasi" if enough else "Belum cukup bukti verifikasi"}</h2>
         <p style="font-size:14px;color:var(--mist);margin-top:4px">{matched}/{target} pasangan</p>
       </div>
@@ -1525,8 +1525,9 @@ def v65_accuracy_page(api: Dict[str, Any], directory: Path) -> str:
       </div>
     </div></section>'''
     else:
-        body += '''<section class="section-compact"><div class="container"><div class="glass glass-static reveal"><p style="color:var(--mist);font-size:14px;line-height:1.7">Halaman ini sengaja tidak mengklaim akurasi sebelum data cukup. Begitu observasi terkumpul, metrik akan muncul otomatis.</p></div></div></section>'''
+        body += '''<section class="section-compact"><div class="container"><div class="glass glass-static reveal"><p style="color:var(--mist);font-size:14px;line-height:1.7">Pengukuran stasiun yang cocok belum mencukupi. Evaluasi terhadap referensi satelit, bila tersedia, ditampilkan terpisah di bawah.</p></div></div></section>'''
 
+    body += verification_panel.render(directory)
     return v65_document(api, "accuracy", f"LANGIT Akurasi — {api['location_name']}", body)
 
 
