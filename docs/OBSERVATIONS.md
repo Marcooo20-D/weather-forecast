@@ -76,3 +76,21 @@ tercatat sebagai data tidak tersedia dan tidak mematikan pembacaan prakiraan.
 - https://dev.meteostat.net/providers
 - https://dev.meteostat.net/quality.html
 - https://dataonline.bmkg.go.id/
+
+## Hasil backfill 5 November 2026
+
+Dari 264 berkas jam sumber yang diminta (24 Oktober–3 November UTC), 242
+tersedia dan 22 mengembalikan HTTP 404. Kekosongan tidak diisi nol. Sebanyak
+351 arsip prakiraan (117 per lokasi) diperiksa pada revisi `7a2abff7b2741870d18774b90de72719d3504b0c`.
+Manifest mencatat hash arsip asal; CSV pasangan menyimpan issue dan interval.
+
+| Lokasi | Kasus semua lead | Jam unik | Brier | MAE (mm/jam) | CRPS (mm) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Dago | 593 | 239 | 0,144 | 0,553 | 0,389 |
+| Jatinangor | 592 | 239 | 0,148 | 0,552 | 0,357 |
+| Arjawinangun | 592 | 239 | 0,112 | 0,331 | 0,218 |
+
+Kasus dari kelompok lead berbeda berbagi jam referensi. Statistik ringkas ini
+bukan hasil dari 1.777 pengamatan independen. Periode akhir mengikuti akhir
+interval, hingga 4 November 00.00 UTC. Evaluasi mengukur kesesuaian dengan
+CMORPH dan belum membuktikan keterampilan prakiraan terhadap penakar lokal.

@@ -1,0 +1,75 @@
+{
+  "schema_version": "LANGIT.satellite-reference.v1",
+  "reference_type": "satellite_gauge_precipitation_estimate",
+  "provider": "NOAA CPC",
+  "product": "CMORPH ICDR ADJ",
+  "product_version": "Version 0.x",
+  "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026102611.nc",
+  "source_sha256": "5abe8dd122305cb53aaa53598dc17c1ea0bcf5a2fcae0735f66b47804a0f6861",
+  "source_created_date": "2026-10-27",
+  "fetched_at": "2026-11-05T10:15:33.161796Z",
+  "interval_start": "2026-10-26T11:00:00Z",
+  "interval_end": "2026-10-26T12:00:00Z",
+  "native_inclusive_bounds_seconds": [
+    1793012400.0,
+    1793015999.0
+  ],
+  "interval_minutes": 60,
+  "native_unit": "mm/hr",
+  "output_unit": "mm",
+  "grid_resolution_degrees": 0.25,
+  "points": {
+    "dago": {
+      "latitude": -6.889,
+      "longitude": 107.61,
+      "cell_latitude": -6.875,
+      "cell_longitude": 107.625,
+      "cell_latitude_bounds": [
+        -7.0,
+        -6.75
+      ],
+      "cell_longitude_bounds": [
+        107.5,
+        107.75
+      ],
+      "rain_mm": 0.0,
+      "qc": "usable_reference",
+      "sampling": "nearest_native_cell_no_interpolation"
+    },
+    "jatinangor": {
+      "latitude": -6.938,
+      "longitude": 107.7556,
+      "cell_latitude": -6.875,
+      "cell_longitude": 107.875,
+      "cell_latitude_bounds": [
+        -7.0,
+        -6.75
+      ],
+      "cell_longitude_bounds": [
+        107.75,
+        108.0
+      ],
+      "rain_mm": 0.1899999976158142,
+      "qc": "usable_reference",
+      "sampling": "nearest_native_cell_no_interpolation"
+    },
+    "arjawinangun": {
+      "latitude": -6.6453,
+      "longitude": 108.4103,
+      "cell_latitude": -6.625,
+      "cell_longitude": 108.375,
+      "cell_latitude_bounds": [
+        -6.75,
+        -6.5
+      ],
+      "cell_longitude_bounds": [
+        108.25,
+        108.5
+      ],
+      "rain_mm": 1.6299999952316284,
+      "qc": "usable_reference",
+      "sampling": "nearest_native_cell_no_interpolation"
+    }
+  },
+  "limitations": "Areal satellite/gauge estimate; not a local gauge, not radar, not an independent in-situ validation, and not used to train station calibration"
+}

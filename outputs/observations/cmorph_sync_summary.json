@@ -1,0 +1,1594 @@
+{
+  "schema_version": "LANGIT.reference-sync.v1",
+  "generated_at": "2026-11-05T14:52:02.751446Z",
+  "requested_hours": 264,
+  "available_hours": 242,
+  "missing_hours": 22,
+  "reference_type": "satellite_gauge_precipitation_estimate",
+  "records": [
+    {
+      "hour": "2026-10-24T00:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T00.json",
+      "fetched_at": "2026-11-05T10:12:53.693157Z"
+    },
+    {
+      "hour": "2026-10-24T01:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T01.json",
+      "fetched_at": "2026-11-05T10:12:53.691927Z"
+    },
+    {
+      "hour": "2026-10-24T02:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T02.json",
+      "fetched_at": "2026-11-05T10:12:53.693108Z"
+    },
+    {
+      "hour": "2026-10-24T03:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T03.json",
+      "fetched_at": "2026-11-05T10:13:00.281793Z"
+    },
+    {
+      "hour": "2026-10-24T04:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T04.json",
+      "fetched_at": "2026-11-05T10:13:00.329443Z"
+    },
+    {
+      "hour": "2026-10-24T05:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T05.json",
+      "fetched_at": "2026-11-05T10:13:00.329627Z"
+    },
+    {
+      "hour": "2026-10-24T06:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T06.json",
+      "fetched_at": "2026-11-05T10:13:13.869369Z"
+    },
+    {
+      "hour": "2026-10-24T07:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T07.json",
+      "fetched_at": "2026-11-05T10:13:13.910113Z"
+    },
+    {
+      "hour": "2026-10-24T08:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T08.json",
+      "fetched_at": "2026-11-05T10:13:13.910033Z"
+    },
+    {
+      "hour": "2026-10-24T09:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T09.json",
+      "fetched_at": "2026-11-05T10:13:20.641481Z"
+    },
+    {
+      "hour": "2026-10-24T10:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T10.json",
+      "fetched_at": "2026-11-05T10:13:20.545282Z"
+    },
+    {
+      "hour": "2026-10-24T11:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T11.json",
+      "fetched_at": "2026-11-05T10:13:20.537585Z"
+    },
+    {
+      "hour": "2026-10-24T12:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T12.json",
+      "fetched_at": "2026-11-05T10:13:28.205324Z"
+    },
+    {
+      "hour": "2026-10-24T13:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T13.json",
+      "fetched_at": "2026-11-05T10:13:28.165678Z"
+    },
+    {
+      "hour": "2026-10-24T14:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T14.json",
+      "fetched_at": "2026-11-05T10:13:28.241370Z"
+    },
+    {
+      "hour": "2026-10-24T15:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T15.json",
+      "fetched_at": "2026-11-05T10:13:35.206912Z"
+    },
+    {
+      "hour": "2026-10-24T16:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T16.json",
+      "fetched_at": "2026-11-05T10:13:35.209615Z"
+    },
+    {
+      "hour": "2026-10-24T17:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T17.json",
+      "fetched_at": "2026-11-05T10:13:35.201595Z"
+    },
+    {
+      "hour": "2026-10-24T18:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T18.json",
+      "fetched_at": "2026-11-05T10:13:42.297388Z"
+    },
+    {
+      "hour": "2026-10-24T19:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T19.json",
+      "fetched_at": "2026-11-05T10:13:42.347147Z"
+    },
+    {
+      "hour": "2026-10-24T20:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T20.json",
+      "fetched_at": "2026-11-05T10:13:42.333335Z"
+    },
+    {
+      "hour": "2026-10-24T21:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T21.json",
+      "fetched_at": "2026-11-05T10:13:49.249759Z"
+    },
+    {
+      "hour": "2026-10-24T22:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T22.json",
+      "fetched_at": "2026-11-05T10:13:49.233710Z"
+    },
+    {
+      "hour": "2026-10-24T23:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261024T23.json",
+      "fetched_at": "2026-11-05T10:13:49.246451Z"
+    },
+    {
+      "hour": "2026-10-25T00:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T00.json",
+      "fetched_at": "2026-11-05T10:14:00.773355Z"
+    },
+    {
+      "hour": "2026-10-25T01:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T01.json",
+      "fetched_at": "2026-11-05T10:14:00.769821Z"
+    },
+    {
+      "hour": "2026-10-25T02:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T02.json",
+      "fetched_at": "2026-11-05T10:14:00.765411Z"
+    },
+    {
+      "hour": "2026-10-25T03:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T03.json",
+      "fetched_at": "2026-11-05T10:14:07.669481Z"
+    },
+    {
+      "hour": "2026-10-25T04:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T04.json",
+      "fetched_at": "2026-11-05T10:14:07.637370Z"
+    },
+    {
+      "hour": "2026-10-25T05:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T05.json",
+      "fetched_at": "2026-11-05T10:14:07.677278Z"
+    },
+    {
+      "hour": "2026-10-25T06:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T06.json",
+      "fetched_at": "2026-11-05T10:14:14.485712Z"
+    },
+    {
+      "hour": "2026-10-25T07:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T07.json",
+      "fetched_at": "2026-11-05T10:14:14.490792Z"
+    },
+    {
+      "hour": "2026-10-25T08:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T08.json",
+      "fetched_at": "2026-11-05T10:14:14.485819Z"
+    },
+    {
+      "hour": "2026-10-25T09:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T09.json",
+      "fetched_at": "2026-11-05T10:14:27.009317Z"
+    },
+    {
+      "hour": "2026-10-25T10:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T10.json",
+      "fetched_at": "2026-11-05T10:14:27.001570Z"
+    },
+    {
+      "hour": "2026-10-25T11:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T11.json",
+      "fetched_at": "2026-11-05T10:14:27.006881Z"
+    },
+    {
+      "hour": "2026-10-25T12:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T12.json",
+      "fetched_at": "2026-11-05T10:14:34.161533Z"
+    },
+    {
+      "hour": "2026-10-25T13:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T13.json",
+      "fetched_at": "2026-11-05T10:14:34.107165Z"
+    },
+    {
+      "hour": "2026-10-25T14:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T14.json",
+      "fetched_at": "2026-11-05T10:14:34.101506Z"
+    },
+    {
+      "hour": "2026-10-25T15:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T15.json",
+      "fetched_at": "2026-11-05T10:14:43.193588Z"
+    },
+    {
+      "hour": "2026-10-25T16:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T16.json",
+      "fetched_at": "2026-11-05T10:14:43.185553Z"
+    },
+    {
+      "hour": "2026-10-25T17:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T17.json",
+      "fetched_at": "2026-11-05T10:14:43.189612Z"
+    },
+    {
+      "hour": "2026-10-25T18:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T18.json",
+      "fetched_at": "2026-11-05T10:14:51.277879Z"
+    },
+    {
+      "hour": "2026-10-25T19:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T19.json",
+      "fetched_at": "2026-11-05T10:14:51.269489Z"
+    },
+    {
+      "hour": "2026-10-25T20:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T20.json",
+      "fetched_at": "2026-11-05T10:14:51.277389Z"
+    },
+    {
+      "hour": "2026-10-25T21:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T21.json",
+      "fetched_at": "2026-11-05T10:14:59.317538Z"
+    },
+    {
+      "hour": "2026-10-25T22:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T22.json",
+      "fetched_at": "2026-11-05T10:14:59.361292Z"
+    },
+    {
+      "hour": "2026-10-25T23:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261025T23.json",
+      "fetched_at": "2026-11-05T10:14:59.353445Z"
+    },
+    {
+      "hour": "2026-10-26T00:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T00.json",
+      "fetched_at": "2026-11-05T10:15:08.313510Z"
+    },
+    {
+      "hour": "2026-10-26T01:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T01.json",
+      "fetched_at": "2026-11-05T10:15:08.509546Z"
+    },
+    {
+      "hour": "2026-10-26T02:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T02.json",
+      "fetched_at": "2026-11-05T10:15:08.297506Z"
+    },
+    {
+      "hour": "2026-10-26T03:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261026T03.json",
+      "fetched_at": "2026-11-05T14:52:10.419232Z"
+    },
+    {
+      "hour": "2026-10-26T04:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261026T04.json",
+      "fetched_at": "2026-11-05T14:52:10.419154Z"
+    },
+    {
+      "hour": "2026-10-26T05:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261026T05.json",
+      "fetched_at": "2026-11-05T14:52:10.558287Z"
+    },
+    {
+      "hour": "2026-10-26T06:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T06.json",
+      "fetched_at": "2026-11-05T10:15:24.193090Z"
+    },
+    {
+      "hour": "2026-10-26T07:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T07.json",
+      "fetched_at": "2026-11-05T10:15:24.241332Z"
+    },
+    {
+      "hour": "2026-10-26T08:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T08.json",
+      "fetched_at": "2026-11-05T10:15:24.225363Z"
+    },
+    {
+      "hour": "2026-10-26T09:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T09.json",
+      "fetched_at": "2026-11-05T10:15:33.167268Z"
+    },
+    {
+      "hour": "2026-10-26T10:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T10.json",
+      "fetched_at": "2026-11-05T10:15:33.162214Z"
+    },
+    {
+      "hour": "2026-10-26T11:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T11.json",
+      "fetched_at": "2026-11-05T10:15:33.161796Z"
+    },
+    {
+      "hour": "2026-10-26T12:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T12.json",
+      "fetched_at": "2026-11-05T10:15:40.213262Z"
+    },
+    {
+      "hour": "2026-10-26T13:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T13.json",
+      "fetched_at": "2026-11-05T10:15:40.210710Z"
+    },
+    {
+      "hour": "2026-10-26T14:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T14.json",
+      "fetched_at": "2026-11-05T10:15:40.202455Z"
+    },
+    {
+      "hour": "2026-10-26T15:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T15.json",
+      "fetched_at": "2026-11-05T10:15:46.861117Z"
+    },
+    {
+      "hour": "2026-10-26T16:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T16.json",
+      "fetched_at": "2026-11-05T10:15:46.749434Z"
+    },
+    {
+      "hour": "2026-10-26T17:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T17.json",
+      "fetched_at": "2026-11-05T10:15:46.859061Z"
+    },
+    {
+      "hour": "2026-10-26T18:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261026T18.json",
+      "fetched_at": "2026-11-05T14:52:10.537189Z"
+    },
+    {
+      "hour": "2026-10-26T19:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261026T19.json",
+      "fetched_at": "2026-11-05T14:52:17.905562Z"
+    },
+    {
+      "hour": "2026-10-26T20:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261026T20.json",
+      "fetched_at": "2026-11-05T14:52:17.858029Z"
+    },
+    {
+      "hour": "2026-10-26T21:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T21.json",
+      "fetched_at": "2026-11-05T10:16:03.277531Z"
+    },
+    {
+      "hour": "2026-10-26T22:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T22.json",
+      "fetched_at": "2026-11-05T10:16:03.182034Z"
+    },
+    {
+      "hour": "2026-10-26T23:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261026T23.json",
+      "fetched_at": "2026-11-05T10:16:03.165628Z"
+    },
+    {
+      "hour": "2026-10-27T00:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T00.json",
+      "fetched_at": "2026-11-05T10:16:11.786301Z"
+    },
+    {
+      "hour": "2026-10-27T01:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T01.json",
+      "fetched_at": "2026-11-05T10:16:11.821383Z"
+    },
+    {
+      "hour": "2026-10-27T02:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T02.json",
+      "fetched_at": "2026-11-05T10:16:11.776377Z"
+    },
+    {
+      "hour": "2026-10-27T03:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T03.json",
+      "fetched_at": "2026-11-05T10:16:18.440214Z"
+    },
+    {
+      "hour": "2026-10-27T04:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T04.json",
+      "fetched_at": "2026-11-05T10:16:18.537592Z"
+    },
+    {
+      "hour": "2026-10-27T05:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T05.json",
+      "fetched_at": "2026-11-05T10:16:18.382998Z"
+    },
+    {
+      "hour": "2026-10-27T06:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T06.json",
+      "fetched_at": "2026-11-05T10:16:26.333984Z"
+    },
+    {
+      "hour": "2026-10-27T07:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T07.json",
+      "fetched_at": "2026-11-05T10:16:26.297748Z"
+    },
+    {
+      "hour": "2026-10-27T08:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T08.json",
+      "fetched_at": "2026-11-05T10:16:26.321365Z"
+    },
+    {
+      "hour": "2026-10-27T09:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T09.json",
+      "fetched_at": "2026-11-05T10:16:32.527892Z"
+    },
+    {
+      "hour": "2026-10-27T10:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T10.json",
+      "fetched_at": "2026-11-05T10:16:32.531122Z"
+    },
+    {
+      "hour": "2026-10-27T11:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T11.json",
+      "fetched_at": "2026-11-05T10:16:32.413764Z"
+    },
+    {
+      "hour": "2026-10-27T12:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T12.json",
+      "fetched_at": "2026-11-05T10:16:39.837430Z"
+    },
+    {
+      "hour": "2026-10-27T13:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T13.json",
+      "fetched_at": "2026-11-05T10:16:39.877524Z"
+    },
+    {
+      "hour": "2026-10-27T14:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T14.json",
+      "fetched_at": "2026-11-05T10:16:39.795532Z"
+    },
+    {
+      "hour": "2026-10-27T15:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T15.json",
+      "fetched_at": "2026-11-05T10:16:45.913592Z"
+    },
+    {
+      "hour": "2026-10-27T16:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T16.json",
+      "fetched_at": "2026-11-05T10:16:45.953619Z"
+    },
+    {
+      "hour": "2026-10-27T17:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T17.json",
+      "fetched_at": "2026-11-05T10:16:45.933582Z"
+    },
+    {
+      "hour": "2026-10-27T18:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T18.json",
+      "fetched_at": "2026-11-05T10:16:54.973324Z"
+    },
+    {
+      "hour": "2026-10-27T19:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T19.json",
+      "fetched_at": "2026-11-05T10:16:55.029257Z"
+    },
+    {
+      "hour": "2026-10-27T20:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T20.json",
+      "fetched_at": "2026-11-05T10:16:55.013403Z"
+    },
+    {
+      "hour": "2026-10-27T21:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T21.json",
+      "fetched_at": "2026-11-05T10:17:01.237390Z"
+    },
+    {
+      "hour": "2026-10-27T22:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T22.json",
+      "fetched_at": "2026-11-05T10:17:01.249696Z"
+    },
+    {
+      "hour": "2026-10-27T23:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261027T23.json",
+      "fetched_at": "2026-11-05T10:17:01.213478Z"
+    },
+    {
+      "hour": "2026-10-28T00:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T00.json",
+      "fetched_at": "2026-11-05T10:17:09.997912Z"
+    },
+    {
+      "hour": "2026-10-28T01:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T01.json",
+      "fetched_at": "2026-11-05T10:17:10.001608Z"
+    },
+    {
+      "hour": "2026-10-28T02:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T02.json",
+      "fetched_at": "2026-11-05T10:17:10.004226Z"
+    },
+    {
+      "hour": "2026-10-28T03:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T03.json",
+      "fetched_at": "2026-11-05T10:17:16.275689Z"
+    },
+    {
+      "hour": "2026-10-28T04:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T04.json",
+      "fetched_at": "2026-11-05T10:17:16.270087Z"
+    },
+    {
+      "hour": "2026-10-28T05:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T05.json",
+      "fetched_at": "2026-11-05T10:17:16.269673Z"
+    },
+    {
+      "hour": "2026-10-28T06:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T06.json",
+      "fetched_at": "2026-11-05T10:17:23.765596Z"
+    },
+    {
+      "hour": "2026-10-28T07:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T07.json",
+      "fetched_at": "2026-11-05T10:17:23.791034Z"
+    },
+    {
+      "hour": "2026-10-28T08:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T08.json",
+      "fetched_at": "2026-11-05T10:17:23.769448Z"
+    },
+    {
+      "hour": "2026-10-28T09:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T09.json",
+      "fetched_at": "2026-11-05T10:17:30.769606Z"
+    },
+    {
+      "hour": "2026-10-28T10:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T10.json",
+      "fetched_at": "2026-11-05T10:17:30.717426Z"
+    },
+    {
+      "hour": "2026-10-28T11:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T11.json",
+      "fetched_at": "2026-11-05T10:17:30.769522Z"
+    },
+    {
+      "hour": "2026-10-28T12:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T12.json",
+      "fetched_at": "2026-11-05T10:17:37.507004Z"
+    },
+    {
+      "hour": "2026-10-28T13:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T13.json",
+      "fetched_at": "2026-11-05T10:17:37.519368Z"
+    },
+    {
+      "hour": "2026-10-28T14:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T14.json",
+      "fetched_at": "2026-11-05T10:17:37.505671Z"
+    },
+    {
+      "hour": "2026-10-28T15:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T15.json",
+      "fetched_at": "2026-11-05T10:17:44.101663Z"
+    },
+    {
+      "hour": "2026-10-28T16:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T16.json",
+      "fetched_at": "2026-11-05T10:17:44.085633Z"
+    },
+    {
+      "hour": "2026-10-28T17:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T17.json",
+      "fetched_at": "2026-11-05T10:17:44.090346Z"
+    },
+    {
+      "hour": "2026-10-28T18:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T18.json",
+      "fetched_at": "2026-11-05T10:17:50.986079Z"
+    },
+    {
+      "hour": "2026-10-28T19:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T19.json",
+      "fetched_at": "2026-11-05T10:17:50.997938Z"
+    },
+    {
+      "hour": "2026-10-28T20:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T20.json",
+      "fetched_at": "2026-11-05T10:17:50.969500Z"
+    },
+    {
+      "hour": "2026-10-28T21:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T21.json",
+      "fetched_at": "2026-11-05T10:17:57.997483Z"
+    },
+    {
+      "hour": "2026-10-28T22:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T22.json",
+      "fetched_at": "2026-11-05T10:17:57.945959Z"
+    },
+    {
+      "hour": "2026-10-28T23:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261028T23.json",
+      "fetched_at": "2026-11-05T10:17:57.957749Z"
+    },
+    {
+      "hour": "2026-10-29T00:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261029T00.json",
+      "fetched_at": "2026-11-05T10:18:06.369291Z"
+    },
+    {
+      "hour": "2026-10-29T01:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261029T01.json",
+      "fetched_at": "2026-11-05T10:18:06.361552Z"
+    },
+    {
+      "hour": "2026-10-29T02:00:00Z",
+      "status": "cached",
+      "path": "outputs/observations/cmorph/20261029T02.json",
+      "fetched_at": "2026-11-05T10:18:06.361626Z"
+    },
+    {
+      "hour": "2026-10-29T03:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T03.json",
+      "fetched_at": "2026-11-05T14:52:17.745489Z"
+    },
+    {
+      "hour": "2026-10-29T04:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T04.json",
+      "fetched_at": "2026-11-05T14:52:17.769288Z"
+    },
+    {
+      "hour": "2026-10-29T05:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T05.json",
+      "fetched_at": "2026-11-05T14:52:24.989672Z"
+    },
+    {
+      "hour": "2026-10-29T06:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T06.json",
+      "fetched_at": "2026-11-05T14:52:24.982429Z"
+    },
+    {
+      "hour": "2026-10-29T07:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T07.json",
+      "fetched_at": "2026-11-05T14:52:24.977504Z"
+    },
+    {
+      "hour": "2026-10-29T08:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T08.json",
+      "fetched_at": "2026-11-05T14:52:24.989918Z"
+    },
+    {
+      "hour": "2026-10-29T09:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T09.json",
+      "fetched_at": "2026-11-05T14:52:29.773561Z"
+    },
+    {
+      "hour": "2026-10-29T10:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T10.json",
+      "fetched_at": "2026-11-05T14:52:29.724422Z"
+    },
+    {
+      "hour": "2026-10-29T11:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T11.json",
+      "fetched_at": "2026-11-05T14:52:29.773973Z"
+    },
+    {
+      "hour": "2026-10-29T12:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T12.json",
+      "fetched_at": "2026-11-05T14:52:29.821485Z"
+    },
+    {
+      "hour": "2026-10-29T13:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T13.json",
+      "fetched_at": "2026-11-05T14:52:34.681556Z"
+    },
+    {
+      "hour": "2026-10-29T14:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T14.json",
+      "fetched_at": "2026-11-05T14:52:34.688977Z"
+    },
+    {
+      "hour": "2026-10-29T15:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T15.json",
+      "fetched_at": "2026-11-05T14:52:34.697270Z"
+    },
+    {
+      "hour": "2026-10-29T16:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T16.json",
+      "fetched_at": "2026-11-05T14:52:34.689036Z"
+    },
+    {
+      "hour": "2026-10-29T17:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T17.json",
+      "fetched_at": "2026-11-05T14:52:39.797576Z"
+    },
+    {
+      "hour": "2026-10-29T18:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T18.json",
+      "fetched_at": "2026-11-05T14:52:39.805656Z"
+    },
+    {
+      "hour": "2026-10-29T19:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T19.json",
+      "fetched_at": "2026-11-05T14:52:39.806809Z"
+    },
+    {
+      "hour": "2026-10-29T20:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T20.json",
+      "fetched_at": "2026-11-05T14:52:39.806018Z"
+    },
+    {
+      "hour": "2026-10-29T21:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T21.json",
+      "fetched_at": "2026-11-05T14:52:46.077984Z"
+    },
+    {
+      "hour": "2026-10-29T22:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T22.json",
+      "fetched_at": "2026-11-05T14:52:46.073604Z"
+    },
+    {
+      "hour": "2026-10-29T23:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261029T23.json",
+      "fetched_at": "2026-11-05T14:52:46.201550Z"
+    },
+    {
+      "hour": "2026-10-30T00:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T00.json",
+      "fetched_at": "2026-11-05T14:52:46.206112Z"
+    },
+    {
+      "hour": "2026-10-30T01:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T01.json",
+      "fetched_at": "2026-11-05T14:52:53.357833Z"
+    },
+    {
+      "hour": "2026-10-30T02:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T02.json",
+      "fetched_at": "2026-11-05T14:52:53.345587Z"
+    },
+    {
+      "hour": "2026-10-30T03:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T03.json",
+      "fetched_at": "2026-11-05T14:52:53.361517Z"
+    },
+    {
+      "hour": "2026-10-30T04:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T04.json",
+      "fetched_at": "2026-11-05T14:52:53.363695Z"
+    },
+    {
+      "hour": "2026-10-30T05:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T05.json",
+      "fetched_at": "2026-11-05T14:53:00.531138Z"
+    },
+    {
+      "hour": "2026-10-30T06:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T06.json",
+      "fetched_at": "2026-11-05T14:53:00.525475Z"
+    },
+    {
+      "hour": "2026-10-30T07:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T07.json",
+      "fetched_at": "2026-11-05T14:53:00.531580Z"
+    },
+    {
+      "hour": "2026-10-30T08:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T08.json",
+      "fetched_at": "2026-11-05T14:53:00.538855Z"
+    },
+    {
+      "hour": "2026-10-30T09:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T09.json",
+      "fetched_at": "2026-11-05T14:53:08.093547Z"
+    },
+    {
+      "hour": "2026-10-30T10:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T10.json",
+      "fetched_at": "2026-11-05T14:53:08.097765Z"
+    },
+    {
+      "hour": "2026-10-30T11:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T11.json",
+      "fetched_at": "2026-11-05T14:53:08.093489Z"
+    },
+    {
+      "hour": "2026-10-30T12:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T12.json",
+      "fetched_at": "2026-11-05T14:53:08.065467Z"
+    },
+    {
+      "hour": "2026-10-30T13:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T13.json",
+      "fetched_at": "2026-11-05T14:53:15.357390Z"
+    },
+    {
+      "hour": "2026-10-30T14:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T14.json",
+      "fetched_at": "2026-11-05T14:53:15.289389Z"
+    },
+    {
+      "hour": "2026-10-30T15:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T15.json",
+      "fetched_at": "2026-11-05T14:53:15.281488Z"
+    },
+    {
+      "hour": "2026-10-30T16:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T16.json",
+      "fetched_at": "2026-11-05T14:53:15.333804Z"
+    },
+    {
+      "hour": "2026-10-30T17:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T17.json",
+      "fetched_at": "2026-11-05T14:53:22.666176Z"
+    },
+    {
+      "hour": "2026-10-30T18:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T18.json",
+      "fetched_at": "2026-11-05T14:53:22.550040Z"
+    },
+    {
+      "hour": "2026-10-30T19:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T19.json",
+      "fetched_at": "2026-11-05T14:53:22.668263Z"
+    },
+    {
+      "hour": "2026-10-30T20:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T20.json",
+      "fetched_at": "2026-11-05T14:53:22.533482Z"
+    },
+    {
+      "hour": "2026-10-30T21:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T21.json",
+      "fetched_at": "2026-11-05T14:53:29.927143Z"
+    },
+    {
+      "hour": "2026-10-30T22:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T22.json",
+      "fetched_at": "2026-11-05T14:53:29.921647Z"
+    },
+    {
+      "hour": "2026-10-30T23:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261030T23.json",
+      "fetched_at": "2026-11-05T14:53:29.935450Z"
+    },
+    {
+      "hour": "2026-10-31T00:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T00.json",
+      "fetched_at": "2026-11-05T14:53:29.927104Z"
+    },
+    {
+      "hour": "2026-10-31T01:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T01.json",
+      "fetched_at": "2026-11-05T14:53:37.169531Z"
+    },
+    {
+      "hour": "2026-10-31T02:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T02.json",
+      "fetched_at": "2026-11-05T14:53:37.190035Z"
+    },
+    {
+      "hour": "2026-10-31T03:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T03.json",
+      "fetched_at": "2026-11-05T14:53:37.197514Z"
+    },
+    {
+      "hour": "2026-10-31T04:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T04.json",
+      "fetched_at": "2026-11-05T14:53:37.197603Z"
+    },
+    {
+      "hour": "2026-10-31T05:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T05.json",
+      "fetched_at": "2026-11-05T14:53:44.361505Z"
+    },
+    {
+      "hour": "2026-10-31T06:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T06.json",
+      "fetched_at": "2026-11-05T14:53:44.395218Z"
+    },
+    {
+      "hour": "2026-10-31T07:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T07.json",
+      "fetched_at": "2026-11-05T14:53:44.395366Z"
+    },
+    {
+      "hour": "2026-10-31T08:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T08.json",
+      "fetched_at": "2026-11-05T14:53:44.385413Z"
+    },
+    {
+      "hour": "2026-10-31T09:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T09.json",
+      "fetched_at": "2026-11-05T14:53:51.662138Z"
+    },
+    {
+      "hour": "2026-10-31T10:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T10.json",
+      "fetched_at": "2026-11-05T14:53:51.653679Z"
+    },
+    {
+      "hour": "2026-10-31T11:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T11.json",
+      "fetched_at": "2026-11-05T14:53:51.645880Z"
+    },
+    {
+      "hour": "2026-10-31T12:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T12.json",
+      "fetched_at": "2026-11-05T14:53:51.653412Z"
+    },
+    {
+      "hour": "2026-10-31T13:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T13.json",
+      "fetched_at": "2026-11-05T14:53:58.881569Z"
+    },
+    {
+      "hour": "2026-10-31T14:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T14.json",
+      "fetched_at": "2026-11-05T14:53:58.873421Z"
+    },
+    {
+      "hour": "2026-10-31T15:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T15.json",
+      "fetched_at": "2026-11-05T14:53:58.841488Z"
+    },
+    {
+      "hour": "2026-10-31T16:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T16.json",
+      "fetched_at": "2026-11-05T14:53:58.884004Z"
+    },
+    {
+      "hour": "2026-10-31T17:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T17.json",
+      "fetched_at": "2026-11-05T14:54:06.137649Z"
+    },
+    {
+      "hour": "2026-10-31T18:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T18.json",
+      "fetched_at": "2026-11-05T14:54:06.137970Z"
+    },
+    {
+      "hour": "2026-10-31T19:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T19.json",
+      "fetched_at": "2026-11-05T14:54:06.153315Z"
+    },
+    {
+      "hour": "2026-10-31T20:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T20.json",
+      "fetched_at": "2026-11-05T14:54:06.101471Z"
+    },
+    {
+      "hour": "2026-10-31T21:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T21.json",
+      "fetched_at": "2026-11-05T14:54:13.441327Z"
+    },
+    {
+      "hour": "2026-10-31T22:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T22.json",
+      "fetched_at": "2026-11-05T14:54:13.465438Z"
+    },
+    {
+      "hour": "2026-10-31T23:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261031T23.json",
+      "fetched_at": "2026-11-05T14:54:13.421486Z"
+    },
+    {
+      "hour": "2026-11-01T00:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T00.json",
+      "fetched_at": "2026-11-05T14:54:13.470949Z"
+    },
+    {
+      "hour": "2026-11-01T01:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T01.json",
+      "fetched_at": "2026-11-05T14:54:20.813501Z"
+    },
+    {
+      "hour": "2026-11-01T02:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T02.json",
+      "fetched_at": "2026-11-05T14:54:20.819580Z"
+    },
+    {
+      "hour": "2026-11-01T03:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T03.json",
+      "fetched_at": "2026-11-05T14:54:20.857515Z"
+    },
+    {
+      "hour": "2026-11-01T04:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T04.json",
+      "fetched_at": "2026-11-05T14:54:20.764911Z"
+    },
+    {
+      "hour": "2026-11-01T05:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T05.json",
+      "fetched_at": "2026-11-05T14:54:29.681499Z"
+    },
+    {
+      "hour": "2026-11-01T06:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T06.json",
+      "fetched_at": "2026-11-05T14:54:29.689583Z"
+    },
+    {
+      "hour": "2026-11-01T07:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T07.json",
+      "fetched_at": "2026-11-05T14:54:29.694728Z"
+    },
+    {
+      "hour": "2026-11-01T08:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T08.json",
+      "fetched_at": "2026-11-05T14:54:29.689927Z"
+    },
+    {
+      "hour": "2026-11-01T09:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T09.json",
+      "fetched_at": "2026-11-05T14:54:36.901475Z"
+    },
+    {
+      "hour": "2026-11-01T10:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T10.json",
+      "fetched_at": "2026-11-05T14:54:36.955020Z"
+    },
+    {
+      "hour": "2026-11-01T11:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T11.json",
+      "fetched_at": "2026-11-05T14:54:36.957334Z"
+    },
+    {
+      "hour": "2026-11-01T12:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T12.json",
+      "fetched_at": "2026-11-05T14:54:36.949543Z"
+    },
+    {
+      "hour": "2026-11-01T13:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T13.json",
+      "fetched_at": "2026-11-05T14:54:44.162138Z"
+    },
+    {
+      "hour": "2026-11-01T14:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T14.json",
+      "fetched_at": "2026-11-05T14:54:44.162691Z"
+    },
+    {
+      "hour": "2026-11-01T15:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T15.json",
+      "fetched_at": "2026-11-05T14:54:44.161627Z"
+    },
+    {
+      "hour": "2026-11-01T16:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T16.json",
+      "fetched_at": "2026-11-05T14:54:44.163099Z"
+    },
+    {
+      "hour": "2026-11-01T17:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T17.json",
+      "fetched_at": "2026-11-05T14:54:51.421671Z"
+    },
+    {
+      "hour": "2026-11-01T18:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T18.json",
+      "fetched_at": "2026-11-05T14:54:51.425661Z"
+    },
+    {
+      "hour": "2026-11-01T19:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261101T19.json",
+      "fetched_at": "2026-11-05T14:54:51.426857Z"
+    },
+    {
+      "hour": "2026-11-01T20:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110120.nc"
+    },
+    {
+      "hour": "2026-11-01T21:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110121.nc"
+    },
+    {
+      "hour": "2026-11-01T22:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110122.nc"
+    },
+    {
+      "hour": "2026-11-01T23:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110123.nc"
+    },
+    {
+      "hour": "2026-11-02T00:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110200.nc"
+    },
+    {
+      "hour": "2026-11-02T01:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110201.nc"
+    },
+    {
+      "hour": "2026-11-02T02:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110202.nc"
+    },
+    {
+      "hour": "2026-11-02T03:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110203.nc"
+    },
+    {
+      "hour": "2026-11-02T04:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110204.nc"
+    },
+    {
+      "hour": "2026-11-02T05:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110205.nc"
+    },
+    {
+      "hour": "2026-11-02T06:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110206.nc"
+    },
+    {
+      "hour": "2026-11-02T07:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110207.nc"
+    },
+    {
+      "hour": "2026-11-02T08:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110208.nc"
+    },
+    {
+      "hour": "2026-11-02T09:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110209.nc"
+    },
+    {
+      "hour": "2026-11-02T10:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110210.nc"
+    },
+    {
+      "hour": "2026-11-02T11:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110211.nc"
+    },
+    {
+      "hour": "2026-11-02T12:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110212.nc"
+    },
+    {
+      "hour": "2026-11-02T13:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110213.nc"
+    },
+    {
+      "hour": "2026-11-02T14:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110214.nc"
+    },
+    {
+      "hour": "2026-11-02T15:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110215.nc"
+    },
+    {
+      "hour": "2026-11-02T16:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110216.nc"
+    },
+    {
+      "hour": "2026-11-02T17:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110217.nc"
+    },
+    {
+      "hour": "2026-11-02T18:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261102T18.json",
+      "fetched_at": "2026-11-05T14:55:34.678657Z"
+    },
+    {
+      "hour": "2026-11-02T19:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261102T19.json",
+      "fetched_at": "2026-11-05T14:55:34.661630Z"
+    },
+    {
+      "hour": "2026-11-02T20:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261102T20.json",
+      "fetched_at": "2026-11-05T14:55:34.673807Z"
+    },
+    {
+      "hour": "2026-11-02T21:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261102T21.json",
+      "fetched_at": "2026-11-05T14:55:41.758826Z"
+    },
+    {
+      "hour": "2026-11-02T22:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261102T22.json",
+      "fetched_at": "2026-11-05T14:55:41.838168Z"
+    },
+    {
+      "hour": "2026-11-02T23:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261102T23.json",
+      "fetched_at": "2026-11-05T14:55:41.837898Z"
+    },
+    {
+      "hour": "2026-11-03T00:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T00.json",
+      "fetched_at": "2026-11-05T14:55:41.838064Z"
+    },
+    {
+      "hour": "2026-11-03T01:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T01.json",
+      "fetched_at": "2026-11-05T14:55:48.990646Z"
+    },
+    {
+      "hour": "2026-11-03T02:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T02.json",
+      "fetched_at": "2026-11-05T14:55:48.985520Z"
+    },
+    {
+      "hour": "2026-11-03T03:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T03.json",
+      "fetched_at": "2026-11-05T14:55:48.990754Z"
+    },
+    {
+      "hour": "2026-11-03T04:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T04.json",
+      "fetched_at": "2026-11-05T14:55:48.961497Z"
+    },
+    {
+      "hour": "2026-11-03T05:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T05.json",
+      "fetched_at": "2026-11-05T14:55:57.525535Z"
+    },
+    {
+      "hour": "2026-11-03T06:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T06.json",
+      "fetched_at": "2026-11-05T14:55:57.534135Z"
+    },
+    {
+      "hour": "2026-11-03T07:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T07.json",
+      "fetched_at": "2026-11-05T14:55:57.558003Z"
+    },
+    {
+      "hour": "2026-11-03T08:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T08.json",
+      "fetched_at": "2026-11-05T14:55:57.569816Z"
+    },
+    {
+      "hour": "2026-11-03T09:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T09.json",
+      "fetched_at": "2026-11-05T14:56:04.891896Z"
+    },
+    {
+      "hour": "2026-11-03T10:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T10.json",
+      "fetched_at": "2026-11-05T14:56:04.885647Z"
+    },
+    {
+      "hour": "2026-11-03T11:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T11.json",
+      "fetched_at": "2026-11-05T14:56:04.937514Z"
+    },
+    {
+      "hour": "2026-11-03T12:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T12.json",
+      "fetched_at": "2026-11-05T14:56:04.891970Z"
+    },
+    {
+      "hour": "2026-11-03T13:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T13.json",
+      "fetched_at": "2026-11-05T14:56:12.033553Z"
+    },
+    {
+      "hour": "2026-11-03T14:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T14.json",
+      "fetched_at": "2026-11-05T14:56:12.033353Z"
+    },
+    {
+      "hour": "2026-11-03T15:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T15.json",
+      "fetched_at": "2026-11-05T14:56:12.073476Z"
+    },
+    {
+      "hour": "2026-11-03T16:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T16.json",
+      "fetched_at": "2026-11-05T14:56:11.989541Z"
+    },
+    {
+      "hour": "2026-11-03T17:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T17.json",
+      "fetched_at": "2026-11-05T14:56:19.277519Z"
+    },
+    {
+      "hour": "2026-11-03T18:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T18.json",
+      "fetched_at": "2026-11-05T14:56:19.283979Z"
+    },
+    {
+      "hour": "2026-11-03T19:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T19.json",
+      "fetched_at": "2026-11-05T14:56:19.249877Z"
+    },
+    {
+      "hour": "2026-11-03T20:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T20.json",
+      "fetched_at": "2026-11-05T14:56:19.284106Z"
+    },
+    {
+      "hour": "2026-11-03T21:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T21.json",
+      "fetched_at": "2026-11-05T14:56:26.445603Z"
+    },
+    {
+      "hour": "2026-11-03T22:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T22.json",
+      "fetched_at": "2026-11-05T14:56:26.501467Z"
+    },
+    {
+      "hour": "2026-11-03T23:00:00Z",
+      "status": "downloaded",
+      "path": "outputs/observations/cmorph/20261103T23.json",
+      "fetched_at": "2026-11-05T14:56:26.409574Z"
+    }
+  ]
+}
