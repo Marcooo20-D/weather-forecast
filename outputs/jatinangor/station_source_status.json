@@ -27,16 +27,16 @@
   "source_reports": [
     {
       "source_url": "https://data.meteostat.net/hourly/2026/96781.csv.gz",
-      "fetched_at": "2026-11-06T04:35:20.406831Z",
+      "fetched_at": "2026-11-06T13:11:58.078263Z",
       "rows_considered": 336,
       "measurement_rows": 0,
       "excluded_field_values_by_source": {
         "metno_forecast": 1008
       },
       "rain_policy": "No hourly rain is inferred without explicit accumulation boundaries",
-      "source_sha256": "4186cb7d1522c0f2cba3d4b69e746bfb49ad49f4883e20512bd477c474d0ea28"
+      "source_sha256": "c692dea2f0e4ed7ce7e6403c00fe019416df2dde414439e37c918f227efdab1b"
     }
   ],
-  "checked_at": "2026-11-06T04:35:24.060799Z",
+  "checked_at": "2026-11-06T13:12:03.397608Z",
   "limitations": "Nearby station coverage is not an on-campus measurement; source-labelled model values are excluded"
 }
