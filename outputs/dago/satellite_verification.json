@@ -1,6 +1,6 @@
 {
   "schema_version": "LANGIT.satellite-verification.v1",
-  "generated_at": "2026-11-06T01:50:32.904453Z",
+  "generated_at": "2026-11-06T02:21:41.834414Z",
   "location_slug": "dago",
   "reference_type": "satellite_gauge_precipitation_estimate",
   "reference_product": "NOAA CPC CMORPH ICDR ADJ",
@@ -14,10 +14,10 @@
   "automatic_station_measurement_rows": 0,
   "station_calibration_changed": false,
   "local_station_skill_status": "NOT_ESTABLISHED_BY_THIS_REPORT",
-  "archive_documents": 273,
-  "candidate_rows": 6552,
+  "archive_documents": 276,
+  "candidate_rows": 6624,
   "rejected_rows_by_reason": {
-    "missing_reference_hour": 3210,
+    "missing_reference_hour": 3282,
     "not_pre_event": 709
   },
   "all_leads": {
@@ -160,8 +160,8 @@
   ],
   "reference_coverage": {
     "requested_hours": 336,
-    "available_hours": 317,
-    "missing_hours": 19,
+    "available_hours": 316,
+    "missing_hours": 20,
     "missing_policy": "Missing source hours excluded; never replaced with zero"
   },
   "reference_cell": {
