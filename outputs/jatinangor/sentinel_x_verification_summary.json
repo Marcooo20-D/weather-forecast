@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-05T21:00:36.787268+07:00",
+  "generated_at": "2026-11-06T08:43:35.177932+07:00",
   "location_slug": "jatinangor",
   "location_name": "Jatinangor, Sumedang",
   "matched_cases": 0,
@@ -90,7 +90,7 @@
   ],
   "probabilistic_verification": {
     "schema": "langit-probabilistic-verification-1",
-    "generated_at": "2026-11-05T21:00:58.341218+07:00",
+    "generated_at": "2026-11-06T08:43:56.985731+07:00",
     "status": "insufficient_matching_observations",
     "nominal_interval_coverage": 0.8,
     "calibration_status": "NOT_CERTIFIED",
@@ -105,8 +105,8 @@
     },
     "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
     "rejected": {
-      "not_pre_event": 1701,
-      "missing_qc_observation": 4779,
+      "not_pre_event": 1677,
+      "missing_qc_observation": 4875,
       "rain_interval_mismatch": 0,
       "unknown_observation_location": 0,
       "observation_outside_local_radius": 0
@@ -116,17 +116,17 @@
   "activity_verification": {
     "activities": {
       "motor": {
-        "recommended_windows": 59,
+        "recommended_windows": 60,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 59,
+        "unknown_windows": 60,
         "disruption_rate": null
       },
       "walking": {
-        "recommended_windows": 39,
+        "recommended_windows": 40,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 39,
+        "unknown_windows": 40,
         "disruption_rate": null
       },
       "sport": {
@@ -151,10 +151,10 @@
         "disruption_rate": null
       },
       "photography": {
-        "recommended_windows": 32,
+        "recommended_windows": 33,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 32,
+        "unknown_windows": 33,
         "disruption_rate": null
       }
     },
