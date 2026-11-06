@@ -1,9 +1,9 @@
 {
   "schema_version": "LANGIT.reference-sync.v1",
-  "generated_at": "2026-11-06T13:12:04.401017Z",
+  "generated_at": "2026-11-06T13:38:28.849212Z",
   "requested_hours": 336,
-  "available_hours": 316,
-  "missing_hours": 20,
+  "available_hours": 317,
+  "missing_hours": 19,
   "reference_type": "satellite_gauge_precipitation_estimate",
   "records": [
     {
@@ -1904,9 +1904,9 @@
     },
     {
       "hour": "2026-11-05T17:00:00Z",
-      "status": "unavailable",
-      "error": "HTTP Error 404: Not Found",
-      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110517.nc"
+      "status": "cached",
+      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261105T17.json",
+      "fetched_at": "2026-11-06T13:38:27.553849Z"
     },
     {
       "hour": "2026-11-05T18:00:00Z",

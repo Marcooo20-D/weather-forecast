@@ -1,8 +1,8 @@
 {
   "brand": "LANGIT",
   "version": "LANGIT v67.0",
-  "generated_at": "Diperbarui 6 November, 20:16 WIB",
-  "generated_at_iso": "2026-11-06T20:16:08.184359+07:00",
+  "generated_at": "Diperbarui 6 November, 20:42 WIB",
+  "generated_at_iso": "2026-11-06T20:42:37.040789+07:00",
   "location_name": "Dago, Bandung",
   "location_slug": "dago",
   "latitude": -6.889,
@@ -646,7 +646,7 @@
         "risk_label": "Perlu dipantau",
         "condition": "Cerah Berawan",
         "valid": true,
-        "wind_dir": 14.0,
+        "wind_dir": 15.0,
         "cloud_pct": 54.0,
         "validation_flags": [],
         "risk_score_basis": "activity_disruption_heuristic_not_hazard_probability",
@@ -740,7 +740,7 @@
     ],
     "valid_points": 4,
     "rejected_time_records": 0,
-    "issued_at": "2026-11-06T20:12:04.815037+07:00",
+    "issued_at": "2026-11-06T20:38:29.250925+07:00",
     "time_basis": "forecast_issue_not_provider_model_initialization",
     "ensemble_status": {
       "status": "usable",
@@ -1389,7 +1389,7 @@
           "risk_label": "Perlu dipantau",
           "condition": "Cerah Berawan",
           "valid": true,
-          "wind_dir": 14.0,
+          "wind_dir": 15.0,
           "cloud_pct": 54.0,
           "validation_flags": [],
           "risk_score_basis": "activity_disruption_heuristic_not_hazard_probability",
@@ -1483,7 +1483,7 @@
       ],
       "valid_points": 4,
       "rejected_time_records": 0,
-      "issued_at": "2026-11-06T20:12:04.815037+07:00",
+      "issued_at": "2026-11-06T20:38:29.250925+07:00",
       "time_basis": "forecast_issue_not_provider_model_initialization",
       "ensemble_status": {
         "status": "usable",
@@ -2227,7 +2227,7 @@
       ],
       "valid_points": 24,
       "rejected_time_records": 0,
-      "issued_at": "2026-11-06T20:14:07.422856+07:00",
+      "issued_at": "2026-11-06T20:40:35.546446+07:00",
       "time_basis": "forecast_issue_not_provider_model_initialization",
       "ensemble_status": {
         "status": "usable",
@@ -2970,7 +2970,7 @@
       ],
       "valid_points": 23,
       "rejected_time_records": 0,
-      "issued_at": "2026-11-06T20:16:08.184359+07:00",
+      "issued_at": "2026-11-06T20:42:37.040789+07:00",
       "time_basis": "forecast_issue_not_provider_model_initialization",
       "ensemble_status": {
         "status": "usable",
@@ -2987,12 +2987,12 @@
       "provider": "BMKG",
       "success": "yes",
       "base_weight": "1.6041",
-      "health_factor": "0.8951",
-      "effective_base_weight": "1.4358",
+      "health_factor": "0.8922",
+      "effective_base_weight": "1.4312",
       "points_collected": "4",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "931",
+      "duration_ms": "324",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
@@ -3002,7 +3002,7 @@
       "is_cached": "False",
       "is_backup": "False",
       "model_identifier": "BMKG",
-      "original_fetched_at": "2026-11-06T20:12:05.790117+07:00",
+      "original_fetched_at": "2026-11-06T20:38:29.617753+07:00",
       "cache_age_hours": "0"
     },
     {
@@ -3016,7 +3016,7 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "519",
+      "duration_ms": "374",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
@@ -3026,7 +3026,7 @@
       "is_cached": "False",
       "is_backup": "False",
       "model_identifier": "CMA",
-      "original_fetched_at": "2026-11-06T20:12:08.005079+07:00",
+      "original_fetched_at": "2026-11-06T20:38:30.068335+07:00",
       "cache_age_hours": "0"
     },
     {
@@ -3040,7 +3040,7 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "523",
+      "duration_ms": "375",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
@@ -3050,7 +3050,7 @@
       "is_cached": "False",
       "is_backup": "False",
       "model_identifier": "ECMWF",
-      "original_fetched_at": "2026-11-06T20:12:05.382386+07:00",
+      "original_fetched_at": "2026-11-06T20:38:29.669525+07:00",
       "cache_age_hours": "0"
     },
     {
@@ -3064,7 +3064,7 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "286",
+      "duration_ms": "89",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
@@ -3074,7 +3074,7 @@
       "is_cached": "False",
       "is_backup": "False",
       "model_identifier": "GFS",
-      "original_fetched_at": "2026-11-06T20:12:08.317204+07:00",
+      "original_fetched_at": "2026-11-06T20:38:32.351383+07:00",
       "cache_age_hours": "0"
     },
     {
@@ -3088,7 +3088,7 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "550",
+      "duration_ms": "81",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
@@ -3098,7 +3098,7 @@
       "is_cached": "False",
       "is_backup": "False",
       "model_identifier": "ICON",
-      "original_fetched_at": "2026-11-06T20:12:05.957615+07:00",
+      "original_fetched_at": "2026-11-06T20:38:32.458172+07:00",
       "cache_age_hours": "0"
     },
     {
@@ -3112,7 +3112,7 @@
       "points_collected": "0",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "191",
+      "duration_ms": "1622",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
@@ -3136,7 +3136,7 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "507",
+      "duration_ms": "374",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
@@ -3146,7 +3146,7 @@
       "is_cached": "False",
       "is_backup": "False",
       "model_identifier": "METEOFRANCE",
-      "original_fetched_at": "2026-11-06T20:12:06.490064+07:00",
+      "original_fetched_at": "2026-11-06T20:38:30.467244+07:00",
       "cache_age_hours": "0"
     },
     {
@@ -3155,12 +3155,12 @@
       "provider": "MET Norway",
       "success": "yes",
       "base_weight": "1.3367",
-      "health_factor": "0.9866",
-      "effective_base_weight": "1.3188",
+      "health_factor": "0.9778",
+      "effective_base_weight": "1.307",
       "points_collected": "6",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "548",
+      "duration_ms": "415",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
@@ -3170,7 +3170,7 @@
       "is_cached": "False",
       "is_backup": "False",
       "model_identifier": "METNO",
-      "original_fetched_at": "2026-11-06T20:12:08.035221+07:00",
+      "original_fetched_at": "2026-11-06T20:38:32.679437+07:00",
       "cache_age_hours": "0"
     },
     {
@@ -3184,7 +3184,7 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "718",
+      "duration_ms": "86",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
@@ -3194,7 +3194,7 @@
       "is_cached": "False",
       "is_backup": "False",
       "model_identifier": "ukmo_seamless",
-      "original_fetched_at": "2026-11-06T20:12:07.451543+07:00",
+      "original_fetched_at": "2026-11-06T20:38:32.225748+07:00",
       "cache_age_hours": "0"
     },
     {
@@ -3208,7 +3208,7 @@
       "points_collected": "24",
       "target_points": "24",
       "http_status": "200",
-      "duration_ms": "150",
+      "duration_ms": "80",
       "error_content_type": "",
       "error_snippet": "",
       "payload_saved_path": "",
@@ -3218,7 +3218,7 @@
       "is_cached": "False",
       "is_backup": "True",
       "model_identifier": "jma_seamless",
-      "original_fetched_at": "2026-11-06T20:12:08.492195+07:00",
+      "original_fetched_at": "2026-11-06T20:38:32.786209+07:00",
       "cache_age_hours": "0"
     }
   ],
@@ -3230,12 +3230,12 @@
         "provider": "BMKG",
         "success": "yes",
         "base_weight": "1.6041",
-        "health_factor": "0.8951",
-        "effective_base_weight": "1.4358",
+        "health_factor": "0.8922",
+        "effective_base_weight": "1.4312",
         "points_collected": "4",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "931",
+        "duration_ms": "324",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3245,7 +3245,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "BMKG",
-        "original_fetched_at": "2026-11-06T20:12:05.790117+07:00",
+        "original_fetched_at": "2026-11-06T20:38:29.617753+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3259,7 +3259,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "519",
+        "duration_ms": "374",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3269,7 +3269,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "CMA",
-        "original_fetched_at": "2026-11-06T20:12:08.005079+07:00",
+        "original_fetched_at": "2026-11-06T20:38:30.068335+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3283,7 +3283,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "523",
+        "duration_ms": "375",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3293,7 +3293,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "ECMWF",
-        "original_fetched_at": "2026-11-06T20:12:05.382386+07:00",
+        "original_fetched_at": "2026-11-06T20:38:29.669525+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3307,7 +3307,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "286",
+        "duration_ms": "89",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3317,7 +3317,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "GFS",
-        "original_fetched_at": "2026-11-06T20:12:08.317204+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.351383+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3331,7 +3331,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "550",
+        "duration_ms": "81",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3341,7 +3341,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "ICON",
-        "original_fetched_at": "2026-11-06T20:12:05.957615+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.458172+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3355,7 +3355,7 @@
         "points_collected": "0",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "191",
+        "duration_ms": "1622",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3379,7 +3379,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "507",
+        "duration_ms": "374",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3389,7 +3389,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "METEOFRANCE",
-        "original_fetched_at": "2026-11-06T20:12:06.490064+07:00",
+        "original_fetched_at": "2026-11-06T20:38:30.467244+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3398,12 +3398,12 @@
         "provider": "MET Norway",
         "success": "yes",
         "base_weight": "1.3367",
-        "health_factor": "0.9866",
-        "effective_base_weight": "1.3188",
+        "health_factor": "0.9778",
+        "effective_base_weight": "1.307",
         "points_collected": "6",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "548",
+        "duration_ms": "415",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3413,7 +3413,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "METNO",
-        "original_fetched_at": "2026-11-06T20:12:08.035221+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.679437+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3427,7 +3427,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "718",
+        "duration_ms": "86",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3437,7 +3437,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "ukmo_seamless",
-        "original_fetched_at": "2026-11-06T20:12:07.451543+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.225748+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3451,7 +3451,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "150",
+        "duration_ms": "80",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3461,7 +3461,7 @@
         "is_cached": "False",
         "is_backup": "True",
         "model_identifier": "jma_seamless",
-        "original_fetched_at": "2026-11-06T20:12:08.492195+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.786209+07:00",
         "cache_age_hours": "0"
       }
     ],
@@ -3472,12 +3472,12 @@
         "provider": "BMKG",
         "success": "yes",
         "base_weight": "1.6041",
-        "health_factor": "0.8815",
-        "effective_base_weight": "1.414",
+        "health_factor": "0.8796",
+        "effective_base_weight": "1.411",
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "931",
+        "duration_ms": "324",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3487,7 +3487,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "BMKG",
-        "original_fetched_at": "2026-11-06T20:12:05.790117+07:00",
+        "original_fetched_at": "2026-11-06T20:38:29.617753+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3501,7 +3501,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "519",
+        "duration_ms": "374",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3511,7 +3511,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "CMA",
-        "original_fetched_at": "2026-11-06T20:12:08.005079+07:00",
+        "original_fetched_at": "2026-11-06T20:38:30.068335+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3525,7 +3525,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "523",
+        "duration_ms": "375",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3535,7 +3535,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "ECMWF",
-        "original_fetched_at": "2026-11-06T20:12:05.382386+07:00",
+        "original_fetched_at": "2026-11-06T20:38:29.669525+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3549,7 +3549,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "286",
+        "duration_ms": "89",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3559,7 +3559,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "GFS",
-        "original_fetched_at": "2026-11-06T20:12:08.317204+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.351383+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3573,7 +3573,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "550",
+        "duration_ms": "81",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3583,7 +3583,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "ICON",
-        "original_fetched_at": "2026-11-06T20:12:05.957615+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.458172+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3597,7 +3597,7 @@
         "points_collected": "0",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "191",
+        "duration_ms": "1622",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3621,7 +3621,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "507",
+        "duration_ms": "374",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3631,7 +3631,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "METEOFRANCE",
-        "original_fetched_at": "2026-11-06T20:12:06.490064+07:00",
+        "original_fetched_at": "2026-11-06T20:38:30.467244+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3640,12 +3640,12 @@
         "provider": "MET Norway",
         "success": "yes",
         "base_weight": "1.3367",
-        "health_factor": "0.9475",
-        "effective_base_weight": "1.2665",
+        "health_factor": "0.9418",
+        "effective_base_weight": "1.2589",
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "548",
+        "duration_ms": "415",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3655,7 +3655,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "METNO",
-        "original_fetched_at": "2026-11-06T20:12:08.035221+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.679437+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3669,7 +3669,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "718",
+        "duration_ms": "86",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3679,7 +3679,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "ukmo_seamless",
-        "original_fetched_at": "2026-11-06T20:12:07.451543+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.225748+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3693,7 +3693,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "150",
+        "duration_ms": "80",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3703,7 +3703,7 @@
         "is_cached": "False",
         "is_backup": "True",
         "model_identifier": "jma_seamless",
-        "original_fetched_at": "2026-11-06T20:12:08.492195+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.786209+07:00",
         "cache_age_hours": "0"
       }
     ],
@@ -3714,12 +3714,12 @@
         "provider": "BMKG",
         "success": "yes",
         "base_weight": "1.6041",
-        "health_factor": "0.888",
-        "effective_base_weight": "1.4244",
+        "health_factor": "0.8867",
+        "effective_base_weight": "1.4224",
         "points_collected": "23",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "931",
+        "duration_ms": "324",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3729,7 +3729,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "BMKG",
-        "original_fetched_at": "2026-11-06T20:12:05.790117+07:00",
+        "original_fetched_at": "2026-11-06T20:38:29.617753+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3743,7 +3743,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "519",
+        "duration_ms": "374",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3753,7 +3753,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "CMA",
-        "original_fetched_at": "2026-11-06T20:12:08.005079+07:00",
+        "original_fetched_at": "2026-11-06T20:38:30.068335+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3767,7 +3767,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "523",
+        "duration_ms": "375",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3777,7 +3777,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "ECMWF",
-        "original_fetched_at": "2026-11-06T20:12:05.382386+07:00",
+        "original_fetched_at": "2026-11-06T20:38:29.669525+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3791,7 +3791,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "286",
+        "duration_ms": "89",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3801,7 +3801,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "GFS",
-        "original_fetched_at": "2026-11-06T20:12:08.317204+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.351383+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3815,7 +3815,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "550",
+        "duration_ms": "81",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3825,7 +3825,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "ICON",
-        "original_fetched_at": "2026-11-06T20:12:05.957615+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.458172+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3839,7 +3839,7 @@
         "points_collected": "0",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "191",
+        "duration_ms": "1622",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3863,7 +3863,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "507",
+        "duration_ms": "374",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3873,7 +3873,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "METEOFRANCE",
-        "original_fetched_at": "2026-11-06T20:12:06.490064+07:00",
+        "original_fetched_at": "2026-11-06T20:38:30.467244+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3882,12 +3882,12 @@
         "provider": "MET Norway",
         "success": "yes",
         "base_weight": "1.3367",
-        "health_factor": "0.9659",
-        "effective_base_weight": "1.2911",
+        "health_factor": "0.9622",
+        "effective_base_weight": "1.2862",
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "548",
+        "duration_ms": "415",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3897,7 +3897,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "METNO",
-        "original_fetched_at": "2026-11-06T20:12:08.035221+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.679437+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3911,7 +3911,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "718",
+        "duration_ms": "86",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3921,7 +3921,7 @@
         "is_cached": "False",
         "is_backup": "False",
         "model_identifier": "ukmo_seamless",
-        "original_fetched_at": "2026-11-06T20:12:07.451543+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.225748+07:00",
         "cache_age_hours": "0"
       },
       {
@@ -3935,7 +3935,7 @@
         "points_collected": "24",
         "target_points": "24",
         "http_status": "200",
-        "duration_ms": "150",
+        "duration_ms": "80",
         "error_content_type": "",
         "error_snippet": "",
         "payload_saved_path": "",
@@ -3945,13 +3945,13 @@
         "is_cached": "False",
         "is_backup": "True",
         "model_identifier": "jma_seamless",
-        "original_fetched_at": "2026-11-06T20:12:08.492195+07:00",
+        "original_fetched_at": "2026-11-06T20:38:32.786209+07:00",
         "cache_age_hours": "0"
       }
     ]
   },
   "source_status_date": "2026-11-06",
-  "built_at": "2026-11-06T13:33:19.523140+00:00",
+  "built_at": "2026-11-06T13:59:43.162795+00:00",
   "scientific_status": "Probabilitas belum terkalibrasi; akurasi lokal harus dibuktikan dengan observasi.",
   "raw_version": "LANGIT v61.0"
 }

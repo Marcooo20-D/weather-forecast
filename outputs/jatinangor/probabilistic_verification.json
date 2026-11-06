@@ -1,6 +1,6 @@
 {
   "schema": "langit-probabilistic-verification-1",
-  "generated_at": "2026-11-06T20:23:13.568432+07:00",
+  "generated_at": "2026-11-06T20:49:39.529418+07:00",
   "status": "insufficient_matching_observations",
   "nominal_interval_coverage": 0.8,
   "calibration_status": "NOT_CERTIFIED",
@@ -15,7 +15,7 @@
   },
   "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
   "rejected": {
-    "not_pre_event": 1768,
+    "not_pre_event": 1840,
     "missing_qc_observation": 5000,
     "rain_interval_mismatch": 0,
     "unknown_observation_location": 0,
