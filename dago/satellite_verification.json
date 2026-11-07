@@ -1,0 +1,171 @@
+{
+  "schema_version": "LANGIT.satellite-verification.v1",
+  "generated_at": "2026-11-07T11:15:11.674165Z",
+  "location_slug": "dago",
+  "reference_type": "satellite_gauge_precipitation_estimate",
+  "reference_product": "NOAA CPC CMORPH ICDR ADJ",
+  "grid_resolution_degrees": 0.25,
+  "rain_interval_minutes": 60,
+  "event_threshold_mm": 0.1,
+  "forecast_method": "family_balanced_real_member_empirical_distribution",
+  "forecast_selection": "Earliest eligible issue in each valid-hour/lead bin; issue precedes valid time by at least one hour",
+  "scope": "raw native ensemble rainfall; statistics measure agreement with a grid-cell satellite/gauge estimate",
+  "station_source_status": "no_station_measurements",
+  "automatic_station_measurement_rows": 0,
+  "station_calibration_changed": false,
+  "local_station_skill_status": "NOT_ESTABLISHED_BY_THIS_REPORT",
+  "archive_documents": 291,
+  "candidate_rows": 6984,
+  "rejected_rows_by_reason": {
+    "missing_reference_hour": 3223,
+    "not_pre_event": 803
+  },
+  "all_leads": {
+    "cases": 947,
+    "unique_valid_hours": 350,
+    "unique_dates_utc": 15,
+    "mae_mm": 0.43501783137466765,
+    "rmse_mm": 1.1797338778757793,
+    "bias_mm": -0.06990964543643031,
+    "brier_score": 0.138521225853652,
+    "crps_mm": 0.3020860410908131,
+    "observed_event_frequency": 0.23864836325237593,
+    "period_start": "2026-10-23T01:00:00Z",
+    "period_end": "2026-11-06T15:00:00Z"
+  },
+  "by_lead": {
+    "1-24h": {
+      "cases": 350,
+      "unique_valid_hours": 350,
+      "unique_dates_utc": 15,
+      "mae_mm": 0.4137175020088934,
+      "rmse_mm": 1.11537494206048,
+      "bias_mm": -0.03272704895784811,
+      "brier_score": 0.1324199628166071,
+      "crps_mm": 0.277728757753411,
+      "observed_event_frequency": 0.22,
+      "period_start": "2026-10-23T01:00:00Z",
+      "period_end": "2026-11-06T15:00:00Z"
+    },
+    "24-48h": {
+      "cases": 350,
+      "unique_valid_hours": 350,
+      "unique_dates_utc": 15,
+      "mae_mm": 0.3938943565552896,
+      "rmse_mm": 1.121447335975255,
+      "bias_mm": -0.06668319455587227,
+      "brier_score": 0.1295615437181277,
+      "crps_mm": 0.27332010862776246,
+      "observed_event_frequency": 0.22,
+      "period_start": "2026-10-23T01:00:00Z",
+      "period_end": "2026-11-06T15:00:00Z"
+    },
+    "48h+": {
+      "cases": 247,
+      "unique_valid_hours": 247,
+      "unique_dates_utc": 15,
+      "mae_mm": 0.5234726146329806,
+      "rmse_mm": 1.3383342407177616,
+      "bias_mm": -0.12716942914371404,
+      "brier_score": 0.15986264613866916,
+      "crps_mm": 0.37736185295380303,
+      "observed_event_frequency": 0.291497975708502,
+      "period_start": "2026-10-23T01:00:00Z",
+      "period_end": "2026-11-06T15:00:00Z"
+    }
+  },
+  "reliability": [
+    {
+      "lower_percent": 0,
+      "upper_percent": 10,
+      "cases": 293,
+      "mean_probability_pct": 2.532795950777831,
+      "reference_frequency_pct": 2.3890784982935154
+    },
+    {
+      "lower_percent": 10,
+      "upper_percent": 20,
+      "cases": 105,
+      "mean_probability_pct": 15.199689768380471,
+      "reference_frequency_pct": 8.571428571428571
+    },
+    {
+      "lower_percent": 20,
+      "upper_percent": 30,
+      "cases": 102,
+      "mean_probability_pct": 25.514069237224724,
+      "reference_frequency_pct": 9.803921568627452
+    },
+    {
+      "lower_percent": 30,
+      "upper_percent": 40,
+      "cases": 76,
+      "mean_probability_pct": 34.713711064505034,
+      "reference_frequency_pct": 28.94736842105263
+    },
+    {
+      "lower_percent": 40,
+      "upper_percent": 50,
+      "cases": 104,
+      "mean_probability_pct": 45.00220061142737,
+      "reference_frequency_pct": 25.96153846153846
+    },
+    {
+      "lower_percent": 50,
+      "upper_percent": 60,
+      "cases": 89,
+      "mean_probability_pct": 54.1580152418585,
+      "reference_frequency_pct": 39.325842696629216
+    },
+    {
+      "lower_percent": 60,
+      "upper_percent": 70,
+      "cases": 73,
+      "mean_probability_pct": 65.40014989645881,
+      "reference_frequency_pct": 56.16438356164384
+    },
+    {
+      "lower_percent": 70,
+      "upper_percent": 80,
+      "cases": 75,
+      "mean_probability_pct": 74.96491671937594,
+      "reference_frequency_pct": 66.66666666666667
+    },
+    {
+      "lower_percent": 80,
+      "upper_percent": 90,
+      "cases": 30,
+      "mean_probability_pct": 84.41044697448872,
+      "reference_frequency_pct": 83.33333333333333
+    },
+    {
+      "lower_percent": 90,
+      "upper_percent": 100,
+      "cases": 0,
+      "mean_probability_pct": null,
+      "reference_frequency_pct": null
+    }
+  ],
+  "limitations": [
+    "Reference is an areal satellite/gauge estimate, not an on-campus gauge or radar",
+    "A 0.25-degree grid cannot establish campus-scale accuracy",
+    "Multiple lead bins share reference hours; cases are not independent observations",
+    "No weights, calibration, or hyperparameters are fitted using these results",
+    "Station temperature, humidity, and wind need actual measured data; model-filled station series remain excluded"
+  ],
+  "sources": [
+    "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/",
+    "https://www.ncei.noaa.gov/products/climate-data-records/precipitation-cmorph",
+    "https://dev.meteostat.net/quality.html"
+  ],
+  "reference_coverage": {
+    "requested_hours": 336,
+    "available_hours": 317,
+    "missing_hours": 19,
+    "missing_policy": "Missing source hours excluded; never replaced with zero"
+  },
+  "reference_cell": {
+    "cell_latitude": -6.875,
+    "cell_longitude": 107.625
+  }
+}
