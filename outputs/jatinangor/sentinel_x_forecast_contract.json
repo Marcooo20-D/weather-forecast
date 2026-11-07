@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-11-06T20:50:37.323314+07:00",
+  "generated_at": "2026-11-07T11:10:09.815964+07:00",
   "location": "Jatinangor, Sumedang",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,8 +25,8 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-11-06T20:48:40.701227+07:00",
-    "issued_at": "2026-11-06T20:48:40.701227+07:00",
+    "generated_at": "2026-11-07T11:08:48.016817+07:00",
+    "issued_at": "2026-11-07T11:08:48.016817+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Jatinangor, Sumedang",
     "mission": "safety_first",
@@ -37,10 +37,10 @@
       "07:00",
       "08:00"
     ],
-    "peak_rain_threat_hour": "19:00",
-    "peak_rain_threat_score": 30.3,
-    "peak_heavy_rain_threat_hour": "19:00",
-    "peak_heavy_rain_threat_score": 3.8,
+    "peak_rain_threat_hour": "18:00",
+    "peak_rain_threat_score": 52.8,
+    "peak_heavy_rain_threat_hour": "18:00",
+    "peak_heavy_rain_threat_score": 9.7,
     "summary_text": "Jatinangor, Sumedang: data prakiraan belum lengkap atau sudah usang. Rekomendasi waktu aktivitas belum tersedia.",
     "risk_window": [],
     "location_personality": {
@@ -51,8 +51,8 @@
       "forecast_difficulty": "unknown",
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
-    "dominant_atmospheric_mode": "STABLE_LOW_RAIN",
-    "peak_rain_probability": 24.3516761543327
+    "dominant_atmospheric_mode": "HUMID_CONVECTIVE_AFTERNOON",
+    "peak_rain_probability": 63.41819523508329
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
