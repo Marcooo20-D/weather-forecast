@@ -188,7 +188,8 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-      - name: Deploy to GitHub Pages branch
+      - name: Deploy to GitHub Pages branch (same repository)
+        if: ${{ vars.PUBLIC_PAGES_REPOSITORY == '' }}
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -197,4 +198,13 @@ jobs:
           force_orphan: true
           commit_message: "deploy: validated LANGIT public site"
 
-
+      - name: Deploy to GitHub Pages branch (public output repository)
+        if: ${{ vars.PUBLIC_PAGES_REPOSITORY != '' }}
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
+        with:
+          personal_token: ${{ secrets.PUBLIC_PAGES_DEPLOY_TOKEN }}
+          external_repository: ${{ vars.PUBLIC_PAGES_REPOSITORY }}
+          publish_dir: _site
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "deploy: validated LANGIT public site"
