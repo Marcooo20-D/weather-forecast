@@ -1,6 +1,6 @@
 {
   "schema_version": "LANGIT.satellite-verification.v1",
-  "generated_at": "2026-11-07T04:15:47.516648Z",
+  "generated_at": "2026-11-07T11:15:35.663382Z",
   "location_slug": "jatinangor",
   "reference_type": "satellite_gauge_precipitation_estimate",
   "reference_product": "NOAA CPC CMORPH ICDR ADJ",
@@ -14,64 +14,64 @@
   "automatic_station_measurement_rows": 0,
   "station_calibration_changed": false,
   "local_station_skill_status": "NOT_ESTABLISHED_BY_THIS_REPORT",
-  "archive_documents": 288,
-  "candidate_rows": 6912,
+  "archive_documents": 291,
+  "candidate_rows": 6984,
   "rejected_rows_by_reason": {
-    "missing_reference_hour": 3242,
-    "not_pre_event": 793
+    "missing_reference_hour": 3223,
+    "not_pre_event": 805
   },
   "all_leads": {
-    "cases": 925,
-    "unique_valid_hours": 343,
+    "cases": 946,
+    "unique_valid_hours": 350,
     "unique_dates_utc": 15,
-    "mae_mm": 0.4096765029961401,
-    "rmse_mm": 1.151693272070338,
-    "bias_mm": 0.017804532102506303,
-    "brier_score": 0.14282273634903261,
-    "crps_mm": 0.26107426780951953,
-    "observed_event_frequency": 0.1783783783783784,
+    "mae_mm": 0.40500111986160325,
+    "rmse_mm": 1.1393243924224001,
+    "bias_mm": 0.021828209632627264,
+    "brier_score": 0.14359902777561284,
+    "crps_mm": 0.2568057175756104,
+    "observed_event_frequency": 0.1744186046511628,
     "period_start": "2026-10-23T01:00:00Z",
-    "period_end": "2026-11-06T08:00:00Z"
+    "period_end": "2026-11-06T15:00:00Z"
   },
   "by_lead": {
     "1-24h": {
-      "cases": 343,
-      "unique_valid_hours": 343,
+      "cases": 350,
+      "unique_valid_hours": 350,
       "unique_dates_utc": 15,
-      "mae_mm": 0.3898908951780864,
-      "rmse_mm": 1.088185147226239,
-      "bias_mm": 0.04134748648814796,
-      "brier_score": 0.14421249397486846,
-      "crps_mm": 0.2423075529699762,
-      "observed_event_frequency": 0.16326530612244897,
+      "mae_mm": 0.38605232097200365,
+      "rmse_mm": 1.0776776788715015,
+      "bias_mm": 0.044479780455863996,
+      "brier_score": 0.14463055133544309,
+      "crps_mm": 0.23875594579960263,
+      "observed_event_frequency": 0.16,
       "period_start": "2026-10-23T01:00:00Z",
-      "period_end": "2026-11-06T08:00:00Z"
+      "period_end": "2026-11-06T15:00:00Z"
     },
     "24-48h": {
-      "cases": 343,
-      "unique_valid_hours": 343,
+      "cases": 350,
+      "unique_valid_hours": 350,
       "unique_dates_utc": 15,
-      "mae_mm": 0.3674537628560923,
-      "rmse_mm": 1.0825070514691564,
-      "bias_mm": 0.012867267057825912,
-      "brier_score": 0.12872922493019384,
-      "crps_mm": 0.2310468065254019,
-      "observed_event_frequency": 0.16326530612244897,
+      "mae_mm": 0.364101107887516,
+      "rmse_mm": 1.0721375173822745,
+      "bias_mm": 0.01660634200521492,
+      "brier_score": 0.12980326555524102,
+      "crps_mm": 0.22794883745983904,
+      "observed_event_frequency": 0.16,
       "period_start": "2026-10-23T01:00:00Z",
-      "period_end": "2026-11-06T08:00:00Z"
+      "period_end": "2026-11-06T15:00:00Z"
     },
     "48h+": {
-      "cases": 239,
-      "unique_valid_hours": 239,
+      "cases": 246,
+      "unique_valid_hours": 246,
       "unique_dates_utc": 15,
-      "mae_mm": 0.49866756303642795,
-      "rmse_mm": 1.323777428527357,
-      "bias_mm": -0.00889735678431258,
-      "brier_score": 0.16105448342434653,
-      "crps_mm": 0.33110105613761875,
-      "observed_event_frequency": 0.2217573221757322,
+      "mae_mm": 0.4901518670253852,
+      "rmse_mm": 1.3053377204112413,
+      "bias_mm": -0.0029701485728139392,
+      "brier_score": 0.16175952993492,
+      "crps_mm": 0.3235428239257026,
+      "observed_event_frequency": 0.21544715447154472,
       "period_start": "2026-10-23T01:00:00Z",
-      "period_end": "2026-11-06T08:00:00Z"
+      "period_end": "2026-11-06T15:00:00Z"
     }
   },
   "reliability": [
@@ -85,44 +85,44 @@
     {
       "lower_percent": 10,
       "upper_percent": 20,
-      "cases": 93,
-      "mean_probability_pct": 15.338202988444772,
-      "reference_frequency_pct": 7.526881720430108
+      "cases": 98,
+      "mean_probability_pct": 15.290989514085206,
+      "reference_frequency_pct": 7.142857142857143
     },
     {
       "lower_percent": 20,
       "upper_percent": 30,
-      "cases": 80,
-      "mean_probability_pct": 25.648016814252582,
-      "reference_frequency_pct": 22.5
+      "cases": 82,
+      "mean_probability_pct": 25.626953456441587,
+      "reference_frequency_pct": 21.951219512195124
     },
     {
       "lower_percent": 30,
       "upper_percent": 40,
-      "cases": 83,
-      "mean_probability_pct": 34.96633593196315,
-      "reference_frequency_pct": 13.25301204819277
+      "cases": 85,
+      "mean_probability_pct": 34.91775495777058,
+      "reference_frequency_pct": 12.941176470588236
     },
     {
       "lower_percent": 40,
       "upper_percent": 50,
-      "cases": 67,
-      "mean_probability_pct": 44.02713661295043,
-      "reference_frequency_pct": 13.432835820895523
+      "cases": 71,
+      "mean_probability_pct": 44.20495882738981,
+      "reference_frequency_pct": 12.67605633802817
     },
     {
       "lower_percent": 50,
       "upper_percent": 60,
-      "cases": 59,
-      "mean_probability_pct": 54.039226406801106,
-      "reference_frequency_pct": 20.338983050847457
+      "cases": 66,
+      "mean_probability_pct": 54.00197420121519,
+      "reference_frequency_pct": 18.181818181818183
     },
     {
       "lower_percent": 60,
       "upper_percent": 70,
-      "cases": 68,
-      "mean_probability_pct": 64.11633707879103,
-      "reference_frequency_pct": 32.35294117647059
+      "cases": 69,
+      "mean_probability_pct": 64.07097263090994,
+      "reference_frequency_pct": 31.884057971014492
     },
     {
       "lower_percent": 70,
@@ -160,8 +160,8 @@
   ],
   "reference_coverage": {
     "requested_hours": 336,
-    "available_hours": 316,
-    "missing_hours": 20,
+    "available_hours": 317,
+    "missing_hours": 19,
     "missing_policy": "Missing source hours excluded; never replaced with zero"
   },
   "reference_cell": {
