@@ -1,53 +1,11 @@
 {
   "schema_version": "LANGIT.reference-sync.v1",
-  "generated_at": "2026-11-07T10:57:28.568357Z",
+  "generated_at": "2026-11-07T17:18:53.732637Z",
   "requested_hours": 336,
-  "available_hours": 317,
-  "missing_hours": 19,
+  "available_hours": 316,
+  "missing_hours": 20,
   "reference_type": "satellite_gauge_precipitation_estimate",
   "records": [
-    {
-      "hour": "2026-10-24T10:00:00Z",
-      "status": "cached",
-      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261024T10.json",
-      "fetched_at": "2026-11-05T10:13:20.545282Z"
-    },
-    {
-      "hour": "2026-10-24T11:00:00Z",
-      "status": "cached",
-      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261024T11.json",
-      "fetched_at": "2026-11-05T10:13:20.537585Z"
-    },
-    {
-      "hour": "2026-10-24T12:00:00Z",
-      "status": "cached",
-      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261024T12.json",
-      "fetched_at": "2026-11-05T10:13:28.205324Z"
-    },
-    {
-      "hour": "2026-10-24T13:00:00Z",
-      "status": "cached",
-      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261024T13.json",
-      "fetched_at": "2026-11-05T10:13:28.165678Z"
-    },
-    {
-      "hour": "2026-10-24T14:00:00Z",
-      "status": "cached",
-      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261024T14.json",
-      "fetched_at": "2026-11-05T10:13:28.241370Z"
-    },
-    {
-      "hour": "2026-10-24T15:00:00Z",
-      "status": "cached",
-      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261024T15.json",
-      "fetched_at": "2026-11-05T10:13:35.206912Z"
-    },
-    {
-      "hour": "2026-10-24T16:00:00Z",
-      "status": "cached",
-      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261024T16.json",
-      "fetched_at": "2026-11-05T10:13:35.209615Z"
-    },
     {
       "hour": "2026-10-24T17:00:00Z",
       "status": "cached",
@@ -1910,39 +1868,39 @@
     },
     {
       "hour": "2026-11-06T15:00:00Z",
-      "status": "unavailable",
-      "error": "HTTP Error 404: Not Found",
-      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110615.nc"
+      "status": "cached",
+      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261106T15.json",
+      "fetched_at": "2026-11-07T17:18:52.191103Z"
     },
     {
       "hour": "2026-11-06T16:00:00Z",
-      "status": "unavailable",
-      "error": "HTTP Error 404: Not Found",
-      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110616.nc"
+      "status": "cached",
+      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261106T16.json",
+      "fetched_at": "2026-11-07T17:18:52.194937Z"
     },
     {
       "hour": "2026-11-06T17:00:00Z",
-      "status": "unavailable",
-      "error": "HTTP Error 404: Not Found",
-      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110617.nc"
+      "status": "cached",
+      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261106T17.json",
+      "fetched_at": "2026-11-07T17:18:52.192763Z"
     },
     {
       "hour": "2026-11-06T18:00:00Z",
-      "status": "unavailable",
-      "error": "HTTP Error 404: Not Found",
-      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110618.nc"
+      "status": "cached",
+      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261106T18.json",
+      "fetched_at": "2026-11-07T17:18:52.409478Z"
     },
     {
       "hour": "2026-11-06T19:00:00Z",
-      "status": "unavailable",
-      "error": "HTTP Error 404: Not Found",
-      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110619.nc"
+      "status": "cached",
+      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261106T19.json",
+      "fetched_at": "2026-11-07T17:18:52.417808Z"
     },
     {
       "hour": "2026-11-06T20:00:00Z",
-      "status": "unavailable",
-      "error": "HTTP Error 404: Not Found",
-      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110620.nc"
+      "status": "cached",
+      "path": "/home/runner/work/weather-forecast/weather-forecast/outputs/observations/cmorph/20261106T20.json",
+      "fetched_at": "2026-11-07T17:18:52.424612Z"
     },
     {
       "hour": "2026-11-06T21:00:00Z",
@@ -2021,6 +1979,48 @@
       "status": "unavailable",
       "error": "HTTP Error 404: Not Found",
       "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110709.nc"
+    },
+    {
+      "hour": "2026-11-07T10:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110710.nc"
+    },
+    {
+      "hour": "2026-11-07T11:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110711.nc"
+    },
+    {
+      "hour": "2026-11-07T12:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110712.nc"
+    },
+    {
+      "hour": "2026-11-07T13:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110713.nc"
+    },
+    {
+      "hour": "2026-11-07T14:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110714.nc"
+    },
+    {
+      "hour": "2026-11-07T15:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110715.nc"
+    },
+    {
+      "hour": "2026-11-07T16:00:00Z",
+      "status": "unavailable",
+      "error": "HTTP Error 404: Not Found",
+      "source_url": "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH_RT/ICDR/0.25deg-HLY/CMORPH_V0.x_ADJ_0.25deg-HLY_2026110716.nc"
     }
   ]
 }

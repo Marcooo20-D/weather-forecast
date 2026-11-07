@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-11-07T18:13:44.390734+07:00",
+  "generated_at": "2026-11-08T00:37:44.219359+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.2853,
+      "ema_completeness": 0.2326,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-11-09",
+      "last_run_date": "2026-11-10",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
@@ -15,7 +15,7 @@
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-11-09",
+      "last_run_date": "2026-11-10",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
@@ -24,7 +24,7 @@
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-11-09",
+      "last_run_date": "2026-11-10",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
@@ -33,7 +33,7 @@
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-11-09",
+      "last_run_date": "2026-11-10",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
@@ -42,16 +42,16 @@
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-11-09",
+      "last_run_date": "2026-11-10",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "KMA": {
       "ema_success": 0.0001,
       "ema_completeness": 0.0001,
-      "consecutive_failures": 291,
+      "consecutive_failures": 294,
       "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
-      "last_run_date": "2026-11-09",
+      "last_run_date": "2026-11-10",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
@@ -60,16 +60,16 @@
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-11-09",
+      "last_run_date": "2026-11-10",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "METNO": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.8581,
+      "ema_completeness": 0.8298,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-11-09",
+      "last_run_date": "2026-11-10",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
@@ -78,34 +78,34 @@
       "ema_completeness": 0.9999,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-11-09",
+      "last_run_date": "2026-11-10",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "JMA_BACKUP": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.8521,
+      "ema_completeness": 0.8521,
       "consecutive_failures": 0,
       "last_error": "",
-      "last_run_date": "2026-11-09",
+      "last_run_date": "2026-11-10",
       "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "GEM_BACKUP": {
-      "ema_success": 0.9644,
-      "ema_completeness": 0.9644,
-      "consecutive_failures": 0,
-      "last_error": "",
-      "last_run_date": "2026-11-04",
-      "last_live_fetch_success": true,
+      "ema_success": 0.6269,
+      "ema_completeness": 0.6269,
+      "consecutive_failures": 1,
+      "last_error": "circuit_open host=api.open-meteo.com wait=22s",
+      "last_run_date": "2026-11-08",
+      "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
     "BOM_BACKUP": {
-      "ema_success": 0.1785,
-      "ema_completeness": 0.1785,
-      "consecutive_failures": 4,
-      "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
-      "last_run_date": "2026-10-20",
+      "ema_success": 0.116,
+      "ema_completeness": 0.116,
+      "consecutive_failures": 5,
+      "last_error": "circuit_open host=api.open-meteo.com wait=22s",
+      "last_run_date": "2026-11-08",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     }

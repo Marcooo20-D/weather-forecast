@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-11-07T18:11:58.059464+07:00",
+  "generated_at": "2026-11-08T00:33:43.210692+07:00",
   "location_slug": "arjawinangun",
   "location_name": "Arjawinangun, Cirebon",
   "bmkg_point_name": "Arjawinangun",
@@ -12,9 +12,9 @@
   "longitude": 108.4103,
   "timezone": "Asia/Jakarta",
   "target_date": "2026-11-08",
-  "sources_total": 10,
-  "sources_success": 9,
-  "points_total": 216,
+  "sources_total": 12,
+  "sources_success": 8,
+  "points_total": 192,
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -57,17 +57,17 @@
   "output_dir": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun",
   "retention_days": 30,
   "low_coverage_slots": [],
-  "run_status": "ok",
+  "run_status": "warning",
   "sentinel_x": {
     "version": "LANGIT v61.0",
-    "run_id": "arjawinangun_20261108_06ffe87bf8624415927f82fdc7c42a3b",
+    "run_id": "arjawinangun_20261108_8048bdb4ebd449e2abb4954853a5a0a3",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/command_center_sentinel_x.html",
     "report": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_report.md",
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/sentinel_x_ledger.sqlite",
-    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/forecast_archive/arjawinangun_20261108_06ffe87bf8624415927f82fdc7c42a3b.json.gz",
+    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/forecast_archive/arjawinangun_20261108_8048bdb4ebd449e2abb4954853a5a0a3.json.gz",
     "daily_operational_status": "GREEN"
   }
 }
