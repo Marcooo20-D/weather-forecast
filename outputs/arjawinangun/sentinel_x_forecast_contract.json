@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-11-08T00:37:42.764096+07:00",
+  "generated_at": "2026-11-08T11:02:50.917751+07:00",
   "location": "Arjawinangun, Cirebon",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,19 +25,19 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-11-08T00:35:43.811954+07:00",
-    "issued_at": "2026-11-08T00:35:43.811954+07:00",
+    "generated_at": "2026-11-08T11:01:12.381836+07:00",
+    "issued_at": "2026-11-08T11:01:12.381836+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Arjawinangun, Cirebon",
     "mission": "safety_first",
     "daily_operational_status": "GREEN",
-    "data_quality": "limited",
+    "data_quality": "usable",
     "best_general_activity_window": [],
     "peak_rain_threat_hour": "19:00",
-    "peak_rain_threat_score": 53.3,
+    "peak_rain_threat_score": 54.0,
     "peak_heavy_rain_threat_hour": "19:00",
-    "peak_heavy_rain_threat_score": 13.3,
-    "summary_text": "Arjawinangun, Cirebon: data prakiraan belum lengkap atau sudah usang. Rekomendasi waktu aktivitas belum tersedia.",
+    "peak_heavy_rain_threat_score": 14.7,
+    "summary_text": "Arjawinangun, Cirebon: belum ada rentang aktivitas yang memenuhi batas risiko; pantau pembaruan. Peluang hujan per jam tertinggi 64.6532% sekitar 17:00.",
     "risk_window": [],
     "location_personality": {
       "personality": "unspecified_local_conditions",
@@ -47,8 +47,8 @@
       "forecast_difficulty": "unknown",
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
-    "dominant_atmospheric_mode": "HUMID_CONVECTIVE_AFTERNOON",
-    "peak_rain_probability": 62.54480286738352
+    "dominant_atmospheric_mode": "EVENING_RAIN_RESIDUAL",
+    "peak_rain_probability": 64.65317309719588
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
