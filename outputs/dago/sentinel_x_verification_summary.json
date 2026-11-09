@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T00:36:06.294263+07:00",
+  "generated_at": "2026-11-09T11:04:49.140316+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "matched_cases": 0,
@@ -90,7 +90,7 @@
   ],
   "probabilistic_verification": {
     "schema": "langit-probabilistic-verification-1",
-    "generated_at": "2026-11-09T00:36:33.355240+07:00",
+    "generated_at": "2026-11-09T11:05:20.407652+07:00",
     "status": "insufficient_matching_observations",
     "nominal_interval_coverage": 0.8,
     "calibration_status": "NOT_CERTIFIED",
@@ -105,8 +105,8 @@
     },
     "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
     "rejected": {
-      "not_pre_event": 1790,
-      "missing_qc_observation": 5482,
+      "not_pre_event": 1797,
+      "missing_qc_observation": 5547,
       "rain_interval_mismatch": 0,
       "unknown_observation_location": 0,
       "observation_outside_local_radius": 0
@@ -116,31 +116,31 @@
   "activity_verification": {
     "activities": {
       "motor": {
-        "recommended_windows": 62,
+        "recommended_windows": 64,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 62,
+        "unknown_windows": 64,
         "disruption_rate": null
       },
       "walking": {
-        "recommended_windows": 47,
+        "recommended_windows": 49,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 47,
+        "unknown_windows": 49,
         "disruption_rate": null
       },
       "sport": {
-        "recommended_windows": 26,
+        "recommended_windows": 27,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 26,
+        "unknown_windows": 27,
         "disruption_rate": null
       },
       "drying": {
-        "recommended_windows": 37,
+        "recommended_windows": 39,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 37,
+        "unknown_windows": 39,
         "disruption_rate": null
       },
       "outdoor_event": {
@@ -151,10 +151,10 @@
         "disruption_rate": null
       },
       "photography": {
-        "recommended_windows": 38,
+        "recommended_windows": 40,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 38,
+        "unknown_windows": 40,
         "disruption_rate": null
       }
     },
