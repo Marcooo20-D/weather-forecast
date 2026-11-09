@@ -1,6 +1,6 @@
 {
   "schema_version": "LANGIT.satellite-verification.v1",
-  "generated_at": "2026-11-09T04:21:45.934359Z",
+  "generated_at": "2026-11-09T12:43:40.362010Z",
   "location_slug": "jatinangor",
   "reference_type": "satellite_gauge_precipitation_estimate",
   "reference_product": "NOAA CPC CMORPH ICDR ADJ",
@@ -14,94 +14,94 @@
   "automatic_station_measurement_rows": 0,
   "station_calibration_changed": false,
   "local_station_skill_status": "NOT_ESTABLISHED_BY_THIS_REPORT",
-  "archive_documents": 306,
-  "candidate_rows": 7344,
+  "archive_documents": 309,
+  "candidate_rows": 7416,
   "rejected_rows_by_reason": {
-    "missing_reference_hour": 3146,
-    "not_pre_event": 868
+    "missing_reference_hour": 3130,
+    "not_pre_event": 875
   },
   "all_leads": {
-    "cases": 1052,
-    "unique_valid_hours": 391,
+    "cases": 1078,
+    "unique_valid_hours": 400,
     "unique_dates_utc": 17,
-    "mae_mm": 0.3691311920714037,
-    "rmse_mm": 1.080663717899015,
-    "bias_mm": 0.024566959108845484,
-    "brier_score": 0.13177845459841878,
-    "crps_mm": 0.2320991390757701,
-    "observed_event_frequency": 0.15684410646387834,
+    "mae_mm": 0.36147459613021954,
+    "rmse_mm": 1.067599661813143,
+    "bias_mm": 0.025220817766016153,
+    "brier_score": 0.12940630285419308,
+    "crps_mm": 0.22681123431939176,
+    "observed_event_frequency": 0.15306122448979592,
     "period_start": "2026-10-23T01:00:00Z",
-    "period_end": "2026-11-08T08:00:00Z"
+    "period_end": "2026-11-08T17:00:00Z"
   },
   "by_lead": {
     "1-24h": {
-      "cases": 391,
-      "unique_valid_hours": 391,
+      "cases": 400,
+      "unique_valid_hours": 400,
       "unique_dates_utc": 17,
-      "mae_mm": 0.3505629418233114,
-      "rmse_mm": 1.0199074413794582,
-      "bias_mm": 0.044807470773058494,
-      "brier_score": 0.13226938250341982,
-      "crps_mm": 0.21503161007541344,
-      "observed_event_frequency": 0.1432225063938619,
+      "mae_mm": 0.3436386308399614,
+      "rmse_mm": 1.0084074784608117,
+      "bias_mm": 0.04476265788833914,
+      "brier_score": 0.13002953042282836,
+      "crps_mm": 0.21045658486295157,
+      "observed_event_frequency": 0.14,
       "period_start": "2026-10-23T01:00:00Z",
-      "period_end": "2026-11-08T08:00:00Z"
+      "period_end": "2026-11-08T17:00:00Z"
     },
     "24-48h": {
-      "cases": 391,
-      "unique_valid_hours": 391,
+      "cases": 400,
+      "unique_valid_hours": 400,
       "unique_dates_utc": 17,
-      "mae_mm": 0.330305516407095,
-      "rmse_mm": 1.0145985041934247,
-      "bias_mm": 0.019248820604523684,
-      "brier_score": 0.11838004317104547,
-      "crps_mm": 0.20498635084659897,
-      "observed_event_frequency": 0.1432225063938619,
+      "mae_mm": 0.323883817809757,
+      "rmse_mm": 1.0031563450116856,
+      "bias_mm": 0.019825897662743532,
+      "brier_score": 0.11630082736450743,
+      "crps_mm": 0.20061421216108338,
+      "observed_event_frequency": 0.14,
       "period_start": "2026-10-23T01:00:00Z",
-      "period_end": "2026-11-08T08:00:00Z"
+      "period_end": "2026-11-08T17:00:00Z"
     },
     "48h+": {
-      "cases": 270,
-      "unique_valid_hours": 270,
+      "cases": 278,
+      "unique_valid_hours": 278,
       "unique_dates_utc": 17,
-      "mae_mm": 0.45224609959639933,
-      "rmse_mm": 1.2462380564916726,
-      "bias_mm": 0.002957152051373406,
-      "brier_score": 0.15047040295859493,
-      "crps_mm": 0.29607878365630846,
-      "observed_event_frequency": 0.1962962962962963,
+      "mae_mm": 0.44122530636147245,
+      "rmse_mm": 1.2282462563276673,
+      "bias_mm": 0.004865537163065979,
+      "brier_score": 0.14736637180534465,
+      "crps_mm": 0.2880366611032026,
+      "observed_event_frequency": 0.1906474820143885,
       "period_start": "2026-10-23T01:00:00Z",
-      "period_end": "2026-11-08T08:00:00Z"
+      "period_end": "2026-11-08T16:00:00Z"
     }
   },
   "reliability": [
     {
       "lower_percent": 0,
       "upper_percent": 10,
-      "cases": 420,
-      "mean_probability_pct": 2.915116512554843,
-      "reference_frequency_pct": 3.3333333333333335
+      "cases": 434,
+      "mean_probability_pct": 2.9191403581897553,
+      "reference_frequency_pct": 3.225806451612903
     },
     {
       "lower_percent": 10,
       "upper_percent": 20,
-      "cases": 112,
-      "mean_probability_pct": 15.382755790488238,
-      "reference_frequency_pct": 6.25
+      "cases": 114,
+      "mean_probability_pct": 15.431357753439048,
+      "reference_frequency_pct": 6.140350877192983
     },
     {
       "lower_percent": 20,
       "upper_percent": 30,
-      "cases": 97,
-      "mean_probability_pct": 25.602545041960916,
-      "reference_frequency_pct": 18.556701030927837
+      "cases": 103,
+      "mean_probability_pct": 25.604500449308027,
+      "reference_frequency_pct": 17.475728155339805
     },
     {
       "lower_percent": 30,
       "upper_percent": 40,
-      "cases": 98,
-      "mean_probability_pct": 34.60323376662493,
-      "reference_frequency_pct": 11.224489795918368
+      "cases": 102,
+      "mean_probability_pct": 34.459079014274906,
+      "reference_frequency_pct": 10.784313725490197
     },
     {
       "lower_percent": 40,

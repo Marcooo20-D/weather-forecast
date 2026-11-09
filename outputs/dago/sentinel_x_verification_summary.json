@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T11:04:49.140316+07:00",
+  "generated_at": "2026-11-09T19:31:55.924738+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "matched_cases": 0,
@@ -90,7 +90,7 @@
   ],
   "probabilistic_verification": {
     "schema": "langit-probabilistic-verification-1",
-    "generated_at": "2026-11-09T11:05:20.407652+07:00",
+    "generated_at": "2026-11-09T19:32:17.238861+07:00",
     "status": "insufficient_matching_observations",
     "nominal_interval_coverage": 0.8,
     "calibration_status": "NOT_CERTIFIED",
@@ -105,8 +105,8 @@
     },
     "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
     "rejected": {
-      "not_pre_event": 1797,
-      "missing_qc_observation": 5547,
+      "not_pre_event": 1813,
+      "missing_qc_observation": 5603,
       "rain_interval_mismatch": 0,
       "unknown_observation_location": 0,
       "observation_outside_local_radius": 0
