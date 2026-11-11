@@ -1,10 +1,42 @@
 {
   "schema_version": "LANGIT.station-source.v1",
-  "status": "source_unavailable",
+  "status": "no_station_measurements",
   "location_slug": "jatinangor",
   "station_id": "96781",
+  "station_metadata": {
+    "id": "96781",
+    "name": {
+      "en": "Bandung / Husein"
+    },
+    "country": "ID",
+    "region": "JB",
+    "identifiers": {
+      "wmo": "96781",
+      "icao": "WIIB",
+      "usaf": "967810"
+    },
+    "location": {
+      "latitude": -6.9,
+      "longitude": 107.5833,
+      "elevation": 740
+    },
+    "timezone": "Asia/Jakarta"
+  },
+  "metadata_url": "https://data.meteostat.net/stations/96781.json",
   "rows": 0,
-  "checked_at": "2026-11-11T04:04:10.378619Z",
-  "error": "HTTP Error 403: Forbidden",
-  "source_reports": []
+  "source_reports": [
+    {
+      "source_url": "https://data.meteostat.net/hourly/2026/96781.csv.gz",
+      "fetched_at": "2026-11-11T11:48:57.836349Z",
+      "rows_considered": 336,
+      "measurement_rows": 0,
+      "excluded_field_values_by_source": {
+        "metno_forecast": 1008
+      },
+      "rain_policy": "No hourly rain is inferred without explicit accumulation boundaries",
+      "source_sha256": "6205030a5a44e224c7151d2ca567d764a730b4ad4811a13456831dfa9dbe8d4b"
+    }
+  ],
+  "checked_at": "2026-11-11T11:49:02.574707Z",
+  "limitations": "Nearby station coverage is not an on-campus measurement; source-labelled model values are excluded"
 }
