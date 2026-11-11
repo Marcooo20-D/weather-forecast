@@ -1,42 +1,10 @@
 {
   "schema_version": "LANGIT.station-source.v1",
-  "status": "no_station_measurements",
+  "status": "source_unavailable",
   "location_slug": "dago",
   "station_id": "96781",
-  "station_metadata": {
-    "id": "96781",
-    "name": {
-      "en": "Bandung / Husein"
-    },
-    "country": "ID",
-    "region": "JB",
-    "identifiers": {
-      "wmo": "96781",
-      "icao": "WIIB",
-      "usaf": "967810"
-    },
-    "location": {
-      "latitude": -6.9,
-      "longitude": 107.5833,
-      "elevation": 740
-    },
-    "timezone": "Asia/Jakarta"
-  },
-  "metadata_url": "https://data.meteostat.net/stations/96781.json",
   "rows": 0,
-  "source_reports": [
-    {
-      "source_url": "https://data.meteostat.net/hourly/2026/96781.csv.gz",
-      "fetched_at": "2026-11-10T14:07:46.049524Z",
-      "rows_considered": 336,
-      "measurement_rows": 0,
-      "excluded_field_values_by_source": {
-        "metno_forecast": 1008
-      },
-      "rain_policy": "No hourly rain is inferred without explicit accumulation boundaries",
-      "source_sha256": "220f8c767fa986755fdda073c5c8bf48cb6619ec5aeba0c0d4169dd035856cfd"
-    }
-  ],
-  "checked_at": "2026-11-10T14:07:46.049524Z",
-  "limitations": "Nearby station coverage is not an on-campus measurement; source-labelled model values are excluded"
+  "checked_at": "2026-11-11T04:04:01.383943Z",
+  "error": "HTTP Error 403: Forbidden",
+  "source_reports": []
 }
