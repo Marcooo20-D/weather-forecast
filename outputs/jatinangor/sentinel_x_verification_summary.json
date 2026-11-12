@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-12T02:19:18.529862+07:00",
+  "generated_at": "2026-11-12T12:27:44.933861+07:00",
   "location_slug": "jatinangor",
   "location_name": "Jatinangor, Sumedang",
   "matched_cases": 0,
@@ -90,7 +90,7 @@
   ],
   "probabilistic_verification": {
     "schema": "langit-probabilistic-verification-1",
-    "generated_at": "2026-11-12T02:19:43.730160+07:00",
+    "generated_at": "2026-11-12T12:28:18.811339+07:00",
     "status": "insufficient_matching_observations",
     "nominal_interval_coverage": 0.8,
     "calibration_status": "NOT_CERTIFIED",
@@ -105,8 +105,8 @@
     },
     "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
     "rejected": {
-      "not_pre_event": 1844,
-      "missing_qc_observation": 5932,
+      "not_pre_event": 1867,
+      "missing_qc_observation": 5981,
       "rain_interval_mismatch": 0,
       "unknown_observation_location": 0,
       "observation_outside_local_radius": 0
@@ -116,17 +116,17 @@
   "activity_verification": {
     "activities": {
       "motor": {
-        "recommended_windows": 69,
+        "recommended_windows": 71,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 69,
+        "unknown_windows": 71,
         "disruption_rate": null
       },
       "walking": {
-        "recommended_windows": 47,
+        "recommended_windows": 49,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 47,
+        "unknown_windows": 49,
         "disruption_rate": null
       },
       "sport": {
@@ -137,10 +137,10 @@
         "disruption_rate": null
       },
       "drying": {
-        "recommended_windows": 41,
+        "recommended_windows": 43,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 41,
+        "unknown_windows": 43,
         "disruption_rate": null
       },
       "outdoor_event": {
@@ -151,10 +151,10 @@
         "disruption_rate": null
       },
       "photography": {
-        "recommended_windows": 39,
+        "recommended_windows": 40,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 39,
+        "unknown_windows": 40,
         "disruption_rate": null
       }
     },
