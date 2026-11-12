@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-12T21:44:08.014676+07:00",
+  "generated_at": "2026-11-12T22:14:33.813802+07:00",
   "location_slug": "arjawinangun",
   "location_name": "Arjawinangun, Cirebon",
   "matched_cases": 0,
@@ -90,7 +90,7 @@
   ],
   "probabilistic_verification": {
     "schema": "langit-probabilistic-verification-1",
-    "generated_at": "2026-11-12T21:44:35.018796+07:00",
+    "generated_at": "2026-11-12T22:15:08.273722+07:00",
     "status": "insufficient_matching_observations",
     "nominal_interval_coverage": 0.8,
     "calibration_status": "NOT_CERTIFIED",
@@ -105,8 +105,8 @@
     },
     "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
     "rejected": {
-      "not_pre_event": 1893,
-      "missing_qc_observation": 6027,
+      "not_pre_event": 1959,
+      "missing_qc_observation": 6033,
       "rain_interval_mismatch": 0,
       "unknown_observation_location": 0,
       "observation_outside_local_radius": 0
