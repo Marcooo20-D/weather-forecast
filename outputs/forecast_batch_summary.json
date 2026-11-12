@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-12T12:36:44.975240+07:00",
+  "generated_at": "2026-11-12T21:45:34.008256+07:00",
   "mode": "forecast",
   "locations_file": "",
   "default_multi_locations": [
@@ -16,7 +16,7 @@
       "area_level": "kelurahan",
       "is_proxy_bmkg": false,
       "target_date": "2026-11-12,2026-11-13,2026-11-14",
-      "run_status": "ok",
+      "run_status": "warning",
       "quality_status": "ok",
       "days_ok": 3,
       "days_total": 3,
@@ -24,11 +24,11 @@
       "daily_runs": [
         {
           "target_date": "2026-11-12",
-          "run_status": "ok",
-          "sources_success": 9,
-          "sources_total": 10,
+          "run_status": "warning",
+          "sources_success": 7,
+          "sources_total": 12,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20261112_121509.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20261112_212807.log"
         },
         {
           "target_date": "2026-11-13",
@@ -36,7 +36,7 @@
           "sources_success": 9,
           "sources_total": 10,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20261112_121738.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20261112_213034.log"
         },
         {
           "target_date": "2026-11-14",
@@ -44,7 +44,7 @@
           "sources_success": 9,
           "sources_total": 10,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20261112_122002.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/dago/logs/forecast_20261112_213226.log"
         }
       ],
       "error": ""
@@ -68,7 +68,7 @@
           "sources_success": 9,
           "sources_total": 10,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20261112_122226.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20261112_213418.log"
         },
         {
           "target_date": "2026-11-13",
@@ -76,7 +76,7 @@
           "sources_success": 9,
           "sources_total": 10,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20261112_122449.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20261112_213613.log"
         },
         {
           "target_date": "2026-11-14",
@@ -84,7 +84,7 @@
           "sources_success": 9,
           "sources_total": 10,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20261112_122709.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/logs/forecast_20261112_213803.log"
         }
       ],
       "error": ""
@@ -108,7 +108,7 @@
           "sources_success": 9,
           "sources_total": 10,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20261112_122933.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20261112_213957.log"
         },
         {
           "target_date": "2026-11-13",
@@ -116,7 +116,7 @@
           "sources_success": 9,
           "sources_total": 10,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20261112_123157.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20261112_214151.log"
         },
         {
           "target_date": "2026-11-14",
@@ -124,7 +124,7 @@
           "sources_success": 9,
           "sources_total": 10,
           "low_coverage_slots": [],
-          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20261112_123418.log"
+          "log_file": "/home/runner/work/weather-forecast/weather-forecast/outputs/arjawinangun/logs/forecast_20261112_214340.log"
         }
       ],
       "error": ""
@@ -141,23 +141,23 @@
   "combined_outputs": {
     "ensemble_all_locations": {
       "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_all_locations_20261112_123644.csv",
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_all_locations_20261112_214533.csv",
       "rows": 216
     },
     "ensemble_long_all_locations": {
       "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_long_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_long_all_locations_20261112_123644.csv",
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/ensemble_long_all_locations_20261112_214533.csv",
       "rows": 216
     },
     "forecast_all_locations": {
       "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/forecast_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/forecast_all_locations_20261112_123644.csv",
-      "rows": 1878
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/forecast_all_locations_20261112_214533.csv",
+      "rows": 1776
     },
     "source_status_all_locations": {
       "latest_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/source_status_all_locations.csv",
-      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/source_status_all_locations_20261112_123644.csv",
-      "rows": 90
+      "versioned_path": "/home/runner/work/weather-forecast/weather-forecast/outputs/source_status_all_locations_20261112_214533.csv",
+      "rows": 92
     }
   }
 }
