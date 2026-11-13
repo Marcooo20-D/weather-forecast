@@ -1,6 +1,6 @@
 {
   "schema_version": "LANGIT.satellite-verification.v1",
-  "generated_at": "2026-11-12T15:18:46.557893Z",
+  "generated_at": "2026-11-13T04:54:59.557603Z",
   "location_slug": "jatinangor",
   "reference_type": "satellite_gauge_precipitation_estimate",
   "reference_product": "NOAA CPC CMORPH ICDR ADJ",
@@ -14,73 +14,73 @@
   "automatic_station_measurement_rows": 0,
   "station_calibration_changed": false,
   "local_station_skill_status": "NOT_ESTABLISHED_BY_THIS_REPORT",
-  "archive_documents": 333,
-  "candidate_rows": 7992,
+  "archive_documents": 336,
+  "candidate_rows": 8064,
   "rejected_rows_by_reason": {
-    "missing_reference_hour": 3138,
-    "not_pre_event": 990
+    "missing_reference_hour": 3098,
+    "not_pre_event": 1030
   },
   "all_leads": {
-    "cases": 1284,
-    "unique_valid_hours": 474,
-    "unique_dates_utc": 20,
-    "mae_mm": 0.357318974442479,
-    "rmse_mm": 0.996845287221691,
-    "bias_mm": 0.05462328417087247,
-    "brier_score": 0.14179546563480477,
-    "crps_mm": 0.21627602161865575,
-    "observed_event_frequency": 0.16277258566978192,
+    "cases": 1316,
+    "unique_valid_hours": 488,
+    "unique_dates_utc": 21,
+    "mae_mm": 0.3520479744237373,
+    "rmse_mm": 0.9853555411258094,
+    "bias_mm": 0.05617366787850266,
+    "brier_score": 0.13981181283609778,
+    "crps_mm": 0.21301034260213214,
+    "observed_event_frequency": 0.1656534954407295,
     "period_start": "2026-10-23T01:00:00Z",
-    "period_end": "2026-11-11T19:00:00Z"
+    "period_end": "2026-11-12T09:00:00Z"
   },
   "by_lead": {
     "1-24h": {
-      "cases": 474,
-      "unique_valid_hours": 474,
-      "unique_dates_utc": 20,
-      "mae_mm": 0.3455730476578741,
-      "rmse_mm": 0.9490195634960568,
-      "bias_mm": 0.07326561619377658,
-      "brier_score": 0.14082021666582475,
-      "crps_mm": 0.20413276020570403,
-      "observed_event_frequency": 0.14978902953586498,
+      "cases": 488,
+      "unique_valid_hours": 488,
+      "unique_dates_utc": 21,
+      "mae_mm": 0.3408368643909984,
+      "rmse_mm": 0.9367570324819376,
+      "bias_mm": 0.07626411789149024,
+      "brier_score": 0.13886019841834682,
+      "crps_mm": 0.2010531492600055,
+      "observed_event_frequency": 0.15163934426229508,
       "period_start": "2026-10-23T01:00:00Z",
-      "period_end": "2026-11-11T19:00:00Z"
+      "period_end": "2026-11-12T09:00:00Z"
     },
     "24-48h": {
-      "cases": 474,
-      "unique_valid_hours": 474,
-      "unique_dates_utc": 20,
-      "mae_mm": 0.31977614763781176,
-      "rmse_mm": 0.9368652315624795,
-      "bias_mm": 0.04251832504919843,
-      "brier_score": 0.1287767273055863,
-      "crps_mm": 0.1920779716622155,
-      "observed_event_frequency": 0.14978902953586498,
+      "cases": 488,
+      "unique_valid_hours": 488,
+      "unique_dates_utc": 21,
+      "mae_mm": 0.31295030733327067,
+      "rmse_mm": 0.9236137557822753,
+      "bias_mm": 0.04288722208645573,
+      "brier_score": 0.1262058659072596,
+      "crps_mm": 0.18797320234420428,
+      "observed_event_frequency": 0.15163934426229508,
       "period_start": "2026-10-23T01:00:00Z",
-      "period_end": "2026-11-11T19:00:00Z"
+      "period_end": "2026-11-12T09:00:00Z"
     },
     "48h+": {
-      "cases": 336,
-      "unique_valid_hours": 336,
-      "unique_dates_utc": 20,
-      "mae_mm": 0.42685132325591657,
-      "rmse_mm": 1.1351675440979132,
-      "bias_mm": 0.04540091882806574,
-      "brier_score": 0.16153698343047757,
-      "crps_mm": 0.26754322872904795,
-      "observed_event_frequency": 0.19940476190476192,
+      "cases": 340,
+      "unique_valid_hours": 340,
+      "unique_dates_utc": 21,
+      "mae_mm": 0.4242558662946912,
+      "rmse_mm": 1.1287901816707893,
+      "bias_mm": 0.04640792064374081,
+      "brier_score": 0.16070619500414338,
+      "crps_mm": 0.2661080920045633,
+      "observed_event_frequency": 0.20588235294117646,
       "period_start": "2026-10-23T01:00:00Z",
-      "period_end": "2026-11-11T16:00:00Z"
+      "period_end": "2026-11-12T09:00:00Z"
     }
   },
   "reliability": [
     {
       "lower_percent": 0,
       "upper_percent": 10,
-      "cases": 499,
-      "mean_probability_pct": 2.912098495958816,
-      "reference_frequency_pct": 4.208416833667335
+      "cases": 515,
+      "mean_probability_pct": 2.8694681380225124,
+      "reference_frequency_pct": 4.077669902912621
     },
     {
       "lower_percent": 10,
@@ -99,23 +99,23 @@
     {
       "lower_percent": 30,
       "upper_percent": 40,
-      "cases": 118,
-      "mean_probability_pct": 34.43900824408495,
-      "reference_frequency_pct": 11.864406779661017
+      "cases": 122,
+      "mean_probability_pct": 34.48800734818871,
+      "reference_frequency_pct": 11.475409836065573
     },
     {
       "lower_percent": 40,
       "upper_percent": 50,
-      "cases": 77,
-      "mean_probability_pct": 44.260728729419434,
-      "reference_frequency_pct": 15.584415584415584
+      "cases": 78,
+      "mean_probability_pct": 44.27659925288009,
+      "reference_frequency_pct": 15.384615384615385
     },
     {
       "lower_percent": 50,
       "upper_percent": 60,
-      "cases": 95,
-      "mean_probability_pct": 54.326414549973926,
-      "reference_frequency_pct": 18.94736842105263
+      "cases": 97,
+      "mean_probability_pct": 54.39578891084203,
+      "reference_frequency_pct": 18.556701030927837
     },
     {
       "lower_percent": 60,
@@ -127,16 +127,16 @@
     {
       "lower_percent": 70,
       "upper_percent": 80,
-      "cases": 88,
-      "mean_probability_pct": 74.75473424951603,
-      "reference_frequency_pct": 46.59090909090909
+      "cases": 96,
+      "mean_probability_pct": 74.78544038583176,
+      "reference_frequency_pct": 51.041666666666664
     },
     {
       "lower_percent": 80,
       "upper_percent": 90,
-      "cases": 61,
-      "mean_probability_pct": 83.82464581108312,
-      "reference_frequency_pct": 63.9344262295082
+      "cases": 62,
+      "mean_probability_pct": 83.80617956513164,
+      "reference_frequency_pct": 64.51612903225806
     },
     {
       "lower_percent": 90,
