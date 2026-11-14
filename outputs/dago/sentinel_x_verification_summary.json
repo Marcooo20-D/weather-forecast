@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-13T20:53:04.097601+07:00",
+  "generated_at": "2026-11-14T11:32:24.758144+07:00",
   "location_slug": "dago",
   "location_name": "Dago, Bandung",
   "matched_cases": 0,
@@ -90,7 +90,7 @@
   ],
   "probabilistic_verification": {
     "schema": "langit-probabilistic-verification-1",
-    "generated_at": "2026-11-13T20:53:31.666211+07:00",
+    "generated_at": "2026-11-14T11:33:00.495839+07:00",
     "status": "insufficient_matching_observations",
     "nominal_interval_coverage": 0.8,
     "calibration_status": "NOT_CERTIFIED",
@@ -105,8 +105,8 @@
     },
     "location_rule": "per-variable station distance or explicit target/station coordinates; unknown excluded",
     "rejected": {
-      "not_pre_event": 1950,
-      "missing_qc_observation": 6186,
+      "not_pre_event": 1927,
+      "missing_qc_observation": 6281,
       "rain_interval_mismatch": 0,
       "unknown_observation_location": 0,
       "observation_outside_local_radius": 0
@@ -116,17 +116,17 @@
   "activity_verification": {
     "activities": {
       "motor": {
-        "recommended_windows": 70,
+        "recommended_windows": 72,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 70,
+        "unknown_windows": 72,
         "disruption_rate": null
       },
       "walking": {
-        "recommended_windows": 54,
+        "recommended_windows": 56,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 54,
+        "unknown_windows": 56,
         "disruption_rate": null
       },
       "sport": {
@@ -137,10 +137,10 @@
         "disruption_rate": null
       },
       "drying": {
-        "recommended_windows": 43,
+        "recommended_windows": 45,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 43,
+        "unknown_windows": 45,
         "disruption_rate": null
       },
       "outdoor_event": {
@@ -151,10 +151,10 @@
         "disruption_rate": null
       },
       "photography": {
-        "recommended_windows": 45,
+        "recommended_windows": 46,
         "evaluated_windows": 0,
         "disrupted_windows": 0,
-        "unknown_windows": 45,
+        "unknown_windows": 46,
         "disruption_rate": null
       }
     },
