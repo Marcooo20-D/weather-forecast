@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-11-18T16:20:56.823784+07:00",
+  "generated_at": "2026-11-18T22:18:14.982680+07:00",
   "sources": {
     "BMKG": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.2918,
+      "ema_completeness": 0.2788,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-20",
@@ -11,8 +11,8 @@
       "last_served_from_cache": false
     },
     "CMA": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.6246,
+      "ema_completeness": 0.6246,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-20",
@@ -20,8 +20,8 @@
       "last_served_from_cache": false
     },
     "ECMWF": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.6246,
+      "ema_completeness": 0.6246,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-20",
@@ -29,8 +29,8 @@
       "last_served_from_cache": false
     },
     "GFS": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.6246,
+      "ema_completeness": 0.6246,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-20",
@@ -38,8 +38,8 @@
       "last_served_from_cache": false
     },
     "ICON": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.6246,
+      "ema_completeness": 0.6246,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-20",
@@ -49,15 +49,15 @@
     "KMA": {
       "ema_success": 0.0001,
       "ema_completeness": 0.0001,
-      "consecutive_failures": 366,
+      "consecutive_failures": 369,
       "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
       "last_run_date": "2026-11-20",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
     "METEOFRANCE": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.6246,
+      "ema_completeness": 0.6246,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-20",
@@ -66,7 +66,7 @@
     },
     "METNO": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.8687,
+      "ema_completeness": 0.8284,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-20",
@@ -74,8 +74,8 @@
       "last_served_from_cache": false
     },
     "UKMO": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.6246,
+      "ema_completeness": 0.6246,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-20",
@@ -83,8 +83,8 @@
       "last_served_from_cache": false
     },
     "JMA_BACKUP": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.9999,
+      "ema_success": 0.6246,
+      "ema_completeness": 0.6246,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-20",
@@ -92,20 +92,20 @@
       "last_served_from_cache": false
     },
     "GEM_BACKUP": {
-      "ema_success": 0.6269,
-      "ema_completeness": 0.6269,
-      "consecutive_failures": 1,
-      "last_error": "circuit_open host=api.open-meteo.com wait=22s",
-      "last_run_date": "2026-11-08",
+      "ema_success": 0.2649,
+      "ema_completeness": 0.2649,
+      "consecutive_failures": 3,
+      "last_error": "circuit_open host=api.open-meteo.com wait=77s",
+      "last_run_date": "2026-11-19",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
     "BOM_BACKUP": {
-      "ema_success": 0.116,
-      "ema_completeness": 0.116,
-      "consecutive_failures": 5,
-      "last_error": "circuit_open host=api.open-meteo.com wait=22s",
-      "last_run_date": "2026-11-08",
+      "ema_success": 0.049,
+      "ema_completeness": 0.049,
+      "consecutive_failures": 7,
+      "last_error": "circuit_open host=api.open-meteo.com wait=77s",
+      "last_run_date": "2026-11-19",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     }
