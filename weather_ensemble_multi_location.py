@@ -12729,7 +12729,15 @@ def sync_observations(args):
         log_info("WARNING: Tidak ada referensi satelit yang dapat diambil; status kekosongan tetap diarsipkan.")
     return result["reference"]["records"]
 
-
+# 3) Verifikasi sekali per lokasi, bukan per hari (taruh sebelum `if __name__`)
+_FULL_VERIFY = sentinel_write_verification_artifacts
+def sentinel_write_verification_artifacts(rows, args):
+    if getattr(args, "defer_verification", False):
+        c = read_json(path_output("sentinel_x_verification_summary.json"), {}) or {}
+        c.setdefault("calibration_status", "UNCALIBRATED"); c.setdefault("rain_valid_cases", 0)
+        return c
+    return _FULL_VERIFY(rows, args)
+    
 if __name__ == "__main__":
     main()
 
