@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-11-21T01:35:40.896609+07:00",
+  "generated_at": "2026-11-21T12:11:04.130401+07:00",
   "sources": {
     "BMKG": {
-      "ema_success": 0.9999,
-      "ema_completeness": 0.2314,
-      "consecutive_failures": 0,
-      "last_error": "",
+      "ema_success": 0.2746,
+      "ema_completeness": 0.0636,
+      "consecutive_failures": 3,
+      "last_error": "BMKG tidak mengembalikan kandidat target date",
       "last_run_date": "2026-11-23",
-      "last_live_fetch_success": true,
+      "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
     "CMA": {
-      "ema_success": 0.9953,
-      "ema_completeness": 0.9953,
+      "ema_success": 0.9987,
+      "ema_completeness": 0.9987,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-23",
@@ -20,8 +20,8 @@
       "last_served_from_cache": false
     },
     "ECMWF": {
-      "ema_success": 0.9953,
-      "ema_completeness": 0.9953,
+      "ema_success": 0.9987,
+      "ema_completeness": 0.9987,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-23",
@@ -29,8 +29,8 @@
       "last_served_from_cache": false
     },
     "GFS": {
-      "ema_success": 0.9953,
-      "ema_completeness": 0.9953,
+      "ema_success": 0.9987,
+      "ema_completeness": 0.9987,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-23",
@@ -38,8 +38,8 @@
       "last_served_from_cache": false
     },
     "ICON": {
-      "ema_success": 0.9953,
-      "ema_completeness": 0.9953,
+      "ema_success": 0.9987,
+      "ema_completeness": 0.9987,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-23",
@@ -49,15 +49,15 @@
     "KMA": {
       "ema_success": 0.0001,
       "ema_completeness": 0.0001,
-      "consecutive_failures": 381,
+      "consecutive_failures": 384,
       "last_error": "API returned timestamps but all requested weather values are null; source not counted as successful.",
       "last_run_date": "2026-11-23",
       "last_live_fetch_success": false,
       "last_served_from_cache": false
     },
     "METEOFRANCE": {
-      "ema_success": 0.9953,
-      "ema_completeness": 0.9953,
+      "ema_success": 0.9987,
+      "ema_completeness": 0.9987,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-23",
@@ -66,7 +66,7 @@
     },
     "METNO": {
       "ema_success": 0.9999,
-      "ema_completeness": 0.8176,
+      "ema_completeness": 0.876,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-23",
@@ -74,8 +74,8 @@
       "last_served_from_cache": false
     },
     "UKMO": {
-      "ema_success": 0.9953,
-      "ema_completeness": 0.9953,
+      "ema_success": 0.9987,
+      "ema_completeness": 0.9987,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-23",
@@ -83,8 +83,8 @@
       "last_served_from_cache": false
     },
     "JMA_BACKUP": {
-      "ema_success": 0.9953,
-      "ema_completeness": 0.9953,
+      "ema_success": 0.9987,
+      "ema_completeness": 0.9987,
       "consecutive_failures": 0,
       "last_error": "",
       "last_run_date": "2026-11-23",
@@ -92,12 +92,12 @@
       "last_served_from_cache": false
     },
     "GEM_BACKUP": {
-      "ema_success": 0.0319,
-      "ema_completeness": 0.0319,
-      "consecutive_failures": 8,
-      "last_error": "circuit_open host=api.open-meteo.com wait=683s",
-      "last_run_date": "2026-11-20",
-      "last_live_fetch_success": false,
+      "ema_success": 0.7341,
+      "ema_completeness": 0.7341,
+      "consecutive_failures": 0,
+      "last_error": "",
+      "last_run_date": "2026-11-23",
+      "last_live_fetch_success": true,
       "last_served_from_cache": false
     },
     "BOM_BACKUP": {
