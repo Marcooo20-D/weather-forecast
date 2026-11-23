@@ -1,6 +1,6 @@
 {
   "schema_version": "2026-06-03.sentinel-x.public-operational-v2",
-  "generated_at": "2026-11-22T00:53:42.212243+07:00",
+  "generated_at": "2026-11-23T12:15:24.193756+07:00",
   "location_slug": "jatinangor",
   "location_name": "Jatinangor, Sumedang",
   "bmkg_point_name": "Hegarmanah",
@@ -14,7 +14,7 @@
   "target_date": "2026-11-24",
   "sources_total": 10,
   "sources_success": 9,
-  "points_total": 196,
+  "points_total": 216,
   "sources_active": [
     "BMKG",
     "ECMWF",
@@ -60,14 +60,14 @@
   "run_status": "ok",
   "sentinel_x": {
     "version": "LANGIT v61.0",
-    "run_id": "jatinangor_20261124_2dcd0de3e918446991e2277af751a619",
+    "run_id": "jatinangor_20261124_d391cd513aeb4b069bc2bcc6d7ea385c",
     "csv": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/sentinel_x.csv",
     "json": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/sentinel_x.json",
     "dashboard": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/command_center_sentinel_x.html",
     "report": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/sentinel_x_report.md",
     "contract": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/sentinel_x_forecast_contract.json",
     "ledger": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/sentinel_x_ledger.sqlite",
-    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/forecast_archive/jatinangor_20261124_2dcd0de3e918446991e2277af751a619.json.gz",
+    "archive": "/home/runner/work/weather-forecast/weather-forecast/outputs/jatinangor/forecast_archive/jatinangor_20261124_d391cd513aeb4b069bc2bcc6d7ea385c.json.gz",
     "daily_operational_status": "YELLOW"
   }
 }

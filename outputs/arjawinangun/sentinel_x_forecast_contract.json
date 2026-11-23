@@ -1,7 +1,7 @@
 {
   "version": "ANEMOS Public Weather v11",
   "public_version": "sentinel-x-public-operational-v2",
-  "generated_at": "2026-11-22T01:00:02.334582+07:00",
+  "generated_at": "2026-11-23T12:24:27.653813+07:00",
   "location": "Arjawinangun, Cirebon",
   "official_warning_disclaimer": "Bukan peringatan resmi. Untuk cuaca ekstrem, ikuti informasi BMKG dan kondisi setempat.",
   "allowed_uses": [
@@ -25,19 +25,19 @@
   ],
   "calibration_policy": "If verification cases are below threshold, risk scores are labeled heuristic until enough observations are available.",
   "daily_summary": {
-    "generated_at": "2026-11-22T00:57:56.780340+07:00",
-    "issued_at": "2026-11-22T00:57:56.780340+07:00",
+    "generated_at": "2026-11-23T12:22:13.627547+07:00",
+    "issued_at": "2026-11-23T12:22:13.627547+07:00",
     "aether_version": "LANGIT v61.0",
     "location": "Arjawinangun, Cirebon",
     "mission": "safety_first",
     "daily_operational_status": "YELLOW",
-    "data_quality": "limited",
+    "data_quality": "usable",
     "best_general_activity_window": [],
     "peak_rain_threat_hour": "16:00",
-    "peak_rain_threat_score": 65.8,
+    "peak_rain_threat_score": 67.6,
     "peak_heavy_rain_threat_hour": "16:00",
-    "peak_heavy_rain_threat_score": 22.3,
-    "summary_text": "Arjawinangun, Cirebon: data prakiraan belum lengkap atau sudah usang. Rekomendasi waktu aktivitas belum tersedia.",
+    "peak_heavy_rain_threat_score": 24.1,
+    "summary_text": "Arjawinangun, Cirebon: belum ada rentang aktivitas yang memenuhi batas risiko; pantau pembaruan. Peluang hujan per jam tertinggi 87.5% sekitar 14:00.",
     "risk_window": [],
     "location_personality": {
       "personality": "unspecified_local_conditions",
@@ -48,7 +48,7 @@
       "notes": "Karakter lokal belum diverifikasi dengan pengamatan; skor risiko memakai aturan heuristik umum."
     },
     "dominant_atmospheric_mode": "HEAVY_RAIN_WATCH",
-    "peak_rain_probability": 86.71199662660763
+    "peak_rain_probability": 87.5
   },
   "constitution": [
     "Do not assign high trust when source coverage is weak.",
