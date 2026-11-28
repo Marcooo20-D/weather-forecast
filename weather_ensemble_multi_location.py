@@ -1,21 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-LANGIT Weather Ensemble Multi-Location — single-file, consolidated release (v62).
 
-Perubahan utama dibanding versi sebelumnya
-- Satu definisi per fungsi (semua override v3..v60 yang saling menimpa sudah dilebur).
-- Fetch sumber dan ensemble dilakukan sekali per lokasi (URL konstan antar tanggal, memo HTTP
-  berlaku selama satu siklus), bukan sekali per lokasi x tanggal.
-- Arsip prakiraan diperkecil (anggota ensemble disimpan ringkas) dan SQLite hanya menyimpan metadata.
-- Verifikasi dijalankan sekali per lokasi di akhir siklus (--defer-verification), tidak per hari.
-- Anggaran waktu (--time-budget-minutes) agar step CI tidak mati sebelum halaman publik ditulis.
-- Urutan eksekusi per tanggal lalu per lokasi, jadi bila waktu habis semua lokasi tetap punya hari pertama.
-- Hari pertama otomatis maju ke besok setelah --rollover-hour (default 20) waktu lokal.
-- KMA dikeluarkan dari sumber default (selalu mengembalikan nilai null); tersedia opsional via --sources KMA.
-- source_weights.json lama diabaikan (bobot tanpa validasi holdout).
-- read_json tidak lagi "memperbaiki" JSON secara diam-diam; berkas rusak dikarantina.
-"""
 import argparse
 import csv
 import gzip
